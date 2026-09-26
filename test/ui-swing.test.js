@@ -242,10 +242,8 @@ test('Analyse sends the frames with the ball data and view brief, and stores the
   assert.match(analyseSeen.prompt, /release timing/, 'the session focus goes in');
 });
 
-// KNOWN BUG, recorded rather than fixed (web/index.html stays identical to the
-// artifact until that's decided): analysing in the app after a pasted chat
-// reply keeps analysedIn: 'chat', so the card credits the new reading to a chat.
-test('re-analysing in the app clears the "read in a chat" label', { todo: 'analysedIn is not reset by in-app analysis' }, async () => {
+// Regression: in-app analysis used to keep a stale analysedIn: 'chat'.
+test('re-analysing in the app clears the "read in a chat" label', async () => {
   const got = (await app.api.get('sessions', 's_sw')).swings[0];
   assert.equal(got.analysis.one_thing, 'Rotate through', 'this is the in-app reading');
   assert.equal(got.analysedIn, undefined);

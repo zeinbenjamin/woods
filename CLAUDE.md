@@ -33,19 +33,22 @@ v1.0.0. Built as a Claude artifact, ported here without rewriting the app.
   `ghcr.io/zeinbenjamin/woods`, container named `carry`.
 - Real data in it: 10 Sydney courses with full scorecards, ~6 rounds,
   3 range sessions (~93 tracked shots), a couple of swings.
-- The artifact version still exists at
-  `https://claude.ai/artifact/2GV6LXfWGTtXzPFjDs2vZM` and remains the
-  source of the app code. If you change `web/index.html` here, that fork
-  is real — decide deliberately which is canonical.
+- **This repo is the source of truth for all app code.** Merges to
+  `main` publish the image; the NAS redeploys from it. The original
+  artifact (`https://claude.ai/artifact/2GV6LXfWGTtXzPFjDs2vZM`) is a
+  frozen historical copy: changes are not ported back to it, and data
+  entered there does not reach the NAS.
 
 ## Architecture, and why
 
 The app was written against the Claude artifact runtime, which provides
 capabilities via `claude.use('db' | 'assets' | 'sample' | 'downloads')`.
 Rather than rewrite ~2,000 lines of app code, `web/platform.js` implements that exact
-surface against this server. **The app code is unchanged from the
-artifact.** Keep it that way unless there's a strong reason not to: it
-means fixes port in either direction by copying one file.
+surface against this server. The app code started as an exact copy of
+the artifact; it now evolves here. The shim still makes the capability
+surface the seam between app and server — keep new server features
+behind it (or behind plain `fetch` to `/api`) rather than scattering
+server knowledge through the app.
 
 ```
 server/index.js     routes, token auth, static hosting
@@ -184,14 +187,9 @@ the frame is painted.
 Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations, all caught).
 
-Two tests are marked `todo`: known app bugs, recorded rather than fixed
-because the fix is in `web/index.html` (see "Current state"). They report
-but don't fail the run. Remove the flag when fixing one.
-
-- New round: picking a different course redraws the scorecard but not the
-  tee control, so the round saves the first course's tee.
-- Re-analysing a swing in the app after a pasted chat reply keeps
-  `analysedIn: 'chat'`, so the card credits the new reading to a chat.
+Two bugs found while rebuilding the suites are fixed and pinned by
+regression tests: the New round tee control not following a course
+change, and in-app re-analysis keeping a stale `analysedIn: 'chat'`.
 
 Convention used throughout: **verify rather than assert**. Scorecards
 were checked against published totals before being stored; the zip writer

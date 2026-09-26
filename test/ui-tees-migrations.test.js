@@ -115,13 +115,8 @@ test('the round form offers the course\'s tee sets and saves the one chosen', as
   assert.equal(app.E(`holesOf(session('r_blue'))[0].metres`), 300);
 });
 
-// KNOWN BUG, recorded rather than fixed (the fix is in web/index.html, which
-// is kept identical to the artifact until that's decided). Picking a
-// different course in the New round form redraws the scorecard but not the
-// tee control, so the round saves the tee of whichever course the form
-// opened on, and every distance on it resolves through the wrong tee.
-// Marked todo so it reports without failing the run; drop the flag once fixed.
-test('picking a different course in New round also switches the tee', { todo: 'tee control is not redrawn on course change' }, async () => {
+// Regression: the tee control used to stay on the first course's tee.
+test('picking a different course in New round also switches the tee', async () => {
   await app.api.put('courses', 'c_a', { id: 'c_a', v: 2, name: 'Aardvark GC', tee: 'blue', holes: [{ n: 1, par: 4, metres: 330, tees: { blue: 330 } }] });
   await app.waitFor(() => app.E(`S.courses[0] && S.courses[0].id === 'c_a'`), { what: 'poll' });
   app.act('newRound');

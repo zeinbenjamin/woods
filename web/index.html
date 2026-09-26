@@ -702,11 +702,17 @@ function roundForm(r = {}) {
   const holes = r.holes && r.holes.length ? fullCard(r.holes) : fullCard(c && c.holes ? c.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []);
   return `<h2>${r.id ? 'Edit round' : 'New round'}</h2>
   ${S.courses.length ? coursePicker(r.courseId || (c && c.id)) : `<div class="notice">Add a course first, then log rounds against it.</div>`}
-  <div class="grid2">${field('Date', 'date', 'date', r.date || today())}${(() => { const names = teeNames(c); return names.length > 1 ? selectF('Tees', 'tee', names.map(t => [t, t]), r.tee || primaryTee(c)) : field('Tees', 'tee', 'text', r.tee || (c ? primaryTee(c) : ''), 'placeholder="e.g. white"'); })()}</div>
+  <div class="grid2">${field('Date', 'date', 'date', r.date || today())}${teeControl(c, r.tee)}</div>
   ${field('Notes', 'notes', 'text', r.notes)}
   <h3>Scorecard</h3><p class="small muted">Par and metres prefill from the course; change them here only if you played different tees.</p>
   <div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
   <div id="holesWrap">${holesEditor(holes, true)}</div>`;
+}
+// The tee picker for a round on course c: a select when the card has more
+// than one tee set, otherwise free text. Redrawn when the course changes.
+function teeControl(c, tee) {
+  const names = teeNames(c);
+  return names.length > 1 ? selectF('Tees', 'tee', names.map(t => [t, t]), tee || primaryTee(c)) : field('Tees', 'tee', 'text', tee || (c ? primaryTee(c) : ''), 'placeholder="e.g. white"');
 }
 function clubForm(c = {}) {
   return `<h2>${c.code ? 'Edit club' : 'Add club'}</h2>
@@ -785,7 +791,7 @@ function wireCoursePicker(root) {
 }
 function wireCoursePick(root) {
   const sel = root.querySelector('[name=courseId]'); if (!sel) return;
-  sel.addEventListener('change', () => { const c = course(sel.value); if (!c || !c.holes) return; const card = fullCard(c.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres }))); root.querySelectorAll('[data-holes]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.holes) === card.length)); $('#holesWrap', root).innerHTML = holesEditor(card, true); wireHoleCount(root, true, card); });
+  sel.addEventListener('change', () => { const c = course(sel.value); if (!c || !c.holes) return; const teeEl = root.querySelector('[name=tee]'); if (teeEl) teeEl.closest('label').outerHTML = teeControl(c); const card = fullCard(c.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres }))); root.querySelectorAll('[data-holes]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.holes) === card.length)); $('#holesWrap', root).innerHTML = holesEditor(card, true); wireHoleCount(root, true, card); });
 }
 async function saveRange(root, s) {
   const doc = { ...s, date: val(root, 'date') || today(), venue: val(root, 'venue'), ballType: val(root, 'ballType'), source: val(root, 'source'), focus: val(root, 'focus'), notes: val(root, 'notes') };
@@ -1788,7 +1794,8 @@ Object.assign(ACTIONS, {
       box.innerHTML = `<div class="notice warn">${esc(msg)} <span class="muted small">(${esc(res.error)})</span>${imageProblem ? `<div class="row-actions"><button data-act="swingPrompt" data-sid="${d.sid}" data-wid="${d.wid}">Copy the prompt</button><button data-act="swingFrames" data-sid="${d.sid}" data-wid="${d.wid}">Save the frames</button></div><div class="small" style="margin-top:6px">Then paste both into a Claude chat — it reads images there, and the prompt already carries your ball data for this club.</div>` : ''}</div>`; return;
     }
     const s = session(d.sid);
-    const swings = swingsOf(s).map(x => x.id === d.wid ? { ...x, analysis: res.data, analysedOn: today() } : x);
+    // Read in the app this time, so drop any earlier "read in a chat" credit.
+    const swings = swingsOf(s).map(x => { if (x.id !== d.wid) return x; const { analysedIn, ...rest } = x; return { ...rest, analysis: res.data, analysedOn: today() }; });
     if (await save('sessions', d.sid, { ...s, swings })) render();
   },
   async deleteSwing(d) {
