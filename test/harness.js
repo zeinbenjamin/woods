@@ -39,7 +39,7 @@ export async function waitFor(cond, { timeout = 4000, step = 20, what = 'conditi
 
 // Start a server with `seed` already in SQLite, then boot the app against it.
 // seed: { clubs: [], courses: [], sessions: [], settings: {} }
-export async function startApp({ seed = {}, pollMs = 150, intercept } = {}) {
+export async function startApp({ seed = {}, pollMs = 150, intercept, query = '' } = {}) {
   const DATA = mkdtempSync(join(tmpdir(), 'carry-ui-'));
   const port = await freePort();
   const base = `http://127.0.0.1:${port}`;
@@ -78,7 +78,7 @@ export async function startApp({ seed = {}, pollMs = 150, intercept } = {}) {
   if (html === served) throw new Error('harness: platform.js script tag not found in the served page');
 
   const dom = new JSDOM(html, {
-    url: base + '/', runScripts: 'dangerously', pretendToBeVisual: true,
+    url: base + '/' + query, runScripts: 'dangerously', pretendToBeVisual: true,
     beforeParse(w) {
       win = w;
       w.CARRY_POLL_MS = pollMs;

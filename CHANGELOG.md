@@ -6,6 +6,15 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.3.1 — 2026-09-26
+- New rounds and sessions started before 10am are dated today, not yesterday.
+- Tapping shots quickly on the hole map no longer loses one.
+- The app stays quick as your rounds and range sessions pile up.
+- Swing videos stream properly, so they can play on a phone.
+- Quick score and the other folded lists stay open while you tap through them.
+- A link with your token in it no longer leaves the token in the address bar.
+- Stored images and videos can't be opened as a web page, and nothing new is published unless the tests pass.
+
 ## 1.3.0 — 2026-09-26
 - What to practise now favours recent evidence: something last seen two months ago counts half as much as something from today.
 - Each practice item says how fresh it is: still happening, worked on at the range since (not yet tested on course), or quiet.

@@ -7,7 +7,14 @@
 (function () {
   const TOKEN_KEY = 'carry.token';
   const token = () => localStorage.getItem(TOKEN_KEY) || new URLSearchParams(location.search).get('token') || '';
-  if (new URLSearchParams(location.search).get('token')) localStorage.setItem(TOKEN_KEY, new URLSearchParams(location.search).get('token'));
+  // A ?token= link is remembered, then taken out of the address bar so it
+  // doesn't linger in history, bookmarks or a shared screenshot.
+  const q = new URLSearchParams(location.search);
+  if (q.get('token')) {
+    localStorage.setItem(TOKEN_KEY, q.get('token'));
+    q.delete('token');
+    try { history.replaceState(history.state, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (e) {}
+  }
 
   async function api(path, opts = {}) {
     const res = await fetch('/api' + path, { ...opts, headers: { ...(opts.headers || {}), ...(token() ? { 'x-carry-token': token() } : {}) } });
@@ -28,8 +35,15 @@
     docs: (cache[name] || []).map(d => ({ id: d.id, exists: true, data: () => d })),
   }));
 
+  // A poll that brings back exactly what we already hold (usually our own
+  // write coming round again) doesn't redraw the app.
+  const same = (a, b) => {
+    const key = docs => JSON.stringify((docs || []).slice().sort((x, y) => String(x.id).localeCompare(String(y.id))));
+    return key(a) === key(b);
+  };
   async function refresh(name) {
-    try { cache[name] = (await api('/' + name)).docs; emit(name); } catch (e) { console.warn('refresh failed', name, e); }
+    try { const docs = (await api('/' + name)).docs; if (same(docs, cache[name])) return; cache[name] = docs; emit(name); }
+    catch (e) { console.warn('refresh failed', name, e); }
   }
 
   let polling = false;

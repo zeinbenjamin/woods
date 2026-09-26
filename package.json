@@ -1,6 +1,6 @@
 {
   "name": "carry",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Golf tracker — rounds, range sessions, swing analysis",
   "type": "module",
   "engines": {

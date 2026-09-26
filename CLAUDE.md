@@ -85,6 +85,9 @@ Where Carry differs from the kit, deliberately:
   word); a heading the app can't parse fails CI.
 
 Automation on top of the kit:
+- **Publishing runs the tests first**, so a merge that broke them never
+  produces an image or a tag. (Requiring the test check before merging is
+  a GitHub branch-protection setting on `main`, outside this repo.)
 - **CI gate** (`scripts/check-version.js`): a PR that changes anything in
   the image (`web/`, `server/`, `scripts/`, `Dockerfile`) fails unless the
   version went up and `CHANGELOG.md` opens with that version's entry.
@@ -218,6 +221,25 @@ Each of these cost real debugging time. Don't reintroduce them.
   the whole of v1.0.0 every removed frame, swing video and hole image
   stayed on disk.
   Asset routes now come first; `api.test.js` checks the file is gone.
+- **Days are local, never UTC.** `today()` builds the date from local
+  fields; `toISOString().slice(0, 10)` dated everything before 10am
+  Sydney as the day before. Use `localDay()` for any calendar date.
+- **Writes to one round go one at a time.** `updateHole` queues per round
+  and applies each change to the latest copy; two quick taps used to start
+  from the same stale round and the second save dropped the first shot.
+- **Derived numbers are memoised per data state** (`memoised()`, keyed on
+  the identity of `S.sessions`, `S.clubs`, `S.courses`, `S.settings`). A
+  season of data used to cost 2.3s a render (8,600 club-stat recomputes).
+  So those arrays must always be *replaced*, never mutated in place, or
+  the cache goes stale.
+- **Stored files stream with byte ranges** (`res.sendFile`), which a
+  phone's video player needs, and only photo/video types are served
+  inline; anything else is an attachment, all with `nosniff` and a
+  sandboxing CSP. An uploaded SVG used to be served as a live page on the
+  app's own origin, where the token lives.
+- **Panels keep their state across redraws** by `id` (`render()` reopens
+  them), and the shim doesn't redraw when a poll only brings back our own
+  write. Give any new `<details>` an `id`.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -278,16 +300,21 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 133 tests, about 12s (30s on one core).
+`npm test` — 144 tests, about 13s (35s on one core).
 
-- `api.test.js` (13) — the server alone: auth, documents, assets, import,
-  `/api/version`, the stamped and revalidated page, and `/api/analyse`
+- `api.test.js` (16) — the server alone: auth, documents, assets (byte
+  ranges, safe serving), import, `/api/version`, the stamped and
+  revalidated page, the empty-token warning, and `/api/analyse`
   against a fake Anthropic API (`ANTHROPIC_BASE_URL`).
-- `versioning.test.js` (6) — the changelog format and its agreement with
-  `package.json` and the lockfile, the PR gate, the release notes.
+- `versioning.test.js` (7) — the changelog format and its agreement with
+  `package.json` and the lockfile, the PR gate, the release notes, and
+  that publishing runs the tests first.
+- `regressions.test.js` (7) — the 1.3.1 review fixes, each reproduced
+  before it was fixed: local dates, quick taps, render cost with a season
+  of data, panels staying open, the token leaving the URL, escaping.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server: writes land in SQLite, uploads become blobs, polling works.
-- `ui-*.test.js` (71) — the app's own UI suites, rebuilt here. The
+- `ui-*.test.js` (~100) — the app's own UI suites, rebuilt here. The
   originals from the artifact sandbox were never recovered, so these are
   new tests covering the same ground, driven through the real forms and
   real taps on the hole map:
