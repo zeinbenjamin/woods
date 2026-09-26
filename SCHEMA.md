@@ -104,6 +104,8 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
       "manualStrokes": 7,                 // typed score, kept if shots are cleared
       "putts": 3,
       "firstPutt": 8,                     // metres — can never be backfilled
+      "firstPuttEstimated": true,         // set when derived from an approach tap on the
+                                          // green; cleared when the distance is typed
       "penalties": 1,                     // unattributed
       "shots": [ /* see below */ ]
     }

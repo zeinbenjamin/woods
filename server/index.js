@@ -35,20 +35,9 @@ const collectionOf = req => {
   return c;
 };
 
-/* ---------- documents ---------- */
-app.get('/api/stamps', (_req, res) => res.json(stamps()));
-app.get('/api/:collection', (req, res) => res.json({ docs: listDocs(collectionOf(req)) }));
-app.get('/api/:collection/:id', (req, res) => {
-  const doc = getDoc(collectionOf(req), req.params.id);
-  return doc ? res.json(doc) : res.status(404).json({ error: 'not found' });
-});
-app.put('/api/:collection/:id', (req, res) => {
-  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'body must be an object' });
-  res.json(putDoc(collectionOf(req), req.params.id, { ...req.body, id: req.params.id }));
-});
-app.delete('/api/:collection/:id', (req, res) => res.json({ deleted: deleteDoc(collectionOf(req), req.params.id) }));
-
-/* ---------- assets ---------- */
+/* ---------- assets ----------
+   Registered before the document routes: DELETE /api/:collection/:id would
+   otherwise match /api/assets/:id first and reject it as an unknown collection. */
 const EXT = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
   'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov', 'application/pdf': 'pdf' };
 
@@ -75,6 +64,19 @@ app.get('/_blob/:id', (req, res) => {
   if (!existsSync(p)) return res.status(404).end();
   res.type(a.content_type).set('Cache-Control', 'public, max-age=31536000, immutable').send(readFileSync(p));
 });
+
+/* ---------- documents ---------- */
+app.get('/api/stamps', (_req, res) => res.json(stamps()));
+app.get('/api/:collection', (req, res) => res.json({ docs: listDocs(collectionOf(req)) }));
+app.get('/api/:collection/:id', (req, res) => {
+  const doc = getDoc(collectionOf(req), req.params.id);
+  return doc ? res.json(doc) : res.status(404).json({ error: 'not found' });
+});
+app.put('/api/:collection/:id', (req, res) => {
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'body must be an object' });
+  res.json(putDoc(collectionOf(req), req.params.id, { ...req.body, id: req.params.id }));
+});
+app.delete('/api/:collection/:id', (req, res) => res.json({ deleted: deleteDoc(collectionOf(req), req.params.id) }));
 
 /* ---------- swing analysis ---------- */
 app.post('/api/analyse', async (req, res) => {
