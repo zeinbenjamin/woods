@@ -1,6 +1,6 @@
 {
   "name": "carry",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Golf tracker — rounds, range sessions, swing analysis",
   "type": "module",
   "engines": {
@@ -9,8 +9,7 @@
   "scripts": {
     "start": "node server/index.js",
     "import": "node scripts/import-export.js",
-    "test": "node --test test/*.test.js",
-    "release": "node scripts/release.js"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",

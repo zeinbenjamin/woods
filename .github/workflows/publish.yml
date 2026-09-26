@@ -33,7 +33,6 @@ jobs:
           else
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "built=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -59,9 +58,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # The commit, shown in the app. The metadata labels also stamp it as
+          # org.opencontainers.image.revision, readable with docker inspect.
           build-args: |
-            CARRY_COMMIT=${{ github.sha }}
-            CARRY_BUILT=${{ steps.v.outputs.built }}
+            APP_COMMIT=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

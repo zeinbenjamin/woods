@@ -9,7 +9,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listDocs, getDoc, putDoc, deleteDoc, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR } from './db.js';
 import { analyse, parseJson } from './anthropic.js';
-import { VERSION } from './version.js';
+import { VERSION, COMMIT, CHANGELOG } from './version.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -20,6 +20,11 @@ const MAX_ASSET = Number(process.env.MAX_ASSET_MB || 200) * 1024 * 1024;
 
 app.use(express.json({ limit: '64mb' }));
 app.use(express.raw({ type: ['image/*', 'video/*', 'application/octet-stream'], limit: `${Math.ceil(MAX_ASSET / 1048576)}mb` }));
+
+// Which build this is, and what changed in each version. Open like
+// /healthz — it says nothing about the data — and registered before the
+// auth check so the app can compare builds even before it has a token.
+app.get('/api/version', (_req, res) => res.set('Cache-Control', 'no-store').json({ version: VERSION, commit: COMMIT, changelog: CHANGELOG }));
 
 // Single-user auth. Set API_TOKEN and the browser sends it back on every
 // call; leave it empty only on a LAN you trust.
@@ -96,14 +101,28 @@ app.post('/api/analyse', async (req, res) => {
 });
 
 /* ---------- static app ---------- */
-app.get('/healthz', (_req, res) => res.json({ ok: true, ...VERSION, collections: stamps() }));
-// Unauthenticated like /healthz: the app shows it in the header, and it
-// says nothing about the data.
-app.get('/version', (_req, res) => res.set('Cache-Control', 'no-store').json(VERSION));
-app.use(express.static(join(here, '..', 'web'), { extensions: ['html'] }));
+app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION, commit: COMMIT, collections: stamps() }));
+
+// The page carries its own version in <meta> tags, stamped here as it's
+// served, so a phone running a cached copy can tell it's behind the server.
+// Served only through sendIndex — never as a plain static file, or the
+// placeholders reach the device unfilled.
+const INDEX_HTML = readFileSync(join(here, '..', 'web', 'index.html'), 'utf8')
+  .replace('content="__APP_VERSION__"', `content="${VERSION}"`)
+  .replace('content="__APP_COMMIT__"', `content="${COMMIT}"`);
+// The app shell (page, shim, manifest) is revalidated on every load, or a
+// phone keeps the old app after a redeploy. no-cache still allows a cheap
+// 304 via the ETag. The shim must never lag the page it was written for.
+const revalidate = res => res.set('Cache-Control', 'no-cache');
+const sendIndex = (_req, res) => { revalidate(res); res.type('html').send(INDEX_HTML); };
+app.get(['/', '/index.html'], sendIndex);           // before express.static, or the unstamped file wins
+app.use(express.static(join(here, '..', 'web'), {
+  index: false, maxAge: '1h',
+  setHeaders: (res, file) => { if (/\.(html|js|webmanifest)$/.test(file)) revalidate(res); },
+}));
 
 app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'server error' });
 });
 
-app.listen(PORT, () => console.log(`Carry ${VERSION.version}${VERSION.commit ? ` (${VERSION.commit})` : ''} listening on http://0.0.0.0:${PORT}`));
+app.listen(PORT, () => console.log(`Carry ${VERSION} (${COMMIT}) listening on http://0.0.0.0:${PORT}`));

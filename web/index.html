@@ -35,7 +35,9 @@ body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(
 
 .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); display: flex; align-items: baseline; justify-content: space-between; padding: 12px 16px 10px; }
 .brand { font-family: var(--cond); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
-.brand small { font: 500 11px var(--body); color: var(--ink-3); margin-left: 4px; letter-spacing: 0; }
+button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: pointer; border-radius: 4px; }
+.brand small { font: 500 11px var(--body); color: var(--ink-3); margin-left: 5px; letter-spacing: 0; }
+.vlist { list-style: none; margin: 8px 0 0; padding: 0; } .vlist li { border-top: 1px solid var(--rule); padding: 10px 0; } .vlist ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; } .vlist ul li { border: 0; padding: 2px 0; }
 .status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + 24px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -193,10 +195,13 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1b3a2b">
+  <!-- Filled in by the server when it serves this file, so the app knows which build it is. -->
+  <meta name="app-version" content="__APP_VERSION__">
+  <meta name="app-commit" content="__APP_COMMIT__">
 </head>
 <body>
 <header class="top">
-  <div class="brand">Carry <small id="sub"></small></div>
+  <button class="brand" id="brand" aria-label="Version and update history">Carry<small id="sub"></small></button>
   <div class="status" id="status">Connecting</div>
 </header>
 <main id="view" aria-live="polite"></main>
@@ -256,7 +261,7 @@ function confirmAsk(message, okLabel = 'Delete') {
     dlg.showModal();
   });
 }
-let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
+let toastT; function toast(msg, ms = 1800) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
 function setStatus(txt, err) { const s = $('#status'); s.textContent = txt; s.classList.toggle('err', !!err); }
 
 /* ---------- db ---------- */
@@ -265,7 +270,7 @@ async function connect() {
   const db = await claude.use('db');
   if (!db) { S.dbState = 'none'; setStatus('Storage unavailable in this view', true); render(); return; }
   S.db = db; S.dbState = 'ready'; setStatus('');
-  loadAbout();
+  checkForUpdate();
   try { S.assets = await claude.use('assets'); } catch (e) { S.assets = null; }
   // Swing analysis needs a view that can send images to Claude.
   try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
@@ -291,15 +296,52 @@ const activeClubs = () => S.clubs.filter(c => !c.retired);
 const session = id => S.sessions.find(s => s.id === id);
 const course = id => S.courses.find(c => c.id === id);
 
-/* ---------- which version is running ---------- */
-// Served by the Carry server at /version. Nothing to show when it isn't
-// there (an old artifact copy, offline): the header just says "Carry".
-async function loadAbout() {
-  try { const r = await fetch('/version'); if (!r.ok) return; S.about = await r.json(); } catch (e) { return; }
-  const sub = $('#sub'); if (sub && S.about && S.about.version) { sub.textContent = 'v' + S.about.version; sub.title = aboutLine(); }
-  render();
+/* ---------- which version is running ----------
+   The page's own version and commit are stamped into its <meta> tags by the
+   server as it serves the page, so a phone running a cached copy reports
+   the build it actually has. /api/version says what the server has; if the
+   two differ, this device is behind. */
+// "__…" means the file wasn't served through the server (opened raw): call it "dev".
+const metaOf = n => { const v = (document.querySelector(`meta[name="${n}"]`) || {}).content || ''; return !v || v.startsWith('__') ? 'dev' : v; };
+const APP = { version: metaOf('app-version'), commit: metaOf('app-commit') };
+$('#sub').textContent = 'v' + APP.version;
+// Behind if the version differs, or the same version was rebuilt from a
+// different commit (a release that forgot to bump). "dev" builds are never
+// compared by commit.
+const isStale = info => !!info && (info.version !== APP.version ||
+  (info.commit !== 'dev' && APP.commit !== 'dev' && info.commit !== APP.commit));
+async function fetchVersion() {
+  const r = await fetch('/api/version', AbortSignal.timeout ? { signal: AbortSignal.timeout(10000) } : {});
+  if (!r.ok) throw new Error('version ' + r.status);
+  return r.json();
 }
-const aboutLine = () => { const a = S.about; if (!a || !a.version) return ''; return `Carry ${a.version}${a.commit ? ` · commit ${a.commit}` : ''}${a.built ? ` · built ${dateLabel(a.built.slice(0, 10))}` : ''}`; };
+// On startup, and whenever the app comes back to the foreground (a home-screen
+// app can stay open for days), nudge if this device is behind. At most once
+// every ten minutes.
+let lastUpdateCheck = 0;
+async function checkForUpdate() {
+  if (Date.now() - lastUpdateCheck < 600000) return;
+  lastUpdateCheck = Date.now();
+  try { const info = await fetchVersion(); if (isStale(info)) toast(`Version ${info.version} is ready. Close and reopen the app to update.`, 8000); }
+  catch (e) { /* offline: nothing to compare against */ }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+// Tapping the title: this build, whether the server has a newer one, and the history.
+async function openVersion() {
+  openSheet(`<h2>Carry ${esc(APP.version)}</h2><p class="small muted">Build ${esc(APP.commit)}</p>
+    <p id="verStatus" class="small">Checking the server…</p><ol class="vlist" id="verList"></ol>`);
+  let info = null;
+  try { info = await fetchVersion(); } catch (e) {}
+  const status = $('#verStatus', sheetInner), list = $('#verList', sheetInner); if (!status) return;
+  if (!info) { status.textContent = "Couldn't reach the server, so I can't check for a newer version."; return; }
+  lastUpdateCheck = Date.now();
+  status.innerHTML = isStale(info)
+    ? `<b>The server has ${esc(info.version)} (build ${esc(info.commit)}), but this device is still running ${esc(APP.version)}.</b> Close the app fully and reopen it to update.`
+    : 'Up to date with the server.';
+  status.classList.toggle('notice', isStale(info)); status.classList.toggle('warn', isStale(info));
+  list.innerHTML = (info.changelog || []).map(r => `<li><div class="spread"><b>${esc(r.version)}</b><span class="small muted">${r.version === APP.version ? '<span class="tag green">this device</span> ' : ''}${esc(dateLabel(r.date))}</span></div><ul>${(r.notes || []).map(n => `<li>${esc(n)}</li>`).join('')}</ul></li>`).join('');
+}
+$('#brand').addEventListener('click', openVersion);
 
 /* ---------- analytics ---------- */
 // Full-swing shots for one club across every range session.
@@ -599,17 +641,18 @@ function vBag() {
     <p class="small muted">Everything lives in this page's storage. Export before anything you can't undo, and to move it somewhere else.</p>
     <div class="row-actions"><button class="primary" data-act="exportData">Export everything</button><button data-act="importData">Import a backup</button></div>
     <p class="small muted" style="margin-top:8px">${S.clubs.length} clubs, ${S.courses.length} courses, ${S.sessions.length} sessions, ${allSwings().length} swings.</p>
-    ${S.about ? `<p class="small muted" id="about">${esc(aboutLine())}</p>` : ''}</section>`;
+    <p class="small muted" id="about">Carry ${esc(APP.version)}, build ${esc(APP.commit)}. Tap the title for what's changed.</p></section>`;
   return h;
 }
 
 /* ---------- sheet ---------- */
 const sheet = $('#sheet'), sheetInner = $('#sheetInner');
+// Without onSave, the sheet is read-only: one Close button, nothing to save.
 function openSheet(html, onSave) {
-  sheetInner.innerHTML = html + `<div class="sheet-actions"><button data-close>Cancel</button><button class="primary" data-save>Save</button></div>`;
-  sheet.showModal();
+  sheetInner.innerHTML = html + (onSave ? `<div class="sheet-actions"><button data-close>Cancel</button><button class="primary" data-save>Save</button></div>` : `<div class="sheet-actions"><button class="primary" data-close>Close</button></div>`);
+  if (!sheet.open) sheet.showModal();
   $('[data-close]', sheetInner).onclick = () => sheet.close();
-  $('[data-save]', sheetInner).onclick = async () => { const btn = $('[data-save]', sheetInner); btn.disabled = true; const ok = await onSave(sheetInner); btn.disabled = false; if (ok) { sheet.close(); toast('Saved'); } };
+  if (onSave) $('[data-save]', sheetInner).onclick = async () => { const btn = $('[data-save]', sheetInner); btn.disabled = true; const ok = await onSave(sheetInner); btn.disabled = false; if (ok) { sheet.close(); toast('Saved'); } };
 }
 sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); });
 const val = (root, name) => { const el = root.querySelector(`[name="${name}"]`); if (!el) return null; if (el.type === 'checkbox') return el.checked; const v = el.value.trim(); return v === '' ? null : el.type === 'number' ? Number(v) : v; };
@@ -1680,7 +1723,7 @@ async function swingHandoff(sessionId, swingId, mode) {
   if (mode === 'prompt') {
     const text = swingPrompt(sw, s);
     try { await navigator.clipboard.writeText(text); return 'copied'; }
-    catch (e) { openSheet(`<h2>Analysis prompt</h2><p class="small muted">Copy this, then drop the frames into a Claude chat with it.</p><textarea readonly style="min-height:260px">${esc(text)}</textarea>`, async () => true); return 'shown'; }
+    catch (e) { openSheet(`<h2>Analysis prompt</h2><p class="small muted">Copy this, then drop the frames into a Claude chat with it.</p><textarea readonly style="min-height:260px">${esc(text)}</textarea>`); return 'shown'; }
   }
   const dl = await claude.use('downloads');
   if (!dl) return 'no_downloads';
@@ -1862,7 +1905,7 @@ Object.assign(ACTIONS, {
   },
   playSwing(d) {
     const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw || !sw.video) return;
-    openSheet(`<h2>${esc(VIEWS[sw.view] || 'Swing')}${sw.club ? ' · ' + esc(sw.club) : ''}</h2><div class="bigmap" style="max-width:360px"><video src="/_blob/${sw.video}" controls playsinline loop style="width:100%;border-radius:var(--r)"></video></div>`, async () => true);
+    openSheet(`<h2>${esc(VIEWS[sw.view] || 'Swing')}${sw.club ? ' · ' + esc(sw.club) : ''}</h2><div class="bigmap" style="max-width:360px"><video src="/_blob/${sw.video}" controls playsinline loop style="width:100%;border-radius:var(--r)"></video></div>`);
   },
 });
 
@@ -2180,7 +2223,7 @@ function collectAssetIds() {
 }
 const blobToDataUrl = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(b); });
 async function buildExport({ withImages = true, onProgress } = {}) {
-  const out = { format: 'carry-export', version: EXPORT_VERSION, exportedAt: new Date().toISOString(), appVersion: (S.about && S.about.version) || null,
+  const out = { format: 'carry-export', version: EXPORT_VERSION, exportedAt: new Date().toISOString(), appVersion: APP.version,
     clubs: S.clubs, courses: S.courses, sessions: S.sessions, settings: settings(), assets: {} };
   if (withImages) {
     const ids = collectAssetIds();

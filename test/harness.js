@@ -10,7 +10,7 @@
 //   Blob.arrayBuffer/text    missing from jsdom's Blob
 //   TextEncoder              missing from jsdom's window
 //   canvas getContext        returns null (jsdom has no canvas) without the console noise
-//   fetch                    real network; jsdom Blob bodies sent as bytes
+//   fetch                    real network; jsdom Blob bodies sent as bytes, abort signals dropped
 //
 // Everything else — the app, the shim, the server, SQLite — is the real thing.
 import { spawn } from 'node:child_process';
@@ -71,8 +71,11 @@ export async function startApp({ seed = {}, pollMs = 150, intercept } = {}) {
   const objectURLs = new Map();
   let win;
   const shim = readFileSync('web/platform.js', 'utf8');
-  const html = readFileSync('web/index.html', 'utf8')
-    .replace('<script src="platform.js"></script>', `<script>${shim}</script>`);
+  // The page as the server serves it (version stamped into its meta tags),
+  // with the shim inlined: jsdom's resource loader is slow and unnecessary.
+  const served = await (await fetch(`${base}/`)).text();
+  const html = served.replace('<script src="platform.js"></script>', `<script>${shim}</script>`);
+  if (html === served) throw new Error('harness: platform.js script tag not found in the served page');
 
   const dom = new JSDOM(html, {
     url: base + '/', runScripts: 'dangerously', pretendToBeVisual: true,
@@ -107,7 +110,8 @@ export async function startApp({ seed = {}, pollMs = 150, intercept } = {}) {
         if (intercept) { const r = await intercept(url, o); if (r) return r; }
         let body = o.body;
         if (body instanceof w.Blob) body = Buffer.from(await toAB(body));
-        return fetch(url, { ...o, body });
+        const { signal, ...rest } = o;   // jsdom's AbortSignal isn't one node's fetch accepts
+        return fetch(url, { ...rest, body });
       };
     },
   });

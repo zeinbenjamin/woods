@@ -148,15 +148,20 @@ same server-side key as swing analysis.
 
 ## Versions and updates
 
-The version is in `package.json`, the history in `CHANGELOG.md`, and the
-app shows the running version in its header. To release, run
-`npm run release -- patch|minor|major` on your branch and merge; the
-publish workflow tags `v<version>` and publishes
-`ghcr.io/zeinbenjamin/woods:<version>` alongside `:latest`.
+Tap **Carry** at the top of the app to see the version and build you're
+running and what changed in each version. If the server has a newer
+build than your phone, the app says so: close it fully and reopen.
 
-On TrueNAS, `:latest` follows main; pin `:<version>` instead if you want
-updates only when you choose them. Either way, TrueNAS doesn't pull by
-itself — update the app to redeploy.
+Releasing (details in `CLAUDE.md` → Releases): bump with
+`npm version <x.y.z> --no-git-tag-version`, add a `## x.y.z — YYYY-MM-DD`
+entry with `- ` bullets at the top of `CHANGELOG.md`, and merge. The
+publish workflow tags `v<x.y.z>` and publishes
+`ghcr.io/zeinbenjamin/woods:<x.y.z>` alongside `:latest`.
+
+On TrueNAS, `:latest` follows main; pin `:<x.y.z>` if you want updates
+only when you choose them. `deploy/truenas-compose.yml` sets
+`pull_policy: always` so a redeploy actually fetches the new image;
+TrueNAS still won't redeploy by itself — update the app to do it.
 
 ## Security
 

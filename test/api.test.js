@@ -88,14 +88,36 @@ test('analysis reports a missing key rather than failing silently', async () => 
   assert.equal((await r.json()).error, 'unconfigured');
 });
 
-test('reports its version, unauthenticated, at /version and in /healthz', async () => {
+test('/api/version answers without a token: the package version, the build, and the changelog', async () => {
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
-  const v = await (await fetch(`${base}/version`)).json();       // no token
+  const r = await fetch(`${base}/api/version`);                  // no token
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('cache-control'), 'no-store');
+  const v = await r.json();
   assert.equal(v.version, pkg.version);
-  assert.ok(v.commit === null || /^[0-9a-f]{7}$/.test(v.commit), `commit ${v.commit}`);
+  assert.equal(v.commit, 'dev', 'no APP_COMMIT outside an image build');
+  assert.equal(v.changelog[0].version, pkg.version, 'the top changelog entry is this version');
+  assert.match(v.changelog[0].date, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(v.changelog[0].notes.length > 0);
   const h = await (await fetch(`${base}/healthz`)).json();
-  assert.equal(h.version, pkg.version);
-  assert.equal(h.ok, true);
+  assert.deepEqual([h.ok, h.version, h.commit], [true, pkg.version, 'dev']);
+  assert.equal((await fetch(`${base}/api/courses`)).status, 401, 'the rest of /api still needs the token');
+});
+
+test('the page is served with its version stamped in and is revalidated on every load', async () => {
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  for (const path of ['/', '/index.html']) {
+    const r = await fetch(`${base}${path}`);
+    const html = await r.text();
+    assert.equal(r.headers.get('cache-control'), 'no-cache', `${path} revalidates`);
+    assert.doesNotMatch(html, /__APP_/, `${path}: no placeholders left`);
+    assert.ok(html.includes(`<meta name="app-version" content="${pkg.version}">`));
+    assert.ok(html.includes('<meta name="app-commit" content="dev">'));
+  }
+  assert.equal((await fetch(`${base}/index`)).status, 404, 'no unstamped copy by another name');
+  assert.equal((await fetch(`${base}/platform.js`)).headers.get('cache-control'), 'no-cache', 'the shim never lags the page');
+  assert.equal((await fetch(`${base}/manifest.webmanifest`)).headers.get('cache-control'), 'no-cache');
+  assert.match((await fetch(`${base}/icon.svg`)).headers.get('cache-control'), /max-age=3600/);
 });
 
 test('analysis sends images then prompt upstream, and caps the output length it asks for', async () => {
@@ -114,10 +136,12 @@ test('analysis sends images then prompt upstream, and caps the output length it 
   const dir = mkdtempSync(join(tmpdir(), 'carry-up-'));
   const port = PORT + 50, url = `http://127.0.0.1:${port}`;
   const p = spawn('node', ['server/index.js'], { env: { ...process.env, DATA_DIR: dir, PORT: String(port), API_TOKEN: '',
-    ANTHROPIC_API_KEY: 'sk-test', ANTHROPIC_BASE_URL: `http://127.0.0.1:${fake.address().port}`, CARRY_MODEL: 'test-model' }, stdio: 'ignore' });
+    APP_COMMIT: '0123456789abcdef', ANTHROPIC_API_KEY: 'sk-test', ANTHROPIC_BASE_URL: `http://127.0.0.1:${fake.address().port}`, CARRY_MODEL: 'test-model' }, stdio: 'ignore' });
   try {
     for (let i = 0; i < 50; i++) { try { if ((await fetch(`${url}/healthz`)).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
     const post = body => fetch(`${url}/api/analyse`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+    assert.equal((await (await fetch(`${url}/api/version`)).json()).commit, '0123456', 'APP_COMMIT, shortened');
+    assert.ok((await (await fetch(`${url}/`)).text()).includes('<meta name="app-commit" content="0123456">'));
     const out = await post({ prompt: 'read this', images: [{ mediaType: 'image/png', data: 'AAAA' }] });
     assert.deepEqual(out.json, { ok: true }, 'fenced JSON reply parsed');
     await post({ prompt: 'x', maxTokens: 10 ** 9 });

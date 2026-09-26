@@ -1,19 +1,23 @@
-// CI gate for pull requests: if the PR changes anything that ships in the
-// image, it must raise the version and give that version a CHANGELOG entry.
+// CI gate for pull requests. Every change that ships to the app gets a new
+// version: if the PR changes anything in the image, the version must go up
+// and CHANGELOG.md must open with that version's entry.
 //   node scripts/check-version.js origin/main
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { compareVersions, sections } from './changelog.js';
+import { compareVersions, parseChangelog, malformedHeadings } from '../server/changelog.js';
 
 export const SHIPS = /^(web|server|scripts)\/|^Dockerfile$/;
 
 export function check({ changed, baseVersion, headVersion, changelog }) {
+  const bad = malformedHeadings(changelog);
+  if (bad.length) return { ok: false, why: `CHANGELOG.md heading(s) the app can't parse: ${bad.join(' | ')} — use "## x.y.z — YYYY-MM-DD"` };
   const shipped = changed.filter(f => SHIPS.test(f));
   if (!shipped.length) return { ok: true, why: 'nothing that ships changed' };
   if (compareVersions(headVersion, baseVersion) <= 0)
-    return { ok: false, why: `${shipped.length} shipped file(s) changed (${shipped.slice(0, 3).join(', ')}${shipped.length > 3 ? ', …' : ''}) but the version is still ${headVersion}. Run: npm run release -- patch|minor|major` };
-  if (!sections(changelog).get(headVersion))
-    return { ok: false, why: `version is ${headVersion} but CHANGELOG.md has no section for it` };
+    return { ok: false, why: `${shipped.length} shipped file(s) changed (${shipped.slice(0, 3).join(', ')}${shipped.length > 3 ? ', …' : ''}) but the version is still ${headVersion}. Bump it: npm version <x.y.z> --no-git-tag-version` };
+  const top = parseChangelog(changelog)[0];
+  if (!top || top.version !== headVersion) return { ok: false, why: `CHANGELOG.md must open with "## ${headVersion} — <date>" (it opens with ${top ? top.version : 'nothing'})` };
+  if (!top.notes.length) return { ok: false, why: `CHANGELOG.md entry for ${headVersion} has no "- " notes` };
   return { ok: true, why: `${baseVersion} → ${headVersion}` };
 }
 
