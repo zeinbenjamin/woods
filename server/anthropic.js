@@ -1,6 +1,7 @@
 // Swing analysis. The API key lives here and never reaches the browser:
 // the page posts frames to /api/analyse and this makes the call.
-const API = 'https://api.anthropic.com/v1/messages';
+// ANTHROPIC_BASE_URL is the standard override; the tests point it at a fake.
+const API = (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/$/, '') + '/v1/messages';
 const MODEL = process.env.CARRY_MODEL || 'claude-sonnet-4-6';
 
 export async function analyse({ prompt, images = [], maxTokens = 2000 }) {

@@ -148,7 +148,13 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
       "summary": { "n": 20, "avgCarry": 46, "avgTotal": 51,
                    "fromPinCarry": 11.5, "fromPinTotal": 9.6, "hitsC": 4 },
       "shots": [ { "carry": 147.5, "total": 178.2, "speed": 82.2,
-                   "hitC": false, "hitT": true } ]
+                   "hitC": false, "hitT": true } ],
+      "fromImages": {                // only when the shots were read from screenshots
+        "assets": ["<asset id>"],    // the screenshots themselves, kept as evidence
+        "readOn": "2026-09-26",
+        "units": "m|yd|unknown",     // what the screen said
+        "converted": false           // true when yards were converted to metres
+      }
     }
   ]
 }
@@ -216,6 +222,6 @@ nothing below should ever be written to a document:
 ## Assets
 
 Images live outside these documents and are referenced by id
-(`/_blob/<id>`): hole artwork, swing frames, swing video. An export embeds
+(`/_blob/<id>`): hole artwork, swing frames, swing video, range screenshots. An export embeds
 them as data URLs; an import re-uploads and rewrites every reference. A
 document that references a missing asset renders as a gap, never as an error.

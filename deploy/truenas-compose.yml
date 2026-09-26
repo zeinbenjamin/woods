@@ -11,11 +11,13 @@
 #   2. Values are literal. There's no .env file in this context, so
 #      variable placeholders would silently resolve to empty strings.
 #
-# Replace: <you>, the token, the API key, and the dataset path.
+# Replace: the token, the API key, and the dataset path.
 
 services:
   carry:
-    image: ghcr.io/<you>/carry:latest
+    # :latest follows main. To update only when you choose, pin a release
+    # instead, e.g. ghcr.io/zeinbenjamin/woods:1.1.0 (see CHANGELOG.md).
+    image: ghcr.io/zeinbenjamin/woods:latest
     container_name: carry
     restart: unless-stopped
 

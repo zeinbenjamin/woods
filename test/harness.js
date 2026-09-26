@@ -9,6 +9,7 @@
 //   <a download>.click()     recorded instead of navigating
 //   Blob.arrayBuffer/text    missing from jsdom's Blob
 //   TextEncoder              missing from jsdom's window
+//   canvas getContext        returns null (jsdom has no canvas) without the console noise
 //   fetch                    real network; jsdom Blob bodies sent as bytes
 //
 // Everything else — the app, the shim, the server, SQLite — is the real thing.
@@ -82,6 +83,7 @@ export async function startApp({ seed = {}, pollMs = 150, intercept } = {}) {
       w.HTMLElement.prototype.close = function () { const was = this.open; this.open = false; if (was && this.onclose) this.onclose(); };
       w.scrollTo = () => {};
       w.TextEncoder = TextEncoder;   // every browser has it; jsdom doesn't
+      w.HTMLCanvasElement.prototype.getContext = () => null;   // no canvas in jsdom: say so quietly
       // A tap's client coordinates are its SVG coordinates.
       w.SVGElement.prototype.createSVGPoint = function () { return { x: 0, y: 0, matrixTransform() { return { x: this.x, y: this.y }; } }; };
       w.SVGElement.prototype.getScreenCTM = function () { return { inverse() { return {}; } }; };
@@ -121,7 +123,7 @@ export async function startApp({ seed = {}, pollMs = 150, intercept } = {}) {
   const $$ = (sel, el = doc) => [...el.querySelectorAll(sel)];
   const E = expr => win.eval(expr);
   const app = {
-    base, win, doc, api, downloads, $, $$, E,
+    base, win, doc, api, downloads, $, $$, E, dataDir: DATA,
     // Plain JSON copy of a value computed inside the page's realm.
     J: expr => JSON.parse(win.eval(`JSON.stringify(${expr})`)),
     text: sel => ($(sel) || {}).textContent || '',

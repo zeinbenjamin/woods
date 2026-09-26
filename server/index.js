@@ -9,6 +9,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listDocs, getDoc, putDoc, deleteDoc, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR } from './db.js';
 import { analyse, parseJson } from './anthropic.js';
+import { VERSION } from './version.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -80,10 +81,13 @@ app.delete('/api/:collection/:id', (req, res) => res.json({ deleted: deleteDoc(c
 
 /* ---------- swing analysis ---------- */
 app.post('/api/analyse', async (req, res) => {
-  const { prompt, images = [], json = true } = req.body || {};
+  const { prompt, images = [], json = true, maxTokens } = req.body || {};
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
+  // Long answers (a 40-shot list as JSON) need more than the default; capped
+  // so a request can't ask for an unbounded bill.
+  const cap = Math.min(16000, Math.max(256, Number(maxTokens) || 2000));
   try {
-    const { text, usage } = await analyse({ prompt, images });
+    const { text, usage } = await analyse({ prompt, images, maxTokens: cap });
     res.json({ text, json: json ? parseJson(text) : null, usage });
   } catch (e) {
     const status = e.code === 'unconfigured' ? 503 : e.code === 'rate_limited' ? 429 : e.code === 'bad_key' ? 401 : 502;
@@ -92,11 +96,14 @@ app.post('/api/analyse', async (req, res) => {
 });
 
 /* ---------- static app ---------- */
-app.get('/healthz', (_req, res) => res.json({ ok: true, collections: stamps() }));
+app.get('/healthz', (_req, res) => res.json({ ok: true, ...VERSION, collections: stamps() }));
+// Unauthenticated like /healthz: the app shows it in the header, and it
+// says nothing about the data.
+app.get('/version', (_req, res) => res.set('Cache-Control', 'no-store').json(VERSION));
 app.use(express.static(join(here, '..', 'web'), { extensions: ['html'] }));
 
 app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'server error' });
 });
 
-app.listen(PORT, () => console.log(`Carry listening on http://0.0.0.0:${PORT}`));
+app.listen(PORT, () => console.log(`Carry ${VERSION.version}${VERSION.commit ? ` (${VERSION.commit})` : ''} listening on http://0.0.0.0:${PORT}`));
