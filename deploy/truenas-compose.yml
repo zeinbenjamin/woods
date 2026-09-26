@@ -1,0 +1,44 @@
+# Paste this into TrueNAS SCALE: Apps → Discover → Custom App →
+# "Install via YAML".
+#
+# Two differences from the docker-compose.yml at the repo root:
+#
+#   1. It pulls an image instead of building one. The Custom App form has
+#      no build context, so `build: .` fails there — that failure is what
+#      produces "Failed 'down' action for 'carry' app", because TrueNAS
+#      reports the cleanup error rather than the real one.
+#
+#   2. Values are literal. There's no .env file in this context, so
+#      variable placeholders would silently resolve to empty strings.
+#
+# Replace: <you>, the token, the API key, and the dataset path.
+
+services:
+  carry:
+    image: ghcr.io/<you>/carry:latest
+    container_name: carry
+    restart: unless-stopped
+
+    # The apps user on SCALE. The dataset below must be owned by it:
+    #   chown -R 568:568 /mnt/tank/apps/carry
+    user: "568:568"
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      ANTHROPIC_API_KEY: "sk-ant-REPLACE_ME"
+      API_TOKEN: "REPLACE_WITH_openssl_rand_hex_24"
+      CARRY_MODEL: "claude-sonnet-4-6"
+      MAX_ASSET_MB: "200"
+      TZ: "Australia/Sydney"
+      HOME: "/tmp"
+
+    volumes:
+      - /mnt/tank/apps/carry:/data
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s

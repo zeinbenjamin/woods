@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --paper: #F7F8F5; --paper-2: #ECEFE9; --ink: #1B2A20; --ink-2: #4A5A4F; --ink-3: #7E8B82;
+  --rule: #D3DAD1; --green: #2E6B3F; --green-2: #1F4F2E; --green-soft: #D6E6DA; --fw: #4E9A62; --rough: #B9D3BF;
+  --flag: #C8432A; --flag-soft: #F7DED8; --sand: #E3D6A9; --sand-2: #CDB36A; --water: #8FBEDD; --focus: #2E6B3F;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --r: 8px; --nav-h: 56px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #10170F; --paper-2: #182119; --ink: #E6ECE5; --ink-2: #AAB6AC; --ink-3: #77857A; --rule: #29352C;
+  --green: #6DB37F; --green-2: #9BD3A8; --green-soft: #1E3A27; --fw: #3E7A4E; --rough: #24402C;
+  --flag: #E5674C; --flag-soft: #46231C; --sand: #7A6B3A; --sand-2: #A88F4A; --water: #3E6E8C; --focus: #6DB37F; } }
+:root[data-theme="dark"] {
+  --paper: #10170F; --paper-2: #182119; --ink: #E6ECE5; --ink-2: #AAB6AC; --ink-3: #77857A; --rule: #29352C;
+  --green: #6DB37F; --green-2: #9BD3A8; --green-soft: #1E3A27; --fw: #3E7A4E; --rough: #24402C;
+  --flag: #E5674C; --flag-soft: #46231C; --sand: #7A6B3A; --sand-2: #A88F4A; --water: #3E6E8C; --focus: #6DB37F; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+html, body { height: 100%; }
+*, *::before, *::after { box-sizing: inherit; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); display: flex; align-items: baseline; justify-content: space-between; padding: 12px 16px 10px; }
+.brand { font-family: var(--cond); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+.status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
+main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + 24px); }
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: env(safe-area-inset-bottom, 0px); }
+nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
+nav.tabs button { width: 100%; height: 100%; border: 0; background: none; color: var(--ink-3); font: 500 13px var(--body); cursor: pointer; border-top: 2px solid transparent; margin-top: -1px; }
+nav.tabs button[aria-current="page"] { color: var(--ink); border-top-color: var(--green); }
+nav.tabs button:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; }
+
+h1 { font-family: var(--cond); font-weight: 700; font-size: 26px; line-height: 1.15; margin: 4px 0 12px; letter-spacing: -0.01em; }
+h2 { font-family: var(--cond); font-weight: 600; font-size: 18px; line-height: 1.2; margin: 24px 0 8px; } h2:first-child { margin-top: 0; }
+h3 { font: 600 15px var(--body); margin: 16px 0 8px; }
+p { margin: 0 0 10px; } .muted { color: var(--ink-3); } .small { font-size: 13px; } .lead { color: var(--ink-2); max-width: 60ch; } a { color: var(--green); }
+
+button, .btn { font: 500 14px var(--body); color: var(--ink); background: var(--paper-2); border: 1px solid var(--rule); border-radius: var(--r); padding: 8px 12px; cursor: pointer; }
+button.primary { background: var(--green); border-color: var(--green); color: #fff; }
+:root[data-theme="dark"] button.primary { color: #0F1A12; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.primary { color: #0F1A12; } }
+button.quiet { background: none; border-color: transparent; color: var(--green); padding: 6px 8px; } button.danger { color: var(--flag); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; } button:disabled { opacity: .5; cursor: default; }
+.row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 0; } .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+label { display: block; font-size: 13px; color: var(--ink-2); margin: 12px 0 4px; }
+input[type=text], input[type=number], input[type=date], input[type=url], select, textarea { width: 100%; font: 400 15px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r); padding: 9px 10px; }
+input[type=number] { -moz-appearance: textfield; } input[type=range] { width: 100%; accent-color: var(--green); }
+textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; } .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
+.check { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 15px; color: var(--ink); } .check input { width: 18px; height: 18px; margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; } .seg button { border: 0; border-radius: 0; background: none; padding: 7px 12px; color: var(--ink-2); } .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.list { border-top: 1px solid var(--rule); }
+.item { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 12px 0; color: inherit; font: inherit; cursor: pointer; }
+.item:hover { background: var(--paper-2); } .item .t { font-weight: 500; } .item .s { color: var(--ink-3); font-size: 13px; margin-top: 2px; } .item .n { font-family: var(--cond); font-weight: 600; font-size: 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text-align: right; padding: 7px 6px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-weight: 500; color: var(--ink-3); font-size: 12px; } th:first-child, td:first-child { text-align: left; padding-left: 0; } th:last-child, td:last-child { padding-right: 0; }
+td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; } tr.flag td { color: var(--flag); }
+.tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--rule); vertical-align: middle; }
+.tag.green { background: var(--green-soft); color: var(--green); border-color: transparent; } .tag.flag { background: var(--flag-soft); color: var(--flag); border-color: transparent; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; } .chip { font: 600 13px var(--cond); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* gapping ladder */
+.ladder { margin: 6px 0 4px; }
+.rung { display: grid; grid-template-columns: 44px 1fr 64px; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.rung .club { font-family: var(--cond); font-weight: 700; font-size: 18px; } .rung .club small { display: block; font: 400 11px var(--body); color: var(--ink-3); }
+.rung .bar { position: relative; height: 28px; background: var(--paper-2); border-radius: 4px; }
+.rung .stock { position: absolute; left: 0; top: 0; bottom: 0; background: var(--green); border-radius: 4px; }
+.rung .pure { position: absolute; top: 0; bottom: 0; background: var(--green); opacity: .35; }
+.rung .assumed { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); } .rung .assumed::after { content: ""; position: absolute; left: -3px; top: -4px; width: 8px; height: 4px; background: var(--ink); }
+.rung .val { text-align: right; } .rung .val b { font-family: var(--cond); font-weight: 700; font-size: 20px; display: block; line-height: 1; } .rung .val small { color: var(--ink-3); font-size: 11px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-3); margin: 8px 0 0; } .legend i { display: inline-block; width: 12px; height: 10px; vertical-align: -1px; margin-right: 5px; border-radius: 2px; }
+.l-stock { background: var(--green); } .l-pure { background: var(--green); opacity: .35; } .l-ass { background: var(--ink); width: 2px !important; height: 12px !important; }
+.l-p { background: var(--green); } .l-r { background: var(--sand-2); } .l-s { background: var(--ink-3); } .l-t { background: var(--flag); }
+
+/* dot strips */
+.strip { display: block; width: 100%; height: 30px; }
+.strip .axis { stroke: var(--rule); stroke-width: 1; } .strip .tgt { stroke: var(--ink); stroke-width: 1.2; stroke-dasharray: 2 2; }
+.dot-pure { fill: var(--green); } .dot-runner { fill: var(--sand-2); } .dot-short { fill: var(--ink-3); } .dot-top { fill: var(--flag); } .dot-unknown, .dot- { fill: var(--ink-3); }
+.block-row { display: grid; grid-template-columns: 58px 1fr 50px; gap: 10px; align-items: center; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 10px 0; color: inherit; font: inherit; cursor: pointer; }
+.block-row:hover { background: var(--paper-2); } .block-row .c { font-family: var(--cond); font-weight: 700; font-size: 18px; line-height: 1.1; } .block-row .c small { display: block; font: 400 11px var(--body); color: var(--ink-3); }
+.block-row .n { font-family: var(--cond); font-weight: 600; font-size: 20px; text-align: right; } .block-row .n small { display: block; font: 400 11px var(--body); color: var(--ink-3); }
+
+/* strike profile bars */
+.profile { display: flex; height: 16px; border-radius: 4px; overflow: hidden; background: var(--paper-2); } .profile span { display: block; height: 100%; }
+.p-pure { background: var(--green); } .p-runner { background: var(--sand-2); } .p-short { background: var(--ink-3); opacity: .55; } .p-top { background: var(--flag); }
+.prow { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; padding: 6px 0; } .prow b { font-family: var(--cond); font-size: 17px; } .prow small { text-align: right; color: var(--ink-3); font-size: 12px; }
+
+/* score strip */
+.scorestrip { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin: 6px 0; }
+.sq { aspect-ratio: 1; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--cond); font-weight: 700; font-size: 15px; line-height: 1; border: 0; padding: 0; cursor: pointer; color: var(--ink); background: var(--paper-2); }
+.sq small { font: 400 9px var(--body); color: var(--ink-3); margin-top: 2px; } .sq.tiny { font-size: 11px; border-radius: 3px; }
+.sq.under { background: var(--green); color: #fff; } .sq.under small { color: rgba(255,255,255,.75); }
+.sq.par { background: var(--green-soft); } .sq.b1 { background: var(--sand); } .sq.b2 { background: var(--flag-soft); } .sq.b3 { background: var(--flag); color: #fff; } .sq.b3 small { color: rgba(255,255,255,.75); }
+.sq.empty { background: var(--paper-2); color: var(--ink-3); border: 1px dashed var(--rule); }
+.scorestrip.mini { grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 6px 0 0; } .scorestrip.mini .sq { border-radius: 2px; font-size: 0; min-height: 8px; aspect-ratio: auto; height: 8px; }
+
+/* hole stencils */
+.stencils { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 8px 0; }
+.tile { background: var(--paper-2); border-radius: 10px; padding: 8px 6px 6px; border: 0; cursor: pointer; text-align: center; color: inherit; font: inherit; }
+.tile:hover { outline: 1px solid var(--rule); } .tile svg { width: 100%; height: auto; display: block; }
+.tile .lab { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); margin-top: 4px; padding: 0 2px; } .tile .lab b { font-family: var(--cond); font-size: 15px; color: var(--ink); }
+.tile.hot .lab b { color: var(--flag); }
+.tile.missing { background: none; border: 1.5px dashed var(--flag); } .tile.missing .miss { aspect-ratio: 60 / 100; display: flex; align-items: center; justify-content: center; font: 300 34px var(--body); color: var(--flag); } .tile.missing .lab b, .tile.missing .lab span { color: var(--flag); }
+.stencil .rough { fill: none; stroke: var(--rough); stroke-linecap: round; stroke-linejoin: round; } .stencil .fw { fill: none; stroke: var(--fw); stroke-linecap: round; stroke-linejoin: round; }
+.stencil .green { fill: var(--green-2); } .stencil .tee { fill: var(--green-2); } .stencil .bunker { fill: var(--sand-2); } .stencil .water { fill: var(--water); }
+.stencil .flag { stroke: var(--paper); stroke-width: .8; } .stencil .flagc { fill: var(--flag); }
+.stencil .trace { fill: none; stroke: var(--ink); stroke-width: .9; stroke-dasharray: 1.5 1.5; opacity: .8; } .stencil .ball { fill: var(--paper); stroke: var(--ink); stroke-width: .9; }
+.stencil .ball.pen { stroke: var(--flag); } .stencil text { font: 700 5px var(--cond); fill: var(--ink); }
+.bigmap { max-width: 270px; margin: 0 auto; background: var(--paper-2); border-radius: 12px; padding: 10px; touch-action: manipulation; } .bigmap svg { width: 100%; height: auto; display: block; cursor: crosshair; }
+.map-hint { text-align: center; font-size: 12px; color: var(--ink-3); margin: 6px 0 10px; }
+.stepper { display: inline-flex; align-items: center; gap: 6px; } .stepper b { font-family: var(--cond); font-size: 20px; min-width: 22px; text-align: center; } .stepper button { padding: 4px 10px; }
+.shotlist { font-size: 13px; } .shotlist div { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--rule); }
+
+/* bars */
+.hbar { display: grid; grid-template-columns: 70px 1fr 40px; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; } .hbar i { display: block; height: 14px; border-radius: 3px; background: var(--green); } .hbar i.flag { background: var(--flag); } .hbar i.sand { background: var(--sand-2); }
+.hbar small { text-align: right; color: var(--ink-2); }
+.trend { display: flex; align-items: flex-end; gap: 6px; height: 80px; border-bottom: 1px solid var(--rule); padding-bottom: 0; } .trend button { flex: 1; background: var(--green); opacity: .85; border: 0; border-radius: 4px 4px 0 0; padding: 0; min-width: 14px; max-width: 48px; position: relative; }
+.trend button span { position: absolute; top: -18px; left: 0; right: 0; font: 600 12px var(--cond); color: var(--ink); text-align: center; }
+
+.empty { border: 1px dashed var(--rule); border-radius: var(--r); padding: 22px 16px; color: var(--ink-2); margin: 10px 0; } .empty p { margin-bottom: 12px; }
+.notice { background: var(--paper-2); border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 0 var(--r) var(--r) 0; font-size: 13px; color: var(--ink-2); margin: 0 0 16px; } .notice.warn { border-left-color: var(--flag); }
+.back { margin: -4px 0 12px; } .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 14px; } .kv dt { color: var(--ink-3); } .kv dd { margin: 0; }
+.stat { display: inline-block; margin-right: 22px; margin-bottom: 8px; } .stat b { font-family: var(--cond); font-weight: 700; font-size: 28px; line-height: 1; display: block; } .stat small { color: var(--ink-3); font-size: 12px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: var(--r); font-size: 13px; z-index: 9; opacity: 0; transition: opacity .15s; pointer-events: none; } .toast.show { opacity: 1; }
+.hole-grid { display: grid; grid-template-columns: 36px 52px 1fr 1fr; gap: 6px 8px; align-items: center; font-size: 14px; } .hole-grid input { padding: 7px 8px; text-align: right; } .hole-grid .h { color: var(--ink-3); font-size: 12px; }
+dialog.sheet { border: 0; padding: 0; margin: 0; width: 100%; max-width: 720px; left: 50%; transform: translateX(-50%); top: auto; bottom: 0; max-height: calc(100% - 40px); background: var(--paper); color: var(--ink); border-radius: 14px 14px 0 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
+dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; }
+.sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; position: sticky; bottom: 0; background: var(--paper); padding-top: 10px; } .count { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+.stencil.art .trace { stroke: #fff; stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; opacity: .95; }
+.stencil.art .ball { fill: #fff; stroke: #1B2A20; stroke-width: 1.4; vector-effect: non-scaling-stroke; } .stencil.art .ball.pen { stroke: var(--flag); stroke-width: 2.2; }
+.stencil .calline { fill: none; stroke: var(--flag); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-dasharray: 5 4; }
+.stencil .calgr { fill: rgba(255,255,255,.12); stroke: #fff; stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; }
+.stencil .cal { fill: none; stroke-width: 2.5; vector-effect: non-scaling-stroke; } .stencil .cal.tee { stroke: #fff; } .stencil .cal.grn { stroke: var(--flag); } .stencil .cal.turn { stroke: #F2C94C; }
+[data-cal][aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip.lie { font: 500 12px var(--body); padding: 4px 9px; }
+.armrow { display: flex; flex-direction: column; gap: 5px; align-items: center; margin: 4px 0 10px; }
+.armrow .chips { justify-content: center; }
+.quick { margin-top: 8px; } .qrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.qrow .qn { font-family: var(--cond); font-weight: 700; font-size: 17px; min-width: 44px; } .qrow .qn small { display: block; font: 400 10px var(--body); color: var(--ink-3); }
+.qrow .chips { flex-wrap: nowrap; overflow-x: auto; }
+details.sec > summary { cursor: pointer; }
+.shotrow { display: flex; justify-content: space-between; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 8px 0; font: inherit; color: inherit; cursor: pointer; font-size: 13px; }
+.shotrow:hover { background: var(--paper-2); }
+.nextlist { margin: 6px 0 0; padding-left: 20px; } .nextlist li { margin: 6px 0; font-size: 14px; }
+.basis { font-size: 12px; color: var(--ink-2); background: var(--paper-2); border-radius: var(--r); padding: 7px 10px; margin: 8px 0; }
+details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > summary b { font-family: var(--cond); font-size: 15px; }
+.steps { margin: 6px 0 0; padding-left: 20px; font-size: 14px; } .steps li { margin: 10px 0; }
+.sec { display: block; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--rule); clear: both; }
+.sec > .spread > h2 { margin-top: 0; }
+.filmstrip .frame { position: relative; padding: 0; border: 0; background: none; border-radius: 4px; flex: 0 0 auto; cursor: pointer; }
+.filmstrip .frame span { position: absolute; left: 3px; bottom: 3px; font: 600 10px var(--cond); background: rgba(0,0,0,.55); color: #fff; border-radius: 3px; padding: 0 4px; }
+.filmstrip .frame:hover img { outline: 2px solid var(--flag); }
+.swing { border: 1px solid var(--rule); border-radius: var(--r); padding: 10px 12px; margin: 10px 0; }
+.filmstrip { display: flex; gap: 4px; overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
+.filmstrip img { height: 132px; width: auto; border-radius: 4px; flex: 0 0 auto; background: var(--paper-2); }
+.analysis { border-left: 3px solid var(--green); padding: 8px 10px; margin: 8px 0 0; background: var(--paper-2); border-radius: 0 var(--r) var(--r) 0; }
+.analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
+.analysis .obs { font-size: 13px; margin: 3px 0; }
+.pcard.k-swing { border-left-color: var(--water); }
+.picker { border: 1px solid var(--rule); border-radius: var(--r); margin-top: 4px; max-height: 230px; overflow-y: auto; }
+.picker:empty { display: none; }
+.pick { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 10px; font: inherit; color: inherit; cursor: pointer; }
+.pick:last-child { border-bottom: 0; }
+.pick.on, .pick:hover { background: var(--paper-2); }
+.danger-solid { background: var(--flag); border-color: var(--flag); color: #fff; }
+:root[data-theme="dark"] .danger-solid, .danger-solid { color: #fff; }
+.pcard { border: 1px solid var(--rule); border-left: 4px solid var(--green); border-radius: var(--r); padding: 10px 12px; margin: 8px 0; background: var(--paper); }
+.pcard.k-tee, .pcard.k-penalty { border-left-color: var(--flag); } .pcard.k-short { border-left-color: var(--sand-2); } .pcard.k-putting { border-left-color: var(--ink-2); } .pcard.k-measure { border-left-color: var(--ink-3); }
+.pcard .pt { font-family: var(--cond); font-weight: 700; font-size: 17px; line-height: 1.25; margin: 2px 0 3px; }
+.pcard .pblock { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--rule); }
+.advice { background: var(--green-soft); color: var(--ink); border-radius: var(--r); padding: 8px 10px; margin: 8px 0; }
+.stencil .hdot { fill: #fff; stroke: #1B2A20; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; } .stencil .hdot.first { fill: #F2C94C; }
+.l-teedot { background: #F2C94C; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; } .l-dot { background: #fff; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; }
+</style>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1b3a2b">
+</head>
+<body>
+<header class="top">
+  <div class="brand">Carry <small id="sub"></small></div>
+  <div class="status" id="status">Connecting</div>
+</header>
+<main id="view" aria-live="polite"></main>
+<nav class="tabs" aria-label="Sections">
+  <ul>
+    <li><button data-tab="overview">Overview</button></li>
+    <li><button data-tab="range">Range</button></li>
+    <li><button data-tab="rounds">Rounds</button></li>
+    <li><button data-tab="courses">Courses</button></li>
+    <li><button data-tab="bag">Bag</button></li>
+  </ul>
+</nav>
+<dialog class="sheet" id="sheet"><div class="inner" id="sheetInner"></div></dialog>
+<dialog class="sheet" id="confirmDlg"><div class="inner"><p id="confirmMsg" style="margin:8px 0 0"></p><div class="sheet-actions"><button id="confirmNo">Cancel</button><button class="danger-solid" id="confirmYes">Delete</button></div></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="platform.js"></script>
+<script>
+/* ============================================================
+   Carry — range and round tracker
+   Data: three collections in the artifact db.
+     clubs/<code>     one doc per club
+     courses/<id>     one doc per course, holes embedded
+     sessions/<id>    one doc per session; range blocks and shots,
+                      or round hole scores, embedded
+   Everything analytical (strike profiles, gapping, scores) is
+   derived at render time, never stored.
+   ============================================================ */
+'use strict';
+/* ---------- state ---------- */
+const S = {
+  db: null, dbState: 'connecting',            // connecting | ready | none
+  clubs: [], courses: [], sessions: [], settings: null, sampleOk: false,
+  tab: 'overview', sub: null,                 // sub: {sessionId, blockId, courseId}
+};
+try { const t = localStorage.getItem('carry.tab'); if (['overview','range','rounds','courses','bag'].includes(t)) S.tab = t; } catch (e) {}
+
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = (n, d = 0) => (n == null || isNaN(n)) ? '–' : Number(n).toFixed(d);
+const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
+const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const today = () => new Date().toISOString().slice(0, 10);
+const dateLabel = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }); };
+const sum = a => a.reduce((x, y) => x + y, 0);
+const mean = a => a.length ? sum(a) / a.length : null;
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const quantile = (a, q) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const pos = (s.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos); return s[lo] + (s[hi] - s[lo]) * (pos - lo); };
+
+// The page runs sandboxed, where window.confirm is ignored and returns
+// false, so destructive actions must ask in-page instead.
+function confirmAsk(message, okLabel = 'Delete') {
+  return new Promise(resolve => {
+    const dlg = document.getElementById('confirmDlg'), yes = document.getElementById('confirmYes'), no = document.getElementById('confirmNo');
+    document.getElementById('confirmMsg').textContent = message; yes.textContent = okLabel;
+    const done = v => { yes.onclick = no.onclick = dlg.onclose = null; if (dlg.open) dlg.close(); resolve(v); };
+    yes.onclick = () => done(true); no.onclick = () => done(false); dlg.onclose = () => done(false);
+    dlg.showModal();
+  });
+}
+let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
+function setStatus(txt, err) { const s = $('#status'); s.textContent = txt; s.classList.toggle('err', !!err); }
+
+/* ---------- db ---------- */
+async function connect() {
+  render();
+  const db = await claude.use('db');
+  if (!db) { S.dbState = 'none'; setStatus('Storage unavailable in this view', true); render(); return; }
+  S.db = db; S.dbState = 'ready'; setStatus('');
+  try { S.assets = await claude.use('assets'); } catch (e) { S.assets = null; }
+  // Swing analysis needs a view that can send images to Claude.
+  try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
+  const onErr = e => setStatus('Storage error: ' + (e && e.code || 'unknown'), true);
+  db.collection('clubs').onSnapshot(snap => { S.clubs = snap.docs.map(d => d.data()).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); render(); }, onErr);
+  db.collection('courses').onSnapshot(snap => { S.courses = snap.docs.map(d => d.data()).sort((a, b) => a.name.localeCompare(b.name)); render(); }, onErr);
+  setTimeout(() => runMigrations(), 400);
+  db.collection('settings').onSnapshot(snap => { S.settings = (snap.docs[0] && snap.docs[0].data()) || null; render(); }, onErr);
+  db.collection('sessions').onSnapshot(snap => { S.sessions = snap.docs.map(d => d.data()).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.created || 0) - (a.created || 0)); render(); }, onErr);
+}
+async function save(col, id, doc) {
+  if (!S.db) { toast('Storage unavailable'); return false; }
+  try { await S.db.collection(col).doc(id).set(doc); return true; }
+  catch (e) { toast('Save failed: ' + (e && e.code || 'unknown')); return false; }
+}
+async function remove(col, id) {
+  if (!S.db) { toast('Storage unavailable'); return false; }
+  try { await S.db.collection(col).doc(id).delete(); return true; }
+  catch (e) { toast('Delete failed: ' + (e && e.code || 'unknown')); return false; }
+}
+const clubBy = code => S.clubs.find(c => c.code === code);
+const activeClubs = () => S.clubs.filter(c => !c.retired);
+const session = id => S.sessions.find(s => s.id === id);
+const course = id => S.courses.find(c => c.id === id);
+
+/* ---------- analytics ---------- */
+// Full-swing shots for one club across every range session.
+function fullShots(code) {
+  const out = [];
+  for (const s of S.sessions) if (s.type === 'range' && withinWindow(s.date)) for (const b of (s.blocks || [])) {
+    if (b.club !== code || (b.swing || 'full') !== 'full') continue;
+    for (const sh of (b.shots || [])) if (sh.carry != null && sh.total != null) out.push({ ...sh, sessionId: s.id, date: s.date, blockId: b.id });
+  }
+  return out;
+}
+// Strike profile, relative to the club's own data.
+//   top     carry < 20m
+//   runner  roll% more than 10 points above the roll% of the club's best strikes
+//   pure    carry within 10% of the club's 90th-percentile carry
+//   short   everything else
+function classify(shots) {
+  const live = shots.filter(s => s.carry >= 20);
+  if (live.length < 4) return shots.map(s => s.carry < 20 ? 'top' : 'unknown');
+  const ref = quantile(live.map(s => s.carry), 0.9);
+  const zone = live.filter(s => s.carry >= 0.9 * ref);
+  const pureRoll = median(zone.map(s => (s.total - s.carry) / s.carry)) ?? 0;
+  return shots.map(s => {
+    if (s.carry < 20) return 'top';
+    if ((s.total - s.carry) / s.carry > pureRoll + 0.10) return 'runner';
+    if (s.carry >= 0.9 * ref) return 'pure';
+    return 'short';
+  });
+}
+function clubStats(code) {
+  const shots = fullShots(code);
+  if (!shots.length) return null;
+  const prof = classify(shots);
+  const live = shots.filter((s, i) => prof[i] !== 'top');
+  const pure = shots.filter((s, i) => prof[i] === 'pure');
+  const count = k => prof.filter(p => p === k).length;
+  return {
+    code, n: shots.length,
+    stockCarry: median(live.map(s => s.carry)), stockTotal: median(live.map(s => s.total)),
+    pureCarry: mean(pure.map(s => s.carry)), roll: mean(live.map(s => s.total - s.carry)),
+    pure: count('pure'), runner: count('runner'), short: count('short'), top: count('top'), unknown: count('unknown'),
+  };
+}
+function blockSummary(b) {
+  const shots = b.shots || [], sm = b.summary || {};
+  if (!shots.length) return Object.keys(sm).length ? { ...sm, fromPinSource: 'bay' } : null;
+  const c = shots.map(s => s.carry).filter(v => v != null), t = shots.map(s => s.total).filter(v => v != null);
+  const sp = shots.map(s => s.speed).filter(v => v != null);
+  const bay = sm.fromPinCarry != null || sm.fromPinTotal != null;
+  return {
+    n: shots.length, avgCarry: mean(c), avgTotal: mean(t), avgSpeed: mean(sp),
+    hitsC: shots.filter(s => s.hitC).length, hitsT: shots.filter(s => s.hitT).length,
+    // The bay measures from-pin in two dimensions. Without it, the best we can
+    // derive is the distance error alone, which understates the true miss.
+    fromPinCarry: bay ? sm.fromPinCarry : (b.target ? mean(c.map(v => Math.abs(v - b.target))) : null),
+    fromPinTotal: bay ? sm.fromPinTotal : (b.target ? mean(t.map(v => Math.abs(v - b.target))) : null),
+    fromPinSource: bay ? 'bay' : 'distance',
+    derived: true,
+  };
+}
+function roundStats(r) {
+  const holes = (r.holes || []).filter(h => h.strokes != null);
+  const par = sum(holes.map(h => h.par || 0)), gross = sum(holes.map(h => h.strokes || 0));
+  const byPar = {};
+  for (const h of holes) { const k = h.par; byPar[k] = byPar[k] || { par: k, n: 0, over: 0 }; byPar[k].n++; byPar[k].over += h.strokes - h.par; }
+  const blowups = holes.filter(h => h.strokes - h.par >= 3).sort((a, b) => (b.strokes - b.par) - (a.strokes - a.par));
+  const putts = holes.some(h => h.putts != null) ? sum(holes.map(h => h.putts || 0)) : null;
+  const penalties = sum(holes.map(h => h.penalties || 0));
+  // shot-level (from stencil taps)
+  const shotHoles = holesOf(r).filter(h => (h.shots || []).length);
+  let fir = null, gir = null, approaches = [], byClub = {};
+  if (shotHoles.length) {
+    const drives = shotHoles.filter(h => h.par > 3); fir = { hit: drives.filter(h => lieOf(h, h.shots[0]) === 'fairway').length, of: drives.length };
+    gir = { hit: shotHoles.filter(h => { const k = h.par - 2; const s = h.shots[k - 1]; return s && lieOf(h, s) === 'green'; }).length, of: shotHoles.length };
+    for (const h of shotHoles) h.shots.forEach((s, i) => {
+      const from = i ? toGreen(h, h.shots[i - 1]) : (h.metres || 0), len = shotLen(h, i);
+      if (from == null || len == null) return;            // unplaceable shot: leave it out of the numbers
+      const fromLie = i ? lieOf(h, h.shots[i - 1]) : 'tee';
+      if (i > 0 || h.par === 3) approaches.push({ hole: h.n, dist: Math.round(from), club: s.club, lie: lieOf(h, s) });
+      // Club distances count full swings only: not recoveries from trouble, not short-game shots.
+      if (s.club && !['trees', 'bunker', 'water'].includes(fromLie) && len >= 30 && from >= 40) { (byClub[s.club] = byClub[s.club] || []).push(len); }
+    });
+  }
+  return { holes: holes.length, par, gross, toPar: gross - par, byPar: Object.values(byPar).sort((a, b) => a.par - b.par), blowups, putts, penalties, fir, gir, approaches, byClub, shotLevel: shotHoles.length };
+}
+// Across every shot-level round: what the course actually asks of you.
+function courseDemand() {
+  const rounds = S.sessions.filter(s => s.type === 'round');
+  const bands = {}, byClub = {};
+  for (const r of rounds) { const st = roundStats(r); for (const a of st.approaches) { const b = Math.floor(a.dist / 20) * 20; bands[b] = (bands[b] || 0) + 1; } for (const [k, v] of Object.entries(st.byClub)) (byClub[k] = byClub[k] || []).push(...v); }
+  return { bands: Object.entries(bands).map(([b, n]) => ({ from: Number(b), n })).sort((a, b) => a.from - b.from), byClub: Object.fromEntries(Object.entries(byClub).map(([k, v]) => [k, { n: v.length, median: median(v) }])) };
+}
+
+/* ---------- routing ---------- */
+function go(tab, sub = null) {
+  S.tab = tab; S.sub = sub;
+  try { localStorage.setItem('carry.tab', tab); } catch (e) {}
+  render(); window.scrollTo(0, 0);
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
+function parseGo(str) {
+  const i = str.indexOf(':'); if (i < 0) return [str, null];
+  const tab = str.slice(0, i), rest = str.slice(i + 1);
+  if (rest.includes('=')) { const sub = {}; rest.split(',').forEach(p => { const [k, v] = p.split('='); sub[k] = v; }); return [tab, sub]; }
+  const j = rest.indexOf(':'); return [tab, { [rest.slice(0, j)]: rest.slice(j + 1) }];
+}
+function render() {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
+  const views = { overview: vOverview, range: vRange, rounds: vRounds, courses: vCourses, bag: vBag };
+  $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-go]'); if (a) { const [tab, sub] = parseGo(a.dataset.go); go(tab, sub); return; }
+  const act = e.target.closest('[data-act]'); if (act) { const fn = ACTIONS[act.dataset.act]; if (fn) fn(act.dataset); }
+});
+const back = (tab, sub, label) => `<div class="back"><button class="quiet" data-go="${tab}${sub ? ':' + sub : ''}">‹ ${esc(label)}</button></div>`;
+
+/* ---------- shared visuals ---------- */
+// Dot strip: every shot's carry on one axis, coloured by strike profile, with the target marked.
+function dotStrip(shots, profs, target, maxX) {
+  const W = 300, H = 30, pad = 6; const mx = Math.max(maxX || 0, target || 0, ...shots.map(s => s.carry)) * 1.05 || 1;
+  const x = v => (pad + (W - 2 * pad) * v / mx).toFixed(1);
+  return `<svg class="strip" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <line class="axis" x1="${pad}" y1="${H - 8}" x2="${W - pad}" y2="${H - 8}"/>
+    ${target ? `<line class="tgt" x1="${x(target)}" y1="3" x2="${x(target)}" y2="${H - 4}"/>` : ''}
+    ${shots.map((s, i) => `<circle class="dot-${profs ? profs[i] : ''}" cx="${x(s.carry)}" cy="${(H - 8 - 6 - ((i * 7) % 3) * 3.5).toFixed(1)}" r="3.4" opacity=".85"/>`).join('')}
+  </svg>`;
+}
+function scoreStrip(holes, roundId, mini) {
+  const tag = roundId && !mini ? 'button' : 'span';
+  return `<div class="scorestrip ${mini ? 'mini' : ''}">` + holes.map(h => `<${tag} class="sq ${scoreClass(h)}" ${tag === 'button' ? `data-go="rounds:sessionId=${roundId},hole=${h.n}"` : ''} title="Hole ${h.n}, par ${h.par}${h.strokes != null ? ', ' + h.strokes : ''}">${mini ? '' : (h.strokes ?? '·')}${mini ? '' : `<small>${h.n}</small>`}</${tag}>`).join('') + `</div>`;
+}
+function profileBar(s) { return `<div class="profile"><span class="p-pure" style="width:${pct(s.pure, s.n)}%"></span><span class="p-runner" style="width:${pct(s.runner, s.n)}%"></span><span class="p-short" style="width:${pct(s.short, s.n)}%"></span><span class="p-top" style="width:${pct(s.top, s.n)}%"></span></div>`; }
+function sessionItem(s) {
+  if (s.type === 'round') { const st = roundStats(s); return `<button class="item" data-go="rounds:sessionId:${s.id}"><div class="spread"><div><div class="t">${esc(s.courseName)}</div><div class="s">${dateLabel(s.date)}${st.shotLevel ? ', shot-level' : ''}</div></div><div class="n">${st.gross} <span class="muted small">${st.toPar >= 0 ? '+' : ''}${st.toPar}</span></div></div>${scoreStrip(s.holes || [], s.id, true)}</button>`; }
+  const blocks = s.blocks || [], shots = blocks.reduce((n, b) => n + (b.shots || []).length, 0);
+  const clubs = [...new Set(blocks.map(b => b.club))];
+  const planned = s.planned && !shots && !blocks.some(b => b.summary);
+  return `<button class="item" data-go="range:sessionId:${s.id}"><div class="spread"><div><div class="t">${planned ? '<span class="tag green">planned</span> ' : ''}${dateLabel(s.date)}${s.venue ? ' <span class="muted">' + esc(s.venue) + '</span>' : ''}</div><div class="s">${blocks.length ? `${blocks.length} block${blocks.length === 1 ? '' : 's'}${shots ? ', ' + shots + ' shots' : ''}` : swingsOf(s).length ? `${plural(swingsOf(s).length, 'swing')}, no blocks` : 'empty'}</div></div><div class="chips">${clubs.map(c => `<span class="tag">${esc(c)}</span>`).join('')}</div></div></button>`;
+}
+
+/* ---------- overview ---------- */
+function vOverview() {
+  const stats = activeClubs().map(c => ({ c, s: clubStats(c.code) })).filter(x => x.s && x.s.stockCarry).sort((a, b) => b.s.stockCarry - a.s.stockCarry);
+  const maxM = Math.max(200, ...stats.map(x => Math.max(x.s.pureCarry || 0, x.s.stockCarry, x.c.nominalCarry || 0)));
+  const rounds = S.sessions.filter(s => s.type === 'round');
+  let h = `<h1>Gapping</h1>` + windowPicker() + (windowDays() ? `<p class="small muted" style="margin-top:-2px">Range numbers below use the last ${windowDays()} days only.</p>` : '');
+  if (!stats.length) h += `<div class="empty"><p>No full-swing shots yet. Gapping appears once a range block has shot-level carry and total.</p><button class="primary" data-go="range">Go to range</button></div>`;
+  else {
+    h += `<div class="ladder">` + stats.map(({ c, s }) => { const w = m => (100 * m / maxM).toFixed(1) + '%'; return `<div class="rung">
+        <div class="club">${esc(c.code)}<small>${s.n} shots</small></div>
+        <div class="bar">${s.pureCarry ? `<div class="pure" style="left:${w(s.stockCarry)};width:${w(Math.max(0, s.pureCarry - s.stockCarry))}"></div>` : ''}<div class="stock" style="width:${w(s.stockCarry)}"></div>${c.nominalCarry ? `<div class="assumed" style="left:${w(c.nominalCarry)}" title="assumed carry ${c.nominalCarry}m"></div>` : ''}</div>
+        <div class="val"><b>${fmt(s.stockCarry)}</b><small>${s.pureCarry ? 'pure ' + fmt(s.pureCarry) : 'carry'}</small></div></div>`; }).join('') + `</div>
+      <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span></div>`;
+    const items = practiceItems();
+    h += `<h2>Next session</h2>` + (items.length
+      ? `<ol class="nextlist">` + items.slice(0, 3).map(it => `<li><b>${esc(it.title)}</b>${it.block ? ` <span class="tag green">${esc(it.block.club)} · ${it.block.target ? it.block.target + 'm' : it.block.swing}</span>` : ''}${it.video ? ' <span class="tag">video</span>' : ''}</li>`).join('') + `</ol>`
+        + basisLine() + `<div class="row-actions"><button class="quiet" data-go="range">Full list, evidence and a planned session →</button></div>`
+      : `<p class="muted small">Log shots on a few holes and this fills with what's costing you.</p>`);
+    h += `<h2>Strike profile</h2>` + stats.map(({ c, s }) => `<div class="prow"><b>${esc(c.code)}</b>${profileBar(s)}<small>${pct(s.pure, s.n)}% pure</small></div>`).join('') +
+      `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>low runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>topped</span></div>`;
+  }
+  if (rounds.length) {
+    const rs = rounds.slice().reverse().slice(-10); const mx = Math.max(...rs.map(r => roundStats(r).gross)), mn = Math.min(...rs.map(r => roundStats(r).gross));
+    const tp = rs.map(r => roundStats(r).toPar), tmx = Math.max(...tp), tmn = Math.min(...tp);
+    h += `<h2>Rounds</h2><div class="trend">` + rs.map((r, i) => { const st = roundStats(r); const hgt = 30 + 50 * (tmx === tmn ? 0.5 : (tp[i] - tmn) / (tmx - tmn));
+      return `<button style="height:${hgt}%" data-go="rounds:sessionId:${r.id}" title="${esc(r.courseName)}, ${dateLabel(r.date)} — ${st.gross} off par ${st.par}"><span>${st.toPar >= 0 ? '+' : ''}${st.toPar}</span></button>`; }).join('')
+      + `</div><p class="small muted" style="margin-top:6px">Strokes over par, oldest to newest — comparable across courses of different pars. Tap a bar.</p>`;
+    const d = courseDemand();
+    if (d.bands.length) { const mxn = Math.max(...d.bands.map(b => b.n)); h += `<h2>Approach distances faced</h2>` + d.bands.map(b => `<div class="hbar"><span>${b.from}–${b.from + 19}m</span><i style="width:${pct(b.n, mxn)}%"></i><small>${b.n}</small></div>`).join('') + `<p class="small muted">From shot-level rounds. This is what the course asks of you — the yardages worth practising.</p>`; }
+  }
+  const pt = puttingStats();
+  if (pt) h += `<h2>Putting</h2><div><span class="stat"><b>${pt.perHole.toFixed(2)}</b><small>putts a hole</small></span><span class="stat"><b>${pt.threes}</b><small>three-putts</small></span>${pt.medianFirst != null ? `<span class="stat"><b>${fmt(pt.medianFirst, 1)}m</b><small>median first putt</small></span><span class="stat"><b>${pt.onePuttRate}%</b><small>one-putt from there</small></span>` : ''}</div>${pt.measured < pt.holes ? `<p class="small muted">${pt.measured} of ${pt.holes} holes have a first-putt distance${pt.estimated ? `, ${pt.estimated} of them estimated from where you tapped` : ''}. The rest can't feed strokes gained later.</p>` : pt.estimated ? `<p class="small muted">${pt.estimated} of ${pt.holes} first putts estimated from where you tapped — adjust any that were well off.</p>` : ''}`;
+  h += `<h2>Recent</h2>` + (S.sessions.length ? `<div class="list">${S.sessions.slice(0, 5).map(sessionItem).join('')}</div>` : `<p class="muted">Nothing logged yet.</p>`);
+  return h;
+}
+
+/* ---------- range ---------- */
+function vRange() {
+  if (S.sub && S.sub.blockId) return vBlock();
+  if (S.sub && S.sub.sessionId) return vRangeSession();
+  const list = S.sessions.filter(s => s.type === 'range');
+  return `<div class="spread"><h1>Range</h1><button class="primary" data-act="newRange">New session</button></div><h2>What to practise</h2>` + practiceSection() + `<h2>Sessions</h2>` +
+    (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a range session, then add a block per club and target. Paste shots straight from a tracked bay: one line per shot, carry then total, then club speed if shown.</p><button class="primary" data-act="newRange">New session</button></div>`);
+}
+function vRangeSession() {
+  const s = session(S.sub.sessionId); if (!s) return back('range', null, 'Range') + `<p>Session not found.</p>`;
+  const blocks = (s.blocks || []).slice().sort((a, b) => a.seq - b.seq);
+  let h = back('range', null, 'Range') + `<div class="spread"><h1>${dateLabel(s.date)}</h1><button data-act="editRange" data-id="${s.id}">Edit</button></div>
+  <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(s.ballType) + ' balls' : ''}${s.source ? ', ' + esc(s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
+  ${s.planned && blocks.some(b => b.plan) ? `<div class="notice">Planned from your on-course data. After you hit each block, open it, tap Edit and paste the shots. The loop picks them up from there.</div>` : ''}
+  <div class="spread"><h2>Blocks</h2><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div>`;
+  if (!blocks.length) h += swingsOf(s).length
+    ? `<p class="small muted">No blocks — a video-only session. That's fine: the swings below still count, and you can add blocks later if the numbers turn up.</p>`
+    : `<div class="empty"><p>No blocks yet. A block is one club at one target. If you only came away with a video, skip this and add a swing below.</p></div>`;
+  else h += `<div class="list">` + blocks.map(b => {
+    const sm = blockSummary(b) || {}; const full = (b.swing || 'full') === 'full'; const judge = full ? sm.avgCarry : sm.avgTotal;
+    const all = fullShots(b.club), profs = classify(all); const mine = all.map((x, i) => [x, profs[i]]).filter(([x]) => x.blockId === b.id);
+    const mx = Math.max(...all.map(x => x.carry), 0);
+    return `<button class="block-row" data-go="range:blockId:${b.id}"><div class="c">${esc(b.club)}<small>${b.target ? b.target + 'm' : ''}${b.swing && b.swing !== 'full' ? ' ' + esc(b.swing) : ''}</small></div>
+      <div>${mine.length ? dotStrip(mine.map(m => m[0]), mine.map(m => m[1]), b.target, mx) : b.plan ? `<span class="small muted">Planned: ${esc(b.intent || '')}</span>` : `<span class="small muted">${sm.n || 0} shots, summary only</span>`}</div>
+      <div class="n">${judge ? fmt(judge) : ''}<small>${sm.n || 0} shots</small></div></button>`;
+  }).join('') + `</div><div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
+  h += swingSection(s);
+  h += `<div class="row-actions"><button class="danger" data-act="deleteSession" data-id="${s.id}">Delete session</button></div>`;
+  return h;
+}
+function vBlock() {
+  const s = S.sessions.find(x => (x.blocks || []).some(b => b.id === S.sub.blockId)); if (!s) return back('range', null, 'Range') + `<p>Block not found.</p>`;
+  const b = s.blocks.find(x => x.id === S.sub.blockId); const sm = blockSummary(b) || {}; const shots = b.shots || [];
+  const all = fullShots(b.club), profs = classify(all); const profOf = idx => { const i = all.findIndex(x => x.blockId === b.id && x.idx === idx); return i >= 0 ? profs[i] : ''; };
+  const full = (b.swing || 'full') === 'full';
+  let h = back('range', 'sessionId:' + s.id, dateLabel(s.date)) + `<div class="spread"><h1>${esc(b.club)} ${b.target ? '<span class="muted">to ' + b.target + 'm</span>' : ''}</h1><button data-act="editBlock" data-sid="${s.id}" data-bid="${b.id}">Edit</button></div>
+  <p class="muted small">${dateLabel(s.date)}, ${esc(b.swing || 'full')} swing${b.drill ? ', ' + esc(b.drill) : ''}</p>`;
+  if (shots.length && full) h += dotStrip(shots, shots.map((_, i) => profOf(i)), b.target, Math.max(...all.map(x => x.carry))) + `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
+  h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>mph</small></span>` : ''}</div>`;
+  if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
+  if (shots.length) h += `<details><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Speed</th><th></th></tr></thead><tbody>` +
+    shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td><td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
+  else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}. After you hit it, tap Edit and paste the shots.</div>`;
+  else h += `<p class="muted small">Summary only. Edit the block to paste shots.</p>`;
+  h += `<div class="row-actions"><button class="danger" data-act="deleteBlock" data-sid="${s.id}" data-bid="${b.id}">Delete block</button></div>`;
+  return h;
+}
+
+/* ---------- rounds ---------- */
+function vRounds() {
+  if (S.sub && S.sub.hole) return vHoleLog();
+  if (S.sub && S.sub.sessionId) return vRound();
+  const list = S.sessions.filter(s => s.type === 'round');
+  return `<div class="spread"><h1>Rounds</h1><button class="primary" data-act="newRound">New round</button></div>` +
+    (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a round by scorecard, then tap any hole to trace your shots on its stencil.</p><button class="primary" data-act="newRound">New round</button></div>`);
+}
+function vRound() {
+  const r = session(S.sub.sessionId); if (!r) return back('rounds', null, 'Rounds') + `<p>Round not found.</p>`;
+  const st = roundStats(r); const c = course(r.courseId);
+  const holes = holesOf(r);
+  let h = back('rounds', null, 'Rounds') + `<div class="spread"><h1>${esc(r.courseName)}</h1><button data-act="editRound" data-id="${r.id}">Edit</button></div>
+  <p class="muted small">${dateLabel(r.date)}${r.tee ? ', ' + esc(r.tee) + ' tees' : ''}${st.holes < (r.holes || []).length ? ` · ${st.holes} of ${(r.holes || []).length} holes scored` : ''}${r.notes ? '. ' + esc(r.notes) : ''}</p>
+  <div><span class="stat"><b>${st.gross}</b><small>gross</small></span><span class="stat"><b>${st.toPar >= 0 ? '+' : ''}${st.toPar}</b><small>to par ${st.par}</small></span>${st.putts != null ? `<span class="stat"><b>${st.putts}</b><small>putts</small></span>` : ''}${st.fir ? `<span class="stat"><b>${st.fir.hit}/${st.fir.of}</b><small>fairways</small></span>` : ''}${st.gir ? `<span class="stat"><b>${st.gir.hit}/${st.gir.of}</b><small>greens in reg</small></span>` : ''}</div>`;
+  h += scoreStrip(holes, r.id) + `<p class="small muted">Tap a hole to trace shots on it.</p>`;
+  h += quickScoreSection(r);
+  const mxo = Math.max(...st.byPar.map(p => p.over), 1);
+  h += `<h2>Strokes lost by par</h2>` + st.byPar.map(p => `<div class="hbar"><span>Par ${p.par} <span class="muted">×${p.n}</span></span><i class="${p.over / p.n >= 2.5 ? 'flag' : p.over / p.n >= 1.5 ? 'sand' : ''}" style="width:${pct(p.over, mxo)}%"></i><small>+${p.over}</small></div>`).join('');
+  h += `<h2>Holes</h2>` + stencilGrid(holes, { act: 'logHole', id: r.id, scores: true });
+  if (st.shotLevel) {
+    const ent = Object.entries(st.byClub).map(([k, v]) => ({ k, n: v.length, med: median(v) })).filter(x => x.med).sort((a, b) => b.med - a.med);
+    if (ent.length) h += `<h2>Clubs on the course</h2><p class="small muted">Full swings only, measured tap to tap, so treat as ±15m. Compare with range stock carry on the Overview.</p><div class="scroll"><table><thead><tr><th>Club</th><th>Shots</th><th>Median m</th><th>Range stock</th></tr></thead><tbody>` + ent.map(x => { const s = clubStats(x.k); return `<tr><td><b>${esc(x.k)}</b></td><td>${x.n}</td><td class="num">${fmt(x.med)}</td><td>${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td></tr>`; }).join('') + `</tbody></table></div>`;
+  }
+  h += swingSection(r);
+  h += `<div class="row-actions"><button class="danger" data-act="deleteSession" data-id="${r.id}">Delete round</button></div>`;
+  return h;
+}
+
+/* ---------- courses ---------- */
+function vCourses() {
+  if (S.sub && S.sub.courseId && S.sub.hole) return vCourseHole();
+  if (S.sub && S.sub.courseId) return vCourse();
+  let h = `<div class="spread"><h1>Courses</h1><button class="primary" data-act="newCourse">Add course</button></div>
+  <p class="lead small">Your shortlist. Live tee times for NSW public courses are on <a href="https://www.myteetimes.com.au" target="_blank" rel="noopener">MyTeeTimes</a>.</p>
+  <div class="row-actions" style="margin-bottom:6px"><button class="quiet" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
+  h += S.courses.length ? `<div class="list">` + S.courses.map(c => {
+    const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const best = played.length ? Math.min(...played.map(r => roundStats(r).gross)) : null;
+    return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${esc(c.suburb || '')}${c.bookable ? ' <span class="tag green">public booking</span>' : ''}${c.prereg ? ' <span class="tag">pre-register</span>' : ''}${played.length ? ', played ' + played.length : ''}${distanceLabel(c) ? ` · ${distanceLabel(c)} away` : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
+  }).join('') + `</div>` : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
+  return h;
+}
+function vCourse() {
+  const c = course(S.sub.courseId); if (!c) return back('courses', null, 'Courses') + `<p>Course not found.</p>`;
+  const rounds = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id);
+  const par = sum((c.holes || []).map(h => h.par || 0)), len = sum((c.holes || []).map(h => h.metres || 0));
+  let h = back('courses', null, 'Courses') + `<div class="spread"><h1>${esc(c.name)}</h1><button data-act="editCourse" data-id="${c.id}">Edit</button></div>
+  <p class="muted small">${esc(c.suburb || '')}${c.state ? ', ' + esc(c.state) : ''}${c.holes && c.holes.length ? '. Par ' + par + ', ' + len + 'm' : ''}${distanceLabel(c) ? `. ${distanceLabel(c)} from ${esc((home() || {}).label || 'you')}, straight line` : ''}</p>`;
+  if (c.holes && c.holes.length) {
+    const gaps = missingHoles(c.holes);
+    if (gaps.length) h += `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing from this scorecard. <button class="quiet" data-act="editCourse" data-id="${c.id}">Add ${gaps.length > 1 ? 'them' : 'it'}</button></div>`;
+    h += stencilGrid(fullCard(c.holes).map(x => ({ ...x, _dots: x.par != null ? dotsFor(c.id, x) : [] })), { act: 'viewHole', id: c.id }) + `<p class="small muted">Dots show where your shots finished across every round here. Tap a hole for its history and layout.</p>`;
+  }
+  h += `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${c.bookingUrl ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
+    ${c.feeWeekday || c.feeWeekend ? `<dt>Green fee</dt><dd>${c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : ''}${c.feeWeekday && c.feeWeekend ? ', ' : ''}${c.feeWeekend ? '$' + c.feeWeekend + ' weekend' : ''}</dd>` : ''}
+    ${c.walkable != null ? `<dt>Walking</dt><dd>${c.walkable ? 'Walkable' : 'Cart advised'}</dd>` : ''}${c.transport ? `<dt>Getting there</dt><dd>${esc(c.transport)}</dd>` : ''}${c.notes ? `<dt>Notes</dt><dd>${esc(c.notes)}</dd>` : ''}</dl>`;
+  if (rounds.length) h += `<h2>Rounds here</h2><div class="list">${rounds.map(sessionItem).join('')}</div>`;
+  h += `<div class="row-actions"><button class="danger" data-act="deleteCourse" data-id="${c.id}">Delete course</button></div>`;
+  return h;
+}
+
+/* ---------- bag ---------- */
+function vBag() {
+  let h = `<div class="spread"><h1>Bag</h1><button class="primary" data-act="newClub">Add club</button></div>
+  <p class="lead small">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
+  if (!S.clubs.length) return h + `<div class="empty"><p>No clubs yet.</p></div>`;
+  const row = c => { const s = clubStats(c.code); return `<tr class="${c.retired ? 'muted' : ''}"><td><b>${esc(c.code)}</b> <span class="muted small">${esc(c.name)}</span>${c.retired ? ' <span class="tag">retired</span>' : ''}</td><td>${c.loft ? c.loft + '°' : ''}</td><td>${fmt(c.nominalCarry)}</td><td>${fmt(c.nominalTotal)}</td><td class="num">${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td><td><button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></td></tr>`; };
+  h += `<div class="scroll"><table><thead><tr><th>Club</th><th>Loft</th><th>Assumed carry</th><th>Assumed total</th><th>Stock carry</th><th></th></tr></thead><tbody>${S.clubs.map(row).join('')}</tbody></table></div>`;
+  h += calibrationSection();
+  h += `<section class="sec"><h2>Your data</h2>
+    <p class="small muted">Everything lives in this page's storage. Export before anything you can't undo, and to move it somewhere else.</p>
+    <div class="row-actions"><button class="primary" data-act="exportData">Export everything</button><button data-act="importData">Import a backup</button></div>
+    <p class="small muted" style="margin-top:8px">${S.clubs.length} clubs, ${S.courses.length} courses, ${S.sessions.length} sessions, ${allSwings().length} swings.</p></section>`;
+  return h;
+}
+
+/* ---------- sheet ---------- */
+const sheet = $('#sheet'), sheetInner = $('#sheetInner');
+function openSheet(html, onSave) {
+  sheetInner.innerHTML = html + `<div class="sheet-actions"><button data-close>Cancel</button><button class="primary" data-save>Save</button></div>`;
+  sheet.showModal();
+  $('[data-close]', sheetInner).onclick = () => sheet.close();
+  $('[data-save]', sheetInner).onclick = async () => { const btn = $('[data-save]', sheetInner); btn.disabled = true; const ok = await onSave(sheetInner); btn.disabled = false; if (ok) { sheet.close(); toast('Saved'); } };
+}
+sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); });
+const val = (root, name) => { const el = root.querySelector(`[name="${name}"]`); if (!el) return null; if (el.type === 'checkbox') return el.checked; const v = el.value.trim(); return v === '' ? null : el.type === 'number' ? Number(v) : v; };
+const field = (label, name, type = 'text', value = '', attrs = '') => `<label>${label}<input type="${type}" name="${name}" value="${esc(value ?? '')}" ${attrs}></label>`;
+const selectF = (label, name, opts, value) => `<label>${label}<select name="${name}">${opts.map(([v, t]) => `<option value="${esc(v)}" ${v === value ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
+const checkF = (label, name, checked) => `<label class="check"><input type="checkbox" name="${name}" ${checked ? 'checked' : ''}>${label}</label>`;
+
+/* Parse pasted shots. One shot per line: carry, total, optional speed.
+   Separators: space, tab, comma. "-" or blank means no speed. Trailing
+   ✓ or x marks target hit (carry) — optional. */
+function parseShots(text) {
+  const out = [];
+  for (let raw of (text || '').split(/\n/)) {
+    let line = raw.trim(); if (!line) continue;
+    const hitC = /[✓✔]|\bhit\b/i.test(line) && !/total/i.test(line);
+    line = line.replace(/[✓✔✗x×]/gi, ' ');
+    const nums = line.split(/[\s,;|\t]+/).filter(t => t !== '' && t !== '-').map(Number).filter(n => !isNaN(n));
+    if (nums.length < 2) continue;
+    // 2 numbers: carry total. 3: carry total speed. 4+: row carry total speed.
+    const vals = nums.length >= 4 ? nums.slice(1) : nums;
+    const sh = { carry: vals[0], total: vals[1] }; if (vals[2] != null) sh.speed = vals[2]; if (hitC) sh.hitC = true;
+    out.push(sh);
+  }
+  return out;
+}
+const shotsText = shots => (shots || []).map(s => [s.carry, s.total, s.speed ?? '-'].join('  ') + (s.hitC ? ' ✓' : '')).join('\n');
+
+/* ---------- forms ---------- */
+function rangeForm(s = {}) {
+  return `<h2>${s.id ? 'Edit session' : 'New range session'}</h2>
+  <div class="grid2">${field('Date', 'date', 'date', s.date || today())}${field('Venue', 'venue', 'text', s.venue, 'placeholder="e.g. Moore Park"')}</div>
+  <div class="grid2">${selectF('Balls', 'ballType', [['range', 'Range balls'], ['premium', 'Premium range balls'], ['own', 'Own balls']], s.ballType || 'range')}${selectF('Data from', 'source', [['toptracer', 'Toptracer'], ['inrange', 'Inrange'], ['trackman', 'Trackman'], ['manual', 'Manual']], s.source || 'toptracer')}</div>
+  ${field('Working on', 'focus', 'text', s.focus, 'placeholder="e.g. release timing on irons"')}
+  <label>Notes<textarea name="notes" style="min-height:70px">${esc(s.notes || '')}</textarea></label>`;
+}
+function blockForm(b = {}) {
+  const clubs = activeClubs().map(c => [c.code, c.code + '  ' + c.name]);
+  return `<h2>${b.id ? 'Edit block' : 'Add block'}</h2>
+  <div class="grid3">${selectF('Club', 'club', clubs, b.club || (clubs[0] || [])[0])}${selectF('Swing', 'swing', [['full', 'Full'], ['part', 'Part'], ['chip', 'Chip']], b.swing || 'full')}${field('Target m', 'target', 'number', b.target, 'inputmode="decimal"')}</div>
+  <label>Shots — one per line: carry, total, speed (4 numbers: row, carry, total, speed)<textarea name="shots" placeholder="147.5  178.2  -&#10;156.6  170.8  79.4" spellcheck="false" style="min-height:150px;font-variant-numeric:tabular-nums">${esc(shotsText(b.shots))}</textarea></label>
+  <div class="count" id="shotCount"></div>
+  <details ${b.summary && Object.keys(b.summary).length ? 'open' : ''}><summary class="small muted" style="cursor:pointer;margin:12px 0 4px">Bay summary — from-pin figures the bay shows, or the whole block if you have no shot list</summary>
+    <div class="grid3">${field('Shots', 'sm_n', 'number', b.summary?.n)}${field('Avg carry', 'sm_avgCarry', 'number', b.summary?.avgCarry, 'step="0.1"')}${field('Avg total', 'sm_avgTotal', 'number', b.summary?.avgTotal, 'step="0.1"')}</div>
+    <div class="grid3">${field('From pin (carry)', 'sm_fromPinCarry', 'number', b.summary?.fromPinCarry, 'step="0.1"')}${field('From pin (total)', 'sm_fromPinTotal', 'number', b.summary?.fromPinTotal, 'step="0.1"')}${field('Target hits', 'sm_hitsC', 'number', b.summary?.hitsC)}</div>
+  </details>
+  <div class="grid2">${field('Drill', 'drill', 'text', b.drill)}${field('Working on', 'intent', 'text', b.intent)}</div>
+  ${field('Outcome', 'outcome', 'text', b.outcome)}`;
+}
+function wireShotCount(root) {
+  const ta = root.querySelector('[name=shots]'), out = root.querySelector('#shotCount');
+  const upd = () => { const p = parseShots(ta.value); out.textContent = p.length ? `${p.length} shots parsed, avg carry ${fmt(mean(p.map(s => s.carry)), 1)}m, avg total ${fmt(mean(p.map(s => s.total)), 1)}m` : 'No shots parsed yet.'; };
+  ta.addEventListener('input', upd); upd();
+}
+function holesEditor(holes, withScores) {
+  return `<div class="hole-grid"><div class="h">Hole</div><div class="h">Par</div><div class="h">Metres</div><div class="h">${withScores ? 'Score' : ''}</div>` +
+    holes.map(h => `<div>${h.n}</div><input type="number" name="par_${h.n}" value="${h.par ?? ''}" inputmode="numeric"><input type="number" name="m_${h.n}" value="${h.metres ?? ''}" inputmode="numeric">${withScores ? `<input type="number" name="s_${h.n}" value="${h.strokes ?? ''}" inputmode="numeric">` : '<div></div>'}`).join('') + `</div>`;
+}
+const blankHoles = n => Array.from({ length: n }, (_, i) => ({ n: i + 1 }));
+function readHoles(root, n, withScores) {
+  const out = [];
+  for (let i = 1; i <= n; i++) { const par = val(root, 'par_' + i), metres = val(root, 'm_' + i), strokes = withScores ? val(root, 's_' + i) : undefined; const h = { n: i }; if (par != null) h.par = par; if (metres != null) h.metres = metres; if (withScores && strokes != null) h.strokes = strokes; out.push(h); }
+  return out;
+}
+function courseForm(c = {}) {
+  const holes = fullCard(c.holes);
+  const gaps = c.holes && c.holes.length ? missingHoles(c.holes) : [];
+  return `<h2>${c.id ? 'Edit course' : 'Add course'}</h2>
+  ${field('Name', 'name', 'text', c.name)}
+  <div class="grid2">${field('Suburb', 'suburb', 'text', c.suburb)}${field('State', 'state', 'text', c.state || 'NSW')}</div>
+  ${field('Tee these distances are from', 'tee', 'text', primaryTee(c) === 'default' ? '' : primaryTee(c), 'placeholder="white, blue, black…"')}
+  ${checkF('Public booking, no member needed', 'bookable', c.bookable)}
+  ${checkF('Needs pre-registration on their booking site', 'prereg', c.prereg)}
+  ${checkF('Walkable', 'walkable', c.walkable)}
+  <div class="grid2">${field('Green fee weekday $', 'feeWeekday', 'number', c.feeWeekday)}${field('Green fee weekend $', 'feeWeekend', 'number', c.feeWeekend)}</div>
+  ${field('Booking link', 'bookingUrl', 'url', c.bookingUrl)}
+  <div class="grid2">${field('Latitude', 'lat', 'number', c.lat, 'step="0.0001"')}${field('Longitude', 'lng', 'number', c.lng, 'step="0.0001"')}</div>
+  ${field('Getting there', 'transport', 'text', c.transport)}
+  <label>Notes<textarea name="notes" style="min-height:60px">${esc(c.notes || '')}</textarea></label>
+  <h3>Scorecard</h3>${gaps.length ? `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing. Fill ${gaps.length > 1 ? 'them' : 'it'} in below.</div>` : ''}<div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
+  <div id="holesWrap">${holesEditor(holes, false)}</div>`;
+}
+// A scorecard is always holes 1..N (9 or 18). Gaps become blank rows so a
+// missing hole is visible and fixable instead of silently absent.
+function fullCard(holes) {
+  holes = holes || [];
+  const maxN = Math.max(0, ...holes.map(h => h.n || 0));
+  const N = holes.length && maxN <= 9 ? 9 : 18;
+  const byN = Object.fromEntries(holes.map(h => [h.n, h]));
+  return Array.from({ length: N }, (_, i) => byN[i + 1] || { n: i + 1 });
+}
+const missingHoles = holes => fullCard(holes).filter(h => h.par == null).map(h => h.n);
+// Toggle 9/18 without losing data: keep every hole ever shown in a cache,
+// fold the visible inputs into it on each switch, redraw from the cache.
+function wireHoleCount(root, withScores, initial) {
+  const cache = {}; for (const h of fullCard(initial)) cache[h.n] = { ...h };
+  const shown = () => Number(root.querySelector('[data-holes][aria-pressed="true"]')?.dataset.holes || 18);
+  root.querySelectorAll('[data-holes]').forEach(btn => btn.onclick = () => {
+    const was = shown(), n = Number(btn.dataset.holes);
+    for (const h of readHoles(root, was, withScores)) { const { par, metres, strokes, ...rest } = cache[h.n] || {}; cache[h.n] = { ...rest, ...h }; }
+    root.querySelectorAll('[data-holes]').forEach(b => b.setAttribute('aria-pressed', b === btn));
+    $('#holesWrap', root).innerHTML = holesEditor(Array.from({ length: n }, (_, i) => cache[i + 1] || { n: i + 1 }), withScores);
+  });
+}
+function roundForm(r = {}) {
+  const courses = S.courses.map(c => [c.id, c.name]);
+  const c = r.courseId ? course(r.courseId) : (S.courses[0] || null);
+  const holes = r.holes && r.holes.length ? fullCard(r.holes) : fullCard(c && c.holes ? c.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []);
+  return `<h2>${r.id ? 'Edit round' : 'New round'}</h2>
+  ${S.courses.length ? coursePicker(r.courseId || (c && c.id)) : `<div class="notice">Add a course first, then log rounds against it.</div>`}
+  <div class="grid2">${field('Date', 'date', 'date', r.date || today())}${(() => { const names = teeNames(c); return names.length > 1 ? selectF('Tees', 'tee', names.map(t => [t, t]), r.tee || primaryTee(c)) : field('Tees', 'tee', 'text', r.tee || (c ? primaryTee(c) : ''), 'placeholder="e.g. white"'); })()}</div>
+  ${field('Notes', 'notes', 'text', r.notes)}
+  <h3>Scorecard</h3><p class="small muted">Par and metres prefill from the course; change them here only if you played different tees.</p>
+  <div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
+  <div id="holesWrap">${holesEditor(holes, true)}</div>`;
+}
+function clubForm(c = {}) {
+  return `<h2>${c.code ? 'Edit club' : 'Add club'}</h2>
+  <div class="grid2">${field('Short code', 'code', 'text', c.code, c.code ? 'readonly' : 'placeholder="e.g. 5i"')}${field('Name', 'name', 'text', c.name, 'placeholder="e.g. 5 Iron"')}</div>
+  <div class="grid3">${selectF('Type', 'category', [['driver', 'Driver'], ['wood', 'Wood'], ['hybrid', 'Hybrid'], ['iron', 'Iron'], ['wedge', 'Wedge'], ['putter', 'Putter']], c.category || 'iron')}${field('Loft °', 'loft', 'number', c.loft, 'step="0.5"')}${field('Order', 'order', 'number', c.order ?? (S.clubs.length + 1))}</div>
+  <div class="grid2">${field('Assumed carry m', 'nominalCarry', 'number', c.nominalCarry)}${field('Assumed total m', 'nominalTotal', 'number', c.nominalTotal)}</div>
+  ${checkF('Retired (kept for history, hidden from new blocks)', 'retired', c.retired)}
+  ${field('Notes', 'notes', 'text', c.notes)}`;
+}
+
+/* ---------- actions ---------- */
+const ACTIONS = {
+  newRange() { openSheet(rangeForm(), async root => saveRange(root, { id: uid('s'), type: 'range', created: Date.now(), blocks: [] })); },
+  editRange(d) { const s = session(d.id); openSheet(rangeForm(s), async root => saveRange(root, s)); },
+  newBlock(d) { const s = session(d.id); openSheet(blockForm(), async root => saveBlock(root, s, { id: uid('b'), seq: (s.blocks || []).length + 1 })); wireShotCount(sheetInner); },
+  editBlock(d) { const s = session(d.sid), b = s.blocks.find(x => x.id === d.bid); openSheet(blockForm(b), async root => saveBlock(root, s, b)); wireShotCount(sheetInner); },
+  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { toast('Block deleted'); go('range', { sessionId: s.id }); } },
+  async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
+  newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
+  editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
+  newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c') })); wireHoleCount(sheetInner, false, []); },
+  editCourse(d) { const c = course(d.id); openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); },
+  async deleteCourse(d) { if (!await confirmAsk('Delete this course? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
+  newClub() { openSheet(clubForm(), async root => saveClub(root, {})); },
+  editClub(d) { openSheet(clubForm(clubBy(d.id)), async root => saveClub(root, clubBy(d.id))); },
+};
+// Type-to-search course field. Keeps a hidden courseId input so saving and
+// scorecard prefill work exactly as they did with the dropdown.
+function coursePicker(selectedId) {
+  const sel = selectedId ? course(selectedId) : null;
+  return `<label>Course<input type="hidden" name="courseId" value="${esc(selectedId || '')}">
+    <input type="text" id="courseSearch" autocomplete="off" spellcheck="false" placeholder="Search by name or suburb" value="${sel ? esc(sel.name) : ''}"></label>
+    <div class="picker" id="courseResults"></div>`;
+}
+function wireCoursePicker(root) {
+  const hid = root.querySelector('[name=courseId]'); if (!hid) return;
+  const box = $('#courseSearch', root), list = $('#courseResults', root);
+  let active = -1;
+  const matches = () => {
+    // With a course already chosen, focusing shows the whole list rather than
+    // filtering by the name that's sitting in the box.
+    const q = box.dataset.showAll === '1' ? '' : box.value.trim().toLowerCase();
+    const scored = S.courses.map(c => {
+      const name = (c.name || '').toLowerCase(), sub = (c.suburb || '').toLowerCase();
+      if (!q) return { c, s: 0 };
+      if (name.startsWith(q)) return { c, s: 3 };
+      if (name.includes(q)) return { c, s: 2 };
+      if (sub.includes(q)) return { c, s: 1 };
+      return null;
+    }).filter(Boolean).sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name));
+    return scored.map(x => x.c).slice(0, 8);
+  };
+  const draw = open => {
+    if (!open) { list.innerHTML = ''; return; }
+    const m = matches();
+    list.innerHTML = m.length
+      ? m.map((c, i) => `<button type="button" class="pick ${i === active ? 'on' : ''}" data-cid="${c.id}"><b>${esc(c.name)}</b>${c.suburb ? ` <span class="muted small">${esc(c.suburb)}</span>` : ''}${(c.holes || []).length ? ` <span class="muted small">· ${c.holes.length} holes</span>` : ''}</button>`).join('')
+      : `<div class="small muted" style="padding:9px 10px">No course matches “${esc(box.value.trim())}”. <button type="button" class="quiet" data-newcourse>Add it</button></div>`;
+  };
+  const choose = id => { const c = course(id); if (!c) return; hid.value = id; box.value = c.name; active = -1; draw(false); hid.dispatchEvent(new Event('change', { bubbles: true })); };
+  box.addEventListener('focus', () => { box.dataset.showAll = '1'; box.select(); draw(true); });
+  box.addEventListener('input', () => { delete box.dataset.showAll; hid.value = ''; active = -1; draw(true); });
+  box.addEventListener('blur', () => setTimeout(() => { delete box.dataset.showAll; const m = matches(); if (!hid.value && box.value.trim() && m.length === 1) choose(m[0].id); else draw(false); }, 150));
+  box.addEventListener('keydown', e => {
+    const m = matches();
+    if (e.key === 'ArrowDown') { active = Math.min(active + 1, m.length - 1); draw(true); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); draw(true); e.preventDefault(); }
+    else if (e.key === 'Enter') { if (m.length) { choose(m[Math.max(active, 0)].id); e.preventDefault(); } }
+    else if (e.key === 'Escape') { draw(false); }
+  });
+  list.addEventListener('mousedown', e => e.preventDefault());   // keep focus so blur doesn't close first
+  list.addEventListener('click', e => {
+    const b = e.target.closest('[data-cid]'); if (b) return choose(b.dataset.cid);
+    if (e.target.closest('[data-newcourse]')) { sheet.close(); ACTIONS.newCourse(); }
+  });
+}
+function wireCoursePick(root) {
+  const sel = root.querySelector('[name=courseId]'); if (!sel) return;
+  sel.addEventListener('change', () => { const c = course(sel.value); if (!c || !c.holes) return; const card = fullCard(c.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres }))); root.querySelectorAll('[data-holes]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.holes) === card.length)); $('#holesWrap', root).innerHTML = holesEditor(card, true); wireHoleCount(root, true, card); });
+}
+async function saveRange(root, s) {
+  const doc = { ...s, date: val(root, 'date') || today(), venue: val(root, 'venue'), ballType: val(root, 'ballType'), source: val(root, 'source'), focus: val(root, 'focus'), notes: val(root, 'notes') };
+  const ok = await save('sessions', doc.id, doc); if (ok && !s.venue) go('range', { sessionId: doc.id }); return ok;
+}
+async function saveBlock(root, s, b) {
+  const shots = parseShots(val(root, 'shots') || '');
+  const nb = { ...b, club: val(root, 'club'), swing: val(root, 'swing') || 'full', target: val(root, 'target'), drill: val(root, 'drill'), intent: val(root, 'intent'), outcome: val(root, 'outcome'), shots };
+  if (!nb.club) { toast('Pick a club'); return false; }
+  const sm = {}; for (const k of ['n', 'avgCarry', 'avgTotal', 'fromPinCarry', 'fromPinTotal', 'hitsC']) { const v = val(root, 'sm_' + k); if (v != null) sm[k] = v; }
+  if (shots.length) { for (const k of ['n', 'avgCarry', 'avgTotal', 'hitsC']) delete sm[k]; }  // derived from shots
+  nb.summary = Object.keys(sm).length ? sm : null;
+  if (shots.length || nb.summary) delete nb.plan;
+  if (!shots.length && !nb.summary) { toast('Paste shots or fill the bay summary'); return false; }
+  const blocks = (s.blocks || []).filter(x => x.id !== b.id).concat(nb).sort((x, y) => x.seq - y.seq);
+  const ok = await save('sessions', s.id, { ...s, blocks }); if (ok) go('range', { sessionId: s.id }); return ok;
+}
+async function saveRound(root, r) {
+  const cid = val(root, 'courseId'), c = course(cid);
+  if (!c) { toast('Pick a course'); return false; }
+  const n = Number(root.querySelector('[data-holes][aria-pressed="true"]')?.dataset.holes || 18);
+  const holes = readHoles(root, n, true);
+  if (!holes.some(h => h.strokes != null)) { toast('Enter at least one score'); return false; }
+  if (holes.some(h => h.strokes != null && h.par == null)) { toast('Every scored hole needs a par'); return false; }
+  const prev = Object.fromEntries((r.holes || []).map(h => [h.n, h]));
+  const merged = holes.map(h => { const p = prev[h.n] || {}; const keep = {}; for (const k of ['shots', 'putts', 'penalties', 'manualStrokes']) if (p[k] != null) keep[k] = p[k]; const nh = { ...h, ...keep }; if ((nh.shots || []).length) { nh.manualStrokes = h.strokes ?? nh.manualStrokes; nh.strokes = nh.shots.length + (nh.putts || 0) + (nh.penalties || 0); } return nh; });
+  const doc = { ...r, v: SCHEMA_VERSION, date: val(root, 'date') || today(), courseId: c.id, courseName: c.name, tee: val(root, 'tee') || primaryTee(c), notes: val(root, 'notes'), detail: merged.some(h => (h.shots || []).length) ? 'shot_level' : 'score_only', holes: merged };
+  const ok = await save('sessions', doc.id, doc); if (ok) go('rounds', { sessionId: doc.id }); return ok;
+}
+async function saveCourse(root, c) {
+  const name = val(root, 'name'); if (!name) { toast('Name the course'); return false; }
+  const n = Number(root.querySelector('[data-holes][aria-pressed="true"]')?.dataset.holes || 18);
+  const tee = (val(root, 'tee') || primaryTee(c) || 'white').toLowerCase();
+  const near = S.courses.find(x => x.id !== c.id && x.name && name && x.name.toLowerCase().replace(/[^a-z]/g, '') === name.toLowerCase().replace(/[^a-z]/g, ''));
+  if (near && !await confirmAsk(`"${near.name}" is already in your courses. Add this as a second one?`, 'Add anyway')) return false;
+  const doc = { ...c, v: SCHEMA_VERSION, tee, name, suburb: val(root, 'suburb'), state: val(root, 'state'), bookable: val(root, 'bookable'), prereg: val(root, 'prereg'), walkable: val(root, 'walkable'), feeWeekday: val(root, 'feeWeekday'), feeWeekend: val(root, 'feeWeekend'), bookingUrl: val(root, 'bookingUrl'), lat: val(root, 'lat'), lng: val(root, 'lng'), transport: val(root, 'transport'), notes: val(root, 'notes'), // Keep everything the form doesn't edit (artwork, outline shape, stroke
+// index); only par and metres come from the inputs.
+    holes: readHoles(root, n, false).map(h => { const { par, metres, n: _n, ...keep } = (c.holes || []).find(x => x.n === h.n) || {}; return { ...keep, ...h, tees: { ...(keep.tees || {}), ...(h.metres == null ? {} : { [tee]: h.metres }) } }; }) };
+  const noPar = doc.holes.filter(h => h.par == null).map(h => h.n);
+  if (noPar.length) { toast(`Add a par for hole${noPar.length > 1 ? 's' : ''} ${noPar.join(', ')}`); return false; }
+  const ok = await save('courses', doc.id, doc); if (ok) go('courses', { courseId: doc.id }); return ok;
+}
+async function saveClub(root, c) {
+  const code = (val(root, 'code') || '').replace(/[^\w.+-]/g, '').slice(0, 8); if (!code) { toast('Short code is required'); return false; }
+  if (!c.code && clubBy(code)) { toast('That code is already in the bag'); return false; }
+  const doc = { code, name: val(root, 'name') || code, category: val(root, 'category'), loft: val(root, 'loft'), order: val(root, 'order') ?? 99, nominalCarry: val(root, 'nominalCarry'), nominalTotal: val(root, 'nominalTotal'), retired: !!val(root, 'retired'), notes: val(root, 'notes') };
+  return save('clubs', code, doc);
+}
+
+
+/* ============================================================
+   Hole stencils
+   Each hole is a schematic: a fairway ribbon along a quadratic
+   curve from tee to green, scaled by length, bent by a dogleg
+   value, with optional bunkers and water. Coordinates on a hole
+   are (t, u): t is 0 at the tee and 1 at the green; u is lateral,
+   -1..1 spanning the rough. A tap on the stencil becomes (t, u),
+   and distance to green is (1 - t) × hole metres.
+   ============================================================ */
+const TILE_W = 60, TILE_H = 100;
+const defaultShape = () => ({ bend: 0, bendAt: 0.55, hazards: [] });
+const shapeOf = h => Object.assign(defaultShape(), h.shape || {});
+function holeGeom(h, lenFrac = 1) {
+  const s = shapeOf(h);
+  const span = 84 * Math.max(0.35, Math.min(1, lenFrac));
+  const gy = 9, ty = gy + span;
+  const p0 = { x: 30, y: ty }, p2 = { x: 30 + 15 * s.bend, y: gy };
+  const p1 = { x: 30 + 36 * s.bend, y: ty - span * s.bendAt };
+  const w = h.par === 3 ? 9 : h.par === 5 ? 13 : 12;
+  return { p0, p1, p2, w, d: `M${p0.x.toFixed(1)},${p0.y.toFixed(1)} Q${p1.x.toFixed(1)},${p1.y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`, s };
+}
+const bez = (g, t) => { const a = 1 - t; return { x: a * a * g.p0.x + 2 * a * t * g.p1.x + t * t * g.p2.x, y: a * a * g.p0.y + 2 * a * t * g.p1.y + t * t * g.p2.y }; };
+function normalAt(g, t) { const a = 1 - t; const dx = 2 * a * (g.p1.x - g.p0.x) + 2 * t * (g.p2.x - g.p1.x), dy = 2 * a * (g.p1.y - g.p0.y) + 2 * t * (g.p2.y - g.p1.y); const L = Math.hypot(dx, dy) || 1; return { x: -dy / L, y: dx / L }; }
+const halfRough = g => g.w / 2 + 6;
+function holePt(g, t, u) { const c = bez(g, t), n = normalAt(g, t), o = u * halfRough(g); return { x: c.x + n.x * o, y: c.y + n.y * o }; }
+function toTU(g, pt) {
+  let bt = 0, bd = Infinity;
+  for (let i = 0; i <= 120; i++) { const t = i / 120, c = bez(g, t), d = (c.x - pt.x) ** 2 + (c.y - pt.y) ** 2; if (d < bd) { bd = d; bt = t; } }
+  const c = bez(g, bt), n = normalAt(g, bt);
+  const u = ((pt.x - c.x) * n.x + (pt.y - c.y) * n.y) / halfRough(g);
+  return { t: bt, u: Math.max(-1.8, Math.min(1.8, u)) };
+}
+// Where a shot at (t, u) finished, in golf terms.
+function lieOf(h, sh) { if (sh.lie) return sh.lie; if (sh.t == null) return 'unknown'; const g = holeGeom(h); const dist = (1 - sh.t) * (h.metres || 0); if (sh.t >= 0.93 && Math.abs(sh.u) <= 0.55) return 'green'; if (Math.abs(sh.u) <= (g.w / 2) / halfRough(g) + 0.05) return 'fairway'; if (Math.abs(sh.u) > 1.15) return 'trouble'; return 'rough'; }
+
+function stencilSVG(h, opts = {}) {
+  const g = holeGeom(h, opts.lenFrac ?? 1);
+  const hz = (g.s.hazards || []).map(z => { const p = holePt(g, z.t, z.side * 1.05); return z.kind === 'water' ? `<ellipse class="water" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" rx="5" ry="3.2"/>` : `<ellipse class="bunker" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" rx="3" ry="2.2"/>`; }).join('');
+  const shots = opts.shots || [];
+  let trace = '';
+  if (shots.length) {
+    const pts = [holePt(g, 0, 0)].concat(shots.map(s => holePt(g, s.t, s.u)));
+    trace = `<polyline class="trace" points="${pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ')}"/>` +
+      shots.map((s, i) => { const p = pts[i + 1]; return `<circle class="ball ${s.penalty ? 'pen' : ''}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${opts.big ? 2.2 : 1.6}"/>`; }).join('');
+  }
+  const teeN = normalAt(g, 0), tee = g.p0;
+  const flag = `<line class="flag" x1="${g.p2.x.toFixed(1)}" y1="${g.p2.y.toFixed(1)}" x2="${g.p2.x.toFixed(1)}" y2="${(g.p2.y - 6).toFixed(1)}"/><path class="flagc" d="M${g.p2.x.toFixed(1)},${(g.p2.y - 6).toFixed(1)} l3.2,1.4 l-3.2,1.4z"/>`;
+  return `<svg class="stencil" viewBox="0 0 ${TILE_W} ${TILE_H}" xmlns="http://www.w3.org/2000/svg" ${opts.attrs || ''}>
+    <path class="rough" d="${g.d}" stroke-width="${g.w + 12}"/>
+    <path class="fw" d="${g.d}" stroke-width="${g.w}"/>
+    ${hz}
+    <ellipse class="green" cx="${g.p2.x.toFixed(1)}" cy="${g.p2.y.toFixed(1)}" rx="${(g.w / 2 + 1.5).toFixed(1)}" ry="${(g.w / 2 - 0.5).toFixed(1)}"/>
+    <rect class="tee" x="${(tee.x - 3.5).toFixed(1)}" y="${(tee.y - 1.5).toFixed(1)}" width="7" height="3" rx="1" transform="rotate(${(Math.atan2(teeN.y, teeN.x) * 180 / Math.PI).toFixed(1)} ${tee.x.toFixed(1)} ${tee.y.toFixed(1)})"/>
+    ${flag}${trace}${(opts.dots || []).map(s => { const p = holePt(g, s.t, s.u); return `<circle class="hdot ${s.first ? 'first' : ''}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${opts.big ? 1.9 : 1.5}"/>`; }).join('')}
+    ${opts.label ? `<text x="3" y="97">${esc(opts.label)}</text>` : ''}
+  </svg>`;
+}
+function stencilGrid(holes, opts = {}) {
+  const maxM = Math.max(...holes.map(h => h.metres || 0), 1);
+  return `<div class="stencils">` + holes.map(h => {
+    if (h.par == null && h.metres == null) return `<button class="tile missing" data-act="editCourse" data-id="${esc(opts.courseId || opts.id || '')}" title="Hole ${h.n} is missing"><div class="miss">+</div><div class="lab"><b>${h.n}</b><span>missing</span><span></span></div></button>`;
+    const st = opts.scores ? scoreClass(h) : '';
+    const sub = opts.scores && h.strokes != null ? `${h.strokes}` : `${h.metres || '–'}m`;
+    return `<button class="tile ${st === 'b3' || st === 'b2' ? 'hot' : ''}" data-act="${opts.act}" data-n="${h.n}" data-id="${esc(opts.id || '')}" title="Hole ${h.n}">
+      ${usesArt(h) ? artSVG(h, { dots: h._dots }) : stencilSVG(h, { lenFrac: (h.metres || maxM) / maxM, shots: h.shots, dots: h._dots })}
+      <div class="lab"><b>${h.n}</b><span>par ${h.par ?? '–'}</span><span>${sub}</span></div></button>`;
+  }).join('') + `</div>`;
+}
+function scoreClass(h) { if (h.strokes == null || h.par == null) return 'empty'; const o = h.strokes - h.par; return o < 0 ? 'under' : o === 0 ? 'par' : o === 1 ? 'b1' : o === 2 ? 'b2' : 'b3'; }
+
+/* ---------- hole editor (shape) ---------- */
+function openHoleEditor(courseId, n) {
+  const c = course(courseId); if (!c) return;
+  const hole = c.holes.find(h => h.n === n); if (!hole) return;
+  if (hole.art) return openArtEditor(courseId, n, hole.art, false);
+  const shape = shapeOf(hole); let mode = null;
+  const maxM = Math.max(...c.holes.map(h => h.metres || 0), 1);
+  const draw = () => { $('#mapWrap', sheetInner).innerHTML = stencilSVG({ ...hole, shape }, { lenFrac: (hole.metres || maxM) / maxM, big: true, attrs: 'id="editMap"' }); wireTap(); };
+  const wireTap = () => { const svg = $('#editMap', sheetInner); if (!svg) return; svg.addEventListener('click', ev => { if (!mode) return; const g = holeGeom({ ...hole, shape }, (hole.metres || maxM) / maxM); const pt = svgPoint(svg, ev); const tu = toTU(g, pt); shape.hazards = (shape.hazards || []).concat({ kind: mode, t: +tu.t.toFixed(3), side: tu.u < 0 ? -1 : 1 }); draw(); }); };
+  openSheet(`<h2>Hole ${n} <span class="muted">par ${hole.par ?? '–'}, ${hole.metres || '–'}m</span></h2>
+    <div class="bigmap" id="mapWrap"></div>
+    <div class="map-hint" id="mapHint">Drag the dogleg slider, then tap the map to place hazards.</div>
+    <label>Dogleg <span class="muted">left ↔ right</span><input type="range" name="bend" min="-1" max="1" step="0.05" value="${shape.bend}"></label>
+    <label>Where it turns <span class="muted">early ↔ late</span><input type="range" name="bendAt" min="0.2" max="0.85" step="0.05" value="${shape.bendAt}"></label>
+    <div class="row-actions"><button type="button" data-mode="bunker">Add bunker</button><button type="button" data-mode="water">Add water</button><button type="button" data-clear>Clear hazards</button></div>
+    ${S.assets ? `<h3>Or use your own artwork</h3><p class="small muted">Upload a top-down image of the hole. A white background is cut away automatically; then you mark the tee and green.</p><div class="row-actions"><button type="button" data-upload>Upload image</button></div>` : ''}`,
+    async root => { const holes = c.holes.map(h => h.n === n ? { ...h, shape } : h); const ok = await save('courses', c.id, { ...c, holes }); if (ok) render(); return ok; });
+  draw();
+  sheetInner.querySelector('[name=bend]').addEventListener('input', e => { shape.bend = Number(e.target.value); draw(); });
+  sheetInner.querySelector('[name=bendAt]').addEventListener('input', e => { shape.bendAt = Number(e.target.value); draw(); });
+  sheetInner.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { mode = mode === b.dataset.mode ? null : b.dataset.mode; sheetInner.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x.dataset.mode === mode)); $('#mapHint', sheetInner).textContent = mode ? `Tap the map to place a ${mode}.` : 'Drag the dogleg slider, then tap the map to place hazards.'; }));
+  sheetInner.querySelector('[data-clear]').addEventListener('click', () => { shape.hazards = []; draw(); });
+  const up = sheetInner.querySelector('[data-upload]'); if (up) up.addEventListener('click', () => startArtUpload(courseId, n));
+}
+function svgPoint(svg, ev) { const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+
+/* ---------- shot logger (per hole, inside a round) ---------- */
+function vHoleLog() {
+  const r = session(S.sub.sessionId); if (!r) return back('rounds', null, 'Rounds') + `<p>Round not found.</p>`;
+  const n = Number(S.sub.hole); const all = holesOf(r); const h = all.find(x => x.n === n); if (!h) return back('rounds', 'sessionId:' + r.id, r.courseName) + `<p>Hole not found.</p>`;
+  const hole = h; const maxM = Math.max(...all.map(x => x.metres || 0), 1);
+  const shots = h.shots || []; const last = shots[shots.length - 1]; const art = usesArt(h);
+  const leftRaw = toGreen(h, last), distLeft = leftRaw == null ? null : Math.round(leftRaw);
+  const onGreen = last && lieOf(h, last) === 'green';
+  const strokes = holeStrokes(hole);
+  const clubs = activeClubs().filter(x => x.category !== 'putter');
+  let html = back('rounds', 'sessionId:' + r.id, r.courseName) + `<div class="spread"><h1>Hole ${n} <span class="muted">par ${hole.par}, ${hole.metres || '–'}m</span></h1>
+    <div class="row-actions" style="margin:0">${n > 1 ? `<button data-go="rounds:sessionId=${r.id},hole=${n - 1}">‹</button>` : ''}${n < all.length ? `<button data-go="rounds:sessionId=${r.id},hole=${n + 1}">›</button>` : ''}</div></div>`;
+  if (S.moving && S.moving.n === n) html += `<div class="notice">Moving shot ${S.moving.i + 1} — tap where it finished. <button class="quiet" data-act="cancelMove">Cancel</button></div>`;
+  html += `<div class="bigmap">${art ? artSVG(h, { big: true, attrs: 'id="logMap"' }) : stencilSVG(h, { lenFrac: (hole.metres || maxM) / maxM, big: true, shots, attrs: 'id="logMap"' })}</div>
+    <div class="map-hint">${onGreen ? 'On the green. Add putts below.' : distLeft == null ? 'Tap where the next shot finished.' : shots.length ? `${distLeft}m to the green. Tap where the next shot finished.` : 'Tap where your tee shot finished.'}${h.art && !art ? ' <span class="muted">(Shots here were logged on the drawn outline, so it stays for this round.)</span>' : ''}</div>
+    ${!onGreen && adviceFor(distLeft) ? `<p class="small advice" style="text-align:center">${adviceFor(distLeft)}</p>` : ''}`;
+  html += clubArmRow(r, h, distLeft);
+  if (last) html += `<div class="chips" style="justify-content:center;margin:-2px 0 10px">${['green', 'fairway', 'rough', 'bunker', 'water', 'trees'].map(l => `<button class="chip lie" data-lie="${l}" aria-pressed="${lieOf(h, last) === l}">${l}</button>`).join('')}</div>`;
+  if (last) html += `<div class="chips" id="clubChips" style="justify-content:center;margin-bottom:12px">${clubs.map(x => `<button class="chip" data-club="${esc(x.code)}" aria-pressed="${last.club === x.code}">${esc(x.code)}</button>`).join('')}</div>
+    <p class="small muted" style="text-align:center;margin-top:-6px">Club for shot ${shots.length}${last.club ? ': ' + esc(last.club) : ' — pick one'}</p>`;
+  html += puttRow(r, hole);
+  html += `<div class="spread" style="margin-top:8px"><div class="stepper"><span class="small muted">Penalties</span><button data-step="penalties" data-d="-1">−</button><b>${hole.penalties || 0}</b><button data-step="penalties" data-d="1">+</button></div></div>
+    <div class="row-actions"><button data-act="setPutt" data-sid="${r.id}" data-n="${n}">${hole.firstPutt != null ? `First putt ${hole.firstPuttEstimated ? '≈' : ''}${fmt(hole.firstPutt)}m — ${hole.firstPuttEstimated ? 'estimated from your tap, adjust' : 'change'}` : 'Add first-putt distance'}</button>${(hole.shots || []).some(s => s.penalty) ? `<span class="small muted">${plural((hole.shots || []).filter(s => s.penalty).length, 'penalty', 'penalties')} attached to shots</span>` : ''}</div>
+    <div class="spread" style="margin-top:14px"><span class="stat" style="margin:0"><b>${shots.length ? strokes : (hole.strokes ?? '–')}</b><small>${shots.length ? 'strokes (shots + putts + penalties)' : 'strokes, from scorecard'}</small></span>
+    <div class="row-actions" style="margin:0"><button data-act="undoShot">Undo shot</button><button class="danger" data-act="clearHole">Clear hole</button></div></div>`;
+  if (onGreen && hole.putts != null && n < all.length) html += `<div class="row-actions" style="margin-top:12px"><button class="primary" data-go="rounds:sessionId=${r.id},hole=${n + 1}">Hole ${n + 1} →</button><span class="small muted">${holeStrokes(hole)} on this hole</span></div>`;
+  if (shots.length) html += `<h2>Shots</h2><div class="shotlist">` + shots.map((s, i) => { const from = i ? toGreen(h, shots[i - 1]) : hole.metres, len = shotLen(h, i); return `<button class="shotrow" data-act="editShot" data-sid="${r.id}" data-n="${n}" data-i="${i}"><span>${i + 1}. ${esc(s.club || '?')}${from == null ? '' : ` from ${Math.round(from)}m`}${s.penalty ? ' <span class="tag flag">penalty</span>' : ''}${s.verified ? ' <span class="tag green">real</span>' : ''}</span><span class="muted">${len == null ? 'not measurable' : Math.round(len) + 'm'}, ${lieOf(h, s)} ›</span></button>`; }).join('') + `</div><p class="small muted">Tap a shot to change its club or lie, move it, or delete it.</p>`;
+  return html;
+}
+async function updateHole(r, n, fn) {
+  const holes = r.holes.map(h => {
+    if (h.n !== n) return h; const nh = { ...h }; fn(nh);
+    if ((nh.shots || []).length) { if (nh.manualStrokes == null && h.strokes != null && !(h.shots || []).length) nh.manualStrokes = h.strokes; nh.strokes = holeStrokes(nh); }
+    else { if (nh.manualStrokes != null) nh.strokes = nh.manualStrokes; else if ((h.shots || []).length) delete nh.strokes; delete nh.manualStrokes; delete nh.shots; }
+    return nh;
+  });
+  const detail = holes.some(h => (h.shots || []).length) ? 'shot_level' : 'score_only';
+  return save('sessions', r.id, { ...r, holes, detail });
+}
+document.addEventListener('click', async e => {
+  if (!(S.tab === 'rounds' && S.sub && S.sub.hole)) return;
+  const r = session(S.sub.sessionId), n = Number(S.sub.hole); if (!r) return;
+  const svg = e.target.closest('#logMap');
+  if (svg) {
+    const h = holesOf(r).find(x => x.n === n); const prev = (h.shots || []).slice(-1)[0];
+    const moving = S.moving && S.moving.n === n ? S.moving.i : null;
+    const club = armedClubFor(h, toGreen(h, prev));
+    if (usesArt(h)) {
+      const p = svgPoint(svg, e), x = Math.max(0, Math.min(h.art.w, p.x)), y = Math.max(0, Math.min(h.art.h, p.y));
+      const lie = await lieAt(h.art, x, y);
+      await updateHole(r, n, hh => {
+        if (moving != null) { hh.shots = hh.shots.map((s, j) => j === moving ? { ...s, x: +x.toFixed(1), y: +y.toFixed(1), lie: lie || s.lie } : s); return; }
+        const s = { x: +x.toFixed(1), y: +y.toFixed(1), club }; if (lie) s.lie = lie; hh.shots = (hh.shots || []).concat(s);
+        // On the green and no putt distance yet: estimate it from the tap.
+        if (lie === 'green' && hh.firstPutt == null) {
+          const d = toGreen({ ...h, shots: hh.shots }, s);
+          if (d != null && d <= 40) { hh.firstPutt = +d.toFixed(1); hh.firstPuttEstimated = true; }
+        }
+      });
+      if (moving != null) { S.moving = null; toast('Shot moved'); render(); }
+    } else {
+      const maxM = Math.max(...r.holes.map(x => x.metres || 0), 1);
+      const g = holeGeom(h, (h.metres || maxM) / maxM);
+      const tu = toTU(g, svgPoint(svg, e));
+      await updateHole(r, n, hh => {
+        if (moving != null) { hh.shots = hh.shots.map((s, j) => j === moving ? { ...s, t: +tu.t.toFixed(3), u: +tu.u.toFixed(2) } : s); return; }
+        hh.shots = (hh.shots || []).concat({ t: +tu.t.toFixed(3), u: +tu.u.toFixed(2), club });
+      });
+      if (moving != null) { S.moving = null; toast('Shot moved'); render(); }
+    }
+    return;
+  }
+  const lieBtn = e.target.closest('[data-lie]'); if (lieBtn) { await updateHole(r, n, hh => { const s = hh.shots.slice(); s[s.length - 1] = { ...s[s.length - 1], lie: lieBtn.dataset.lie }; hh.shots = s; }); return; }
+  // Arming chips also carry data-club but own their own action; this
+  // handler is only for correcting the club on a shot already logged.
+  const chip = e.target.closest('[data-club]:not([data-act])');
+  if (chip) { await updateHole(r, n, h => { if (!(h.shots || []).length) return; const s = h.shots.slice(); s[s.length - 1] = { ...s[s.length - 1], club: chip.dataset.club }; h.shots = s; }); return; }
+  const step = e.target.closest('[data-step]'); if (step) { await updateHole(r, n, h => { h[step.dataset.step] = Math.max(0, (h[step.dataset.step] || 0) + Number(step.dataset.d)); }); return; }
+});
+Object.assign(ACTIONS, {
+  async undoShot() { const r = session(S.sub.sessionId), n = Number(S.sub.hole); await updateHole(r, n, h => { h.shots = (h.shots || []).slice(0, -1); }); },
+  async clearHole() { if (!await confirmAsk('Clear shots, putts and penalties for this hole?', 'Clear hole')) return; const r = session(S.sub.sessionId), n = Number(S.sub.hole); await updateHole(r, n, h => { delete h.shots; delete h.putts; delete h.penalties; }); },
+  editHole(d) { openHoleEditor(d.id, Number(d.n)); },
+  logHole(d) { go('rounds', { sessionId: d.id, hole: d.n }); },
+});
+
+/* ============================================================
+   Hole artwork
+   A course hole can carry `art`: an uploaded image plus three
+   calibration points in image pixels.
+     art = { asset, w, h, tee:[x,y], green:[x,y], turn?:[x,y], gr }
+   Shots tapped on art are stored as {x, y} in the same pixels.
+   Distance to the green is measured along tee → (turn) → green and
+   scaled so the full line equals the scorecard metres. The lie is
+   read from the artwork's colour under the tap, and can be
+   corrected with a chip.
+   ============================================================ */
+const artURL = a => '/_blob/' + a.asset;
+const dpx = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+function pxToGreen(a, p) {
+  if (a.turn) {
+    const T = a.tee, K = a.turn, vx = K[0] - T[0], vy = K[1] - T[1];
+    const along = ((p[0] - T[0]) * vx + (p[1] - T[1]) * vy) / ((vx * vx + vy * vy) || 1);
+    if (along < 1) return dpx(p, K) + dpx(K, a.green);
+  }
+  return dpx(p, a.green);
+}
+const metresPerPx = h => (h.metres || 0) / (pxToGreen(h.art, h.art.tee) || 1);
+// Metres from a shot's finishing spot to the green, for either kind of hole.
+function toGreen(h, s) {
+  if (!s) return h.metres || 0;
+  if (s.x != null) return h.art ? Math.max(0, pxToGreen(h.art, [s.x, s.y]) * metresPerPx(h)) : null;
+  if (s.t != null) return Math.max(0, (1 - s.t) * (h.metres || 0));
+  return null;   // a shot this hole can't place (e.g. artwork removed under it)
+}
+// Where a shot finished, as a point in a plane with a known metres-per-unit scale.
+function bezLen(g) { let L = 0, p = bez(g, 0); for (let i = 1; i <= 60; i++) { const q = bez(g, i / 60); L += Math.hypot(q.x - p.x, q.y - p.y); p = q; } return L; }
+// A hole has two possible coordinate frames: image pixels (tapped on
+// artwork) and outline units. Both ends of a shot must be measured in the
+// SAME frame, or the numbers are meaningless — so the frame is chosen by
+// the shot being measured and the tee is placed in that same frame.
+const frameOf = s => s == null ? null : s.x != null ? 'art' : s.t != null ? 'outline' : null;
+function spot(h, s, frame) {
+  if (frame === 'art') return h.art ? { p: s ? [s.x, s.y] : h.art.tee, k: metresPerPx(h) } : null;
+  if (s && s.t == null) return null;
+  const g = holeGeom(h, 1), q = s ? holePt(g, s.t, s.u) : holePt(g, 0, 0);
+  return { p: [q.x, q.y], k: (h.metres || 0) / (bezLen(g) || 1) };
+}
+// How far a shot actually travelled: displacement from the previous spot (or the tee).
+// Not the change in distance-to-green, which undercounts sideways and long shots.
+function shotLen(h, i) {
+  const shots = h.shots || [], prev = i ? shots[i - 1] : null;
+  const frame = frameOf(shots[i]);
+  if (!frame || (prev && frameOf(prev) !== frame)) return null;
+  const a = spot(h, prev, frame), b = spot(h, shots[i], frame);
+  if (!a || !b) return null;
+  return Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1]) * b.k;
+}
+// Round holes carry scores; shape and art live on the course and are merged in.
+function holesOf(r) {
+  const c = course(r.courseId);
+  return (r.holes || []).map(h => {
+    const src = c && (c.holes || []).find(x => x.n === h.n);
+    // Distance resolves through the tee the round was played off; the
+    // round's own snapshot is the fallback.
+    const m = r.tee && src ? teeMetres(src, r.tee) : null;
+    return { ...h, metres: m ?? h.metres, shape: (src && src.shape) || h.shape, art: src && src.art };
+  });
+}
+// Use art only when every logged shot on the hole was tapped on art.
+const usesArt = h => !!h.art && (h.shots || []).every(s => s.x != null);
+
+function artSVG(h, opts = {}) {
+  const a = h.art, big = !!opts.big;
+  const shots = (h.shots || []).filter(s => s.x != null);
+  let over = '';
+  if (opts.cal) {
+    const m = (p, cls) => p ? `<circle class="cal ${cls}" cx="${p[0]}" cy="${p[1]}" r="${big ? 11 : 16}"/>` : '';
+    const line = [a.tee, a.turn, a.green].filter(Boolean).map(p => p.join(',')).join(' ');
+    over += `<polyline class="calline" points="${line}"/><circle class="calgr" cx="${a.green[0]}" cy="${a.green[1]}" r="${a.gr || 30}"/>` + m(a.tee, 'tee') + m(a.turn, 'turn') + m(a.green, 'grn');
+  }
+  if (shots.length) {
+    const pts = [a.tee].concat(shots.map(s => [s.x, s.y]));
+    over += `<polyline class="trace" points="${pts.map(p => p.join(',')).join(' ')}"/>` +
+      shots.map(s => `<circle class="ball ${s.lie === 'water' ? 'pen' : ''}" cx="${s.x}" cy="${s.y}" r="${big ? 10 : 18}"/>`).join('');
+  }
+  over += (opts.dots || []).map(s => `<circle class="hdot ${s.first ? 'first' : ''}" cx="${s.x}" cy="${s.y}" r="${big ? 8 : 14}"/>`).join('');
+  return `<svg class="stencil art" viewBox="0 0 ${a.w} ${a.h}" xmlns="http://www.w3.org/2000/svg" ${opts.attrs || ''}><image href="${artURL(a)}" x="0" y="0" width="${a.w}" height="${a.h}"/>${over}</svg>`;
+}
+
+/* ---------- terrain sampling ---------- */
+const artPixels = new Map();
+function loadArt(a) {
+  const url = artURL(a);
+  if (!artPixels.has(url)) artPixels.set(url, new Promise(res => {
+    const img = new Image(); img.decoding = 'async';
+    img.onload = () => { try { const cv = document.createElement('canvas'); cv.width = a.w; cv.height = a.h; const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0, a.w, a.h); res(cx.getImageData(0, 0, a.w, a.h)); } catch (e) { res(null); } };
+    img.onerror = () => res(null); img.src = url;
+  }));
+  return artPixels.get(url);
+}
+// Same rule as the one verified offline against the artwork:
+// 7×7 alpha-weighted mean colour, then water, sand, trees, light green.
+function classifyAt(px, a, x, y) {
+  if (!px) return null;
+  const box = (rad, wantVar) => {
+    let r = 0, g = 0, b = 0, gg = 0, w = 0, n = 0;
+    for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
+      const xx = Math.round(x) + dx, yy = Math.round(y) + dy; n++;
+      if (xx < 0 || yy < 0 || xx >= px.width || yy >= px.height) continue;
+      const i = (yy * px.width + xx) * 4, al = px.data[i + 3] / 255;
+      r += px.data[i] * al; g += px.data[i + 1] * al; b += px.data[i + 2] * al; w += al;
+      if (wantVar) gg += px.data[i + 1] * px.data[i + 1] * al;
+    }
+    const ww = Math.max(w, 1e-6), gm = g / ww;
+    return { r: r / ww, g: gm, b: b / ww, cover: w / n, std: wantVar ? Math.sqrt(Math.max(gg / ww - gm * gm, 0)) : 0 };
+  };
+  const c = box(3, false);
+  if (c.cover < 0.5) return 'trees';                    // off the artwork
+  if (c.r > 150 && c.g > 140 && c.b > 95) return 'bunker';
+  if (c.b > c.g && c.b > c.r + 20) return 'water';
+  // Canopy is dark, or mid-dark and visually noisy. Turf is smooth at any
+  // brightness, so texture separates trees from rough across art styles.
+  if (c.g < 64) return 'trees';
+  if (c.g < 110 && box(4, true).std > 18) return 'trees';
+  if (c.g >= 118) return dpx([x, y], a.green) <= (a.gr || 30) ? 'green' : 'fairway';
+  return 'rough';
+}
+async function lieAt(a, x, y) { try { return classifyAt(await loadArt(a), a, x, y); } catch (e) { return null; } }
+
+/* ---------- upload: cut out the background, crop to a 3:5 tile ---------- */
+async function prepArt(file) {
+  const src = await new Promise((res, rej) => { const u = URL.createObjectURL(file); const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('unreadable')); im.src = u; });
+  const k = Math.min(1, 1024 / Math.max(src.naturalWidth, src.naturalHeight));
+  const W = Math.round(src.naturalWidth * k), H = Math.round(src.naturalHeight * k);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(src, 0, 0, W, H);
+  const id = cx.getImageData(0, 0, W, H), d = id.data, N = W * H;
+  const white = new Uint8Array(N); for (let i = 0; i < N; i++) white[i] = Math.min(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]) > 222 ? 1 : 0;
+  // background = near-white pixels connected to the border
+  const bg = new Uint8Array(N), q = new Int32Array(N); let qh = 0, qt = 0;
+  const seed = i => { if (white[i] && !bg[i]) { bg[i] = 1; q[qt++] = i; } };
+  for (let x = 0; x < W; x++) { seed(x); seed((H - 1) * W + x); } for (let y = 0; y < H; y++) { seed(y * W); seed(y * W + W - 1); }
+  while (qh < qt) { const i = q[qh++], x = i % W; if (x > 0) seed(i - 1); if (x < W - 1) seed(i + 1); if (i >= W) seed(i - W); if (i < N - W) seed(i + W); }
+  // keep only the largest foreground piece (drops watermarks and specks)
+  const comp = new Int32Array(N).fill(-1); let best = -1, bestN = 0, cid = 0;
+  for (let s = 0; s < N; s++) { if (bg[s] || comp[s] >= 0) continue; qh = 0; qt = 0; q[qt++] = s; comp[s] = cid; let cnt = 0;
+    while (qh < qt) { const i = q[qh++], x = i % W; cnt++; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i >= W ? i - W : -1, i < N - W ? i + W : -1]) if (j >= 0 && !bg[j] && comp[j] < 0) { comp[j] = cid; q[qt++] = j; } }
+    if (cnt > bestN) { bestN = cnt; best = cid; } cid++; }
+  let x0 = W, y0 = H, x1 = 0, y1 = 0;
+  for (let i = 0; i < N; i++) {
+    const keep = !bg[i] && comp[i] === best, p = i * 4;
+    if (!keep) { d[p + 3] = 0; continue; }
+    const x = i % W, y = (i / W) | 0;
+    const edge = (x > 0 && bg[i - 1]) || (x < W - 1 && bg[i + 1]) || (y > 0 && bg[i - W]) || (y < H - 1 && bg[i + W]);
+    if (edge) { const a = Math.min(1, (255 - Math.min(d[p], d[p + 1], d[p + 2])) / 255 * 1.6); for (let c = 0; c < 3; c++) d[p + c] = Math.max(0, Math.min(255, (d[p + c] - 255 * (1 - a)) / Math.max(a, 0.01))); d[p + 3] = Math.round(a * 255); }
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  if (best < 0) throw new Error('empty');
+  cx.putImageData(id, 0, 0);
+  const pad = 14; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(W, x1 + pad); y1 = Math.min(H, y1 + pad);
+  const cw = x1 - x0, ch = y1 - y0; let tw = cw, th = ch; if (cw / ch < 0.6) tw = Math.round(ch * 0.6); else th = Math.round(cw / 0.6);
+  const oh = Math.min(900, th), ow = Math.round(tw * oh / th), s = oh / th;
+  const out = document.createElement('canvas'); out.width = ow; out.height = oh;
+  out.getContext('2d').drawImage(cv, x0, y0, cw, ch, Math.round((tw - cw) / 2 * s), Math.round((th - ch) / 2 * s), Math.round(cw * s), Math.round(ch * s));
+  let blob = await new Promise(r => out.toBlob(r, 'image/webp', 0.86));
+  if (!blob || blob.type !== 'image/webp') blob = await new Promise(r => out.toBlob(r, 'image/png'));
+  return { blob, w: ow, h: oh };
+}
+async function uploadArt(file) {
+  if (!S.assets) { toast('Image upload needs write access to this page'); return null; }
+  let prepped; try { prepped = await prepArt(file); } catch (e) { toast("Couldn't read that image"); return null; }
+  try {
+    const res = await S.assets.upload(prepped.blob, { type: prepped.blob.type });
+    return { asset: res.id, w: prepped.w, h: prepped.h, tee: [Math.round(prepped.w / 2), Math.round(prepped.h * 0.9)], green: [Math.round(prepped.w / 2), Math.round(prepped.h * 0.12)], gr: Math.round(prepped.h * 0.035) };
+  } catch (e) {
+    const c = e && e.code; toast(c === 'too_large' ? 'That image is too large' : c === 'quota_or_state' ? 'Image storage is full' : c === 'rate_limited' ? 'Too many uploads, try again shortly' : 'Upload failed');
+    return null;
+  }
+}
+async function releaseArt(assetId) {
+  // Delete only when no hole on any course still points at it.
+  if (!S.assets || !assetId) return;
+  const used = S.courses.some(c => (c.holes || []).some(h => h.art && h.art.asset === assetId));
+  if (!used) { try { await S.assets.delete(assetId); } catch (e) {} }
+}
+
+/* ---------- art editor: calibrate tee, green, turn ---------- */
+function openArtEditor(courseId, n, art, firstTime) {
+  const c = course(courseId); const hole = c && c.holes.find(h => h.n === n); if (!hole) return;
+  const a = JSON.parse(JSON.stringify(art)); let mode = firstTime ? 'tee' : null;
+  const hints = { tee: 'Tap the tee box.', green: 'Tap the middle of the green.', turn: 'Tap where the fairway bends.', null: 'Tap a button, then tap the image to move that point.' };
+  const draw = () => { $('#artWrap', sheetInner).innerHTML = artSVG({ ...hole, art: a }, { big: true, cal: true, attrs: 'id="artMap"' }); $('#artHint', sheetInner).textContent = hints[mode]; sheetInner.querySelectorAll('[data-cal]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cal === mode)); };
+  openSheet(`<h2>Hole ${n} <span class="muted">par ${hole.par ?? '–'}, ${hole.metres || '–'}m</span></h2>
+    <div class="bigmap" id="artWrap"></div><div class="map-hint" id="artHint"></div>
+    <div class="row-actions" style="justify-content:center"><button type="button" data-cal="tee">Tee</button><button type="button" data-cal="green">Green</button><button type="button" data-cal="turn">Bend</button><button type="button" data-noturn>Straight</button></div>
+    <label>Green size<input type="range" name="gr" min="10" max="90" step="1" value="${a.gr || 30}"></label>
+    <p class="small muted">Distances run along the red line and are scaled to the scorecard's ${hole.metres || '–'}m. Add a bend where the fairway doglegs so the line follows it.</p>
+    <div class="row-actions"><button type="button" data-replace>Replace image</button><button type="button" class="danger" data-removeart>Remove image</button><input type="file" accept="image/*" hidden id="artFile"></div>`,
+    async () => { const holes = c.holes.map(h => h.n === n ? { ...h, art: a } : h); const old = hole.art && hole.art.asset !== a.asset ? hole.art.asset : null; const ok = await save('courses', c.id, { ...c, holes }); if (ok) { if (old) releaseArt(old); render(); } return ok; });
+  draw();
+  sheetInner.addEventListener('click', ev => {
+    const svg = ev.target.closest('#artMap'); if (!svg || !mode) return;
+    const p = svgPoint(svg, ev), pt = [Math.round(Math.max(0, Math.min(a.w, p.x))), Math.round(Math.max(0, Math.min(a.h, p.y)))];
+    a[mode] = pt; mode = mode === 'tee' ? 'green' : null; draw();
+  });
+  sheetInner.querySelectorAll('[data-cal]').forEach(b => b.addEventListener('click', () => { mode = mode === b.dataset.cal ? null : b.dataset.cal; draw(); }));
+  sheetInner.querySelector('[data-noturn]').addEventListener('click', () => { delete a.turn; if (mode === 'turn') mode = null; draw(); });
+  sheetInner.querySelector('[name=gr]').addEventListener('input', e => { a.gr = Number(e.target.value); draw(); });
+  const fileIn = sheetInner.querySelector('#artFile');
+  sheetInner.querySelector('[data-replace]').addEventListener('click', () => fileIn.click());
+  fileIn.addEventListener('change', async () => { const f = fileIn.files[0]; if (!f) return; toast('Preparing image…'); const na = await uploadArt(f); if (na) { const prevAsset = a.asset; Object.assign(a, na); delete a.turn; mode = 'tee'; draw(); if (prevAsset !== hole.art?.asset) releaseArt(prevAsset); } });
+  sheetInner.querySelector('[data-removeart]').addEventListener('click', async () => {
+    const traced = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id).flatMap(r => (r.holes || []).filter(x => x.n === n && (x.shots || []).some(sh => sh.x != null)).map(x => ({ r, h: x })));
+    if (!await confirmAsk(`Remove this image? The hole goes back to its drawn outline.${traced.length ? ` ${plural(traced.length, 'round')} with shots traced here will be converted to the outline.` : ''}`, 'Remove image')) return;
+    // Convert tapped shots to outline coordinates first, so their distances survive.
+    for (const t of traced) {
+      const src = { ...t.h, art: hole.art };
+      const shots = (t.h.shots || []).map(sh => {
+        if (sh.x == null) return sh;
+        const d = toGreen(src, sh), tt = Math.max(0, Math.min(1, 1 - d / (t.h.metres || 1)));
+        const u = { fairway: 0, green: 0, rough: 0.8, bunker: 0.9, trees: 1.3, water: 1.3 }[sh.lie] ?? 0.4;
+        const { x, y, ...rest } = sh; return { ...rest, t: +tt.toFixed(3), u };
+      });
+      await save('sessions', t.r.id, { ...t.r, holes: t.r.holes.map(x => x.n === n ? { ...x, shots } : x) });
+    }
+    const holes = c.holes.map(h => { if (h.n !== n) return h; const { art: _, ...rest } = h; return rest; });
+    if (await save('courses', c.id, { ...c, holes })) { sheet.close(); toast('Image removed'); releaseArt(hole.art && hole.art.asset); if (a.asset !== hole.art?.asset) releaseArt(a.asset); render(); }
+  });
+}
+async function startArtUpload(courseId, n) {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = async () => { const f = inp.files[0]; if (!f) return; toast('Preparing image…'); const art = await uploadArt(f); if (art) { if (sheet.open) sheet.close(); openArtEditor(courseId, n, art, true); } };
+  inp.click();
+}
+
+/* ============================================================
+   Feedback loop
+   One rule: the range measures HOW FAR, the course measures WHAT
+   IT COSTS. Course taps never overwrite range distances.
+     1. Course → range   practiceItems(): what to work on next
+     2. Range → course   adviceFor(): which club fits the distance
+     3. Calibration      calibration(): do range numbers hold up?
+   Every output carries its sample size, and says so when small.
+   ============================================================ */
+const round5 = v => Math.round(v / 5) * 5;
+const confidence = n => n >= 12 ? 'consistent' : n >= 5 ? 'emerging' : 'early signal';
+const plural = (n, w, p) => `${n} ${n === 1 ? w : (p || w + 's')}`;
+
+// Every shot logged on course, with what it was trying to do.
+//   tee       first shot on a par 4 or 5
+//   recovery  played from trees, bunker or water
+//   short     inside 60m (pitches, chips)
+//   approach  everything else, including par-3 tee shots
+function shotRecords() {
+  const out = [];
+  for (const r of S.sessions) if (r.type === 'round') for (const h of holesOf(r)) {
+    const shots = h.shots || [];
+    shots.forEach((s, i) => {
+      const from = i ? toGreen(h, shots[i - 1]) : (h.metres || 0);
+      const len = shotLen(h, i), lie = lieOf(h, s);
+      if (from == null || len == null) return;            // unplaceable shot: leave it out of the loop
+      const fromLie = i ? lieOf(h, shots[i - 1]) : 'tee';
+      const recovery = ['trees', 'bunker', 'water'].includes(fromLie);
+      const kind = i === 0 && h.par >= 4 ? 'tee' : recovery ? 'recovery' : from < 60 ? 'short' : 'approach';
+      out.push({ r, h, i, s, club: s.club, from, fromLie, lie, len, kind, full: !recovery && len >= 30 && from >= 40 });
+    });
+  }
+  return out;
+}
+const shotHoleCount = () => S.sessions.filter(r => r.type === 'round').reduce((n, r) => n + (r.holes || []).filter(h => (h.shots || []).length).length, 0);
+
+/* ---------- reference distances, with where they came from ---------- */
+const rangeBlocksFor = code => S.sessions.filter(s => s.type === 'range').flatMap(s => (s.blocks || []).map(b => ({ ...b, date: s.date }))).filter(b => b.club === code);
+function weighted(blocks, key) { const bs = blocks.filter(b => b.summary && b.summary[key] != null && (b.swing || 'full') === 'full'); if (!bs.length) return null; const w = sum(bs.map(b => b.summary.n || 1)); return sum(bs.map(b => b.summary[key] * (b.summary.n || 1))) / w; }
+function carryRef(code) {
+  const s = clubStats(code); if (s && s.stockCarry) return { v: s.stockCarry, measured: true, src: 'range', pure: pct(s.pure, s.n) };
+  const w = weighted(rangeBlocksFor(code), 'avgCarry'); if (w) return { v: w, measured: true, src: 'range summary' };
+  const c = clubBy(code); if (!c) return null;
+  if (c.nominalCarry) return { v: c.nominalCarry, measured: false, src: 'your estimate' };
+  if (c.nominalTotal) return { v: c.nominalTotal * 0.9, measured: false, src: 'estimated from your total' };
+  return null;
+}
+function totalRef(code) {
+  const s = clubStats(code); if (s && s.stockTotal) return { v: s.stockTotal, measured: true, src: 'range', max: Math.max(...fullShots(code).map(x => x.total)) };
+  const w = weighted(rangeBlocksFor(code), 'avgTotal'); if (w) return { v: w, measured: true, src: 'range summary' };
+  const c = clubBy(code); if (c && c.nominalTotal) return { v: c.nominalTotal, measured: false, src: 'your estimate' };
+  return null;
+}
+
+/* ---------- 2. range → course: which club fits ---------- */
+function clubFit(dist) {
+  const clubs = activeClubs().filter(c => c.category !== 'putter').map(c => ({ c, ref: carryRef(c.code) })).filter(x => x.ref);
+  const measured = clubs.filter(x => x.ref.measured).sort((a, b) => Math.abs(a.ref.v - dist) - Math.abs(b.ref.v - dist));
+  const unmeasured = clubs.filter(x => !x.ref.measured && Math.abs(x.ref.v - dist) <= 15).sort((a, b) => Math.abs(a.ref.v - dist) - Math.abs(b.ref.v - dist));
+  const longest = clubs.filter(x => x.ref.measured).sort((a, b) => b.ref.v - a.ref.v)[0];
+  return { best: measured[0], unmeasured: unmeasured[0], longest };
+}
+function adviceFor(dist) {
+  if (!dist || dist < 60) return '';
+  const f = clubFit(dist); if (!f.best) return '';
+  const tag = x => `<b>${esc(x.c.code)}</b>`;
+  if (f.longest && dist > f.longest.ref.v + 20) {
+    const tot = totalRef(f.longest.c.code);
+    if (tot && tot.measured && dist <= tot.v + 10) return `For ${fmt(dist)}m: ${tag(f.longest)} carries ${fmt(f.longest.ref.v)}m and runs out to about ${fmt(tot.v)}m, so it gets there if it lands short and rolls. Anything in front of the green is in play.`;
+    return `Longer than any measured club. ${tag(f.longest)} carries ${fmt(f.longest.ref.v)}m${tot && tot.measured ? `, about ${fmt(tot.v)}m with roll, leaving ~${fmt(dist - tot.v)}m` : ''}.${activeClubs().some(c => c.code === 'D') && !carryRef('D') ? ' Driver has no range data yet.' : ''}`;
+  }
+  const b = f.best;
+  return `For ${fmt(dist)}m: ${tag(b)}, stock carry ${fmt(b.ref.v)}m${b.ref.pure != null ? `, pure ${b.ref.pure}% of the time` : ''}.${f.unmeasured && f.unmeasured.c.code !== b.c.code ? ` ${tag(f.unmeasured)} should fit too but isn't measured yet.` : ''}`;
+}
+
+/* ---------- 1. course → range: what to practise ---------- */
+function practiceItems() {
+  const R = shotRecords(), items = [];
+  // Tee accuracy, by club
+  const tee = {};
+  for (const x of R.filter(x => x.kind === 'tee' && x.club)) { const t = tee[x.club] = tee[x.club] || { n: 0, fw: 0, lies: {}, recs: [] }; t.n++; if (x.lie === 'fairway') t.fw++; else t.lies[x.lie] = (t.lies[x.lie] || 0) + 1; t.recs.push(x); }
+  const W = { trees: .8, water: 1, bunker: .5, rough: .3 };
+  for (const [club, t] of Object.entries(tee)) {
+    if (t.fw === t.n) continue; const cs = clubStats(club), ref = carryRef(club);
+    items.push({ kind: 'tee', n: t.n, score: Object.entries(t.lies).reduce((a, [l, c]) => a + (W[l] ?? .3) * c, 0),
+      title: `${club} off the tee: ${t.fw} of ${t.n} fairways`, detail: `Misses: ${Object.entries(t.lies).map(([l, c]) => `${c} ${l}`).join(', ')}. Distance isn't the issue${ref && ref.measured ? ` (stock carry ${fmt(ref.v)}m)` : ''}; direction is.`,
+      range: cs ? `On the range: ${pct(cs.pure, cs.n)}% pure, ${pct(cs.top, cs.n)}% topped` : null,
+      block: { club, swing: 'full', target: ref ? round5(ref.v) : null, intent: 'Accuracy: pick two markers about 30m apart and count how many finish between them' }, recs: t.recs });
+  }
+  // Approaches: clubbed short, and clubs that should be covering these distances but aren't measured
+  const appr = R.filter(x => (x.kind === 'approach' || (x.i === 0 && x.h.par === 3)) && x.from >= 60 && x.club);
+  const short = appr.filter(x => { const c = carryRef(x.club); return c && c.measured && x.from - c.v > 15; });
+  if (short.length) {
+    const med = median(short.map(x => x.from)), f = clubFit(med);
+    items.push({ kind: 'approach', n: appr.length, score: .5 * short.length, title: `Approaches clubbed short: ${short.length} of ${appr.length}`,
+      detail: short.map(x => `${x.club} (stock ${fmt(carryRef(x.club).v)}m) from ${fmt(x.from)}m`).join('; ') + '.',
+      advice: f.best ? `From ${fmt(Math.min(...short.map(x => x.from)))}–${fmt(Math.max(...short.map(x => x.from)))}m, your measured club is ${f.best.c.code} (${fmt(f.best.ref.v)}m).` : null, recs: short });
+  }
+  const bestUnmeasured = {};
+  for (const x of appr) { const u = clubFit(x.from).unmeasured; if (u) (bestUnmeasured[u.c.code] = bestUnmeasured[u.c.code] || { ref: u.ref, xs: [] }).xs.push(x); }
+  for (const [code, u] of Object.entries(bestUnmeasured)) {
+    const ds = u.xs.map(x => x.from);
+    items.push({ kind: 'measure', n: u.xs.length, score: .4 * u.xs.length, title: `Measure your ${code}`,
+      detail: `${plural(u.xs.length, 'approach', 'approaches')} of ${fmt(Math.min(...ds))}${ds.length > 1 ? '–' + fmt(Math.max(...ds)) : ''}m, where it should sit (about ${fmt(u.ref.v)}m, ${u.ref.src}). It has no range data, so the app can't recommend it.`,
+      block: { club: code, swing: 'full', target: round5(median(ds)), intent: 'Establish a stock carry: 20 balls, paste carry and total' }, recs: u.xs });
+  }
+  // Short game
+  const sg = R.filter(x => x.kind === 'short' && x.club), sgMiss = sg.filter(x => x.lie !== 'green');
+  if (sgMiss.length) {
+    const main = Object.entries(sg.reduce((a, x) => (a[x.club] = (a[x.club] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1])[0][0];
+    const chip = rangeBlocksFor(main).filter(b => b.swing === 'chip').sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
+    const cs = chip && blockSummary(chip);
+    items.push({ kind: 'short', n: sg.length, score: .5 * sgMiss.length, title: `Short game: ${sgMiss.length} of ${sg.length} missed the green`,
+      detail: sgMiss.map(x => `${x.club} from ${fmt(x.from)}m, finished in the ${x.lie}`).join('; ') + '.',
+      range: cs && cs.fromPinTotal != null ? `On the range: your ${chip.target}m chip block finished ${fmt(cs.fromPinTotal, 1)}m from the pin on average` : null,
+      block: { club: main, swing: 'chip', target: round5(median(sg.map(x => x.from))) || 20, intent: 'Land it on the green: count how many finish inside 3m' }, recs: sgMiss });
+  }
+  // Putting and penalties, from holes where they were logged
+  const ph = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
+  const threes = ph.filter(p => p.h.putts >= 3);
+  if (threes.length) items.push({ kind: 'putting', n: ph.length, score: threes.length, title: `Three-putts: ${threes.length} in ${plural(ph.length, 'hole')}`,
+    detail: `${sum(ph.map(p => p.h.putts))} putts over ${plural(ph.length, 'hole')}, ${(sum(ph.map(p => p.h.putts)) / ph.length).toFixed(1)} a hole.`, practice: 'Putting green: 20 lag putts from 8–12m, trying to finish inside a metre.', recs: threes.map(p => ({ r: p.r, h: p.h })) });
+  const pens = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => (h.shots || []).length && h.penalties).map(h => ({ r, h })));
+  if (pens.length) items.push({ kind: 'penalty', n: shotHoleCount(), score: .6 * sum(pens.map(p => p.h.penalties)), title: `Penalty strokes: ${sum(pens.map(p => p.h.penalties))} in ${plural(shotHoleCount(), 'hole')}`,
+    detail: `On ${pens.map(p => 'hole ' + p.h.n).join(', ')}. Worth checking the trace to see what caused it.`, recs: pens });
+  items.push(...swingItems());
+  return items.sort((a, b) => b.score - a.score);
+}
+
+/* ---------- 3. calibration: course distance vs range ---------- */
+function calibration() {
+  const by = {};
+  for (const x of shotRecords().filter(x => x.full && x.club)) (by[x.club] = by[x.club] || []).push(x);
+  return Object.entries(by).map(([club, xs]) => {
+    const ref = totalRef(club), med = median(xs.map(x => x.len)), n = xs.length;
+    // Short shots are plausible mishits. Only shots LONGER than the range allows are suspect data.
+    const ceiling = ref ? Math.max(ref.max || 0, ref.v + Math.max(25, 0.25 * ref.v)) : null;
+    const suspect = ceiling ? xs.filter(x => x.len > ceiling && !(x.s && x.s.verified)) : [];
+    return { club, n, med, ref, delta: ref ? med - ref.v : null, status: n >= 8 ? 'calibrated' : n >= 3 ? 'early' : 'too few', suspect, xs };
+  }).sort((a, b) => ((b.ref && b.ref.v) || 0) - ((a.ref && a.ref.v) || 0));
+}
+
+/* ---------- views ---------- */
+const KIND_LABEL = { tee: 'Off the tee', approach: 'Approach', measure: 'Gapping', short: 'Short game', putting: 'Putting', penalty: 'Penalties', swing: 'Swing video' };
+function practiceCard(it, i) {
+  const b = it.block;
+  // Video readings collapse: they are long, and they rank below ball data.
+  if (it.kind === 'swing') return `<details class="pcard k-swing">
+    <summary><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span> <b>${esc(it.title)}</b> <span class="tag">read from video</span></summary>
+    <div class="small" style="margin-top:6px">${esc(it.detail)}</div>
+    ${it.advice ? `<div class="small" style="margin-top:4px"><b>Video vs numbers:</b> ${esc(String(it.advice).replace(/^Video vs numbers: /, ''))}</div>` : ''}
+    ${it.practice ? `<div class="small" style="margin-top:4px"><b>Drill:</b> ${esc(it.practice)}</div>` : ''}
+    ${it.range ? `<div class="small muted" style="margin-top:4px">${esc(it.range)}</div>` : ''}
+  </details>`;
+  return `<div class="pcard k-${it.kind}">
+    <div class="spread"><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span><span class="tag ${it.n >= 12 ? 'green' : ''}">${it.video ? 'read from video' : confidence(it.n) + ', n=' + it.n}</span></div>
+    <div class="pt">${esc(it.title)}</div><div class="small">${esc(it.detail)}</div>
+    ${it.range ? `<div class="small muted" style="margin-top:4px">${esc(it.range)}</div>` : ''}
+    ${it.advice ? `<div class="small" style="margin-top:4px"><b>On course:</b> ${esc(it.advice)}</div>` : ''}
+    ${it.practice ? `<div class="small" style="margin-top:4px"><b>Practice:</b> ${esc(it.practice)}</div>` : ''}
+    ${b ? `<div class="pblock"><span class="tag green">${esc(b.club)} · ${b.swing}${b.target ? ' · ' + b.target + 'm' : ''}</span> <span class="small muted">${esc(b.intent)}</span></div>` : ''}
+    ${it.recs && it.recs.length && it.recs[0].r ? `<div class="small" style="margin-top:6px">${[...new Map(it.recs.map(x => [x.r.id + '|' + x.h.n, x])).values()].slice(0, 6).map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${x.r.id},hole=${x.h.n}">Hole ${x.h.n}</button>`).join('')}</div>` : ''}
+  </div>`;
+}
+function practiceSection(limit) {
+  const items = practiceItems(), holes = shotHoleCount();
+  if (!holes) return `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and this fills with what to practise, ranked by what's costing you on course.</p></div>`;
+  if (!items.length) return `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`;
+  const shown = limit ? items.slice(0, limit) : items;
+  return basisLine() + `<p class="small muted">Ranked by estimated cost on course${holes < 9 ? ' — early signals, not conclusions' : ''}.</p>` +
+    shown.map(practiceCard).join('') +
+    (limit && items.length > limit ? `<button class="quiet" data-go="range">All ${items.length} items</button>` : '') +
+    (items.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
+}
+function calibrationSection() {
+  const rows = calibration(); if (!rows.length) return '';
+  const suspects = rows.flatMap(r => r.suspect.map(x => ({ ...x, ref: r.ref })));
+  let h = `<h2>Range vs course</h2><p class="small muted">Course distances are full swings measured tap to tap (±15m), compared with range stock <i>total</i>, since a tap marks where the ball finished. The range stays the source of truth; this only checks it.</p>
+  <div class="scroll"><table><thead><tr><th>Club</th><th>Range total</th><th>Course</th><th>Δ</th><th></th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td><b>${esc(r.club)}</b></td><td>${r.ref ? fmt(r.ref.v) + (r.ref.measured ? '' : '*') : '–'}</td><td class="num">${fmt(r.med)} <span class="muted small">n=${r.n}</span></td><td>${r.status === 'too few' || r.delta == null ? '<span class="muted">–</span>' : (r.delta >= 0 ? '+' : '') + fmt(r.delta)}</td><td><span class="tag ${r.status === 'calibrated' ? 'green' : ''}">${r.status}</span></td></tr>`).join('') +
+    `</tbody></table></div><p class="small muted">Δ appears from 3 course shots, and counts from 8. * = your estimate, not measured.</p>`;
+  if (suspects.length) h += `<div class="notice warn"><b>Check ${suspects.length === 1 ? 'this tap' : 'these taps'}:</b> ${suspects.map(x => `${x.club} on hole ${x.h.n} (${dateLabel(x.r.date)}) reads ${fmt(x.len)}m, longer than your range allows (${fmt(x.ref.v)}m${x.ref.max ? ', max ' + fmt(x.ref.max) : ''}). <button class="quiet" style="padding:0 4px" data-go="rounds:sessionId=${x.r.id},hole=${x.h.n}">Fix the tap</button><button class="quiet" style="padding:0 4px" data-act="verifyShot" data-sid="${x.r.id}" data-n="${x.h.n}" data-i="${x.i}">It's real</button>`).join(' ')} Usually a tap in the wrong spot — but a bladed wedge really does run, so if it happened, mark it real: it stays in the numbers and stops being flagged.</div>`;
+  return h;
+}
+
+/* ---------- per-hole history on the course page ---------- */
+function holePlays(courseId, n) { return S.sessions.filter(s => s.type === 'round' && s.courseId === courseId).map(r => ({ r, h: holesOf(r).find(x => x.n === n) })).filter(p => p.h && p.h.strokes != null); }
+function dotsFor(courseId, hole) {
+  const art = !!hole.art;
+  return holePlays(courseId, hole.n).flatMap(p => (p.h.shots || []).map((s, i) => ({ ...s, first: i === 0 })).filter(s => art ? s.x != null : s.t != null));
+}
+function vCourseHole() {
+  const c = course(S.sub.courseId), n = Number(S.sub.hole); const hole = c && fullCard(c.holes).find(h => h.n === n);
+  if (!hole || hole.par == null) return back('courses', c ? 'courseId:' + c.id : null, c ? c.name : 'Courses') + `<p>Hole not found.</p>`;
+  const plays = holePlays(c.id, n), dots = dotsFor(c.id, hole);
+  let h = back('courses', 'courseId:' + c.id, c.name) + `<div class="spread"><h1>Hole ${n} <span class="muted">par ${hole.par}, ${hole.metres || '–'}m</span></h1><div class="row-actions" style="margin:0">${n > 1 ? `<button data-go="courses:courseId=${c.id},hole=${n - 1}">‹</button>` : ''}${n < fullCard(c.holes).length ? `<button data-go="courses:courseId=${c.id},hole=${n + 1}">›</button>` : ''}</div></div>`;
+  h += `<div class="bigmap">${hole.art ? artSVG({ ...hole, shots: [] }, { big: true, dots }) : stencilSVG(hole, { big: true, dots })}</div>`;
+  if (dots.length) h += `<div class="legend" style="justify-content:center"><span><i class="l-teedot"></i>tee shots</span><span><i class="l-dot"></i>other shots</span><span>${plural(plays.filter(p => (p.h.shots || []).length).length, 'round')} traced</span></div>`;
+  const par3 = hole.par === 3 && adviceFor(hole.metres) ? `<p class="small advice">${adviceFor(hole.metres)}</p>` : '';
+  if (!plays.length) {
+    h += `<p class="muted">Not played yet.</p>` + par3;
+  } else {
+    const sc = plays.map(p => p.h.strokes), avg = mean(sc);
+    h += `<div style="margin-top:12px"><span class="stat"><b>${plays.length}</b><small>played</small></span><span class="stat"><b>${avg.toFixed(1)}</b><small>average</small></span><span class="stat"><b>${Math.min(...sc)}</b><small>best</small></span><span class="stat"><b>${(avg - hole.par >= 0 ? '+' : '') + (avg - hole.par).toFixed(1)}</b><small>vs par</small></span></div>`;
+    h += scoreStrip(plays.map((p, i) => ({ ...p.h, n: i + 1 })), null) + `<p class="small muted" style="margin-top:-2px">Each square is one round here, oldest first.</p>`;
+    if (hole.par === 3) h += par3;
+    const traced = plays.filter(p => (p.h.shots || []).length);
+    if (traced.length) {
+      const R = shotRecords().filter(x => x.r.courseId === c.id && x.h.n === n);
+      if (hole.par >= 4) {
+        const tee = R.filter(x => x.kind === 'tee');
+        h += `<h2>Off the tee</h2><p>${tee.filter(x => x.lie === 'fairway').length} of ${tee.length} fairways. ${tee.map(x => `${esc(x.club || '?')} → ${fmt(x.len)}m, ${x.lie}`).join('; ')}.</p>`;
+        const leaves = tee.map(x => toGreen(x.h, x.s));
+        if (leaves.length) h += `<p class="small advice">Your tee shots here leave a median of <b>${fmt(median(leaves))}m</b>. ${adviceFor(median(leaves))}</p>`;
+      }
+      const ap = R.filter(x => x.kind === 'approach' && x.i > 0);
+      if (ap.length) h += `<h2>Approaches</h2><p>${ap.map(x => `${esc(x.club || '?')} from ${fmt(x.from)}m → ${x.lie}`).join('; ')}.</p>`;
+    }
+  }
+  h += `<div class="row-actions"><button data-act="editHole" data-id="${c.id}" data-n="${n}">Edit layout</button></div>`;
+  return h;
+}
+
+/* ---------- plan a session from the practice list ---------- */
+Object.assign(ACTIONS, {
+  async planSession() {
+    const items = practiceItems().filter(x => x.block); if (!items.length) return;
+    const seen = new Set(), blocks = [];
+    for (const it of items) { const k = it.block.club + it.block.swing; if (seen.has(k)) continue; seen.add(k); blocks.push({ id: uid('b'), seq: blocks.length + 1, club: it.block.club, swing: it.block.swing, target: it.block.target, intent: it.block.intent, plan: true, shots: [] }); if (blocks.length >= 5) break; }
+    const doc = { id: uid('s'), type: 'range', date: today(), created: Date.now(), planned: true, focus: 'Planned from on-course data', ballType: 'range', source: 'toptracer', blocks };
+    if (await save('sessions', doc.id, doc)) { toast('Session planned'); go('range', { sessionId: doc.id }); }
+  },
+  viewHole(d) { go('courses', { courseId: d.id, hole: d.n }); },
+});
+
+/* ============================================================
+   Swing analyzer
+   A session (range or round) can carry a few swings. Each swing is a
+   handful of frames pulled out of a video in the page, plus a view tag:
+     dtl    down the line — path, plane, early extension, hosel
+     face   face on        — low point, sway/slide, weight, release
+     other  anything else  — describe only what the angle supports
+   Frames are stored as assets; the video too when it fits. Analysis is
+   Claude reading the frames WITH the ball data for that club, so the
+   two lines of evidence are weighed together rather than separately.
+   ============================================================ */
+const VIEWS = { dtl: 'Down the line', face: 'Face on', other: 'Other angle' };
+const FRAME_COUNT = 8;
+
+// What each view can actually show. Sent to Claude so it reads the
+// frames for what they support, and says so when they don't.
+const VIEW_BRIEF = {
+  dtl: `DOWN THE LINE (camera behind the ball on the target line). This view shows: shaft plane through takeaway and downswing, club path in to out or out to in, the trail elbow, spine angle and any early extension (hips thrusting toward the ball), the hosel's proximity to the ball, and where the club exits. It does NOT reliably show: low point ahead or behind the ball, weight distribution, or sway toward the target.`,
+  face: `FACE ON (camera square to the player, ball in the middle). This view shows: low point relative to the ball, lateral hip sway or slide, weight shift and pressure, head movement, the width of the arc, and release timing through impact. It does NOT reliably show: club path, shaft plane, or hosel position.`,
+  other: `AN ANGLE THAT IS NEITHER down the line NOR face on (over the shoulder, in front, from a phone on the ground, or anything oblique). Work out what the angle can honestly support and comment ONLY on that. Say plainly which of the usual checks this angle cannot answer rather than guessing at them.`,
+};
+
+const swingsOf = s => (s.swings || []);
+const allSwings = () => S.sessions.flatMap(s => swingsOf(s).map(sw => ({ ...sw, session: s })));
+
+/* ---------- frames out of a video, in the page ---------- */
+// Frames are individually sized to ~880px, not tiled into one large
+// contact sheet: big sheets have failed to render reliably before.
+async function extractFrames(file, { start = 0, end = null, count = FRAME_COUNT, onProgress } = {}) {
+  const url = URL.createObjectURL(file);
+  const vid = document.createElement('video');
+  vid.preload = 'auto'; vid.muted = true; vid.playsInline = true; vid.src = url;
+  await new Promise((res, rej) => { vid.onloadedmetadata = res; vid.onerror = () => rej(new Error('unreadable')); });
+  // Wait for actual picture data. Seeking before this yields blank frames.
+  if (vid.readyState < 2) await new Promise(res => { const done = () => { vid.onloadeddata = null; res(); }; vid.onloadeddata = done; setTimeout(done, 1500); });
+  const dur = vid.duration && isFinite(vid.duration) ? vid.duration : 0;
+  const EPS = 0.05;                                    // never ask for exactly 0
+  const a = Math.max(EPS, start), b = Math.min(end == null ? dur : end, dur || 1e9);
+  const span = Math.max(0.001, b - a);
+  const scale = Math.min(1, 880 / Math.max(vid.videoWidth || 880, vid.videoHeight || 880));
+  const w = Math.round((vid.videoWidth || 880) * scale), h = Math.round((vid.videoHeight || 880) * scale);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  // A frame is blank when every sampled pixel is identical (all black, all
+  // white, or fully transparent) — the decoder gave us nothing.
+  const looksBlank = () => {
+    try {
+      const d = cx.getImageData(0, 0, w, h).data; let mn = 255, mx = 0, alpha = 0;
+      for (let i = 0; i < d.length; i += 4 * 997) { const v = (d[i] + d[i + 1] + d[i + 2]) / 3; if (v < mn) mn = v; if (v > mx) mx = v; alpha = Math.max(alpha, d[i + 3]); }
+      return alpha === 0 || mx - mn < 3;
+    } catch (e) { return false; }
+  };
+  const seekTo = t => new Promise((res, rej) => {
+    let settled = false;
+    const finish = () => { if (settled) return; settled = true; vid.onseeked = null; res(); };
+    vid.onseeked = () => { if (vid.requestVideoFrameCallback) vid.requestVideoFrameCallback(() => finish()); else setTimeout(finish, 60); };
+    vid.onerror = () => rej(new Error('seek failed'));
+    const target = Math.max(EPS, Math.min(t, Math.max(EPS, (dur || t) - 0.05)));
+    if (Math.abs(vid.currentTime - target) < 0.001) { vid.currentTime = target + 0.001; } else { vid.currentTime = target; }
+    setTimeout(finish, 1200);                          // a seek that never reports back
+  });
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    let t = a + span * (i / (count - 1 || 1));
+    let blob = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await seekTo(t);
+      cx.clearRect(0, 0, w, h);
+      cx.drawImage(vid, 0, 0, w, h);
+      if (!looksBlank()) break;
+      t = Math.min(t + 0.12, Math.max(EPS, (dur || t) - 0.05));   // nudge on and try again
+      blob = null;
+    }
+    blob = await new Promise(r => cv.toBlob(r, 'image/webp', 0.85)) || await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.85));
+    out.push({ blob, t: +t.toFixed(2), blank: looksBlank() });
+    if (onProgress) onProgress(i + 1, count);
+  }
+  URL.revokeObjectURL(url);
+  const kept = out.filter(f => !f.blank);              // drop any that stayed blank
+  return { frames: kept.length >= 2 ? kept : out, duration: dur, width: w, height: h, dropped: out.length - kept.length };
+}
+
+/* ---------- analysis ---------- */
+// Everything the app knows about this club's ball flight, in plain text.
+function ballContextFor(code) {
+  if (!code) return 'No club recorded for this swing.';
+  const s = clubStats(code), ref = carryRef(code), tot = totalRef(code);
+  if (!s) return `${code}: no shot-level range data yet${ref ? `; ${ref.measured ? 'measured' : 'assumed'} carry about ${fmt(ref.v)}m` : ''}.`;
+  const cal = calibration().find(c => c.club === code);
+  return [`${code} from ${s.n} tracked range shots:`,
+    `stock carry ${fmt(s.stockCarry)}m (median of non-topped full swings), pure-strike carry ${fmt(s.pureCarry)}m, average roll ${fmt(s.roll)}m.`,
+    `Strike mix: ${pct(s.pure, s.n)}% pure, ${pct(s.runner, s.n)}% low runners (low launch, long roll), ${pct(s.short, s.n)}% short or fat, ${pct(s.top, s.n)}% topped.`,
+    tot && tot.measured ? `Stock total ${fmt(tot.v)}m.` : '',
+    cal && cal.n ? `On course this club has measured ${fmt(cal.med)}m over ${cal.n} full swings.` : '',
+  ].filter(Boolean).join(' ');
+}
+function swingPrompt(sw, session) {
+  const changes = S.sessions.length ? '' : '';
+  const focus = session.focus ? `The player's stated focus for this session was: "${session.focus}".` : '';
+  const hist = `Background on the player: a beginner roughly a year in, working on iron consistency and course management. Known history: lateral hip sway on the backswing and early extension through impact were early faults; adding hip rotation gained distance but introduced an alternating hook and shank pattern on irons, thought to be body rotation outrunning hand and arm timing.`;
+  return `You are looking at ${FRAME_COUNT} still frames taken in order from a single golf swing, earliest first. They were pulled from a phone video, so they are evenly spaced in time and may not land exactly on the key positions.
+
+CAMERA VIEW: ${VIEW_BRIEF[sw.view] || VIEW_BRIEF.other}
+
+CLUB AND BALL DATA: ${ballContextFor(sw.club)}
+${focus}
+${sw.note ? `The player's own note on this swing: "${sw.note}"` : ''}
+
+${hist}
+
+Read the frames and answer as JSON with exactly these keys:
+{
+  "positions": [ { "frame": 1, "what": "one short line on what this frame shows" } ],
+  "observations": [ { "what": "one specific thing you can see", "evidence": "which frame(s) and what in them shows it", "confidence": "high" | "medium" | "low" } ],
+  "matches_ball_data": "one or two sentences: does what you see line up with the strike mix above, contradict it, or neither? Say which.",
+  "cannot_tell": ["things this camera angle or frame spacing cannot answer"],
+  "drill": { "name": "one drill", "why": "one line tying it to what you saw" },
+  "one_thing": "the single change you would make, in one sentence a golfer can act on"
+}
+
+Be specific and restrained. Only claim what the frames support; put anything you are unsure of at low confidence or in cannot_tell. Do not invent measurements or angles. Prefer "I cannot see that from here" over a guess.`;
+}
+async function analyseSwing(sessionId, swingId, onText) {
+  const s = session(sessionId), sw = swingsOf(s).find(x => x.id === swingId);
+  if (!sw) return { error: 'gone' };
+  const sample = await claude.use('sample');
+  if (!sample) return { error: 'unavailable' };
+  // limits() can under-report; attempt the call and let it reject rather
+  // than refusing up front.
+  const lim = await sample.limits().catch(() => null);
+  const max = Math.max(1, Math.min((lim && lim.images && lim.images.maxCount) || 4, sw.frames.length));
+  const pick = sw.frames.length <= max ? sw.frames : Array.from({ length: max }, (_, i) => sw.frames[Math.round(i * (sw.frames.length - 1) / (max - 1))]);
+  let blobs;
+  try { blobs = await Promise.all(pick.map(async f => { const r = await fetch('/_blob/' + f.asset); if (!r.ok) throw new Error('fetch'); return r.blob(); })); }
+  catch (e) { return { error: 'frames_unreadable' }; }
+  try {
+    const data = await sample.json(swingPrompt({ ...sw, frames: pick }, s), { images: blobs, modelTier: 'complex', onText });
+    return { data };
+  } catch (e) { return { error: e && e.code ? e.code : 'failed', text: e && e.text }; }
+}
+// One save prompt, not one per frame: the platform rate-limits repeated
+// prompts, so the frames go out as a single stored (uncompressed) zip.
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let i = 0; i < 256; i++) { let c = i; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[i] = c >>> 0; } return t; })();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files, when = new Date()) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  const dosTime = ((when.getHours() & 31) << 11) | ((when.getMinutes() & 63) << 5) | ((when.getSeconds() / 2) & 31);
+  const dosDate = (((when.getFullYear() - 1980) & 127) << 9) | (((when.getMonth() + 1) & 15) << 5) | (when.getDate() & 31);
+  const u32 = v => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+  const u16 = v => [v & 255, (v >>> 8) & 255];
+  for (const f of files) {
+    const name = enc.encode(f.name), data = f.bytes, crc = crc32(data);
+    const local = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(dosTime), ...u16(dosDate),
+      ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0)]);
+    parts.push(local, name, data);
+    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(dosTime), ...u16(dosDate),
+      ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset)]), name);
+    offset += local.length + name.length + data.length;
+  }
+  const cdStart = offset;
+  let cdLen = 0; for (const c of central) cdLen += c.length;
+  const eocd = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdLen), ...u32(cdStart), ...u16(0)]);
+  return new Blob([...parts, ...central, eocd], { type: 'application/zip' });
+}
+
+// When this view can't send images, the frames and the prompt can still go
+// somewhere that can: a normal Claude chat.
+async function swingHandoff(sessionId, swingId, mode) {
+  const s = session(sessionId), sw = swingsOf(s).find(x => x.id === swingId);
+  if (!sw) return 'gone';
+  if (mode === 'prompt') {
+    const text = swingPrompt(sw, s);
+    try { await navigator.clipboard.writeText(text); return 'copied'; }
+    catch (e) { openSheet(`<h2>Analysis prompt</h2><p class="small muted">Copy this, then drop the frames into a Claude chat with it.</p><textarea readonly style="min-height:260px">${esc(text)}</textarea>`, async () => true); return 'shown'; }
+  }
+  const dl = await claude.use('downloads');
+  if (!dl) return 'no_downloads';
+  const files = [];
+  for (let i = 0; i < sw.frames.length; i++) {
+    try {
+      const r = await fetch('/_blob/' + sw.frames[i].asset); if (!r.ok) continue;
+      const b = await r.blob(), ext = (b.type || '').includes('jpeg') ? 'jpg' : 'webp';
+      files.push({ name: `swing-${sw.view}-${String(i + 1).padStart(2, '0')}.${ext}`, bytes: new Uint8Array(await b.arrayBuffer()) });
+    } catch (e) {}
+  }
+  if (!files.length) return 'none';
+  try {
+    await dl.save({ filename: `swing-${sw.view}${sw.club ? '-' + sw.club : ''}-${s.date || today()}.zip`, data: zipStore(files) });
+    return 'saved';
+  } catch (e) { return (e && e.code) || 'failed'; }
+}
+
+/* ---------- views ---------- */
+function swingCard(sw, s, opts = {}) {
+  const a = sw.analysis;
+  return `<div class="swing">
+    <div class="spread"><div><b>${esc(VIEWS[sw.view] || 'Swing')}</b>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}${a ? ' <span class="tag green">analysed</span>' : ''}</div>
+      <span class="small muted">${sw.frames.length} frames</span></div>
+    ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
+    <div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
+    ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}
+    ${a ? `<div class="analysis">
+      <div class="one">${esc(a.one_thing || '')}</div>
+      ${(a.observations || []).slice(0, 4).map(o => `<div class="obs"><span class="tag ${o.confidence === 'high' ? 'green' : o.confidence === 'low' ? '' : ''}">${esc(o.confidence || '')}</span> <b>${esc(o.what)}</b> <span class="muted">${esc(o.evidence || '')}</span></div>`).join('')}
+      ${a.matches_ball_data ? `<div class="small" style="margin-top:6px"><b>Against your ball data:</b> ${esc(a.matches_ball_data)}</div>` : ''}
+      ${a.drill ? `<div class="small" style="margin-top:6px"><b>Drill:</b> ${esc(a.drill.name)} — ${esc(a.drill.why || '')}</div>` : ''}
+      ${(a.cannot_tell || []).length ? `<div class="small muted" style="margin-top:6px">Can't tell from this angle: ${esc((a.cannot_tell || []).join('; '))}</div>` : ''}
+      ${a.notes ? `<div class="small" style="margin-top:6px;white-space:pre-wrap">${esc(a.notes)}</div>` : ''}
+      <div class="small muted" style="margin-top:6px">Read from frames by Claude${sw.analysedIn === 'chat' ? ' in a chat' : ''} on ${dateLabel(sw.analysedOn || s.date)} — a reading, not a measurement.</div>
+    </div>` : ''}
+    ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet — tap Analyse and Claude reads these frames against your ball data for this club.</div>`}
+    <div class="row-actions">
+      <button class="${a ? '' : 'primary'}" data-act="analyseSwing" data-sid="${s.id}" data-wid="${sw.id}">${a ? 'Analyse again' : 'Analyse'}</button>
+      <button data-act="chatRoute" data-sid="${s.id}" data-wid="${sw.id}">Analyse in a chat</button>
+      ${sw.video ? `<button data-act="playSwing" data-sid="${s.id}" data-wid="${sw.id}">Play video</button>` : ''}
+      <button class="danger" data-act="deleteSwing" data-sid="${s.id}" data-wid="${sw.id}">Delete</button>
+    </div>
+    <div id="an_${sw.id}"></div>
+  </div>`;
+}
+function swingSection(s) {
+  const sws = swingsOf(s);
+  return `<section class="sec"><div class="spread"><h2>Swings</h2>${S.assets ? `<button data-act="addSwing" data-id="${s.id}">Add swing</button>` : ''}</div>` +
+    (sws.length ? sws.map(sw => swingCard(sw, s)).join('')
+      : `<p class="small muted">${S.assets ? 'Add a video and the app pulls frames out of it — a couple per session is plenty.' : 'Adding swings needs write access to this page.'}</p>`) + `</section>`;
+}
+
+/* ---------- add a swing ---------- */
+function addSwingForm() {
+  const clubs = activeClubs().filter(c => c.category !== 'putter');
+  return `<h2>Add a swing</h2>
+    <label>Video<input type="file" accept="video/*" name="vid"></label>
+    <div class="grid2">
+      ${selectF('Camera view', 'view', Object.entries(VIEWS), 'dtl')}
+      ${selectF('Club', 'club', [['', '—']].concat(clubs.map(c => [c.code, c.code + '  ' + c.name])), clubs.some(c => c.code === '7i') ? '7i' : '')}
+    </div>
+    ${field('Note', 'note', 'text', '', 'placeholder="what you were working on, or what the ball did"')}
+    <div id="trim"></div>
+    <div class="count" id="frameNote">Pick a video to set the part of the clip to use.</div>`;
+}
+function wireSwingForm(root, sessionId) {
+  const fileIn = root.querySelector('[name=vid]'); let picked = null, range = null;
+  fileIn.addEventListener('change', async () => {
+    const f = fileIn.files[0]; if (!f) return;
+    picked = f;
+    const url = URL.createObjectURL(f), v = document.createElement('video');
+    v.src = url; v.muted = true; v.playsInline = true; v.preload = 'auto'; v.style.width = '100%'; v.style.borderRadius = 'var(--r)';
+    await new Promise(res => { v.onloadedmetadata = res; v.onerror = res; });
+    const dur = isFinite(v.duration) ? v.duration : 0;
+    range = { start: 0, end: dur };
+    $('#trim', root).innerHTML = `<div class="bigmap" style="max-width:340px"></div>
+      <label>Start <span id="ss"></span><input type="range" name="s0" min="0" max="${dur.toFixed(2)}" step="0.05" value="0"></label>
+      <label>End <span id="ee"></span><input type="range" name="s1" min="0" max="${dur.toFixed(2)}" step="0.05" value="${dur.toFixed(2)}"></label>`;
+    $('#trim .bigmap', root).appendChild(v);
+    const s0 = root.querySelector('[name=s0]'), s1 = root.querySelector('[name=s1]');
+    const upd = which => {
+      range.start = Math.min(Number(s0.value), Number(s1.value) - 0.1);
+      range.end = Math.max(Number(s1.value), range.start + 0.1);
+      s0.value = range.start.toFixed(2);
+      $('#ss', root).textContent = range.start.toFixed(1) + 's'; $('#ee', root).textContent = range.end.toFixed(1) + 's';
+      v.currentTime = which === 'end' ? range.end : range.start;
+      $('#frameNote', root).textContent = `${FRAME_COUNT} frames across ${(range.end - range.start).toFixed(1)}s. Trim to the swing itself — from address to a beat after the finish.`;
+    };
+    s0.addEventListener('input', () => upd('start')); s1.addEventListener('input', () => upd('end')); upd('start');
+  });
+  return () => ({ file: picked, range });
+}
+Object.assign(ACTIONS, {
+  addSwing(d) {
+    const sid = d.id; let get;
+    openSheet(addSwingForm(), async root => {
+      const { file, range } = get();
+      if (!file) { toast('Pick a video first'); return false; }
+      if (!S.assets) { toast('Upload needs write access'); return false; }
+      const note = $('#frameNote', root);
+      let ex; try { note.textContent = 'Pulling frames…'; ex = await extractFrames(file, { ...range, onProgress: (i, n) => note.textContent = `Pulling frame ${i} of ${n}…` }); }
+      catch (e) { toast("Couldn't read that video"); return false; }
+      const frames = [];
+      for (let i = 0; i < ex.frames.length; i++) {
+        note.textContent = `Storing frame ${i + 1} of ${ex.frames.length}…`;
+        try { const r = await S.assets.upload(ex.frames[i].blob, { type: ex.frames[i].blob.type }); frames.push({ asset: r.id, t: ex.frames[i].t }); }
+        catch (e) { toast(e && e.code === 'quota_or_state' ? 'Image storage is full' : 'Frame upload failed'); return false; }
+      }
+      let video = null;
+      if (file.size <= 20 * 1024 * 1024) { note.textContent = 'Storing the video…'; try { const r = await S.assets.upload(file, { type: file.type }); video = r.id; } catch (e) { video = null; } }
+      const s = session(sid);
+      const sw = { id: uid('sw'), view: val(root, 'view') || 'dtl', club: val(root, 'club'), note: val(root, 'note'), frames, video, addedOn: today(), duration: +(ex.duration || 0).toFixed(2) };
+      const ok = await save('sessions', sid, { ...s, swings: swingsOf(s).concat(sw) });
+      if (ok) { toast(ex.dropped ? `Swing added (${ex.dropped} blank frame${ex.dropped > 1 ? 's' : ''} dropped)` : video ? 'Swing added' : 'Frames added — video too large to store'); render(); }
+      return ok;
+    });
+    get = wireSwingForm(sheetInner, sid);
+  },
+  async analyseSwing(d) {
+    const box = document.getElementById('an_' + d.wid); if (!box) return;
+    box.innerHTML = `<div class="analysis"><div class="small muted" id="prog_${d.wid}">Thinking…</div></div>`;
+    const prog = document.getElementById('prog_' + d.wid);
+    const res = await analyseSwing(d.sid, d.wid, ({ text }) => { if (prog) prog.textContent = text.slice(-400); });
+    if (res.error) {
+      const imageProblem = ['no_images', 'images_unavailable', 'image_rejected'].includes(res.error);
+      const msg = { unavailable: 'This view of the page cannot reach Claude. Open the artifact from claude.ai rather than a shared or embedded copy.', no_images: "This view can't send images to Claude. That's usually the client, not the page — the Claude mobile app blocks it where a desktop browser at claude.ai generally allows it.", images_unavailable: "This view can't send images to Claude. That's usually the client, not the page — the Claude mobile app blocks it where a desktop browser at claude.ai generally allows it.", image_rejected: 'One of the frames was rejected as an image.', not_granted: 'You declined the request, so nothing was sent. Tap Analyse again to allow it.', rate_limited: 'Too many requests just now — wait a moment and try again.', frames_unreadable: "Couldn't load the stored frames.", invalid_json: 'Claude replied but not in the expected format. Try again.', cancelled: 'Stopped.' }[res.error] || 'Analysis failed.';
+      box.innerHTML = `<div class="notice warn">${esc(msg)} <span class="muted small">(${esc(res.error)})</span>${imageProblem ? `<div class="row-actions"><button data-act="swingPrompt" data-sid="${d.sid}" data-wid="${d.wid}">Copy the prompt</button><button data-act="swingFrames" data-sid="${d.sid}" data-wid="${d.wid}">Save the frames</button></div><div class="small" style="margin-top:6px">Then paste both into a Claude chat — it reads images there, and the prompt already carries your ball data for this club.</div>` : ''}</div>`; return;
+    }
+    const s = session(d.sid);
+    const swings = swingsOf(s).map(x => x.id === d.wid ? { ...x, analysis: res.data, analysedOn: today() } : x);
+    if (await save('sessions', d.sid, { ...s, swings })) render();
+  },
+  async deleteSwing(d) {
+    if (!await confirmAsk('Delete this swing and its frames?')) return;
+    const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw) return;
+    if (await save('sessions', d.sid, { ...s, swings: swingsOf(s).filter(x => x.id !== d.wid) })) {
+      if (S.assets) { for (const f of sw.frames) { try { await S.assets.delete(f.asset); } catch (e) {} } if (sw.video) { try { await S.assets.delete(sw.video); } catch (e) {} } }
+      toast('Swing deleted'); render();
+    }
+  },
+  chatRoute(d) {
+    const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw) return;
+    openSheet(`<h2>Analyse in a chat</h2>
+      <p class="small muted">This view can't send images to Claude, but a normal Claude chat reads them fine. Three steps, then the result comes back in here.</p>
+      <ol class="steps">
+        <li><b>Save the frames</b><div class="row-actions"><button type="button" data-act="swingFrames" data-sid="${d.sid}" data-wid="${d.wid}">Save ${sw.frames.length} frames (one zip)</button></div></li>
+        <li><b>Copy the prompt</b> — it carries the camera view and your ball data for ${sw.club ? esc(sw.club) : 'this club'}.<div class="row-actions"><button type="button" data-act="swingPrompt" data-sid="${d.sid}" data-wid="${d.wid}">Copy prompt</button></div></li>
+        <li><b>Paste Claude's reply below.</b> The JSON block is what it asks for; plain prose works too.</li>
+      </ol>
+      <label>Claude's reply<textarea name="reply" placeholder='{ "observations": [ ... ], "one_thing": "..." }' style="min-height:170px"></textarea></label>`,
+      async root => {
+        const raw = (val(root, 'reply') || '').trim();
+        if (!raw) { toast('Paste the reply first'); return false; }
+        const data = parseAnalysis(raw);
+        const cur = session(d.sid);
+        const swings = swingsOf(cur).map(x => x.id === d.wid ? { ...x, analysis: data, analysedOn: today(), analysedIn: 'chat' } : x);
+        const ok = await save('sessions', d.sid, { ...cur, swings });
+        if (ok) { toast(data.parsed === false ? 'Saved as notes' : 'Analysis saved'); render(); }
+        return ok;
+      });
+  },
+  async swingPrompt(d) { const r = await swingHandoff(d.sid, d.wid, 'prompt'); if (r === 'copied') toast('Prompt copied'); },
+  async swingFrames(d) {
+    toast('Packing frames…');
+    const r = await swingHandoff(d.sid, d.wid, 'frames');
+    toast({ saved: 'Frames saved as a zip', no_downloads: "This view can't save files", declined: 'Save cancelled',
+      rate_limited: 'A save prompt is already open — finish it, then try again', too_large: 'That zip is too large to save here',
+      rejected_extension: "This view won't accept a zip", none: 'No frames to save' }[r] || 'Save failed');
+  },
+  async dropFrame(d) {
+    const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw) return;
+    const i = Number(d.fi), fr = sw.frames[i]; if (!fr) return;
+    if (sw.frames.length <= 2) { toast('A swing needs at least two frames'); return; }
+    if (!await confirmAsk(`Remove frame ${i + 1}?`, 'Remove frame')) return;
+    const swings = swingsOf(s).map(x => x.id === d.wid ? { ...x, frames: x.frames.filter((_, j) => j !== i) } : x);
+    if (await save('sessions', s.id, { ...s, swings })) { if (S.assets) { try { await S.assets.delete(fr.asset); } catch (e) {} } toast('Frame removed'); render(); }
+  },
+  playSwing(d) {
+    const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw || !sw.video) return;
+    openSheet(`<h2>${esc(VIEWS[sw.view] || 'Swing')}${sw.club ? ' · ' + esc(sw.club) : ''}</h2><div class="bigmap" style="max-width:360px"><video src="/_blob/${sw.video}" controls playsinline loop style="width:100%;border-radius:var(--r)"></video></div>`, async () => true);
+  },
+});
+
+// Claude's reply, however it arrives: the JSON it was asked for, the same
+// JSON inside a code fence, or plain prose (kept verbatim as one note).
+function parseAnalysis(raw) {
+  const tryJson = t => { try { const v = JSON.parse(t); return v && typeof v === 'object' ? v : null; } catch (e) { return null; } };
+  let v = tryJson(raw);
+  if (!v) { const m = raw.match(/```(?:json)?\s*([\s\S]*?)```/); if (m) v = tryJson(m[1].trim()); }
+  if (!v) { const a = raw.indexOf('{'), b = raw.lastIndexOf('}'); if (a >= 0 && b > a) v = tryJson(raw.slice(a, b + 1)); }
+  if (!v) return { one_thing: raw.split(/\n\s*\n/)[0].slice(0, 300), notes: raw.slice(0, 4000), parsed: false };
+  return v;
+}
+
+/* ---------- into the loop ---------- */
+// A swing reading is evidence, not measurement: it ranks below anything
+// derived from ball flight, and only rises when the two agree.
+function swingItems() {
+  const items = [];
+  for (const sw of allSwings()) {
+    const a = sw.analysis; if (!a) continue;
+    const strong = (a.observations || []).filter(o => o.confidence === 'high');
+    if (!strong.length && !a.one_thing) continue;
+    const cs = sw.club ? clubStats(sw.club) : null;
+    const agrees = /line[s]? up|matches|consistent|agree/i.test(a.matches_ball_data || '') && !/not|doesn't|does not|contradict/i.test(a.matches_ball_data || '');
+    items.push({ kind: 'swing', n: strong.length || 1, score: (agrees ? 0.9 : 0.45) * (strong.length || 1),
+      title: `${VIEWS[sw.view] || 'Swing'}${sw.club ? ' · ' + sw.club : ''}: ${a.one_thing || strong[0].what}`,
+      detail: strong.slice(0, 2).map(o => `${o.what} (${o.evidence})`).join('; ') || (a.observations || [])[0]?.what || '',
+      range: cs ? `Ball data for ${sw.club}: ${pct(cs.pure, cs.n)}% pure, ${pct(cs.runner, cs.n)}% low runners` : null,
+      advice: a.matches_ball_data ? `Video vs numbers: ${a.matches_ball_data}` : null,
+      practice: a.drill ? `${a.drill.name} — ${a.drill.why || ''}` : null,
+      video: true, session: sw.session });
+  }
+  return items;
+}
+
+/* ============================================================
+   v1 additions
+   Export/import (the whole store, images included), a settings
+   document, course distances from a home location, verification of
+   flagged taps, and the freshness line behind "what to practise".
+   ============================================================ */
+const SETTINGS_ID = 'app';
+const settings = () => S.settings || {};
+const home = () => settings().home || null;
+
+/* ---------- distance ---------- */
+const hasCoords = c => c && typeof c.lat === 'number' && typeof c.lng === 'number';
+function kmBetween(a, b) {                       // straight line, not drive time
+  const R = 6371, rad = d => d * Math.PI / 180;
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+function distanceTo(c) {
+  const h = home(); if (!h || !hasCoords(h) || !hasCoords(c)) return null;
+  return kmBetween(h, c);
+}
+const distanceLabel = c => { const d = distanceTo(c); return d == null ? '' : d < 10 ? `${d.toFixed(1)} km` : `${Math.round(d)} km`; };
+
+ACTIONS.setHome = function () {
+  const h = home() || {};
+  openSheet(`<h2>Your location</h2>
+    <p class="small muted">Used only to show how far each course is, as the crow flies. Stored with your data, never sent anywhere.</p>
+    ${field('Label', 'label', 'text', h.label || '', 'placeholder="Home"')}
+    <div class="row-actions"><button type="button" data-usegps>Use my current location</button><span class="small muted" id="gps"></span></div>
+    <div class="grid2">${field('Latitude', 'lat', 'number', h.lat, 'step="0.0001"')}${field('Longitude', 'lng', 'number', h.lng, 'step="0.0001"')}</div>`,
+    async root => {
+      const lat = val(root, 'lat'), lng = val(root, 'lng');
+      if (lat == null || lng == null) { toast('Set a location first'); return false; }
+      const ok = await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, home: { label: val(root, 'label') || 'Home', lat, lng } });
+      if (ok) render();
+      return ok;
+    });
+  const btn = sheetInner.querySelector('[data-usegps]'), out = $('#gps', sheetInner);
+  btn.addEventListener('click', () => {
+    if (!navigator.geolocation) { out.textContent = 'Not available in this view — type the coordinates instead.'; return; }
+    out.textContent = 'Asking…';
+    navigator.geolocation.getCurrentPosition(
+      p => { sheetInner.querySelector('[name=lat]').value = p.coords.latitude.toFixed(4); sheetInner.querySelector('[name=lng]').value = p.coords.longitude.toFixed(4); out.textContent = 'Got it.'; },
+      e => { out.textContent = e && e.code === 1 ? 'Permission denied — type the coordinates instead.' : 'Location unavailable — type the coordinates instead.'; },
+      { timeout: 8000 });
+  });
+};
+
+/* ---------- verifying a flagged tap ---------- */
+// A long shot can be real (a bladed wedge runs forever). Marking it real
+// keeps it in the numbers and stops it being flagged again.
+ACTIONS.verifyShot = async function (d) {
+  const r = session(d.sid); if (!r) return;
+  const n = Number(d.n), i = Number(d.i);
+  const holes = (r.holes || []).map(h => h.n !== n ? h : { ...h, shots: (h.shots || []).map((s, j) => j === i ? { ...s, verified: true } : s) });
+  if (await save('sessions', r.id, { ...r, holes })) { toast('Marked as a real shot'); render(); }
+};
+
+/* ---------- freshness: what the practice list is standing on ---------- */
+function practiceBasis() {
+  const rounds = S.sessions.filter(s => s.type === 'round');
+  const shotHoles = rounds.flatMap(r => (r.holes || []).filter(h => (h.shots || []).length).map(h => ({ r, h })));
+  const ranges = S.sessions.filter(s => s.type === 'range');
+  const rangeShots = ranges.reduce((n, s) => n + (s.blocks || []).reduce((m, b) => m + (b.shots || []).length, 0), 0);
+  const swings = allSwings().filter(s => s.analysis);
+  const dates = [...shotHoles.map(x => x.r.date), ...ranges.filter(s => (s.blocks || []).some(b => (b.shots || []).length || b.summary)).map(s => s.date), ...swings.map(s => s.session.date)].filter(Boolean).sort();
+  const newest = dates[dates.length - 1];
+  const parts = [];
+  if (shotHoles.length) parts.push(`${plural(shotHoles.length, 'hole')} of shot data`);
+  if (rangeShots) parts.push(`${rangeShots} range shots`);
+  if (swings.length) parts.push(`${plural(swings.length, 'analysed swing')}`);
+  if ((rounds.length - new Set(shotHoles.map(x => x.r.id)).size) > 0) parts.push(`${rounds.length - new Set(shotHoles.map(x => x.r.id)).size} scorecard-only rounds (not used)`);
+  return { text: parts.length ? `Built from ${parts.join(', ')}.` : 'Nothing to build from yet.', newest, count: shotHoles.length + rangeShots + swings.length };
+}
+const basisLine = () => { const b = practiceBasis(); return `<div class="basis">${esc(b.text)}${b.newest ? ` Newest input ${dateLabel(b.newest)}.` : ''} <span class="muted">Recalculated every time this screen draws — there is no stored copy.</span></div>`; };
+
+/* ---------- export and import ---------- */
+const EXPORT_VERSION = 1;
+function collectAssetIds() {
+  const ids = new Set();
+  for (const c of S.courses) for (const h of (c.holes || [])) if (h.art && h.art.asset) ids.add(h.art.asset);
+  for (const s of S.sessions) for (const sw of (s.swings || [])) { for (const f of (sw.frames || [])) ids.add(f.asset); if (sw.video) ids.add(sw.video); }
+  return [...ids];
+}
+const blobToDataUrl = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(b); });
+async function buildExport({ withImages = true, onProgress } = {}) {
+  const out = { format: 'carry-export', version: EXPORT_VERSION, exportedAt: new Date().toISOString(),
+    clubs: S.clubs, courses: S.courses, sessions: S.sessions, settings: settings(), assets: {} };
+  if (withImages) {
+    const ids = collectAssetIds();
+    for (let i = 0; i < ids.length; i++) {
+      if (onProgress) onProgress(i + 1, ids.length);
+      try { const r = await fetch('/_blob/' + ids[i]); if (!r.ok) continue; const b = await r.blob(); const d = await blobToDataUrl(b); if (d) out.assets[ids[i]] = d; } catch (e) {}
+    }
+  }
+  return out;
+}
+const dataUrlToBlob = async d => (await fetch(d)).blob();
+async function applyImport(data, { onProgress } = {}) {
+  if (!data || data.format !== 'carry-export') throw new Error('Not a Carry export file');
+  const map = {};                                   // old asset id -> new asset id
+  const ids = Object.keys(data.assets || {});
+  if (ids.length && S.assets) {
+    for (let i = 0; i < ids.length; i++) {
+      if (onProgress) onProgress('images', i + 1, ids.length);
+      try { const blob = await dataUrlToBlob(data.assets[ids[i]]); const r = await S.assets.upload(blob, { type: blob.type }); map[ids[i]] = r.id; } catch (e) {}
+    }
+  }
+  const remap = id => map[id] || id;
+  const courses = (data.courses || []).map(c => ({ ...c, holes: (c.holes || []).map(h => h.art && h.art.asset ? { ...h, art: { ...h.art, asset: remap(h.art.asset) } } : h) }));
+  const sessions = (data.sessions || []).map(s => ({ ...s, swings: (s.swings || []).map(sw => ({ ...sw, frames: (sw.frames || []).map(f => ({ ...f, asset: remap(f.asset) })), video: sw.video ? remap(sw.video) : null })) }));
+  const counts = { clubs: 0, courses: 0, sessions: 0 };
+  for (const c of (data.clubs || [])) { if (await save('clubs', c.code, c)) counts.clubs++; onProgress && onProgress('clubs', counts.clubs, (data.clubs || []).length); }
+  for (const c of courses) { if (await save('courses', c.id, c)) counts.courses++; onProgress && onProgress('courses', counts.courses, courses.length); }
+  for (const s of sessions) { if (await save('sessions', s.id, s)) counts.sessions++; onProgress && onProgress('sessions', counts.sessions, sessions.length); }
+  if (data.settings && Object.keys(data.settings).length) await save('settings', SETTINGS_ID, { ...data.settings, id: SETTINGS_ID });
+  return counts;
+}
+Object.assign(ACTIONS, {
+  exportData() {
+    openSheet(`<h2>Export everything</h2>
+      <p class="small muted">One JSON file with every club, course, session, swing and setting. Images can travel inside it as data, which makes the file the whole app rather than a list of broken references.</p>
+      ${checkF('Include images (hole artwork and swing frames)', 'imgs', true)}
+      <div class="count" id="exProg"></div>`,
+      async root => {
+        const withImages = !!val(root, 'imgs');
+        const p = $('#exProg', root); p.textContent = 'Collecting…';
+        const data = await buildExport({ withImages, onProgress: (i, n) => p.textContent = `Packing image ${i} of ${n}…` });
+        const json = JSON.stringify(data);
+        const dl = await claude.use('downloads');
+        if (!dl) { toast("This view can't save files"); return false; }
+        try {
+          await dl.save({ filename: `carry-export-${today()}.json`, data: new Blob([json], { type: 'application/json' }) });
+          toast(`Exported ${S.sessions.length} sessions, ${Object.keys(data.assets).length} images`);
+          return true;
+        } catch (e) { toast(e && e.code === 'declined' ? 'Export cancelled' : e && e.code === 'too_large' ? 'Too large — try again without images' : 'Export failed'); return false; }
+      });
+  },
+  importData() {
+    openSheet(`<h2>Import a backup</h2>
+      <p class="small muted">Restores from a Carry export. Anything with the same id is overwritten; everything else is left alone. Images are re-uploaded and their references rewritten.</p>
+      <label>Export file<input type="file" accept="application/json,.json" name="file"></label>
+      <div class="count" id="imProg"></div>`,
+      async root => {
+        const f = root.querySelector('[name=file]').files[0];
+        if (!f) { toast('Pick a file first'); return false; }
+        const p = $('#imProg', root);
+        let data; try { data = JSON.parse(await f.text()); } catch (e) { toast("That file isn't valid JSON"); return false; }
+        if (data.format !== 'carry-export') { toast('Not a Carry export file'); return false; }
+        const n = (data.sessions || []).length, imgs = Object.keys(data.assets || {}).length;
+        if (!await confirmAsk(`Import ${plural((data.courses || []).length, 'course')}, ${plural(n, 'session')} and ${plural(imgs, 'image')}? Matching records are overwritten.`, 'Import')) return false;
+        try {
+          const c = await applyImport(data, { onProgress: (what, i, tot) => p.textContent = `Restoring ${what} ${i} of ${tot}…` });
+          toast(`Imported ${c.courses} courses, ${c.sessions} sessions`); render(); return true;
+        } catch (e) { toast(e.message || 'Import failed'); return false; }
+      });
+  },
+});
+
+/* ============================================================
+   v1, part two
+   Tee sets, editing a shot after the fact, first-putt distance,
+   penalties attached to the shot that caused them, a recency window
+   on range numbers, and a versioned schema with migrations.
+   ============================================================ */
+const SCHEMA_VERSION = 2;
+
+/* ---------- tee sets ----------
+   A course hole carries `tees: { white: 297, blue: 310 }` and a mirror
+   `metres` for the course's primary tee. A round records which tee was
+   played, and every distance downstream resolves through it. */
+const teeNames = c => { const s = new Set(); for (const h of (c && c.holes) || []) for (const k of Object.keys(h.tees || {})) s.add(k); if (!s.size && c && c.teeName) s.add(c.teeName); return [...s]; };
+const primaryTee = c => (c && c.tee) || teeNames(c)[0] || 'default';
+function teeMetres(hole, tee) {
+  if (!hole) return null;
+  if (tee && hole.tees && hole.tees[tee] != null) return hole.tees[tee];
+  return hole.metres ?? null;
+}
+// Course holes resolved for one tee, so the rest of the app keeps reading `metres`.
+const holesForTee = (c, tee) => (c && c.holes || []).map(h => ({ ...h, metres: teeMetres(h, tee || primaryTee(c)) }));
+
+/* ---------- migrations ----------
+   Runs once per document, in the page, and writes the upgraded shape
+   back. Keep every step idempotent: it will run against documents that
+   are already current. */
+function migrateCourse(c) {
+  if ((c.v || 0) >= SCHEMA_VERSION) return null;
+  const tee = c.tee || c.teeName || 'white';
+  const holes = (c.holes || []).map(h => h.tees ? h : { ...h, tees: h.metres == null ? {} : { [tee]: h.metres } });
+  return { ...c, v: SCHEMA_VERSION, tee, holes };
+}
+function migrateSession(s) {
+  if ((s.v || 0) >= SCHEMA_VERSION) return null;
+  if (s.type !== 'round') return { ...s, v: SCHEMA_VERSION };
+  const c = course(s.courseId);
+  return { ...s, v: SCHEMA_VERSION, tee: s.tee || (c ? primaryTee(c) : null) };
+}
+let migrating = false;
+async function runMigrations() {
+  if (migrating || !S.db) return;
+  migrating = true;
+  try {
+    for (const c of S.courses) { const up = migrateCourse(c); if (up) await save('courses', c.id, up); }
+    for (const s of S.sessions) { const up = migrateSession(s); if (up) await save('sessions', s.id, up); }
+  } finally { migrating = false; }
+}
+
+/* ---------- recency window ---------- */
+const WINDOWS = [['all', 'All time'], ['365', 'Last 12 months'], ['180', 'Last 6 months'], ['90', 'Last 90 days']];
+const windowDays = () => { const w = (settings().window || 'all'); return w === 'all' ? null : Number(w); };
+function withinWindow(date) {
+  const d = windowDays(); if (!d || !date) return true;
+  const age = (Date.now() - new Date(date + 'T00:00:00').getTime()) / 86400000;
+  return age <= d;
+}
+ACTIONS.setWindow = async function (d) {
+  await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, window: d.w });
+  render();
+};
+const windowPicker = () => `<div class="chips" style="margin:6px 0">${WINDOWS.map(([v, l]) => `<button class="chip" data-act="setWindow" data-w="${v}" aria-pressed="${(settings().window || 'all') === v}">${l}</button>`).join('')}</div>`;
+
+/* ---------- first putt, penalties, editing a shot ---------- */
+const holeStrokes = h => (h.shots || []).length + (h.putts || 0) + (h.penalties || 0) + (h.shots || []).reduce((n, s) => n + (s.penalty ? 1 : 0), 0);
+
+ACTIONS.editShot = function (d) {
+  const r = session(d.sid), n = Number(d.n), i = Number(d.i);
+  const h = holesOf(r).find(x => x.n === n); if (!h) return;
+  const s = (h.shots || [])[i]; if (!s) return;
+  const clubs = activeClubs().filter(c => c.category !== 'putter');
+  const lies = ['green', 'fairway', 'rough', 'bunker', 'water', 'trees'];
+  openSheet(`<h2>Shot ${i + 1} on hole ${n}</h2>
+    <p class="small muted">${fmt(shotLen(h, i))}m, finished in the ${lieOf(h, s)}.</p>
+    ${selectF('Club', 'club', [['', '—']].concat(clubs.map(c => [c.code, c.code + '  ' + c.name])), s.club || '')}
+    ${selectF('Finished in', 'lie', lies.map(l => [l, l]), lieOf(h, s))}
+    ${checkF('This shot cost a penalty stroke', 'penalty', !!s.penalty)}
+    ${checkF('Distance is real, not a mis-tap', 'verified', !!s.verified)}
+    <div class="row-actions"><button type="button" data-act="moveShot" data-sid="${d.sid}" data-n="${n}" data-i="${i}">Move it on the map</button><button type="button" class="danger" data-act="removeShot" data-sid="${d.sid}" data-n="${n}" data-i="${i}">Delete shot</button></div>`,
+    async root => {
+      const patch = { club: val(root, 'club'), lie: val(root, 'lie'), penalty: !!val(root, 'penalty'), verified: !!val(root, 'verified') };
+      const ok = await updateHole(r, n, hh => { hh.shots = hh.shots.map((x, j) => j === i ? { ...x, ...patch } : x); });
+      if (ok) render();
+      return ok;
+    });
+};
+Object.assign(ACTIONS, {
+  moveShot(d) { sheet.close(); S.moving = { n: Number(d.n), i: Number(d.i) }; render(); toast('Tap the map where it finished'); },
+  async removeShot(d) {
+    if (!await confirmAsk(`Delete shot ${Number(d.i) + 1}?`)) return;
+    const r = session(d.sid);
+    if (await updateHole(r, Number(d.n), hh => { hh.shots = (hh.shots || []).filter((_, j) => j !== Number(d.i)); })) { sheet.close(); toast('Shot deleted'); render(); }
+  },
+  cancelMove() { S.moving = null; render(); },
+  async setPutt(d) {
+    const r = session(d.sid), n = Number(d.n);
+    const cur = (holesOf(r).find(x => x.n === n) || {}).firstPutt;
+    openSheet(`<h2>First putt on hole ${n}</h2>
+      <p class="small muted">How far was the first putt? This is the one number strokes gained can't be worked out without, and it can't be added later.</p>
+      ${field('Metres', 'm', 'number', cur, 'step="0.5" min="0" max="40" inputmode="decimal"')}
+      <div class="chips" style="margin-top:8px">${[1, 2, 3, 5, 8, 12, 20].map(m => `<button type="button" class="chip" data-putt="${m}">${m}m</button>`).join('')}</div>`,
+      async root => {
+        const m = val(root, 'm');
+        const ok = await updateHole(r, n, hh => { if (m == null) { delete hh.firstPutt; delete hh.firstPuttEstimated; } else { hh.firstPutt = m; delete hh.firstPuttEstimated; } });
+        if (ok) render();
+        return ok;
+      });
+    sheetInner.querySelectorAll('[data-putt]').forEach(b => b.addEventListener('click', () => { sheetInner.querySelector('[name=m]').value = b.dataset.putt; }));
+  },
+});
+
+/* ---------- putting stats, now that distance exists ---------- */
+function puttingStats() {
+  const holes = S.sessions.filter(s => s.type === 'round').flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
+  const withDist = holes.filter(x => x.h.firstPutt != null);
+  if (!holes.length) return null;
+  return {
+    holes: holes.length, putts: sum(holes.map(x => x.h.putts)),
+    perHole: sum(holes.map(x => x.h.putts)) / holes.length,
+    threes: holes.filter(x => x.h.putts >= 3).length,
+    measured: withDist.length, estimated: withDist.filter(x => x.h.firstPuttEstimated).length,
+    medianFirst: withDist.length ? median(withDist.map(x => x.h.firstPutt)) : null,
+    onePuttRate: withDist.length ? pct(withDist.filter(x => x.h.putts === 1).length, withDist.length) : null,
+  };
+}
+
+/* ============================================================
+   Faster logging
+   Fewer taps per hole, without guessing on the golfer's behalf:
+   - the club is armed BEFORE the tap, defaulting to what he usually
+     hits from that distance (his own history, not a recommendation)
+   - putts are one tap, not a stepper
+   - first-putt distance is derived from the approach tap when it
+     finished on the green, flagged as an estimate
+   - holes he doesn't want to trace get a one-tap score
+   ============================================================ */
+
+// What he actually hits from around this distance — descriptive, from his
+// own logs. Deliberately not the club the app would recommend: the loop
+// must not end up grading its own advice.
+function usualClubFor(dist, courseId) {
+  if (dist == null) return null;
+  const near = shotRecords().filter(x => x.club && x.from != null && Math.abs(x.from - dist) <= 15);
+  if (!near.length) return null;
+  const here = near.filter(x => x.r.courseId === courseId);
+  const pool = here.length >= 2 ? here : near;
+  const counts = {};
+  for (const x of pool) counts[x.club] = (counts[x.club] || 0) + 1;
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return best && best[1] >= 2 ? { club: best[0], n: best[1], scope: here.length >= 2 ? 'here' : 'anywhere' } : null;
+}
+function armedClubFor(h, distLeft) {
+  if (S.armed && S.armed.hole === h.n) return S.armed.club;
+  const shots = h.shots || [];
+  // Tee shot on a two-shot hole: the driver, or the longest club in the bag
+  // if there isn't one.
+  if (!shots.length && h.par >= 4) {
+    const d = clubBy('D');
+    if (d && !d.retired) return 'D';
+    const longest = activeClubs().filter(c => c.category !== 'putter')
+      .sort((a, b) => (b.nominalTotal || b.nominalCarry || 0) - (a.nominalTotal || a.nominalCarry || 0))[0];
+    return longest ? longest.code : null;
+  }
+  const usual = usualClubFor(distLeft, S.sub && S.sub.sessionId ? (session(S.sub.sessionId) || {}).courseId : null);
+  return (usual && usual.club) || (shots.length ? shots[shots.length - 1].club : null);
+}
+Object.assign(ACTIONS, {
+  armClub(d) { S.armed = { hole: Number(d.n), club: d.club }; render(); },
+  async setPutts(d) {
+    const r = session(d.sid);
+    if (await updateHole(r, Number(d.n), h => { h.putts = Number(d.p); })) render();
+  },
+  async quickScore(d) {
+    const r = session(d.sid), n = Number(d.n), v = Number(d.s);
+    const h = (r.holes || []).find(x => x.n === n);
+    if ((h.shots || []).length) { toast('This hole has shots traced — edit those instead'); return; }
+    if (await updateHole(r, n, hh => { hh.manualStrokes = v; hh.strokes = v; })) render();
+  },
+});
+
+// Chips for arming the next club, with the reason attached.
+function clubArmRow(r, h, distLeft) {
+  const clubs = activeClubs().filter(c => c.category !== 'putter');
+  if (!clubs.length) return '';
+  const armed = armedClubFor(h, distLeft);
+  const usual = usualClubFor(distLeft, r.courseId);
+  return `<div class="armrow">
+    <div class="small muted">Next shot${armed ? `: <b>${esc(armed)}</b>` : ''}${usual && usual.club === armed ? ` — what you usually hit from about ${fmt(distLeft)}m${usual.scope === 'here' ? ' on this course' : ''} (${usual.n}×)` : ''}</div>
+    <div class="chips">${clubs.map(c => `<button class="chip" data-act="armClub" data-n="${h.n}" data-club="${esc(c.code)}" aria-pressed="${armed === c.code}">${esc(c.code)}</button>`).join('')}</div>
+  </div>`;
+}
+const puttRow = (r, h) => `<div class="armrow"><div class="small muted">Putts${h.putts != null ? `: <b>${h.putts}</b>` : ''}</div>
+  <div class="chips">${[0, 1, 2, 3, 4, 5].map(p => `<button class="chip" data-act="setPutts" data-sid="${r.id}" data-n="${h.n}" data-p="${p}" aria-pressed="${h.putts === p}">${p}</button>`).join('')}</div></div>`;
+
+// One-tap scores for holes he isn't tracing.
+function quickScoreSection(r) {
+  const holes = holesOf(r);
+  const untraced = holes.filter(h => !(h.shots || []).length);
+  if (!untraced.length) return '';
+  return `<details class="sec"><summary><b>Quick score</b> <span class="small muted">— ${plural(untraced.length, 'hole')} without shots, one tap each</span></summary>
+    <div class="quick">${untraced.map(h => `<div class="qrow"><span class="qn">${h.n}<small>par ${h.par ?? '–'}</small></span>
+      <div class="chips">${(h.par ? [h.par - 1, h.par, h.par + 1, h.par + 2, h.par + 3, h.par + 4] : [3, 4, 5, 6, 7, 8]).filter(v => v > 0).map(v => `<button class="chip" data-act="quickScore" data-sid="${r.id}" data-n="${h.n}" data-s="${v}" aria-pressed="${h.strokes === v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
+    <p class="small muted">Par is highlighted for reference — tap the score you made. Holes with traced shots aren't listed; their score comes from the shots.</p></details>`;
+}
+
+/* ---------- start ---------- */
+connect();
+
+</script>
+</body>
+</html>

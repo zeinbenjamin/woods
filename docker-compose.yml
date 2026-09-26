@@ -1,0 +1,23 @@
+services:
+  carry:
+    build: .
+    # Or, once you've pushed an image:
+    # image: ghcr.io/<you>/carry:latest
+    container_name: carry
+    restart: unless-stopped
+    # TrueNAS SCALE runs apps as the `apps` user, 568:568. The dataset at
+    # DATA_PATH is owned by it, so the container must write as it too —
+    # the image's default user (node, 1000) can't create the SQLite WAL.
+    user: "${APP_UID:-568}:${APP_GID:-568}"
+    ports:
+      - "8080:8080"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      API_TOKEN: ${API_TOKEN}
+      CARRY_MODEL: ${CARRY_MODEL:-claude-sonnet-4-6}
+      MAX_ASSET_MB: ${MAX_ASSET_MB:-200}
+      TZ: ${TZ:-Australia/Sydney}
+      HOME: /tmp
+    volumes:
+      # On TrueNAS point this at a dataset, e.g. /mnt/tank/apps/carry
+      - ${DATA_PATH:-./data}:/data

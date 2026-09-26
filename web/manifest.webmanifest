@@ -1,0 +1,12 @@
+{
+  "name": "Carry",
+  "short_name": "Carry",
+  "description": "Golf tracker — rounds, range sessions, swing analysis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#1b3a2b",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
