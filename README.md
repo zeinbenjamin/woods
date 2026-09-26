@@ -35,7 +35,7 @@ SCHEMA.md       every document shape, the invariants, what's derived
 cp .env.example .env          # fill in ANTHROPIC_API_KEY and API_TOKEN
 npm install
 DATA_DIR=./data node server/index.js
-# http://localhost:8080
+# http://localhost:1818
 ```
 
 Run the tests with `npm test` — 15 of them, covering the API, the asset
@@ -94,7 +94,7 @@ store, auth, the import path, and the real app driving the real server.
    | Setting | Value |
    |---|---|
    | Image | build from this repo, or your pushed image |
-   | Port | host `8080` → container `8080` |
+   | Port | host `1818` → container `1818` |
    | Storage | host `/mnt/tank/apps/carry` → container `/data` |
    | User / Group ID | `568` / `568` |
    | `ANTHROPIC_API_KEY` | from console.anthropic.com |
@@ -112,7 +112,7 @@ store, auth, the import path, and the real app driving the real server.
    Asset ids are preserved, so hole artwork and swing frames keep
    resolving without rewriting a single reference. Re-running it is safe.
 
-5. **Open it** at `http://truenas:8080/?token=YOUR_API_TOKEN`. The token
+5. **Open it** at `http://truenas:1818/?token=YOUR_API_TOKEN`. The token
    is stored in the browser, so that's once per device. Add it to the
    home screen — there's a manifest, so it installs like an app.
 
