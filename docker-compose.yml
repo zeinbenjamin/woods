@@ -2,7 +2,7 @@ services:
   carry:
     build: .
     # Or, once you've pushed an image:
-    # image: ghcr.io/<you>/carry:latest
+    # image: ghcr.io/zeinbenjamin/woods:latest   (or a pinned :<version>)
     container_name: carry
     restart: unless-stopped
     # TrueNAS SCALE runs apps as the `apps` user, 568:568. The dataset at

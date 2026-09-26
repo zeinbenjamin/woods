@@ -138,6 +138,26 @@ on the key anyway — a retry loop is how people get surprise bills.
 
 Model is configurable with `CARRY_MODEL`.
 
+## Range shots from screenshots
+
+On a range session, **From screenshots** takes up to six screenshots or
+photos of the bay's shot list. Claude reads them into blocks, one per
+club; you check every number beside the images, fix anything, and only
+then is it saved. The screenshots are stored with the blocks. Uses the
+same server-side key as swing analysis.
+
+## Versions and updates
+
+The version is in `package.json`, the history in `CHANGELOG.md`, and the
+app shows the running version in its header. To release, run
+`npm run release -- patch|minor|major` on your branch and merge; the
+publish workflow tags `v<version>` and publishes
+`ghcr.io/zeinbenjamin/woods:<version>` alongside `:latest`.
+
+On TrueNAS, `:latest` follows main; pin `:<version>` instead if you want
+updates only when you choose them. Either way, TrueNAS doesn't pull by
+itself — update the app to redeploy.
+
 ## Security
 
 - The Anthropic key is only ever on the server. The browser talks to

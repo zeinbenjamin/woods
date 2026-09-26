@@ -35,6 +35,7 @@ body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(
 
 .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); display: flex; align-items: baseline; justify-content: space-between; padding: 12px 16px 10px; }
 .brand { font-family: var(--cond); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+.brand small { font: 500 11px var(--body); color: var(--ink-3); margin-left: 4px; letter-spacing: 0; }
 .status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + 24px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -171,6 +172,9 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
 .analysis .obs { font-size: 13px; margin: 3px 0; }
 .pcard.k-swing { border-left-color: var(--water); }
+.shotimgs { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0; } .shotimgs img { height: 180px; width: auto; border-radius: 4px; border: 1px solid var(--rule); flex: 0 0 auto; }
+.readblock { border: 1px solid var(--rule); border-radius: var(--r); padding: 4px 12px 10px; margin: 12px 0; } .readblock textarea { min-height: 150px; font-variant-numeric: tabular-nums; }
+.warnlist { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--flag); }
 .picker { border: 1px solid var(--rule); border-radius: var(--r); margin-top: 4px; max-height: 230px; overflow-y: auto; }
 .picker:empty { display: none; }
 .pick { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 10px; font: inherit; color: inherit; cursor: pointer; }
@@ -261,6 +265,7 @@ async function connect() {
   const db = await claude.use('db');
   if (!db) { S.dbState = 'none'; setStatus('Storage unavailable in this view', true); render(); return; }
   S.db = db; S.dbState = 'ready'; setStatus('');
+  loadAbout();
   try { S.assets = await claude.use('assets'); } catch (e) { S.assets = null; }
   // Swing analysis needs a view that can send images to Claude.
   try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
@@ -285,6 +290,16 @@ const clubBy = code => S.clubs.find(c => c.code === code);
 const activeClubs = () => S.clubs.filter(c => !c.retired);
 const session = id => S.sessions.find(s => s.id === id);
 const course = id => S.courses.find(c => c.id === id);
+
+/* ---------- which version is running ---------- */
+// Served by the Carry server at /version. Nothing to show when it isn't
+// there (an old artifact copy, offline): the header just says "Carry".
+async function loadAbout() {
+  try { const r = await fetch('/version'); if (!r.ok) return; S.about = await r.json(); } catch (e) { return; }
+  const sub = $('#sub'); if (sub && S.about && S.about.version) { sub.textContent = 'v' + S.about.version; sub.title = aboutLine(); }
+  render();
+}
+const aboutLine = () => { const a = S.about; if (!a || !a.version) return ''; return `Carry ${a.version}${a.commit ? ` · commit ${a.commit}` : ''}${a.built ? ` · built ${dateLabel(a.built.slice(0, 10))}` : ''}`; };
 
 /* ---------- analytics ---------- */
 // Full-swing shots for one club across every range session.
@@ -476,10 +491,10 @@ function vRangeSession() {
   let h = back('range', null, 'Range') + `<div class="spread"><h1>${dateLabel(s.date)}</h1><button data-act="editRange" data-id="${s.id}">Edit</button></div>
   <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(s.ballType) + ' balls' : ''}${s.source ? ', ' + esc(s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
   ${s.planned && blocks.some(b => b.plan) ? `<div class="notice">Planned from your on-course data. After you hit each block, open it, tap Edit and paste the shots. The loop picks them up from there.</div>` : ''}
-  <div class="spread"><h2>Blocks</h2><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div>`;
+  <div class="spread"><h2>Blocks</h2><div class="row-actions" style="margin:0"><button data-act="shotsFromImages" data-id="${s.id}">From screenshots</button><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div></div>`;
   if (!blocks.length) h += swingsOf(s).length
     ? `<p class="small muted">No blocks — a video-only session. That's fine: the swings below still count, and you can add blocks later if the numbers turn up.</p>`
-    : `<div class="empty"><p>No blocks yet. A block is one club at one target. If you only came away with a video, skip this and add a swing below.</p></div>`;
+    : `<div class="empty"><p>No blocks yet. A block is one club at one target. Screenshots of the bay's shot list are quickest: tap <b>From screenshots</b> and check what's read before it's saved. If you only came away with a video, skip this and add a swing below.</p></div>`;
   else h += `<div class="list">` + blocks.map(b => {
     const sm = blockSummary(b) || {}; const full = (b.swing || 'full') === 'full'; const judge = full ? sm.avgCarry : sm.avgTotal;
     const all = fullShots(b.club), profs = classify(all); const mine = all.map((x, i) => [x, profs[i]]).filter(([x]) => x.blockId === b.id);
@@ -501,6 +516,7 @@ function vBlock() {
   <p class="muted small">${dateLabel(s.date)}, ${esc(b.swing || 'full')} swing${b.drill ? ', ' + esc(b.drill) : ''}</p>`;
   if (shots.length && full) h += dotStrip(shots, shots.map((_, i) => profOf(i)), b.target, Math.max(...all.map(x => x.carry))) + `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>mph</small></span>` : ''}</div>`;
+  if (b.fromImages) { const fi = b.fromImages; h += `<p class="small muted" style="margin-top:10px">Read from ${plural((fi.assets || []).length, 'screenshot')} on ${dateLabel(fi.readOn)}${fi.converted ? ', converted from yards' : ''}${fi.units === 'unknown' ? ', units not shown on the screen' : ''}, then checked before saving.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`; }
   if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
   if (shots.length) h += `<details><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Speed</th><th></th></tr></thead><tbody>` +
     shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td><td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
@@ -582,7 +598,8 @@ function vBag() {
   h += `<section class="sec"><h2>Your data</h2>
     <p class="small muted">Everything lives in this page's storage. Export before anything you can't undo, and to move it somewhere else.</p>
     <div class="row-actions"><button class="primary" data-act="exportData">Export everything</button><button data-act="importData">Import a backup</button></div>
-    <p class="small muted" style="margin-top:8px">${S.clubs.length} clubs, ${S.courses.length} courses, ${S.sessions.length} sessions, ${allSwings().length} swings.</p></section>`;
+    <p class="small muted" style="margin-top:8px">${S.clubs.length} clubs, ${S.courses.length} courses, ${S.sessions.length} sessions, ${allSwings().length} swings.</p>
+    ${S.about ? `<p class="small muted" id="about">${esc(aboutLine())}</p>` : ''}</section>`;
   return h;
 }
 
@@ -729,8 +746,8 @@ const ACTIONS = {
   editRange(d) { const s = session(d.id); openSheet(rangeForm(s), async root => saveRange(root, s)); },
   newBlock(d) { const s = session(d.id); openSheet(blockForm(), async root => saveBlock(root, s, { id: uid('b'), seq: (s.blocks || []).length + 1 })); wireShotCount(sheetInner); },
   editBlock(d) { const s = session(d.sid), b = s.blocks.find(x => x.id === d.bid); openSheet(blockForm(b), async root => saveBlock(root, s, b)); wireShotCount(sheetInner); },
-  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { toast('Block deleted'); go('range', { sessionId: s.id }); } },
-  async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
+  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const gone = s.blocks.find(b => b.id === d.bid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { releaseAssets(blockAssets(gone)); toast('Block deleted'); go('range', { sessionId: s.id }); } },
+  async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
   newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c') })); wireHoleCount(sheetInner, false, []); },
@@ -1883,6 +1900,200 @@ function swingItems() {
 }
 
 /* ============================================================
+   Range shots from screenshots
+   Typing a 40-shot block by hand is slow and error-prone. Instead he
+   drops in screenshots of the bay's shot list; Claude reads them into
+   blocks; he checks every number in a review sheet against the images
+   before anything is saved. The screenshots are kept with the blocks,
+   so each number still traces back to what the bay showed.
+   What's read is never trusted silently:
+     - units: converted only when the screen says yards; if it doesn't
+       say, nothing is converted and the review sheet says so
+     - anything Claude marks unclear, out of range, or with total < carry
+       is listed as a warning next to the block
+     - a club that isn't clearly one of his is left unpicked
+   ============================================================ */
+const SHOT_IMAGES_MAX = 6;
+const YD_TO_M = 0.9144;
+
+// Large photos are shrunk to the API's working size; screenshots that are
+// already small enough go as they are. Anything the page can't decode
+// (or no canvas at all) is sent untouched.
+async function shrinkImage(file, maxEdge = 1568) {
+  try {
+    const cv = document.createElement('canvas'), cx = cv.getContext && cv.getContext('2d');
+    if (!cx) return file;
+    const img = await new Promise((res, rej) => { const u = URL.createObjectURL(file); const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('unreadable')); im.src = u; });
+    const k = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight));
+    if (k === 1 && file.size <= 4.5 * 1024 * 1024 && /^image\/(png|jpeg|webp)$/.test(file.type)) return file;
+    cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+    cx.drawImage(img, 0, 0, cv.width, cv.height);
+    return (await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.9))) || file;
+  } catch (e) { return file; }
+}
+
+function shotImagePrompt(n) {
+  const bag = activeClubs().filter(c => c.category !== 'putter').map(c => `${c.code} = ${c.name}${c.loft ? ` (${c.loft}°)` : ''}`).join('; ');
+  return `${n === 1 ? 'This image is a screenshot or photo' : `These ${n} images are screenshots or photos`} of a golf range bay's shot data (Toptracer, Inrange, Trackman or similar), in order.
+
+Read every shot you can see and answer as JSON with exactly these keys:
+{
+  "units": "m" | "yd" | "unknown",
+  "blocks": [
+    {
+      "club": "a code from the bag list below, or null",
+      "clubAsShown": "the club exactly as the screen shows it, or null",
+      "target": number or null,
+      "shots": [ { "carry": number, "total": number or null, "clubSpeedMph": number or null, "unclear": true or false } ],
+      "summary": { "n": number, "avgCarry": number, "avgTotal": number, "fromPinCarry": number, "fromPinTotal": number } or null
+    }
+  ],
+  "notes": "one or two sentences on anything that affects how these numbers should be read, or empty",
+  "unreadable": ["things you could see but could not read"]
+}
+
+Rules:
+- Copy numbers exactly as displayed. Never estimate, average, interpolate or fill in a missing value.
+- If a value is cut off, blurred or covered, give your best reading with "unclear": true, or leave the shot out and say so in "unreadable".
+- "units" is what the screen itself says (m, metres, yd, yds, yards). If it doesn't say, use "unknown" — do not guess from the size of the numbers.
+- carry and total are distances. Do not confuse them with ball speed, height, apex, launch angle, curve, side or offline.
+- clubSpeedMph only when the screen labels a value as club speed in mph. Ball speed is not club speed.
+- One block per club (and per target, if the screen groups shots by target). Shots that appear in two screenshots because of scrolling overlap are listed once.
+- The golfer's bag: ${bag || 'not recorded'}. Set "club" only when the screen's club is clearly one of these; otherwise null, with "clubAsShown" saying what the screen showed.
+- "summary" only when the screen shows averages or from-pin figures; include only the fields it shows.
+- Keep shots in the order the screen lists them.`;
+}
+
+// Claude's reading → blocks the review sheet can show. Pure: no I/O.
+function normaliseShotRead(raw) {
+  const units = ['m', 'yd'].includes(raw && raw.units) ? raw.units : 'unknown';
+  const k = units === 'yd' ? YD_TO_M : 1;
+  const num = v => (typeof v === 'number' && isFinite(v)) ? v : (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v)) ? Number(v) : null);
+  const conv = v => { const n = num(v); return n == null ? null : Math.round(n * k * 10) / 10; };
+  const blocks = (Array.isArray(raw && raw.blocks) ? raw.blocks : []).map(b => {
+    const warnings = [], shots = [];
+    const club = b && typeof b.club === 'string' && clubBy(b.club) && !clubBy(b.club).retired ? b.club : null;
+    (Array.isArray(b && b.shots) ? b.shots : []).forEach((sh, i) => {
+      const carry = conv(sh && sh.carry), total = conv(sh && sh.total);
+      if (carry == null || total == null) { warnings.push(`Shot ${i + 1} left out: ${carry == null ? 'no carry' : 'no total'} could be read.`); return; }
+      if (carry <= 0 || carry > 350 || total > 400) { warnings.push(`Shot ${i + 1} left out: ${fmt(carry, 1)} / ${fmt(total, 1)}m isn't a plausible range shot.`); return; }
+      const out = { carry, total }; const sp = num(sh.clubSpeedMph); if (sp != null && sp > 0 && sp < 160) out.speed = sp;
+      shots.push(out);
+      const n = shots.length;
+      if (sh.unclear) warnings.push(`Shot ${n} (${fmt(carry, 1)} / ${fmt(total, 1)}) was hard to read.`);
+      if (total < carry) warnings.push(`Shot ${n}: total ${fmt(total, 1)} is less than carry ${fmt(carry, 1)}.`);
+    });
+    let summary = null;
+    if (b && b.summary && typeof b.summary === 'object') {
+      summary = {};
+      for (const key of ['avgCarry', 'avgTotal', 'fromPinCarry', 'fromPinTotal']) { const v = conv(b.summary[key]); if (v != null) summary[key] = v; }
+      const n = num(b.summary.n); if (n != null) summary.n = n;
+      if (!Object.keys(summary).length) summary = null;
+    }
+    if (!club) warnings.push(b && b.clubAsShown ? `Club shown as "${b.clubAsShown}" — pick which of yours it was.` : 'No club could be read — pick one.');
+    const target = conv(b && b.target);
+    return { club, clubAsShown: (b && b.clubAsShown) || null, target: target == null ? null : Math.round(target), shots, summary, warnings };
+  }).filter(b => b.shots.length || b.summary);
+  return { units, converted: units === 'yd', notes: (raw && typeof raw.notes === 'string' && raw.notes) || '', unreadable: Array.isArray(raw && raw.unreadable) ? raw.unreadable.map(String) : [], blocks };
+}
+
+async function readShotImages(files) {
+  const sample = await claude.use('sample');
+  if (!sample) return { error: 'unavailable' };
+  const images = []; for (const f of files) images.push(await shrinkImage(f));
+  try {
+    const raw = await sample.json(shotImagePrompt(images.length), { images, maxTokens: 12000 });
+    return { read: normaliseShotRead(raw), images };
+  } catch (e) { return { error: (e && e.code) || 'failed' }; }
+}
+
+const SHOT_READ_ERRORS = {
+  unavailable: "Reading screenshots needs Claude, and this server can't reach it — check ANTHROPIC_API_KEY on the server.",
+  rate_limited: 'Too many requests just now — wait a moment and try again.',
+  invalid_json: 'Claude replied, but not in the expected format. Try again.',
+};
+
+function openShotReview(sid, read, images) {
+  const clubs = [['', '— pick a club —']].concat(activeClubs().filter(c => c.category !== 'putter').map(c => [c.code, c.code + '  ' + c.name]));
+  const previews = images.map(b => URL.createObjectURL(b));
+  const smF = (i, key, label, v) => field(label, `sm_${key}_${i}`, 'number', v, 'step="0.1"');
+  openSheet(`<h2>Check the shots</h2>
+    <div class="notice">Read from ${plural(images.length, 'screenshot')} by Claude — a reading, not a measurement. Check each block against the images before saving; fix or delete any line here. Nothing is saved until you do.</div>
+    ${read.converted ? `<div class="notice">The screen shows yards, so every distance here has been converted to metres (× 0.9144).</div>` : ''}
+    ${read.units === 'unknown' ? `<div class="notice warn">The screenshots don't say whether these are metres or yards. They're shown exactly as read. If they're yards, cancel and convert them, or fix them below.</div>` : ''}
+    <div class="shotimgs">${previews.map((u, i) => `<img src="${u}" alt="screenshot ${i + 1}">`).join('')}</div>
+    ${read.notes ? `<p class="small muted">${esc(read.notes)}</p>` : ''}
+    ${read.unreadable.length ? `<p class="small" style="color:var(--flag)">Couldn't read: ${esc(read.unreadable.join('; '))}</p>` : ''}
+    ${read.blocks.map((b, i) => `<div class="readblock">
+      ${checkF(`<b>Block ${i + 1}</b>${b.clubAsShown ? ` <span class="muted small">screen says “${esc(b.clubAsShown)}”</span>` : ''}`, `keep_${i}`, true)}
+      <div class="grid3">${selectF('Club', `club_${i}`, clubs, b.club || '')}${selectF('Swing', `swing_${i}`, [['full', 'Full'], ['part', 'Part'], ['chip', 'Chip']], 'full')}${field('Target m', `target_${i}`, 'number', b.target, 'inputmode="decimal"')}</div>
+      <label>Shots — carry, total, speed<textarea name="shots_${i}" spellcheck="false">${esc(shotsText(b.shots))}</textarea></label>
+      <div class="count" data-count="${i}"></div>
+      ${b.summary ? `<div class="grid3">${field('Shots', `sm_n_${i}`, 'number', b.summary.n)}${smF(i, 'fromPinCarry', 'From pin (carry)', b.summary.fromPinCarry)}${smF(i, 'fromPinTotal', 'From pin (total)', b.summary.fromPinTotal)}</div><div class="grid2">${smF(i, 'avgCarry', 'Avg carry', b.summary.avgCarry)}${smF(i, 'avgTotal', 'Avg total', b.summary.avgTotal)}</div>` : ''}
+      ${b.warnings.length ? `<ul class="warnlist">${b.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+    </div>`).join('')}`,
+    async root => {
+      const s = session(sid); if (!s) { toast('Session not found'); return false; }
+      const nb = [];
+      for (let i = 0; i < read.blocks.length; i++) {
+        if (!val(root, `keep_${i}`)) continue;
+        const club = val(root, `club_${i}`);
+        if (!club) { toast(`Pick a club for block ${i + 1}, or untick it`); return false; }
+        const shots = parseShots(val(root, `shots_${i}`) || '');
+        const sm = {}; for (const key of ['n', 'avgCarry', 'avgTotal', 'fromPinCarry', 'fromPinTotal']) { const v = val(root, `sm_${key}_${i}`); if (v != null) sm[key] = v; }
+        if (shots.length) { delete sm.n; delete sm.avgCarry; delete sm.avgTotal; }   // derived from shots
+        const summary = Object.keys(sm).length ? sm : null;
+        if (!shots.length && !summary) { toast(`Block ${i + 1} has no shots left — untick it or add them`); return false; }
+        nb.push({ club, swing: val(root, `swing_${i}`) || 'full', target: val(root, `target_${i}`), shots, summary });
+      }
+      if (!nb.length) { toast('Nothing ticked to save'); return false; }
+      if (!S.assets) { toast('Saving needs write access to this page'); return false; }
+      const assets = [];
+      for (const img of images) {
+        try { assets.push((await S.assets.upload(img, { type: img.type || 'image/jpeg' })).id); }
+        catch (e) { releaseAssets(assets); toast('Storing the screenshots failed — nothing saved'); return false; }
+      }
+      const fromImages = { assets, readOn: today(), units: read.units, converted: read.converted };
+      const seq0 = (s.blocks || []).reduce((m, b) => Math.max(m, b.seq || 0), 0);
+      const blocks = (s.blocks || []).concat(nb.map((b, j) => ({ id: uid('b'), seq: seq0 + j + 1, ...b, fromImages })));
+      const ok = await save('sessions', s.id, { ...s, blocks });
+      if (!ok) { releaseAssets(assets); return false; }
+      previews.forEach(u => URL.revokeObjectURL(u));
+      go('range', { sessionId: s.id });
+      return true;
+    });
+  const upd = () => read.blocks.forEach((_, i) => { const ta = sheetInner.querySelector(`[name=shots_${i}]`), out = sheetInner.querySelector(`[data-count="${i}"]`); const p = parseShots(ta.value); out.textContent = p.length ? `${plural(p.length, 'shot')}, avg carry ${fmt(mean(p.map(x => x.carry)), 1)}m, avg total ${fmt(mean(p.map(x => x.total)), 1)}m` : 'No shots.'; });
+  sheetInner.addEventListener('input', e => { if (/^shots_/.test(e.target.name || '')) upd(); });
+  upd();
+}
+
+// Assets a block or a whole session points at, and letting them go.
+const blockAssets = b => (b && b.fromImages && b.fromImages.assets) || [];
+const sessionAssets = s => [...(s.blocks || []).flatMap(blockAssets), ...(s.swings || []).flatMap(sw => [...(sw.frames || []).map(f => f.asset), ...(sw.video ? [sw.video] : [])])];
+async function releaseAssets(ids) { if (!S.assets) return; for (const id of ids || []) { try { await S.assets.delete(id); } catch (e) {} } }
+
+ACTIONS.shotsFromImages = function (d) {
+  const sid = d.id;
+  openSheet(`<h2>Shots from screenshots</h2>
+    <p class="small muted">Screenshots or photos of the bay's shot list — up to ${SHOT_IMAGES_MAX}, in order. Claude reads them into blocks, one per club; you check every number before anything is saved.</p>
+    <label>Screenshots<input type="file" accept="image/*" multiple name="imgs"></label>
+    <div class="count" id="readNote"></div>`,
+    async root => {
+      const files = [...(root.querySelector('[name=imgs]').files || [])];
+      const note = $('#readNote', root);
+      if (!files.length) { toast('Pick at least one screenshot'); return false; }
+      if (files.length > SHOT_IMAGES_MAX) { toast(`Up to ${SHOT_IMAGES_MAX} at a time`); return false; }
+      note.textContent = `Reading ${plural(files.length, 'screenshot')}…`;
+      const res = await readShotImages(files);
+      if (res.error) { note.textContent = SHOT_READ_ERRORS[res.error] || `Reading failed (${res.error}).`; return false; }
+      if (!res.read.blocks.length) { note.textContent = `No shots could be read from ${files.length === 1 ? 'that image' : 'those images'}.${res.read.unreadable.length ? ' ' + res.read.unreadable.join('; ') : ''}`; return false; }
+      sheet.close();
+      openShotReview(sid, res.read, res.images);
+      return false;
+    });
+};
+
+/* ============================================================
    v1 additions
    Export/import (the whole store, images included), a settings
    document, course distances from a home location, verification of
@@ -1964,12 +2175,12 @@ const EXPORT_VERSION = 1;
 function collectAssetIds() {
   const ids = new Set();
   for (const c of S.courses) for (const h of (c.holes || [])) if (h.art && h.art.asset) ids.add(h.art.asset);
-  for (const s of S.sessions) for (const sw of (s.swings || [])) { for (const f of (sw.frames || [])) ids.add(f.asset); if (sw.video) ids.add(sw.video); }
+  for (const s of S.sessions) for (const id of sessionAssets(s)) ids.add(id);
   return [...ids];
 }
 const blobToDataUrl = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(b); });
 async function buildExport({ withImages = true, onProgress } = {}) {
-  const out = { format: 'carry-export', version: EXPORT_VERSION, exportedAt: new Date().toISOString(),
+  const out = { format: 'carry-export', version: EXPORT_VERSION, exportedAt: new Date().toISOString(), appVersion: (S.about && S.about.version) || null,
     clubs: S.clubs, courses: S.courses, sessions: S.sessions, settings: settings(), assets: {} };
   if (withImages) {
     const ids = collectAssetIds();
@@ -1993,7 +2204,8 @@ async function applyImport(data, { onProgress } = {}) {
   }
   const remap = id => map[id] || id;
   const courses = (data.courses || []).map(c => ({ ...c, holes: (c.holes || []).map(h => h.art && h.art.asset ? { ...h, art: { ...h.art, asset: remap(h.art.asset) } } : h) }));
-  const sessions = (data.sessions || []).map(s => ({ ...s, swings: (s.swings || []).map(sw => ({ ...sw, frames: (sw.frames || []).map(f => ({ ...f, asset: remap(f.asset) })), video: sw.video ? remap(sw.video) : null })) }));
+  const sessions = (data.sessions || []).map(s => ({ ...s, swings: (s.swings || []).map(sw => ({ ...sw, frames: (sw.frames || []).map(f => ({ ...f, asset: remap(f.asset) })), video: sw.video ? remap(sw.video) : null })),
+    ...(s.blocks ? { blocks: s.blocks.map(b => b.fromImages ? { ...b, fromImages: { ...b.fromImages, assets: (b.fromImages.assets || []).map(remap) } } : b) } : {}) }));
   const counts = { clubs: 0, courses: 0, sessions: 0 };
   for (const c of (data.clubs || [])) { if (await save('clubs', c.code, c)) counts.clubs++; onProgress && onProgress('clubs', counts.clubs, (data.clubs || []).length); }
   for (const c of courses) { if (await save('courses', c.id, c)) counts.courses++; onProgress && onProgress('courses', counts.courses, courses.length); }

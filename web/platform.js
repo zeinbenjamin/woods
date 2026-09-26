@@ -102,7 +102,7 @@
     try {
       out = await api('/analyse', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt, images, json: !!wantJson }),
+        body: JSON.stringify({ prompt, images, json: !!wantJson, ...(opts.maxTokens ? { maxTokens: opts.maxTokens } : {}) }),
       });
     } catch (e) {
       const err = new Error(e.message);

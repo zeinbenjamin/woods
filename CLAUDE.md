@@ -27,7 +27,9 @@ is ever stored.**
 
 ## Current state
 
-v1.0.0. Built as a Claude artifact, ported here without rewriting the app.
+The running version is in `package.json` and `CHANGELOG.md`, and the app
+shows it in the header. Built as a Claude artifact, ported here without
+rewriting the app.
 
 - Deployed on TrueNAS SCALE, image published to GHCR as
   `ghcr.io/zeinbenjamin/woods`, container named `carry`.
@@ -38,6 +40,31 @@ v1.0.0. Built as a Claude artifact, ported here without rewriting the app.
   artifact (`https://claude.ai/artifact/2GV6LXfWGTtXzPFjDs2vZM`) is a
   frozen historical copy: changes are not ported back to it, and data
   entered there does not reach the NAS.
+
+## Versioning
+
+`package.json`'s version is the release number (semver). `CHANGELOG.md`
+records every release; new work goes under `## [Unreleased]` as it lands.
+
+- **To release:** on the branch, `npm run release -- patch|minor|major`
+  (fixes → patch, new features → minor, breaking data or deploy changes →
+  major). It bumps `package.json` and the lockfile and moves the
+  Unreleased notes under the new version. Commit, PR, merge.
+- **CI gate:** a PR that changes anything shipped in the image (`web/`,
+  `server/`, `scripts/`, `Dockerfile`) fails unless the version went up
+  and has a CHANGELOG section (`scripts/check-version.js`). Tests, docs
+  and `deploy/` don't need a bump.
+- **On merge to main** the publish workflow pushes `:latest` and
+  `:sha-<short>` every time and, when the version is new, `:<version>`
+  plus a `v<version>` git tag and a GitHub release built from the
+  changelog section. Version tags are written once, never moved.
+- **In the app:** the header shows `v<version>`; Bag → Your data shows
+  version, commit and build date. The server serves them at `/version`
+  (unauthenticated, like `/healthz`), stamped into the image by the
+  `CARRY_COMMIT` / `CARRY_BUILT` build args. Exports record `appVersion`.
+
+There is no `v1.0.0` git tag: 1.0.0 is the port as first committed, and
+the fixes merged after it (PRs 1 and 2) are released as part of 1.1.0.
 
 ## Architecture, and why
 
@@ -159,12 +186,34 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
+## Range data from screenshots
+
+Range shots come from screenshots of the bay's shot list, not typing:
+Range → a session → *From screenshots*. Claude reads them into blocks
+(prompt: `shotImagePrompt`), `normaliseShotRead` cleans the reading, and a
+review sheet shows every number beside the images. Nothing is stored
+until he saves; then the screenshots are kept with the blocks as
+`fromImages`, so each number traces back to what the bay showed. Rules
+the reader follows, each pinned by a test: yards are converted only when
+the screen says yards; unclear readings, implausible shots, missing
+totals and total < carry become warnings, never silent fixes; a club that
+isn't clearly one of his is left for him to pick.
+
+**Not yet verified against real screenshots.** The tests stub Claude's
+reply. The prompt has not been run against actual Toptracer / Inrange
+screens; the first real session is the test, and a screenshot kept as a
+fixture would let the reading be pinned.
+
 ## Testing
 
-`npm test` — 87 tests, about 10s (20s on one core). Needs `python3` on the
+`npm test` — 111 tests, about 12s (20s+ on one core). Needs `python3` on the
 path: the zip test opens the app's zip output with Python's `zipfile`.
 
-- `api.test.js` (10) — the server alone: auth, documents, assets, import.
+- `api.test.js` (12) — the server alone: auth, documents, assets, import,
+  `/version`, and `/api/analyse` against a fake Anthropic API
+  (`ANTHROPIC_BASE_URL`).
+- `versioning.test.js` (7) — changelog parsing, `npm run release` run for
+  real in a scratch directory, the PR gate.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server: writes land in SQLite, uploads become blobs, polling works.
 - `ui-*.test.js` (71) — the app's own UI suites, rebuilt here. The
@@ -175,7 +224,9 @@ path: the zip test opens the app's zip output with Python's `zipfile`.
   (strike classes, derived-never-stored, nominal vs measured, recency
   window, calibration, unmeasurable → null), `ui-tees-migrations`,
   `ui-swing` (frame extraction, zip, one download, chat paste, analysis),
-  `ui-logging` (armed club, putts, penalties, quick score, first putt).
+  `ui-logging` (armed club, putts, penalties, quick score, first putt),
+  `ui-range-images` (screenshots → review → blocks, units, warnings,
+  export/import/delete of the screenshots, version in the header).
 
 `test/harness.js` boots a real server on a free port with seeded
 documents, loads the app into jsdom, and stubs only what jsdom lacks
@@ -185,7 +236,8 @@ fake decoder that reproduces the real one's timing: `seeked` fires before
 the frame is painted.
 
 Every gotcha above has a test, and each was checked by reintroducing the
-bug and watching the test fail (22 mutations, all caught).
+bug and watching the test fail (22 mutations, all caught; 10 more for
+versioning and screenshots, all caught).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
 regression tests: the New round tee control not following a course

@@ -3,7 +3,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -86,6 +86,49 @@ test('analysis reports a missing key rather than failing silently', async () => 
   const r = await fetch(`${base}/api/analyse`, { method: 'POST', headers: hdr, body: JSON.stringify({ prompt: 'hello' }) });
   assert.equal(r.status, 503);
   assert.equal((await r.json()).error, 'unconfigured');
+});
+
+test('reports its version, unauthenticated, at /version and in /healthz', async () => {
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  const v = await (await fetch(`${base}/version`)).json();       // no token
+  assert.equal(v.version, pkg.version);
+  assert.ok(v.commit === null || /^[0-9a-f]{7}$/.test(v.commit), `commit ${v.commit}`);
+  const h = await (await fetch(`${base}/healthz`)).json();
+  assert.equal(h.version, pkg.version);
+  assert.equal(h.ok, true);
+});
+
+test('analysis sends images then prompt upstream, and caps the output length it asks for', async () => {
+  // A fake Anthropic API, and a second Carry server pointed at it.
+  const { createServer } = await import('node:http');
+  const seen = [];
+  const fake = createServer((req, res) => {
+    let body = ''; req.on('data', c => body += c);
+    req.on('end', () => {
+      seen.push({ key: req.headers['x-api-key'], body: JSON.parse(body) });
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ content: [{ type: 'text', text: '```json\n{"ok":true}\n```' }], usage: { input_tokens: 1, output_tokens: 1 } }));
+    });
+  });
+  await new Promise(r => fake.listen(0, '127.0.0.1', r));
+  const dir = mkdtempSync(join(tmpdir(), 'carry-up-'));
+  const port = PORT + 50, url = `http://127.0.0.1:${port}`;
+  const p = spawn('node', ['server/index.js'], { env: { ...process.env, DATA_DIR: dir, PORT: String(port), API_TOKEN: '',
+    ANTHROPIC_API_KEY: 'sk-test', ANTHROPIC_BASE_URL: `http://127.0.0.1:${fake.address().port}`, CARRY_MODEL: 'test-model' }, stdio: 'ignore' });
+  try {
+    for (let i = 0; i < 50; i++) { try { if ((await fetch(`${url}/healthz`)).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
+    const post = body => fetch(`${url}/api/analyse`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+    const out = await post({ prompt: 'read this', images: [{ mediaType: 'image/png', data: 'AAAA' }] });
+    assert.deepEqual(out.json, { ok: true }, 'fenced JSON reply parsed');
+    await post({ prompt: 'x', maxTokens: 10 ** 9 });
+    await post({ prompt: 'x', maxTokens: 12000 });
+    await post({ prompt: 'x', maxTokens: 3 });
+    assert.deepEqual(seen.map(x => x.body.max_tokens), [2000, 16000, 12000, 256]);
+    assert.equal(seen[0].key, 'sk-test');
+    assert.equal(seen[0].body.model, 'test-model');
+    assert.deepEqual(seen[0].body.messages[0].content.map(c => c.type), ['image', 'text'], 'images before the prompt');
+    assert.equal(seen[0].body.messages[0].content[0].source.media_type, 'image/png');
+  } finally { p.kill(); fake.close(); rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('serves the app itself', async () => {

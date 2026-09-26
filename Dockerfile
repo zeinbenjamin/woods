@@ -23,4 +23,9 @@ VOLUME ["/data"]
 EXPOSE 1818
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD node -e "fetch('http://127.0.0.1:1818/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+# Stamped by the publish workflow so the running app can say exactly which
+# commit it is. Declared last so they don't bust the layer cache above.
+ARG CARRY_COMMIT=""
+ARG CARRY_BUILT=""
+ENV CARRY_COMMIT=$CARRY_COMMIT CARRY_BUILT=$CARRY_BUILT
 CMD ["node", "server/index.js"]
