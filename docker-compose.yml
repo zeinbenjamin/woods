@@ -10,7 +10,7 @@ services:
     # the image's default user (node, 1000) can't create the SQLite WAL.
     user: "${APP_UID:-568}:${APP_GID:-568}"
     ports:
-      - "8080:8080"
+      - "1818:1818"
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       API_TOKEN: ${API_TOKEN}
