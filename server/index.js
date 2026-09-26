@@ -12,7 +12,7 @@ import { analyse, parseJson } from './anthropic.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = Number(process.env.PORT || 8080);
+const PORT = Number(process.env.PORT || 1818);
 const TOKEN = process.env.API_TOKEN || '';
 const COLLECTIONS = new Set(['clubs', 'courses', 'sessions', 'settings']);
 const MAX_ASSET = Number(process.env.MAX_ASSET_MB || 200) * 1024 * 1024;
