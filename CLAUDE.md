@@ -42,7 +42,7 @@ v1.0.0. Built as a Claude artifact, ported here without rewriting the app.
 
 The app was written against the Claude artifact runtime, which provides
 capabilities via `claude.use('db' | 'assets' | 'sample' | 'downloads')`.
-Rather than rewrite 1,600 lines, `web/platform.js` implements that exact
+Rather than rewrite ~2,000 lines of app code, `web/platform.js` implements that exact
 surface against this server. **The app code is unchanged from the
 artifact.** Keep it that way unless there's a strong reason not to: it
 means fixes port in either direction by copying one file.
@@ -51,7 +51,7 @@ means fixes port in either direction by copying one file.
 server/index.js     routes, token auth, static hosting
 server/db.js        SQLite: JSON documents + asset metadata
 server/anthropic.js the Messages API call — the only place the key exists
-web/index.html      the entire app, one file, ~1,600 lines of JS
+web/index.html      the entire app, one file, ~2,250 lines (~2,030 of them JS)
 web/platform.js     the shim: artifact capability surface → this API
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
 deploy/truenas-compose.yml paste-ready for the SCALE Custom App form
@@ -147,20 +147,51 @@ Each of these cost real debugging time. Don't reintroduce them.
   pulls only, and `${VARIABLES}` silently resolve to empty — including
   `API_TOKEN`, which disables auth rather than erroring. Use
   `deploy/truenas-compose.yml`, which is literal throughout.
+- **Express matches routes in registration order.** `DELETE
+  /api/:collection/:id` once sat above `DELETE /api/assets/:id` and
+  swallowed it with a 404, and the app ignores asset-delete errors, so in
+  the whole of v1.0.0 every removed frame, swing video and hole image
+  stayed on disk.
+  Asset routes now come first; `api.test.js` checks the file is gone.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
 ## Testing
 
-`npm test` — 15 tests. Nine hit a live server process; six load the real
-`web/index.html` in jsdom, point it at that server, and assert that a
-write from the app lands in SQLite, an upload becomes a fetchable blob,
-and an external change arrives by polling.
+`npm test` — 87 tests, about 10s (20s on one core). Needs `python3` on the
+path: the zip test opens the app's zip output with Python's `zipfile`.
 
-The app's own UI suites (CRUD, swing analyzer, UX, tee sets/migrations,
-faster logging — about 110 assertions) were written in the artifact
-sandbox and are **not in this repo**. Porting them is worthwhile; they
-caught several real bugs, including the ones listed above.
+- `api.test.js` (10) — the server alone: auth, documents, assets, import.
+- `web.test.js` (6) — the real `web/index.html` in jsdom against a live
+  server: writes land in SQLite, uploads become blobs, polling works.
+- `ui-*.test.js` (71) — the app's own UI suites, rebuilt here. The
+  originals from the artifact sandbox were never recovered, so these are
+  new tests covering the same ground, driven through the real forms and
+  real taps on the hole map:
+  `ui-crud` (clubs, courses, range blocks, rounds), `ui-analytics`
+  (strike classes, derived-never-stored, nominal vs measured, recency
+  window, calibration, unmeasurable → null), `ui-tees-migrations`,
+  `ui-swing` (frame extraction, zip, one download, chat paste, analysis),
+  `ui-logging` (armed club, putts, penalties, quick score, first putt).
+
+`test/harness.js` boots a real server on a free port with seeded
+documents, loads the app into jsdom, and stubs only what jsdom lacks
+(`<dialog>`, SVG CTM as identity so taps land at exact coordinates,
+object URLs, `TextEncoder`, `Blob.arrayBuffer`). The swing suite adds a
+fake decoder that reproduces the real one's timing: `seeked` fires before
+the frame is painted.
+
+Every gotcha above has a test, and each was checked by reintroducing the
+bug and watching the test fail (22 mutations, all caught).
+
+Two tests are marked `todo`: known app bugs, recorded rather than fixed
+because the fix is in `web/index.html` (see "Current state"). They report
+but don't fail the run. Remove the flag when fixing one.
+
+- New round: picking a different course redraws the scorecard but not the
+  tee control, so the round saves the first course's tee.
+- Re-analysing a swing in the app after a pasted chat reply keeps
+  `analysedIn: 'chat'`, so the card credits the new reading to a chat.
 
 Convention used throughout: **verify rather than assert**. Scorecards
 were checked against published totals before being stored; the zip writer

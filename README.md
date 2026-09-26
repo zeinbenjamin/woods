@@ -38,8 +38,11 @@ DATA_DIR=./data node server/index.js
 # http://localhost:1818
 ```
 
-Run the tests with `npm test` — 15 of them, covering the API, the asset
-store, auth, the import path, and the real app driving the real server.
+Run the tests with `npm test` — 87 of them, covering the API, the asset
+store, auth, the import path, and the real app driving the real server:
+CRUD through its forms, shot logging by tapping the hole map, analytics
+invariants, tee sets and migrations, and the swing analyzer. The zip test
+needs `python3` on the path.
 
 ## Deploying on TrueNAS SCALE
 

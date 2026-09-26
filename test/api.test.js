@@ -3,7 +3,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -52,6 +52,18 @@ test('round-trips an asset and serves the blob unauthenticated', async () => {
   assert.equal(blob.status, 200);
   assert.equal(blob.headers.get('content-type'), 'image/webp');
   assert.deepEqual(Buffer.from(await blob.arrayBuffer()), bytes);
+});
+
+test('deletes an asset: the record and the file on disk', async () => {
+  // Regression: DELETE /api/:collection/:id used to be registered first and
+  // answered this with 404 "unknown collection", leaving the file behind.
+  const up = await (await fetch(`${base}/api/assets`, { method: 'POST', headers: { 'x-carry-token': TOKEN, 'content-type': 'image/png' }, body: Buffer.from('png-ish') })).json();
+  assert.ok(existsSync(join(DATA, 'assets', `${up.id}.png`)));
+  const del = await fetch(`${base}/api/assets/${up.id}`, { method: 'DELETE', headers: hdr });
+  assert.equal(del.status, 200);
+  assert.equal((await del.json()).deleted, true);
+  assert.equal((await fetch(`${base}/_blob/${up.id}`)).status, 404);
+  assert.equal(existsSync(join(DATA, 'assets', `${up.id}.png`)), false, 'file removed from disk');
 });
 
 test('deletes a document', async () => {
