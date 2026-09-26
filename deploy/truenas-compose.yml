@@ -1,3 +1,14 @@
+# ========================================================================
+#  BEFORE PASTING, REPLACE THE THREE MARKED VALUES BELOW (search: REPLACE)
+#    1. ANTHROPIC_API_KEY  your key from console.anthropic.com
+#    2. API_TOKEN          the token your devices already use (keep it the
+#                          same, or every device will be asked for it again)
+#    3. the dataset path   where your existing data lives, e.g.
+#                          /mnt/tank/apps/carry — a wrong path starts an
+#                          EMPTY app (your data is still safe on disk)
+#  Pasted as-is, the app runs with a placeholder token and asks for it.
+# ========================================================================
+#
 # Paste this into TrueNAS SCALE: Apps → Discover → Custom App →
 # "Install via YAML".
 #
@@ -23,6 +34,9 @@ services:
     pull_policy: always
     container_name: carry
     restart: unless-stopped
+    # A tiny init as PID 1, so stop signals reach the app and it shuts down
+    # at once instead of being killed after 10 seconds.
+    init: true
 
     # The apps user on SCALE. The dataset below must be owned by it:
     #   chown -R 568:568 /mnt/tank/apps/carry
@@ -32,15 +46,15 @@ services:
       - "1818:1818"
 
     environment:
-      ANTHROPIC_API_KEY: "sk-ant-REPLACE_ME"
-      API_TOKEN: "REPLACE_WITH_openssl_rand_hex_24"
+      ANTHROPIC_API_KEY: "sk-ant-REPLACE_ME"                # ← REPLACE (1)
+      API_TOKEN: "REPLACE_WITH_openssl_rand_hex_24"   # ← REPLACE (2)
       CARRY_MODEL: "claude-sonnet-4-6"
       MAX_ASSET_MB: "200"
       TZ: "Australia/Sydney"
       HOME: "/tmp"
 
     volumes:
-      - /mnt/tank/apps/carry:/data
+      - /mnt/tank/apps/carry:/data     # ← REPLACE (3) the left-hand side only
 
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1818/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]

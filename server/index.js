@@ -7,7 +7,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listDocs, getDoc, putDoc, deleteDoc, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR } from './db.js';
+import { db, listDocs, getDoc, putDoc, deleteDoc, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR } from './db.js';
 import { analyse, parseJson } from './anthropic.js';
 import { VERSION, COMMIT, CHANGELOG } from './version.js';
 
@@ -18,6 +18,17 @@ const TOKEN = process.env.API_TOKEN || '';
 const COLLECTIONS = new Set(['clubs', 'courses', 'sessions', 'settings']);
 const MAX_ASSET = Number(process.env.MAX_ASSET_MB || 200) * 1024 * 1024;
 
+// One line per request that changes something or fails, so the NAS's
+// container log says what happened. Quiet for successful reads (the page
+// polls every few seconds), and the path only: a ?token= never reaches the log.
+app.use((req, res, next) => {
+  const t0 = Date.now();
+  res.on('finish', () => {
+    if (req.method === 'GET' && res.statusCode < 400) return;
+    console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl.split('?')[0]} ${res.statusCode} ${Date.now() - t0}ms`);
+  });
+  next();
+});
 app.use(express.json({ limit: '64mb' }));
 app.use(express.raw({ type: ['image/*', 'video/*', 'application/octet-stream'], limit: `${Math.ceil(MAX_ASSET / 1048576)}mb` }));
 
@@ -135,11 +146,26 @@ app.use(express.static(join(here, '..', 'web'), {
   setHeaders: (res, file) => { if (/\.(html|js|webmanifest)$/.test(file)) revalidate(res); },
 }));
 
-app.use((err, _req, res, _next) => {
-  res.status(err.status || 500).json({ error: err.message || 'server error' });
+app.use((err, req, res, _next) => {
+  const status = err.status || err.statusCode || 500;
+  if (status >= 500) console.error(`${new Date().toISOString()} ERROR ${req.method} ${req.originalUrl.split('?')[0]}\n${err.stack || err}`);
+  res.status(status).json({ error: err.message || 'server error' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Carry ${VERSION} (${COMMIT}) listening on http://0.0.0.0:${PORT}`);
   if (!TOKEN) console.warn('WARNING: API_TOKEN is empty, so the API is open to anyone who can reach this port. Set it unless this is a trusted LAN.');
 });
+
+// docker stop sends SIGTERM. Node doesn't exit on it by default when it's
+// the container's first process, so Docker waited 10s and killed it. Close
+// the server and the database cleanly instead.
+function shutdown(signal) {
+  console.log(`${signal}: shutting down`);
+  const done = () => { try { db.close(); } catch {} process.exit(0); };
+  server.close(done);
+  server.closeIdleConnections?.();
+  setTimeout(done, 3000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

@@ -118,6 +118,8 @@ screenshots, versioning, and the swing analyzer.
 5. **Open it** at `http://truenas:1818/?token=YOUR_API_TOKEN`. The token
    is stored in the browser, so that's once per device. Add it to the
    home screen — there's a manifest, so it installs like an app.
+   Open it without the token (or with a wrong one) and the app asks for
+   it.
 
 ### Behind a reverse proxy
 

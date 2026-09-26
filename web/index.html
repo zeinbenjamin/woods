@@ -183,7 +183,8 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .gaps .gap { display: grid; grid-template-columns: 90px 50px 1fr; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--rule); font-size: 14px; } .gaps .gap b { font-family: var(--cond); text-align: right; } .gaps .gap small { color: var(--ink-3); } .gaps .gap.flag small { color: var(--flag); }
 .hbar em { grid-column: 1 / -1; margin: -4px 0 2px 80px; font-style: normal; } .hbar.brk { grid-template-columns: 80px 1fr 40px; } .hbar.brk em { margin-left: 90px; } .trend sup { font-size: 9px; margin-left: 2px; color: var(--ink-3); }
 .ftile.long b { font-size: 19px; }
-.item.recent { font-size: 14px; padding: 9px 0; } .pcard.k-strike { border-left-color: var(--sand-2); }
+.item.recent { font-size: 14px; padding: 9px 0; }
+details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label { margin-top: 8px; } .pcard.k-strike { border-left-color: var(--sand-2); }
 .fresh { color: var(--ink-2); margin: 2px 0 4px; } .fresh.practised { color: var(--green); }
 .qitem { padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 14px; }
 .shotimgs { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0; } .shotimgs img { height: 180px; width: auto; border-radius: 4px; border: 1px solid var(--rule); flex: 0 0 auto; }
@@ -289,12 +290,34 @@ async function connect() {
   try { S.assets = await claude.use('assets'); } catch (e) { S.assets = null; }
   // Swing analysis needs a view that can send images to Claude.
   try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
-  const onErr = e => setStatus('Storage error: ' + (e && e.code || 'unknown'), true);
+  const onErr = e => { if (e && e.code === 'unauthorised') return askToken(e.token); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
   db.collection('clubs').onSnapshot(snap => { S.clubs = snap.docs.map(d => d.data()).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); render(); }, onErr);
   db.collection('courses').onSnapshot(snap => { S.courses = snap.docs.map(d => d.data()).sort((a, b) => a.name.localeCompare(b.name)); render(); }, onErr);
   setTimeout(() => runMigrations(), 400);
   db.collection('settings').onSnapshot(snap => { S.settings = (snap.docs[0] && snap.docs[0].data()) || null; render(); }, onErr);
   db.collection('sessions').onSnapshot(snap => { S.sessions = snap.docs.map(d => d.data()).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.created || 0) - (a.created || 0)); render(); }, onErr);
+}
+// The server wants its API_TOKEN and this device doesn't have the right one
+// (a new phone, or the token was changed on the NAS). Ask once; the shim
+// sends it from then on, and the next poll loads everything.
+let askingToken = false;
+function askToken(refused) {
+  if (askingToken) return;
+  // Refused a token that has since been replaced: an old request, not a verdict on the new one.
+  let current = ''; try { current = localStorage.getItem('carry.token') || ''; } catch (e) {}
+  if (refused !== undefined && refused !== current) return;
+  askingToken = true;
+  setStatus('Needs your access token', true);
+  openSheet(`<h2>Access token</h2>
+    <p class="small muted">This server asks for its access token — the API_TOKEN in your TrueNAS app settings. It's stored on this device only.</p>
+    ${field('Token', 'token', 'text', '', 'autocomplete="off" autocapitalize="off" spellcheck="false"')}`,
+    async root => {
+      const t = val(root, 'token'); if (!t) { toast('Paste the token first'); return false; }
+      try { localStorage.setItem('carry.token', t); } catch (e) {}
+      askingToken = false; setStatus('Connecting…');
+      setTimeout(() => { if ($('#status').textContent === 'Connecting…') setStatus(''); }, 3000);
+      return true;
+    });
 }
 async function save(col, id, doc) {
   if (!S.db) { toast('Storage unavailable'); return false; }
@@ -375,12 +398,60 @@ function memoised(name, arg, fn) {
 const fullShots = code => memoised('fullShots', code, c => fullShotsUncached(c));
 function fullShotsUncached(code) {
   const out = [];
-  for (const s of S.sessions) if (s.type === 'range' && withinWindow(s.date)) for (const b of (s.blocks || [])) {
+  for (const s of S.sessions) if (countsForNumbers(s)) out.push(...sessionFullShots(s, code));
+  return out;
+}
+// A session's full-swing shots for one club, each tagged with where it came from.
+function sessionFullShots(s, code) {
+  const out = [];
+  for (const b of (s.blocks || [])) {
     if (b.club !== code || (b.swing || 'full') !== 'full') continue;
-    for (const sh of (b.shots || [])) if (sh.carry != null && sh.total != null) out.push({ ...sh, sessionId: s.id, date: s.date, blockId: b.id });
+    (b.shots || []).forEach((sh, idx) => { if (sh.carry != null && sh.total != null) out.push({ ...sh, sessionId: s.id, date: s.date, blockId: b.id, idx }); });
   }
   return out;
 }
+// The shots a session's own page classifies against: the club's counted
+// shots, plus this session's if it's filtered out, so its dots still show.
+const shotsWithSession = (code, s) => countsForNumbers(s) ? fullShots(code) : fullShots(code).concat(sessionFullShots(s, code));
+
+/* ---------- which range shots count, and how much ----------
+   A range session counts towards club numbers unless he's left it out, it's
+   outside the date window, or its ball type doesn't match the ball filter.
+   Within that, recent shots count more (unless he picks "every shot the
+   same"): each shot's weight halves every DISTANCE_HALF_LIFE days, and stock
+   carry is the weighted median. How much a number rests on is shown as the
+   effective shot count, (Σw)² / Σw². */
+const DISTANCE_HALF_LIFE = 60;
+const BALLS = [['all', 'All balls'], ['range', 'Range balls'], ['better', 'Premium & own']];
+const WEIGHTINGS = [['recent', 'Recent shots count more'], ['equal', 'Every shot the same']];
+const weighting = () => settings().weighting === 'equal' ? 'equal' : 'recent';
+const ballFilter = () => settings().balls || 'all';
+function ballOk(s) {
+  const f = ballFilter();
+  if (f === 'all') return true;
+  return f === 'range' ? s.ballType === 'range' : s.ballType === 'premium' || s.ballType === 'own';   // unrecorded ball type counts only under "all"
+}
+const countsForNumbers = s => s.type === 'range' && !s.excluded && withinWindow(s.date) && ballOk(s);
+const shotWeight = date => weighting() === 'equal' || !date ? 1 : Math.pow(0.5, ageDays(date) / DISTANCE_HALF_LIFE);
+// [value, weight] pairs. With equal weights this is exactly the ordinary median.
+function weightedMedian(pairs) {
+  const xs = pairs.filter(([v, w]) => v != null && w > 0).sort((a, b) => a[0] - b[0]);
+  if (!xs.length) return null;
+  const half = sum(xs.map(x => x[1])) / 2; let cum = 0;
+  for (let i = 0; i < xs.length; i++) {
+    cum += xs[i][1];
+    if (Math.abs(cum - half) < 1e-9 * half && i + 1 < xs.length) return (xs[i][0] + xs[i + 1][0]) / 2;
+    if (cum > half) return xs[i][0];
+  }
+  return xs[xs.length - 1][0];
+}
+// Weights are relative, so scale them against the largest: equal weights
+// become exactly 1 and give the plain mean, with no floating-point residue.
+const weightedMean = pairs => {
+  const xs = pairs.filter(([v, w]) => v != null && w > 0); if (!xs.length) return null;
+  const top = Math.max(...xs.map(x => x[1])), ws = xs.map(x => x[1] / top);
+  return sum(xs.map(([v], i) => v * ws[i])) / sum(ws);
+};
 // Strike profile, relative to the club's own data.
 //   top     carry < 20m
 //   runner  roll% more than 10 points above the roll% of the club's best strikes
@@ -403,14 +474,16 @@ const clubStats = code => memoised('clubStats', code, clubStatsUncached);
 function clubStatsUncached(code) {
   const shots = fullShots(code);
   if (!shots.length) return null;
-  const prof = classify(shots);
-  const live = shots.filter((s, i) => prof[i] !== 'top');
-  const pure = shots.filter((s, i) => prof[i] === 'pure');
-  const count = k => prof.filter(p => p === k).length;
+  const prof = classify(shots), w = shots.map(s => shotWeight(s.date));
+  const live = shots.map((s, i) => [s, w[i]]).filter((_, i) => prof[i] !== 'top');
+  const pure = shots.map((s, i) => [s, w[i]]).filter((_, i) => prof[i] === 'pure');
+  const count = k => prof.filter(p => p === k).length;   // the strike profile stays a plain count
+  const W = sum(w), nEff = W * W / sum(w.map(x => x * x));
   return {
-    code, n: shots.length,
-    stockCarry: median(live.map(s => s.carry)), stockTotal: median(live.map(s => s.total)),
-    pureCarry: mean(pure.map(s => s.carry)), roll: mean(live.map(s => s.total - s.carry)),
+    code, n: shots.length, nEff: Math.round(nEff), weighted: weighting() === 'recent' && Math.round(nEff) < shots.length,
+    newest: shots.map(s => s.date).filter(Boolean).sort().pop() || null,
+    stockCarry: weightedMedian(live.map(([s, x]) => [s.carry, x])), stockTotal: weightedMedian(live.map(([s, x]) => [s.total, x])),
+    pureCarry: weightedMean(pure.map(([s, x]) => [s.carry, x])), roll: weightedMean(live.map(([s, x]) => [s.total - s.carry, x])),
     pure: count('pure'), runner: count('runner'), short: count('short'), top: count('top'), unknown: count('unknown'),
   };
 }
@@ -512,7 +585,54 @@ function sessionItem(s) {
   const blocks = s.blocks || [], shots = blocks.reduce((n, b) => n + (b.shots || []).length, 0);
   const clubs = [...new Set(blocks.map(b => b.club))];
   const planned = s.planned && !shots && !blocks.some(b => b.summary);
-  return `<button class="item" data-go="range:sessionId:${s.id}"><div class="spread"><div><div class="t">${planned ? '<span class="tag green">planned</span> ' : ''}${dateLabel(s.date)}${s.venue ? ' <span class="muted">' + esc(s.venue) + '</span>' : ''}</div><div class="s">${blocks.length ? `${blocks.length} block${blocks.length === 1 ? '' : 's'}${shots ? ', ' + shots + ' shots' : ''}` : swingsOf(s).length ? `${plural(swingsOf(s).length, 'swing')}, no blocks` : 'empty'}</div></div><div class="chips">${clubs.map(c => `<span class="tag">${esc(c)}</span>`).join('')}</div></div></button>`;
+  return `<button class="item" data-go="range:sessionId:${s.id}"><div class="spread"><div><div class="t">${planned ? '<span class="tag green">planned</span> ' : ''}${s.excluded ? '<span class="tag flag">left out</span> ' : ''}${dateLabel(s.date)}${s.venue ? ' <span class="muted">' + esc(s.venue) + '</span>' : ''}</div><div class="s">${blocks.length ? `${blocks.length} block${blocks.length === 1 ? '' : 's'}${shots ? ', ' + shots + ' shots' : ''}` : swingsOf(s).length ? `${plural(swingsOf(s).length, 'swing')}, no blocks` : 'empty'}</div></div><div class="chips">${clubs.map(c => `<span class="tag">${esc(c)}</span>`).join('')}</div></div></button>`;
+}
+
+/* ---------- penalty report ----------
+   Which shots cost penalty strokes, and where. Only traced holes count
+   (a scorecard-only round doesn't say whether it had penalties). A penalty
+   marked on the shot that caused it can be broken down by club, shot type
+   and where the ball went; one added with the hole's penalty counter can't,
+   and the report says how many are in that state. */
+const SHOT_KIND = { tee: 'Tee shot', approach: 'Approach', short: 'Short game', recovery: 'Recovery' };
+function penaltyReport() {
+  const traced = S.sessions.filter(s => s.type === 'round').flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
+  const recs = shotRecords();
+  const attached = traced.flatMap(({ r, h }) => (h.shots || []).map((s, i) => ({ r, h, s, i })).filter(x => x.s.penalty))
+    .map(x => { const rec = recs.find(y => y.r.id === x.r.id && y.h.n === x.h.n && y.i === x.i); return { ...x, club: x.s.club || '?', kind: rec ? SHOT_KIND[rec.kind] : 'Not measurable', lie: lieOf(x.h, x.s) }; });
+  const loose = traced.reduce((n, { h }) => n + (h.penalties || 0), 0);
+  const group = (xs, key) => Object.entries(xs.reduce((a, x) => (a[key(x)] = (a[key(x)] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1]);
+  // How often each club was used on traced holes, so a count can be read as a rate.
+  const used = traced.flatMap(({ h }) => (h.shots || []).map(s => s.club || '?')).reduce((a, c) => (a[c] = (a[c] || 0) + 1, a), {});
+  const holes = {};
+  for (const { r, h } of traced) {
+    const n = (h.penalties || 0) + (h.shots || []).filter(s => s.penalty).length; if (!n) continue;
+    const k = r.courseId + '|' + h.n, e = holes[k] = holes[k] || { course: r.courseName, n: h.n, strokes: 0, rounds: [], latest: null };
+    e.strokes += n; e.rounds.push(r.id);
+    if (!e.latest || r.date > e.latest.date) e.latest = r;
+  }
+  const scorecardOnly = S.sessions.filter(s => s.type === 'round' && !(s.holes || []).some(h => (h.shots || []).length)).length;
+  return { total: attached.length + loose, attached, loose, traced: traced.length, holesWith: Object.keys(holes).length, scorecardOnly,
+    byClub: group(attached, x => x.club).map(([club, n]) => ({ club, n, of: used[club] || 0 })),
+    byKind: group(attached, x => x.kind), byLie: group(attached, x => x.lie),
+    holes: Object.values(holes).sort((a, b) => b.strokes - a.strokes || b.rounds.length - a.rounds.length) };
+}
+function vPenalties() {
+  const p = penaltyReport();
+  let h = back('rounds', null, 'Rounds') + `<h1>Penalty report</h1>`;
+  if (!p.traced) return h + `<div class="empty"><p>Penalties are only known on holes you traced shot by shot. Trace a round and this fills in.</p></div>`;
+  if (!p.total) return h + `<p class="muted">No penalty strokes in ${plural(p.traced, 'traced hole')}.</p>`;
+  h += tileGrid('penTiles', [tile(p.total, 'penalty strokes'), tile(`${p.holesWith}`, 'holes with one', `of ${p.traced} traced`), tile(p.attached.length, 'tied to a shot'), tile(p.loose, 'not tied to a shot')]);
+  if (p.loose) h += `<p class="small muted" id="penLoose">${plural(p.loose, 'penalty', 'penalties')} ${p.loose === 1 ? 'was' : 'were'} added with a hole's penalty counter, so what caused ${p.loose === 1 ? 'it' : 'them'} isn't known. Next time, open the shot and tick "This shot cost a penalty".</p>`;
+  if (p.attached.length) {
+    const rows = (id, head, list, fmtRow) => `<h2>${head}</h2><div class="scroll"><table id="${id}"><tbody>${list.map(fmtRow).join('')}</tbody></table></div>`;
+    h += rows('penClub', 'By club', p.byClub, x => `<tr><td><b>${esc(x.club)}</b></td><td class="num">${x.n}</td><td class="muted small">${x.of ? `of ${plural(x.of, 'shot')} with it on traced holes` : ''}</td></tr>`);
+    h += rows('penKind', 'By shot', p.byKind, ([k, n]) => `<tr><td>${esc(k)}</td><td class="num">${n}</td><td></td></tr>`);
+    h += rows('penLie', 'Where the ball went', p.byLie, ([k, n]) => `<tr><td>${esc(k)}</td><td class="num">${n}</td><td></td></tr>`);
+  }
+  h += `<h2>Holes</h2><div class="list" id="penHoles">` + p.holes.map(x => `<button class="item" data-go="rounds:sessionId=${x.latest.id},hole=${x.n}"><div class="spread"><div><div class="t">${esc(x.course)} · hole ${x.n}</div><div class="s">${plural(x.strokes, 'penalty stroke')} in ${plural(new Set(x.rounds).size, 'round')}${new Set(x.rounds).size > 1 ? ' — a repeat' : ''}</div></div><span class="muted small">latest ›</span></div></button>`).join('') + `</div>`;
+  if (p.scorecardOnly) h += `<p class="small muted">${plural(p.scorecardOnly, 'scorecard-only round')} not included: ${p.scorecardOnly === 1 ? "it doesn't" : "they don't"} say whether there were penalties.</p>`;
+  return h;
 }
 
 /* ---------- overview ---------- */
@@ -523,7 +643,7 @@ function sessionItem(s) {
 function vOverview() {
   const stats = activeClubs().map(c => ({ c, s: clubStats(c.code) })).filter(x => x.s && x.s.stockCarry);
   const rounds = S.sessions.filter(s => s.type === 'round' && (s.holes || []).some(h => h.strokes != null));   // newest first
-  let h = `<h1>Overview</h1>` + windowPicker() + (windowDays() ? `<p class="small muted" style="margin-top:-2px">Range numbers below use the last ${windowDays()} days only.</p>` : '');
+  let h = `<h1>Overview</h1>` + rangeFilter();
   if (!stats.length && !rounds.length) return h + `<div class="empty"><p>Nothing logged yet. Log a round (Rounds → New round) or a range session with shots, and this fills in.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
   h += overviewForm(rounds) + overviewWork() + overviewGapping(stats) + overviewScoring(rounds) + overviewBreakdown() + overviewApproaches() + overviewPutting() + overviewEvidence() + overviewRecent();
   return h;
@@ -597,7 +717,7 @@ function overviewGapping(stats) {
       <div class="club">${esc(c.code)}</div>
       <div class="bar">${s.pureCarry ? `<div class="pure" style="left:${w(s.stockCarry)};width:${w(Math.max(0, s.pureCarry - s.stockCarry))}"></div>` : ''}<div class="stock" style="width:${w(s.stockCarry)}"></div>${c.nominalCarry ? `<div class="assumed" style="left:${w(c.nominalCarry)}" title="assumed carry ${c.nominalCarry}m"></div>` : ''}</div>
       <div class="val"><b>${fmt(s.stockCarry)}</b><small>${s.pureCarry ? 'pure ' + fmt(s.pureCarry) : 'carry'}</small></div>
-      <div class="conf small ${s.n < 5 ? 'early' : ''}">${s.n} shots · ${confidence(s.n)}</div></div>`).join('') + `</div>
+      <div class="conf small ${(s.weighted ? s.nEff : s.n) < 5 ? 'early' : ''}">${s.n} shots${s.weighted ? ` · counts like ${s.nEff} recent` : ''} · ${confidence(s.weighted ? s.nEff : s.n)}</div></div>`).join('') + `</div>
     <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span></div>`;
   const g = gapHealth(stats);
   if (g.pairs.length) h += `<h3>Distance gaps</h3><div class="gaps" id="gapList">` + g.pairs.map(p => `<div class="gap ${p.flag ? 'flag' : ''}"><span>${esc(p.a.c.code)} → ${esc(p.b.c.code)}</span><b>${fmt(p.gap)}m</b><small>${p.flag ? '⚠ ' + esc(p.flag) : ''}${p.early ? `${p.flag ? ' · ' : ''}early signal` : ''}</small></div>`).join('') + `</div>
@@ -645,7 +765,8 @@ function overviewBreakdown() {
   const { rows, recoveries } = gameBreakdown();
   if (!rows.some(r => r.key !== 'putting')) return '';
   return `<h2>Where your game is being tested</h2><div id="breakdown">` + rows.map(r => `<div class="hbar brk"><span>${r.label}</span><i class="${r.missed / r.of >= 0.5 ? 'flag' : r.missed / r.of >= 0.25 ? 'sand' : ''}" style="width:${pct(r.missed, r.of)}%"></i><small>${pct(r.missed, r.of)}%</small><em class="small muted">${r.missed} of ${r.of} ${r.what}${r.of < 5 ? ' · early signal' : ''}</em></div>`).join('') +
-    `</div><p class="small muted">How often each part of the game missed its target, from the holes you traced${recoveries ? `, plus ${plural(recoveries, 'recovery shot')} from trees, bunkers or water` : ''}. Counts, not strokes gained.</p>`;
+    `</div><p class="small muted">How often each part of the game missed its target, from the holes you traced${recoveries ? `, plus ${plural(recoveries, 'recovery shot')} from trees, bunkers or water` : ''}. Counts, not strokes gained.</p>` +
+    (rows.some(r => r.key === 'penalty' && r.missed) ? `<div class="row-actions" style="margin-top:0"><button class="quiet" data-go="rounds:view=penalties">Penalty report →</button></div>` : '');
 }
 
 /* ---------- approach distances ---------- */
@@ -702,6 +823,7 @@ function vRangeSession() {
   const blocks = (s.blocks || []).slice().sort((a, b) => a.seq - b.seq);
   let h = back('range', null, 'Range') + `<div class="spread"><h1>${dateLabel(s.date)}</h1><button data-act="editRange" data-id="${s.id}">Edit</button></div>
   <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(s.ballType) + ' balls' : ''}${s.source ? ', ' + esc(s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
+  ${s.excluded ? `<div class="notice warn" id="leftOut">Left out of your numbers: this session's shots don't count towards stock carry, gapping, calibration or the practice list. <button class="quiet" data-act="toggleExclude" data-id="${s.id}">Count it again</button></div>` : ''}
   ${s.planned && blocks.some(b => b.plan) ? `<div class="notice">Planned from what's current in your rounds, range sessions and swings. After you hit each block, add its screenshots (or open it and paste the shots); the list picks them up from there.</div>` : ''}
   <div class="spread"><h2>Blocks</h2><div class="row-actions" style="margin:0"><button data-act="shotsFromImages" data-id="${s.id}">From screenshots</button><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div></div>`;
   if (!blocks.length) h += swingsOf(s).length
@@ -709,20 +831,20 @@ function vRangeSession() {
     : `<div class="empty"><p>No blocks yet. A block is one club at one target. Screenshots of the bay's shot list are quickest: tap <b>From screenshots</b> and check what's read before it's saved. If you only came away with a video, skip this and add a swing below.</p></div>`;
   else h += `<div class="list">` + blocks.map(b => {
     const sm = blockSummary(b) || {}; const full = (b.swing || 'full') === 'full'; const judge = full ? sm.avgCarry : sm.avgTotal;
-    const all = fullShots(b.club), profs = classify(all); const mine = all.map((x, i) => [x, profs[i]]).filter(([x]) => x.blockId === b.id);
+    const all = shotsWithSession(b.club, s), profs = classify(all); const mine = all.map((x, i) => [x, profs[i]]).filter(([x]) => x.blockId === b.id);
     const mx = Math.max(...all.map(x => x.carry), 0);
     return `<button class="block-row" data-go="range:blockId:${b.id}"><div class="c">${esc(b.club)}<small>${b.target ? b.target + 'm' : ''}${b.swing && b.swing !== 'full' ? ' ' + esc(b.swing) : ''}</small></div>
       <div>${mine.length ? dotStrip(mine.map(m => m[0]), mine.map(m => m[1]), b.target, mx) : b.plan ? `<span class="small muted">Planned: ${esc(b.intent || '')}${b.reason ? `<br>Why: ${esc(b.reason)}` : ''}</span>` : `<span class="small muted">${sm.n || 0} shots, summary only</span>`}</div>
       <div class="n">${judge ? fmt(judge) : ''}<small>${sm.n || 0} shots</small></div></button>`;
   }).join('') + `</div><div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += swingSection(s);
-  h += `<div class="row-actions"><button class="danger" data-act="deleteSession" data-id="${s.id}">Delete session</button></div>`;
+  h += `<div class="row-actions">${s.excluded ? '' : `<button data-act="toggleExclude" data-id="${s.id}">Leave out of my numbers</button>`}<button class="danger" data-act="deleteSession" data-id="${s.id}">Delete session</button></div>`;
   return h;
 }
 function vBlock() {
   const s = S.sessions.find(x => (x.blocks || []).some(b => b.id === S.sub.blockId)); if (!s) return back('range', null, 'Range') + `<p>Block not found.</p>`;
   const b = s.blocks.find(x => x.id === S.sub.blockId); const sm = blockSummary(b) || {}; const shots = b.shots || [];
-  const all = fullShots(b.club), profs = classify(all); const profOf = idx => { const i = all.findIndex(x => x.blockId === b.id && x.idx === idx); return i >= 0 ? profs[i] : ''; };
+  const all = shotsWithSession(b.club, s), profs = classify(all); const profOf = idx => { const i = all.findIndex(x => x.blockId === b.id && x.idx === idx); return i >= 0 ? profs[i] : ''; };
   const full = (b.swing || 'full') === 'full';
   let h = back('range', 'sessionId:' + s.id, dateLabel(s.date)) + `<div class="spread"><h1>${esc(b.club)} ${b.target ? '<span class="muted">to ' + b.target + 'm</span>' : ''}</h1><button data-act="editBlock" data-sid="${s.id}" data-bid="${b.id}">Edit</button></div>
   <p class="muted small">${dateLabel(s.date)}, ${esc(b.swing || 'full')} swing${b.drill ? ', ' + esc(b.drill) : ''}</p>`;
@@ -740,10 +862,13 @@ function vBlock() {
 
 /* ---------- rounds ---------- */
 function vRounds() {
+  if (S.sub && S.sub.view === 'penalties') return vPenalties();
   if (S.sub && S.sub.hole) return vHoleLog();
   if (S.sub && S.sub.sessionId) return vRound();
   const list = S.sessions.filter(s => s.type === 'round');
+  const pens = penaltyReport();
   return `<div class="spread"><h1>Rounds</h1><button class="primary" data-act="newRound">New round</button></div>` +
+    (pens.total ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" data-go="rounds:view=penalties">Penalty report: ${plural(pens.total, 'penalty stroke')} →</button></div>` : '') +
     (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a round by scorecard, then tap any hole to trace your shots on its stencil.</p><button class="primary" data-act="newRound">New round</button></div>`);
 }
 function vRound() {
@@ -1532,11 +1657,11 @@ function shotRecordsUncached() {
 const shotHoleCount = () => S.sessions.filter(r => r.type === 'round').reduce((n, r) => n + (r.holes || []).filter(h => (h.shots || []).length).length, 0);
 
 /* ---------- reference distances, with where they came from ---------- */
-const rangeBlocksFor = code => S.sessions.filter(s => s.type === 'range').flatMap(s => (s.blocks || []).map(b => ({ ...b, date: s.date }))).filter(b => b.club === code);
-function weighted(blocks, key) { const bs = blocks.filter(b => b.summary && b.summary[key] != null && (b.swing || 'full') === 'full'); if (!bs.length) return null; const w = sum(bs.map(b => b.summary.n || 1)); return sum(bs.map(b => b.summary[key] * (b.summary.n || 1))) / w; }
+const rangeBlocksFor = (code, counted = false) => S.sessions.filter(s => s.type === 'range' && (!counted || countsForNumbers(s))).flatMap(s => (s.blocks || []).map(b => ({ ...b, date: s.date }))).filter(b => b.club === code);
+function weighted(blocks, key) { const bs = blocks.filter(b => b.summary && b.summary[key] != null && (b.swing || 'full') === 'full'); if (!bs.length) return null; const wt = b => (b.summary.n || 1) * shotWeight(b.date); const w = sum(bs.map(wt)); return sum(bs.map(b => b.summary[key] * wt(b))) / w; }
 function carryRef(code) {
   const s = clubStats(code); if (s && s.stockCarry) return { v: s.stockCarry, measured: true, src: 'range', pure: pct(s.pure, s.n) };
-  const w = weighted(rangeBlocksFor(code), 'avgCarry'); if (w) return { v: w, measured: true, src: 'range summary' };
+  const w = weighted(rangeBlocksFor(code, true), 'avgCarry'); if (w) return { v: w, measured: true, src: 'range summary' };
   const c = clubBy(code); if (!c) return null;
   if (c.nominalCarry) return { v: c.nominalCarry, measured: false, src: 'your estimate' };
   if (c.nominalTotal) return { v: c.nominalTotal * 0.9, measured: false, src: 'estimated from your total' };
@@ -1544,7 +1669,7 @@ function carryRef(code) {
 }
 function totalRef(code) {
   const s = clubStats(code); if (s && s.stockTotal) return { v: s.stockTotal, measured: true, src: 'range', max: Math.max(...fullShots(code).map(x => x.total)) };
-  const w = weighted(rangeBlocksFor(code), 'avgTotal'); if (w) return { v: w, measured: true, src: 'range summary' };
+  const w = weighted(rangeBlocksFor(code, true), 'avgTotal'); if (w) return { v: w, measured: true, src: 'range summary' };
   const c = clubBy(code); if (c && c.nominalTotal) return { v: c.nominalTotal, measured: false, src: 'your estimate' };
   return null;
 }
@@ -2586,6 +2711,28 @@ ACTIONS.setWindow = async function (d) {
   await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, window: d.w });
   render();
 };
+ACTIONS.setWeighting = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, weighting: d.v }); render(); };
+ACTIONS.setBalls = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, balls: d.v }); render(); };
+ACTIONS.toggleExclude = async function (d) {
+  const s = session(d.id); if (!s) return;
+  if (await save('sessions', s.id, { ...s, excluded: !s.excluded })) { toast(s.excluded ? 'Counting this session again' : 'Left out of your numbers'); render(); }
+};
+// One compact panel for everything that decides which range shots count.
+function rangeFilter() {
+  const ranges = S.sessions.filter(s => s.type === 'range'), left = ranges.filter(s => s.excluded).length;
+  const noBall = ranges.filter(s => !s.ballType).length;
+  const chips = (act, key, opts, cur) => `<div class="chips" style="margin:6px 0">${opts.map(([v, l]) => `<button class="chip" data-act="${act}" data-${key}="${v}" aria-pressed="${cur === v}">${l}</button>`).join('')}</div>`;
+  const summary = [(WINDOWS.find(w => w[0] === (settings().window || 'all')) || WINDOWS[0])[1], weighting() === 'recent' ? 'recent shots count more' : 'every shot the same',
+    (BALLS.find(b => b[0] === ballFilter()) || BALLS[0])[1].toLowerCase()].concat(left ? [`${left} left out`] : []).join(' · ');
+  return `<details class="sec filters" id="rangeFilter"><summary><b>Range numbers:</b> <span class="small">${esc(summary)}</span></summary>
+    <label>When</label>${windowPicker()}
+    <label>Weighting</label>${chips('setWeighting', 'v', WEIGHTINGS, weighting())}
+    <p class="small muted">Recent shots: a shot ${DISTANCE_HALF_LIFE} days old counts half as much as one from today, so a swing change shows up without deleting anything.</p>
+    <label>Balls</label>${chips('setBalls', 'v', BALLS, ballFilter())}
+    ${noBall && ballFilter() !== 'all' ? `<p class="small muted">${plural(noBall, 'session')} didn't record the ball type, so only counts under All balls.</p>` : ''}
+    ${left ? `<p class="small muted">${plural(left, 'session')} left out by hand — open one in Range to count it again.</p>` : ''}
+  </details>`;
+}
 const windowPicker = () => `<div class="chips" style="margin:6px 0">${WINDOWS.map(([v, l]) => `<button class="chip" data-act="setWindow" data-w="${v}" aria-pressed="${(settings().window || 'all') === v}">${l}</button>`).join('')}</div>`;
 
 /* ---------- first putt, penalties, editing a shot ---------- */

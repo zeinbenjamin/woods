@@ -17,8 +17,11 @@
   }
 
   async function api(path, opts = {}) {
-    const res = await fetch('/api' + path, { ...opts, headers: { ...(opts.headers || {}), ...(token() ? { 'x-carry-token': token() } : {}) } });
-    if (res.status === 401) { const e = new Error('unauthorised'); e.code = 'unauthorised'; throw e; }
+    const sent = token();
+    const res = await fetch('/api' + path, { ...opts, headers: { ...(opts.headers || {}), ...(sent ? { 'x-carry-token': sent } : {}) } });
+    // Say which token was refused: a request still in flight when a new
+    // token was entered comes back 401 for the old one, and isn't news.
+    if (res.status === 401) { const e = new Error('unauthorised'); e.code = 'unauthorised'; e.token = sent; throw e; }
     if (!res.ok) { const e = new Error(await res.text().catch(() => res.statusText)); e.code = 'request_failed'; e.status = res.status; throw e; }
     return res.status === 204 ? null : res.json();
   }
@@ -29,6 +32,7 @@
      immediately, so the UI never waits for the next poll. */
   const cache = {};                 // collection -> array of docs
   const listeners = {};             // collection -> [cb]
+  const errorHandlers = new Set();  // onSnapshot error callbacks
   let lastStamps = {};
 
   const emit = name => (listeners[name] || []).forEach(cb => cb({
@@ -55,7 +59,11 @@
       for (const name of Object.keys(listeners)) {
         if (s[name] !== lastStamps[name]) { lastStamps[name] = s[name]; await refresh(name); }
       }
-    } catch (e) { /* offline: keep showing what we have */ }
+    } catch (e) {
+      // A rejected token is worth telling the app about (it asks for the
+      // token); anything else is probably offline: keep showing what we have.
+      if (e && e.code === 'unauthorised') errorHandlers.forEach(f => f(e));
+    }
     finally { polling = false; }
   }
   setInterval(poll, Number(window.CARRY_POLL_MS || 5000));
@@ -66,6 +74,7 @@
       return {
         onSnapshot(cb, onErr) {
           (listeners[name] = listeners[name] || []).push(cb);
+          if (onErr) errorHandlers.add(onErr);
           api('/' + name).then(r => { cache[name] = r.docs; emit(name); }).catch(e => onErr && onErr(e));
           return () => { listeners[name] = (listeners[name] || []).filter(f => f !== cb); };
         },

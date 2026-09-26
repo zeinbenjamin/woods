@@ -6,6 +6,16 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.5.0 — 2026-09-26
+- Club distances now favour your recent shots: a shot from two months ago counts half as much as one from today, so a swing change shows up in your numbers sooner. You can switch back to every shot counting the same.
+- Gapping says how much each number rests on, for example "12 shots · counts like 7 recent".
+- New "Range numbers" panel at the top of the Overview: pick the date window, the weighting, and which balls count (all, range balls only, or premium and your own).
+- Leave a range session out of your numbers from its page (for example a session on bad mats, or with someone else's clubs); it stays in your history and can be counted again.
+- New Penalty report (from Rounds or the Overview): which clubs and shots cost penalty strokes, where the ball went, and which holes keep costing them.
+- A block's shot list shows each shot's strike again (pure, runner, short, top); the tags were blank.
+- If the app doesn't have your token, it asks for it instead of showing "Storage error: unauthorised".
+- The app on the NAS stops straight away on a redeploy, and its log shows saves and errors (re-paste the app YAML once to get this).
+
 ## 1.4.0 — 2026-09-26
 - The Overview is redesigned as your home screen: how you're playing, what to work on, then the detail behind it.
 - New "Current form" at the top: your last score, to par, strokes over par per hole across recent rounds, putts, fairways and greens — each only when your rounds record it.

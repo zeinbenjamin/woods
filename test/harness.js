@@ -39,24 +39,25 @@ export async function waitFor(cond, { timeout = 4000, step = 20, what = 'conditi
 
 // Start a server with `seed` already in SQLite, then boot the app against it.
 // seed: { clubs: [], courses: [], sessions: [], settings: {} }
-export async function startApp({ seed = {}, pollMs = 150, intercept, query = '' } = {}) {
+export async function startApp({ seed = {}, pollMs = 150, intercept, query = '', serverToken = '' } = {}) {
   const DATA = mkdtempSync(join(tmpdir(), 'carry-ui-'));
   const port = await freePort();
   const base = `http://127.0.0.1:${port}`;
   const proc = spawn('node', ['server/index.js'], {
-    env: { ...process.env, DATA_DIR: DATA, PORT: String(port), API_TOKEN: '', ANTHROPIC_API_KEY: '' },
+    env: { ...process.env, DATA_DIR: DATA, PORT: String(port), API_TOKEN: serverToken, ANTHROPIC_API_KEY: '' },
     stdio: 'ignore',
   });
   await waitFor(async () => (await fetch(`${base}/healthz`)).ok, { timeout: 8000, what: 'server start' });
 
+  const auth = serverToken ? { 'x-carry-token': serverToken } : {};
   const api = {
     async put(col, id, doc) {
-      const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(doc) });
+      const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { method: 'PUT', headers: { 'content-type': 'application/json', ...auth }, body: JSON.stringify(doc) });
       if (!r.ok) throw new Error(`PUT ${col}/${id}: ${r.status}`);
       return r.json();
     },
-    async get(col, id) { const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`); return r.ok ? r.json() : null; },
-    async list(col) { return (await (await fetch(`${base}/api/${col}`)).json()).docs; },
+    async get(col, id) { const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { headers: auth }); return r.ok ? r.json() : null; },
+    async list(col) { return (await (await fetch(`${base}/api/${col}`, { headers: auth })).json()).docs; },
     async upload(bytes, type = 'image/png') {
       return (await fetch(`${base}/api/assets`, { method: 'POST', headers: { 'content-type': type }, body: bytes })).json();
     },
