@@ -29,6 +29,7 @@
      immediately, so the UI never waits for the next poll. */
   const cache = {};                 // collection -> array of docs
   const listeners = {};             // collection -> [cb]
+  const errorHandlers = new Set();  // onSnapshot error callbacks
   let lastStamps = {};
 
   const emit = name => (listeners[name] || []).forEach(cb => cb({
@@ -55,7 +56,11 @@
       for (const name of Object.keys(listeners)) {
         if (s[name] !== lastStamps[name]) { lastStamps[name] = s[name]; await refresh(name); }
       }
-    } catch (e) { /* offline: keep showing what we have */ }
+    } catch (e) {
+      // A rejected token is worth telling the app about (it asks for the
+      // token); anything else is probably offline: keep showing what we have.
+      if (e && e.code === 'unauthorised') errorHandlers.forEach(f => f(e));
+    }
     finally { polling = false; }
   }
   setInterval(poll, Number(window.CARRY_POLL_MS || 5000));
@@ -66,6 +71,7 @@
       return {
         onSnapshot(cb, onErr) {
           (listeners[name] = listeners[name] || []).push(cb);
+          if (onErr) errorHandlers.add(onErr);
           api('/' + name).then(r => { cache[name] = r.docs; emit(name); }).catch(e => onErr && onErr(e));
           return () => { listeners[name] = (listeners[name] || []).filter(f => f !== cb); };
         },

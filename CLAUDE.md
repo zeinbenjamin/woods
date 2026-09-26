@@ -162,10 +162,10 @@ accident is not.
 
 ## Domain definitions
 
-- **Stock carry** — median carry of non-topped full swings. The planning
-  number.
-- **Pure carry** — mean carry of pure strikes only. What he hits when he
-  catches it.
+- **Stock carry** — median carry of non-topped full swings, weighted by
+  recency (see below). The planning number.
+- **Pure carry** — mean carry of pure strikes only, same weighting. What he
+  hits when he catches it.
 - **Strike classes**, relative to each club's own 90th-percentile carry:
   `top` (<20m), `runner` (roll% more than 10 points above pure-strike
   roll%), `pure` (≥90% of 90th pct), `short` (everything else).
@@ -240,6 +240,15 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **Panels keep their state across redraws** by `id` (`render()` reopens
   them), and the shim doesn't redraw when a poll only brings back our own
   write. Give any new `<details>` an `id`.
+- **A wrong or missing token asks for it.** A 401 from the API or the poll
+  opens a token sheet (`askToken`) instead of the old dead-end "Storage
+  error: unauthorised"; the token is stored in `localStorage`.
+- **The server logs writes and errors**, never GETs that succeed, and never
+  the query string (the token can be in it).
+- **The container stops cleanly**: SIGTERM closes the HTTP server and
+  SQLite and exits 0, and both compose files set `init: true` so the
+  signal reaches node. Before this, a redeploy waited out Docker's 10s
+  timeout and killed it.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -300,6 +309,37 @@ The chat route for swing analysis (save frames as a zip, copy a prompt,
 paste the reply back) was removed in 1.3.0; analyses already saved with
 `analysedIn: 'chat'` still show with that label.
 
+## How club distances are counted
+
+Every range-derived number (`clubStats`, `carryRef`, `totalRef`, the
+gapping ladder, calibration ceilings) goes through the same gate:
+`countsForNumbers(s)` — a range session counts unless it's `excluded` by
+hand, outside the date `window`, or its `ballType` doesn't match the
+`balls` filter (a session with no ball type counts only under "all"). A
+left-out session's own page still shows its shots (`shotsWithSession`).
+
+Within that, `weighting: 'recent'` (the default) gives each shot weight
+`0.5^(age / DISTANCE_HALF_LIFE)` (60 days) and takes a weighted median /
+mean; `'equal'` is the plain median. `clubStats` also returns `nEff`
+= (Σw)²/Σw², so the Overview can say "5 shots · counts like 4 recent".
+The strike profile stays a plain count, because it describes what
+happened, not what to plan on. `weightedMean` scales weights against the
+largest one so equal weights give exactly the plain mean — without that,
+same-day shots came out as 125.25000000000001.
+
+The filters live in the "Range numbers" panel at the top of the Overview.
+
+## Penalty report
+
+Rounds → *Penalty report* (`penaltyReport()` / `vPenalties()`): penalty
+strokes on traced holes, split into those tied to a shot (the shot's
+"cost a penalty" tick) and those added with the hole's counter, whose
+cause isn't known and is said so. Broken down by club (with how often the
+club was used on traced holes, so a count reads as a rate), by kind of
+shot and by where the ball went; holes ranked, and one is "a repeat" only
+when penalties came in more than one round. Scorecard-only rounds are left
+out and counted, never treated as clean.
+
 ## Range data from screenshots
 
 Range shots come from screenshots of the bay's shot list, not typing:
@@ -320,7 +360,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 158 tests, about 14s (40s on one core).
+`npm test` — 177 tests, about 18s (50s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -348,7 +388,11 @@ fixture would let the reading be pinned.
   scenario, nothing shown without data),
   `ui-range-images` (screenshots → review → blocks, units, warnings,
   export/import/delete of the screenshots), `ui-version` (the stamped
-  label, the version sheet, behind-the-server detection).
+  label, the version sheet, behind-the-server detection),
+  `ui-distances` (recency weighting, nEff, ball filter, left-out
+  sessions), `ui-penalties` (the penalty report).
+- `housekeeping.test.js` (4) — the token prompt, request logging without
+  the query string, a clean SIGTERM exit, the YAML's replace markers.
 
 `test/harness.js` boots a real server on a free port with seeded
 documents, loads the page as the server serves it into jsdom, and stubs only what jsdom lacks
@@ -359,7 +403,8 @@ the frame is painted.
 
 Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
-18 for versioning and screenshots, 8 for the practice list; all caught.
+18 for versioning and screenshots, 8 for the practice list, 14 for
+1.5.0's distances, penalties and housekeeping; all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
@@ -381,14 +426,14 @@ In rough order of value:
 2. **Pose estimation on swing frames**, server-side. Turns swing analysis
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
-3. **Recency weighting** beyond the current all/365/180/90 window
-   selector. Old data actively misleads after a swing change.
-4. **Course data from OpenStreetMap.** `golf=hole` ways carry par, length
+3. **Course data from OpenStreetMap.** `golf=hole` ways carry par, length
    and stroke index; the polygons would give true hole shapes instead of
    drawn outlines or hand-placed artwork. Licence is ODbL — attribution
    required, fine for personal use.
-5. Session filtering, artwork for the remaining courses, penalty
-   attribution reporting.
+4. Artwork for the remaining courses.
+
+Done in 1.5.0: recency weighting of club distances, session filtering
+(leave out, ball type), the penalty report.
 
 Deliberately out of scope: multi-user, booking integration, anything that
 sends his data anywhere.

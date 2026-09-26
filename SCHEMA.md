@@ -138,6 +138,7 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "date": "2026-07-15", "venue": "…", "focus": "…",
   "ballType": "range|premium|own", "source": "toptracer|inrange|trackman|manual",
   "planned": false,                  // generated from the practice list
+  "excluded": false,                 // left out of club numbers by hand; its own page still shows it
   "blocks": [
     {
       "id": "b_…", "seq": 1, "club": "7i",
@@ -201,7 +202,9 @@ still come back blank.
 {
   "id": "app",
   "home": { "label": "Home", "lat": -33.89, "lng": 151.19 },
-  "window": "all|365|180|90"         // recency window on range-derived numbers
+  "window": "all|365|180|90",        // recency window on range-derived numbers
+  "weighting": "recent|equal",       // default recent: a shot counts half after DISTANCE_HALF_LIFE (60) days
+  "balls": "all|range|better"        // which ball types count; better = premium + own. No ballType counts only under all
 }
 ```
 
