@@ -13,18 +13,27 @@ import { startApp, club, sleep } from './harness.js';
 test('without the right token the app asks for it, re-asks after a wrong one, and loads once it is right', async () => {
   const app = await startApp({ serverToken: 'right-token', seed: { clubs: [club('7i', 'iron')] } });
   try {
+    // Every time the app asks, and which token had been refused, for the failure message.
+    app.win.eval(`window.__asks = []; { const ask = askToken; askToken = r => { __asks.push([Math.round(performance.now()), r, localStorage.getItem('carry.token'), askingToken]); return ask(r); }; }`);
+    const asks = () => JSON.stringify(app.J('__asks'));
     await app.waitFor(() => app.sheetOpen() && app.field('token'), { what: 'token prompt' });
     assert.equal(app.text('#status'), 'Needs your access token');
     assert.equal(app.E('S.clubs.length'), 0);
+    // A wrong token is stored and refused on the next poll, which can come
+    // back within milliseconds; so check for a fresh, empty prompt rather
+    // than for the sheet having closed in between.
+    const first = app.field('token');
     app.fill('token', 'wrong-token');
-    assert.equal(await app.save(), true);
-    await app.waitFor(() => app.sheetOpen() && app.field('token'), { what: 'asked again after a wrong token' });
+    app.click('#sheetInner [data-save]');
+    await app.waitFor(() => app.win.localStorage.getItem('carry.token') === 'wrong-token', { what: 'wrong token stored' });
+    await app.waitFor(() => app.sheetOpen() && app.field('token') && app.field('token') !== first && app.field('token').value === '',
+      { what: 'asked again after a wrong token' });
     app.fill('token', 'right-token');
-    assert.equal(await app.save(), true);
+    assert.equal(await app.save(), true, `the right token closes the sheet; asks: ${asks()}`);
     await app.waitFor(() => app.E('S.clubs.length') === 1, { what: 'data loads with the right token' });
     assert.equal(app.win.localStorage.getItem('carry.token'), 'right-token');
     await sleep(400);
-    assert.equal(app.sheetOpen(), false, 'and it stops asking');
+    assert.equal(app.sheetOpen(), false, `and it stops asking; asks: ${asks()}`);
     assert.doesNotMatch(app.text('#status'), /unauthorised/);
   } finally { app.stop(); }
 });
