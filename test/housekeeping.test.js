@@ -29,6 +29,24 @@ test('without the right token the app asks for it, re-asks after a wrong one, an
   } finally { app.stop(); }
 });
 
+test('a refusal that comes back for a token already replaced does not ask again', async () => {
+  // Four collections load at once; each comes back 401 with the old token.
+  // If one is still in flight when the new token is saved, it must not
+  // reopen the sheet (on a slow runner it did, within 30ms).
+  const app = await startApp({ serverToken: 'right-token', seed: { clubs: [club('7i', 'iron')] } });
+  try {
+    await app.waitFor(() => app.sheetOpen() && app.field('token'), { what: 'token prompt' });
+    app.fill('token', 'right-token');
+    assert.equal(await app.save(), true);
+    app.E(`askToken('')`);             // the first load, sent with no token
+    app.E(`askToken('wrong-token')`);  // or with an earlier wrong one
+    assert.equal(app.sheetOpen(), false, 'no second prompt for an old request');
+    await app.waitFor(() => app.E('S.clubs.length') === 1, { what: 'data loads' });
+    app.E(`askToken('right-token')`);  // but a refusal of the current token is real
+    assert.equal(app.sheetOpen(), true);
+  } finally { app.stop(); }
+});
+
 async function server(env = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'carry-hk-'));
   const port = 18900 + Math.floor(Math.random() * 90), base = `http://127.0.0.1:${port}`;

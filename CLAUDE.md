@@ -360,7 +360,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 177 tests, about 18s (50s on one core).
+`npm test` — 178 tests, about 18s (50s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -391,7 +391,8 @@ fixture would let the reading be pinned.
   label, the version sheet, behind-the-server detection),
   `ui-distances` (recency weighting, nEff, ball filter, left-out
   sessions), `ui-penalties` (the penalty report).
-- `housekeeping.test.js` (4) — the token prompt, request logging without
+- `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
+  a token already replaced), request logging without
   the query string, a clean SIGTERM exit, the YAML's replace markers.
 
 `test/harness.js` boots a real server on a free port with seeded

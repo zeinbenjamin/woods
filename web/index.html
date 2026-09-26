@@ -290,7 +290,7 @@ async function connect() {
   try { S.assets = await claude.use('assets'); } catch (e) { S.assets = null; }
   // Swing analysis needs a view that can send images to Claude.
   try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
-  const onErr = e => { if (e && e.code === 'unauthorised') return askToken(); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
+  const onErr = e => { if (e && e.code === 'unauthorised') return askToken(e.token); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
   db.collection('clubs').onSnapshot(snap => { S.clubs = snap.docs.map(d => d.data()).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); render(); }, onErr);
   db.collection('courses').onSnapshot(snap => { S.courses = snap.docs.map(d => d.data()).sort((a, b) => a.name.localeCompare(b.name)); render(); }, onErr);
   setTimeout(() => runMigrations(), 400);
@@ -301,8 +301,11 @@ async function connect() {
 // (a new phone, or the token was changed on the NAS). Ask once; the shim
 // sends it from then on, and the next poll loads everything.
 let askingToken = false;
-function askToken() {
+function askToken(refused) {
   if (askingToken) return;
+  // Refused a token that has since been replaced: an old request, not a verdict on the new one.
+  let current = ''; try { current = localStorage.getItem('carry.token') || ''; } catch (e) {}
+  if (refused !== undefined && refused !== current) return;
   askingToken = true;
   setStatus('Needs your access token', true);
   openSheet(`<h2>Access token</h2>

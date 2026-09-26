@@ -17,8 +17,11 @@
   }
 
   async function api(path, opts = {}) {
-    const res = await fetch('/api' + path, { ...opts, headers: { ...(opts.headers || {}), ...(token() ? { 'x-carry-token': token() } : {}) } });
-    if (res.status === 401) { const e = new Error('unauthorised'); e.code = 'unauthorised'; throw e; }
+    const sent = token();
+    const res = await fetch('/api' + path, { ...opts, headers: { ...(opts.headers || {}), ...(sent ? { 'x-carry-token': sent } : {}) } });
+    // Say which token was refused: a request still in flight when a new
+    // token was entered comes back 401 for the old one, and isn't news.
+    if (res.status === 401) { const e = new Error('unauthorised'); e.code = 'unauthorised'; e.token = sent; throw e; }
     if (!res.ok) { const e = new Error(await res.text().catch(() => res.statusText)); e.code = 'request_failed'; e.status = res.status; throw e; }
     return res.status === 204 ? null : res.json();
   }
