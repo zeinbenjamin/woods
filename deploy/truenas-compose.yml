@@ -18,6 +18,9 @@ services:
     # :latest follows main. To update only when you choose, pin a release
     # instead, e.g. ghcr.io/zeinbenjamin/woods:1.1.0 (see CHANGELOG.md).
     image: ghcr.io/zeinbenjamin/woods:latest
+    # Docker only pulls when the image is missing locally. Without this, a
+    # redeploy silently restarts the old image.
+    pull_policy: always
     container_name: carry
     restart: unless-stopped
 

@@ -27,8 +27,8 @@ is ever stored.**
 
 ## Current state
 
-The running version is in `package.json` and `CHANGELOG.md`, and the app
-shows it in the header. Built as a Claude artifact, ported here without
+The running version is in `package.json` and `CHANGELOG.md`; the app
+shows it next to the title (see Releases). Built as a Claude artifact, ported here without
 rewriting the app.
 
 - Deployed on TrueNAS SCALE, image published to GHCR as
@@ -41,30 +41,62 @@ rewriting the app.
   frozen historical copy: changes are not ported back to it, and data
   entered there does not reach the NAS.
 
-## Versioning
+## Releases
 
-`package.json`'s version is the release number (semver). `CHANGELOG.md`
-records every release; new work goes under `## [Unreleased]` as it lands.
+Carry follows the versioning kit from Bourdain, so both apps release the
+same way.
 
-- **To release:** on the branch, `npm run release -- patch|minor|major`
-  (fixes → patch, new features → minor, breaking data or deploy changes →
-  major). It bumps `package.json` and the lockfile and moves the
-  Unreleased notes under the new version. Commit, PR, merge.
-- **CI gate:** a PR that changes anything shipped in the image (`web/`,
-  `server/`, `scripts/`, `Dockerfile`) fails unless the version went up
-  and has a CHANGELOG section (`scripts/check-version.js`). Tests, docs
-  and `deploy/` don't need a bump.
+Every change that ships to the app gets a new version. Docs-only changes don't.
+
+1. Bump the version with `npm version <x.y.z> --no-git-tag-version`. This
+   updates `package.json` and `package-lock.json` together (the image
+   builds with `npm ci`, so never bump by hand).
+   - **Patch** (1.3.0 → 1.3.1): fixes, no new behaviour.
+   - **Minor** (1.3.0 → 1.4.0): new features or changed behaviour.
+   - **Major** (1.x → 2.0.0): a change to stored data that old data doesn't
+     fit, so it needs a migration (in Carry: a `SCHEMA_VERSION` bump with a
+     `migrate*` step). Size doesn't make a major; data does.
+2. Add an entry at the top of `CHANGELOG.md`: `## x.y.z — YYYY-MM-DD` followed by
+   `- ` bullets. The server parses exactly that format for the in-app history.
+   Write the bullets for the user, not for a developer: what's different when
+   using the app.
+3. There's no service worker, so there's no cache name to bump.
+
+How the version reaches the device: the server reads the version from
+`package.json`, the commit from `APP_COMMIT` (set by the Actions build;
+`dev` locally), and stamps both into the `app-version` / `app-commit` meta
+tags as it serves `index.html`. The app compares its own tags with
+`/api/version`. On startup (and on returning to the foreground, at most
+every 10 minutes) it toasts when the server has a newer build, and tapping
+the title shows the same plus the whole history. Serve `index.html` only
+through `sendIndex`, never as a plain static file, or the placeholders
+reach the device unfilled. `index.html`, `platform.js` and the manifest
+must stay `Cache-Control: no-cache`.
+
+Where Carry differs from the kit, deliberately:
+- `/api/version` is registered **before** the token check (the rest of
+  `/api` needs the token); it says nothing about the data.
+- `platform.js` is revalidated like the page: it's a separate file the
+  page depends on, and must never lag it.
+- No SPA fallback: Carry has no URL routes, so unknown paths stay 404.
+- The update check also runs when the app comes back to the foreground,
+  because a home-screen app can stay open for days without "starting up".
+- Changelog headings must be a real `x.y.z` version (the kit accepts any
+  word); a heading the app can't parse fails CI.
+
+Automation on top of the kit:
+- **CI gate** (`scripts/check-version.js`): a PR that changes anything in
+  the image (`web/`, `server/`, `scripts/`, `Dockerfile`) fails unless the
+  version went up and `CHANGELOG.md` opens with that version's entry.
 - **On merge to main** the publish workflow pushes `:latest` and
-  `:sha-<short>` every time and, when the version is new, `:<version>`
-  plus a `v<version>` git tag and a GitHub release built from the
-  changelog section. Version tags are written once, never moved.
-- **In the app:** the header shows `v<version>`; Bag → Your data shows
-  version, commit and build date. The server serves them at `/version`
-  (unauthenticated, like `/healthz`), stamped into the image by the
-  `CARRY_COMMIT` / `CARRY_BUILT` build args. Exports record `appVersion`.
-
-There is no `v1.0.0` git tag: 1.0.0 is the port as first committed, and
-the fixes merged after it (PRs 1 and 2) are released as part of 1.1.0.
+  `:sha-<short>`, and for a new version also `:<version>`, the git tag
+  `v<version>`, and a GitHub release whose notes are that entry's bullets.
+  Version tags are written once, never moved. (v1.1.0 was released this
+  way; there is no v1.0.0 tag.)
+- **Checking a deploy without the app:** `sudo docker inspect carry
+  --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'`.
+- **`pull_policy: always`** is set in `deploy/truenas-compose.yml`; without
+  it a redeploy silently restarts the old image.
 
 ## Architecture, and why
 
@@ -206,14 +238,14 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 111 tests, about 12s (20s+ on one core). Needs `python3` on the
+`npm test` — 117 tests, about 12s (25s on one core). Needs `python3` on the
 path: the zip test opens the app's zip output with Python's `zipfile`.
 
-- `api.test.js` (12) — the server alone: auth, documents, assets, import,
-  `/version`, and `/api/analyse` against a fake Anthropic API
-  (`ANTHROPIC_BASE_URL`).
-- `versioning.test.js` (7) — changelog parsing, `npm run release` run for
-  real in a scratch directory, the PR gate.
+- `api.test.js` (13) — the server alone: auth, documents, assets, import,
+  `/api/version`, the stamped and revalidated page, and `/api/analyse`
+  against a fake Anthropic API (`ANTHROPIC_BASE_URL`).
+- `versioning.test.js` (6) — the changelog format and its agreement with
+  `package.json` and the lockfile, the PR gate, the release notes.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server: writes land in SQLite, uploads become blobs, polling works.
 - `ui-*.test.js` (71) — the app's own UI suites, rebuilt here. The
@@ -226,17 +258,18 @@ path: the zip test opens the app's zip output with Python's `zipfile`.
   `ui-swing` (frame extraction, zip, one download, chat paste, analysis),
   `ui-logging` (armed club, putts, penalties, quick score, first putt),
   `ui-range-images` (screenshots → review → blocks, units, warnings,
-  export/import/delete of the screenshots, version in the header).
+  export/import/delete of the screenshots), `ui-version` (the stamped
+  label, the version sheet, behind-the-server detection).
 
 `test/harness.js` boots a real server on a free port with seeded
-documents, loads the app into jsdom, and stubs only what jsdom lacks
+documents, loads the page as the server serves it into jsdom, and stubs only what jsdom lacks
 (`<dialog>`, SVG CTM as identity so taps land at exact coordinates,
 object URLs, `TextEncoder`, `Blob.arrayBuffer`). The swing suite adds a
 fake decoder that reproduces the real one's timing: `seeked` fires before
 the frame is painted.
 
 Every gotcha above has a test, and each was checked by reintroducing the
-bug and watching the test fail (22 mutations, all caught; 10 more for
+bug and watching the test fail (22 mutations, all caught; 18 more for
 versioning and screenshots, all caught).
 
 Two bugs found while rebuilding the suites are fixed and pinned by

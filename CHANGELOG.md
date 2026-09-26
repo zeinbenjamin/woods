@@ -1,45 +1,24 @@
 # Changelog
 
-Every release of Carry, newest first. The version is `package.json`'s; the
-app shows it in the header, and the image is published as
-`ghcr.io/zeinbenjamin/woods:<version>`. How releases are cut is in
-`CLAUDE.md` → Versioning.
+What changed in each version, newest first. The app shows this list
+when you tap the title.
 
-## [Unreleased]
+Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
+`- ` bullet lines. The app parses exactly that, so keep to it.
 
-## [1.1.0] - 2026-09-26
+## 1.2.0 — 2026-09-26
+- Tap "Carry" at the top to see which version and build you're running, and what changed in each version.
+- If the server has a newer version than the one open on your phone, the app tells you to close and reopen it.
+- Redeploying on the NAS now always fetches the new version instead of restarting the old one (after you paste the updated app YAML once).
+- The swing video and copy-the-prompt sheets have a Close button instead of a Save button that saved nothing.
 
-### Added
-- **Range shots from screenshots.** On a range session, *From screenshots*
-  takes up to six screenshots or photos of the bay's shot list. Claude reads
-  them into blocks, one per club, and a review sheet shows every number
-  beside the images to check and fix before anything is saved. Yards are
-  converted only when the screen says yards; unclear readings, implausible
-  shots, total-below-carry and unrecognised clubs are listed as warnings.
-  The screenshots are kept with the blocks (`fromImages`) and shown on the
-  block page, so every number traces back to what the bay showed.
-- **Version in the app.** The header shows the running version; *Bag → Your
-  data* shows version, commit and build date. The server reports them at
-  `/version` and `/healthz`, and exports record `appVersion`.
-- **Release process.** `CHANGELOG.md`, `npm run release -- patch|minor|major`,
-  a CI check that pull requests changing shipped code bump the version, and
-  automatic `v<version>` tags, versioned images and GitHub releases on merge.
-- The app's UI test suites, rebuilt: 71 tests across CRUD, analytics
-  invariants, tee sets and migrations, the swing analyzer, and shot logging.
+## 1.1.0 — 2026-09-26
+- New: add range shots from screenshots of the bay instead of typing them. You check every number against the screenshot before it's saved, and the screenshots stay with the block.
+- The version you're running is shown next to the title.
+- New rounds are saved against the tee of the course you picked, not the first course in the list.
+- Re-analysing a swing in the app no longer says it was read in a chat.
+- Deleting a block or a session also removes its screenshots, swing frames and videos.
+- Deleted swing frames, videos and hole images are now actually removed from the server.
 
-### Fixed
-- Deleting a stored file (swing frame, swing video, hole image) never
-  worked: the server answered 404 and the file stayed on disk.
-- New round: picking a different course now switches the tee control, so
-  the round is saved against that course's tee.
-- Re-analysing a swing in the app no longer keeps a stale "read in a chat"
-  label.
-- Deleting a range block or a session now removes its stored screenshots,
-  swing frames and videos.
-- TrueNAS compose healthcheck probed port 8080; the app is on 1818.
-
-## [1.0.0] - 2026-09-26
-
-The artifact app ported to a self-hosted server: Express + SQLite behind a
-shim that serves the artifact's capability surface, a Docker image on GHCR,
-and a TrueNAS SCALE deployment. (Dated by its first commit to this repo.)
+## 1.0.0 — 2026-09-26
+- The app as it was when it moved from the Claude artifact to your own server.

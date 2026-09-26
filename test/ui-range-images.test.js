@@ -1,4 +1,4 @@
-// Range shots from screenshots, and the version shown in the app.
+// Range shots from screenshots.
 // Claude's reply is stubbed at /api/analyse (the prompt and images the app
 // sends are captured and checked); everything else — the review sheet, the
 // save, the stored screenshots — is the real app against the real server.
@@ -40,20 +40,6 @@ async function readScreens(files) {
   app.$('#sheetInner [data-save]').click();
   await app.waitFor(() => app.$('#sheetInner .readblock') || /\S/.test(app.text('#readNote')) && !/^Reading \d/.test(app.text('#readNote')), { what: 'read finished' });
 }
-
-/* ---------- version ---------- */
-
-test('the header shows the running version; the Bag screen shows version and commit', async () => {
-  await app.waitFor(() => app.text('#sub') !== '', { what: 'version loaded' });
-  assert.equal(app.text('#sub'), `v${pkg.version}`);
-  app.go('bag');
-  assert.match(app.text('#about'), new RegExp(`^Carry ${pkg.version.replace(/\./g, '\\.')}( · commit [0-9a-f]{7})?`));
-});
-
-test('an export records which version made it', async () => {
-  const data = await app.win.eval(`buildExport({ withImages: false })`);
-  assert.equal(data.appVersion, pkg.version);
-});
 
 /* ---------- reading what Claude returns ---------- */
 

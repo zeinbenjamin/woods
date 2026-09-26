@@ -1,20 +1,15 @@
-// What's running. The version is package.json's — the one number a release
-// bumps. The commit and build time are baked in by the image build
-// (CARRY_COMMIT / CARRY_BUILT); outside an image, git is asked instead.
+// What's running: the version from package.json, the commit the image was
+// built from (APP_COMMIT, passed in by the Actions build; "dev" for a local
+// run), and the version history from CHANGELOG.md. Read once at startup.
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseChangelog } from './changelog.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-function gitCommit() {
-  try { return execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null; }
-  catch { return null; }
-}
-
-export const VERSION = Object.freeze({
-  version: JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version,
-  commit: (process.env.CARRY_COMMIT || '').slice(0, 7) || gitCommit(),
-  built: process.env.CARRY_BUILT || null,
-});
+export const VERSION = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
+export const COMMIT = (process.env.APP_COMMIT || 'dev').slice(0, 7);
+export const CHANGELOG = (() => {
+  try { return parseChangelog(readFileSync(join(root, 'CHANGELOG.md'), 'utf8')); } catch { return []; }
+})();
