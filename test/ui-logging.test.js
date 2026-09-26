@@ -223,5 +223,5 @@ test('putting stats count holes with a first putt and say how many were estimate
   assert.equal(p.medianFirst, (4.5 + 12) / 2);
   assert.equal(p.onePuttRate, 50);
   app.go('overview');
-  assert.match(app.text('#view'), /2 of 5 holes have a first-putt distance, 1 of them estimated/);
+  assert.match(app.text('#puttCover'), /^First-putt distance on 2 of 5 holes, 1 of them estimated from where you tapped\.$/);
 });

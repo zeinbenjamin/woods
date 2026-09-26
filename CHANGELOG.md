@@ -6,6 +6,18 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.4.0 — 2026-09-26
+- The Overview is redesigned as your home screen: how you're playing, what to work on, then the detail behind it.
+- New "Current form" at the top: your last score, to par, strokes over par per hole across recent rounds, putts, fairways and greens — each only when your rounds record it.
+- "What to work on" shows your top three priorities as cards, each with its evidence and the practice to do, with Plan range session right below.
+- Gapping shows how many shots each club rests on, and flags gaps between neighbouring clubs that stand out from your own usual gap.
+- Scoring trend adds your per-hole average, best 18 and best 9, and blow-up holes; 9-hole rounds are marked.
+- New "Where your game is being tested": how often tee shots, approaches, short game and putts missed their target, and how often a hole had a penalty.
+- Approach distances shows the bands you face most, with your nearest measured club beside each.
+- Putting shows how many holes have a first-putt distance and how many were estimated.
+- New Evidence summary, and a shorter Recent list.
+- The strike profile is folded under Gapping.
+
 ## 1.3.1 — 2026-09-26
 - New rounds and sessions started before 10am are dated today, not yesterday.
 - Tapping shots quickly on the hole map no longer loses one.

@@ -243,6 +243,26 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
+## The Overview
+
+The home screen (`vOverview`), in the order he asked for: Current form →
+What to work on → Gapping (with gap health, strike profile folded) →
+Scoring trend → Where your game is being tested → Approach distances →
+Putting → Evidence → Recent. Each section is built from the existing
+derived numbers (`roundStats`, `rankedPractice`, `clubStats`,
+`shotRecords`, `courseDemand`, `puttingStats`, `confidence`) and only
+appears when there's data for it. Rules that keep it honest:
+
+- Averages across rounds are **per hole** (with a labelled per-18
+  figure): 9- and 18-hole rounds can't be averaged as rounds.
+- Penalties, fairways and greens show only when the rounds recorded them;
+  a scorecard-only round shows score and to par, nothing invented.
+- Gap flags compare with his **own** median gap (under a third, or over
+  twice) plus any club carrying no further than the next one down.
+  Descriptive, never "change clubs".
+- "Where your game is being tested" is counts of missed targets, labelled
+  as not strokes gained.
+
 ## What to practise: weighting and freshness
 
 `practiceItems()` builds the candidates; each carries dated evidence
@@ -300,7 +320,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 144 tests, about 13s (35s on one core).
+`npm test` — 158 tests, about 14s (40s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -324,6 +344,8 @@ fixture would let the reading be pinned.
   `ui-swing` (frame extraction, analysis, video below ball data),
   `ui-practice` (recency weighting, freshness, quiet items, the planner),
   `ui-logging` (armed club, putts, penalties, quick score, first putt),
+  `ui-overview` (section order and every number against a hand-worked
+  scenario, nothing shown without data),
   `ui-range-images` (screenshots → review → blocks, units, warnings,
   export/import/delete of the screenshots), `ui-version` (the stamped
   label, the version sheet, behind-the-server detection).
