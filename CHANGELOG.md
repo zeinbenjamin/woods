@@ -6,6 +6,17 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.3.0 — 2026-09-26
+- What to practise now favours recent evidence: something last seen two months ago counts half as much as something from today.
+- Each practice item says how fresh it is: still happening, worked on at the range since (not yet tested on course), or quiet.
+- Items that haven't happened in enough chances to count as fixed move to a "Quiet lately" list and out of the plan, with the reason.
+- The list shows the top five; the rest are folded away.
+- Range data now feeds the list: a club that keeps coming off as low runners or tops shows up, and says whether your latest range session still shows it.
+- Clubs with no range data yet are listed to measure, even before a course asks for them.
+- A newer swing reading replaces an older one of the same club and angle, and a reading about a club with ball data sits with that item instead of on its own.
+- Plan a range session now draws on your latest rounds, range sessions and swings, says why each block is there, and replaces an unhit plan instead of adding another.
+- Removed "Analyse in a chat": Analyse in the app is the one way to read a swing. Older readings from a chat still show.
+
 ## 1.2.0 — 2026-09-26
 - Tap "Carry" at the top to see which version and build you're running, and what changed in each version.
 - If the server has a newer version than the one open on your phone, the app tells you to close and reopen it.

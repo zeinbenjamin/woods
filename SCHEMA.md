@@ -145,6 +145,7 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
       "target": 130,
       "drill": "…", "intent": "…", "outcome": "…",
       "plan": true,                  // planned, not yet hit
+      "reason": "7i strike: …",      // planned blocks: the practice item(s) behind it
       "summary": { "n": 20, "avgCarry": 46, "avgTotal": 51,
                    "fromPinCarry": 11.5, "fromPinTotal": 9.6, "hitsC": 4 },
       "shots": [ { "carry": 147.5, "total": 178.2, "speed": 82.2,
@@ -179,7 +180,8 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "video": "<asset id>|null",        // null when over the 20 MB asset cap
   "analysis": { /* free-form; see keys below */ },
   "analysedOn": "2026-09-24",
-  "analysedIn": "chat"               // set when pasted back from a chat
+  "analysedIn": "chat"               // on older analyses pasted back from a chat
+                                     // (that route was removed in 1.3.0)
 }
 ```
 

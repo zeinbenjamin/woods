@@ -38,11 +38,11 @@ DATA_DIR=./data node server/index.js
 # http://localhost:1818
 ```
 
-Run the tests with `npm test` — 87 of them, covering the API, the asset
+Run the tests with `npm test` — 133 of them, covering the API, the asset
 store, auth, the import path, and the real app driving the real server:
 CRUD through its forms, shot logging by tapping the hole map, analytics
-invariants, tee sets and migrations, and the swing analyzer. The zip test
-needs `python3` on the path.
+invariants, the practice list and planner, tee sets and migrations, range
+screenshots, versioning, and the swing analyzer.
 
 ## Deploying on TrueNAS SCALE
 
@@ -130,7 +130,8 @@ a single page plus a JSON API, so nothing special is needed beyond
 The reason self-hosting is worth it. In the artifact, sending images to
 Claude wasn't available, so analysis meant saving frames and pasting them
 into a chat. Here the server holds the key and calls the Messages API
-directly, so **Analyse** works in the app.
+directly, so **Analyse** works in the app — it's the only route now; the
+chat workaround was removed in 1.3.0.
 
 Cost is trivial: eight 880px frames plus the prompt is roughly 5,000
 input tokens, about 1.5 cents a swing at Sonnet pricing. Put a spend cap

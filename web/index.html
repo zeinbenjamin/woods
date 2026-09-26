@@ -173,7 +173,9 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .analysis { border-left: 3px solid var(--green); padding: 8px 10px; margin: 8px 0 0; background: var(--paper-2); border-radius: 0 var(--r) var(--r) 0; }
 .analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
 .analysis .obs { font-size: 13px; margin: 3px 0; }
-.pcard.k-swing { border-left-color: var(--water); }
+.pcard.k-swing { border-left-color: var(--water); } .pcard.k-strike { border-left-color: var(--sand-2); }
+.fresh { color: var(--ink-2); margin: 2px 0 4px; } .fresh.practised { color: var(--green); }
+.qitem { padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 14px; }
 .shotimgs { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0; } .shotimgs img { height: 180px; width: auto; border-radius: 4px; border: 1px solid var(--rule); flex: 0 0 auto; }
 .readblock { border: 1px solid var(--rule); border-radius: var(--r); padding: 4px 12px 10px; margin: 12px 0; } .readblock textarea { min-height: 150px; font-variant-numeric: tabular-nums; }
 .warnlist { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--flag); }
@@ -496,7 +498,7 @@ function vOverview() {
         <div class="bar">${s.pureCarry ? `<div class="pure" style="left:${w(s.stockCarry)};width:${w(Math.max(0, s.pureCarry - s.stockCarry))}"></div>` : ''}<div class="stock" style="width:${w(s.stockCarry)}"></div>${c.nominalCarry ? `<div class="assumed" style="left:${w(c.nominalCarry)}" title="assumed carry ${c.nominalCarry}m"></div>` : ''}</div>
         <div class="val"><b>${fmt(s.stockCarry)}</b><small>${s.pureCarry ? 'pure ' + fmt(s.pureCarry) : 'carry'}</small></div></div>`; }).join('') + `</div>
       <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span></div>`;
-    const items = practiceItems();
+    const items = rankedPractice().now;
     h += `<h2>Next session</h2>` + (items.length
       ? `<ol class="nextlist">` + items.slice(0, 3).map(it => `<li><b>${esc(it.title)}</b>${it.block ? ` <span class="tag green">${esc(it.block.club)} · ${it.block.target ? it.block.target + 'm' : it.block.swing}</span>` : ''}${it.video ? ' <span class="tag">video</span>' : ''}</li>`).join('') + `</ol>`
         + basisLine() + `<div class="row-actions"><button class="quiet" data-go="range">Full list, evidence and a planned session →</button></div>`
@@ -532,7 +534,7 @@ function vRangeSession() {
   const blocks = (s.blocks || []).slice().sort((a, b) => a.seq - b.seq);
   let h = back('range', null, 'Range') + `<div class="spread"><h1>${dateLabel(s.date)}</h1><button data-act="editRange" data-id="${s.id}">Edit</button></div>
   <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(s.ballType) + ' balls' : ''}${s.source ? ', ' + esc(s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
-  ${s.planned && blocks.some(b => b.plan) ? `<div class="notice">Planned from your on-course data. After you hit each block, open it, tap Edit and paste the shots. The loop picks them up from there.</div>` : ''}
+  ${s.planned && blocks.some(b => b.plan) ? `<div class="notice">Planned from what's current in your rounds, range sessions and swings. After you hit each block, add its screenshots (or open it and paste the shots); the list picks them up from there.</div>` : ''}
   <div class="spread"><h2>Blocks</h2><div class="row-actions" style="margin:0"><button data-act="shotsFromImages" data-id="${s.id}">From screenshots</button><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div></div>`;
   if (!blocks.length) h += swingsOf(s).length
     ? `<p class="small muted">No blocks — a video-only session. That's fine: the swings below still count, and you can add blocks later if the numbers turn up.</p>`
@@ -542,7 +544,7 @@ function vRangeSession() {
     const all = fullShots(b.club), profs = classify(all); const mine = all.map((x, i) => [x, profs[i]]).filter(([x]) => x.blockId === b.id);
     const mx = Math.max(...all.map(x => x.carry), 0);
     return `<button class="block-row" data-go="range:blockId:${b.id}"><div class="c">${esc(b.club)}<small>${b.target ? b.target + 'm' : ''}${b.swing && b.swing !== 'full' ? ' ' + esc(b.swing) : ''}</small></div>
-      <div>${mine.length ? dotStrip(mine.map(m => m[0]), mine.map(m => m[1]), b.target, mx) : b.plan ? `<span class="small muted">Planned: ${esc(b.intent || '')}</span>` : `<span class="small muted">${sm.n || 0} shots, summary only</span>`}</div>
+      <div>${mine.length ? dotStrip(mine.map(m => m[0]), mine.map(m => m[1]), b.target, mx) : b.plan ? `<span class="small muted">Planned: ${esc(b.intent || '')}${b.reason ? `<br>Why: ${esc(b.reason)}` : ''}</span>` : `<span class="small muted">${sm.n || 0} shots, summary only</span>`}</div>
       <div class="n">${judge ? fmt(judge) : ''}<small>${sm.n || 0} shots</small></div></button>`;
   }).join('') + `</div><div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += swingSection(s);
@@ -562,7 +564,7 @@ function vBlock() {
   if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
   if (shots.length) h += `<details><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Speed</th><th></th></tr></thead><tbody>` +
     shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td><td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
-  else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}. After you hit it, tap Edit and paste the shots.</div>`;
+  else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}.${b.reason ? ` Why: ${esc(b.reason)}.` : ''} After you hit it, tap Edit and paste the shots.</div>`;
   else h += `<p class="muted small">Summary only. Edit the block to paste shots.</p>`;
   h += `<div class="row-actions"><button class="danger" data-act="deleteBlock" data-sid="${s.id}" data-bid="${b.id}">Delete block</button></div>`;
   return h;
@@ -1390,43 +1392,66 @@ function adviceFor(dist) {
 }
 
 /* ---------- 1. course → range: what to practise ---------- */
+// Each item says what it is (key), what it would cost (score, undecayed),
+// the dated evidence behind it (ev: {date, cost}), and — where it can be
+// counted — every chance it had to happen (chances: {date, hit}). Ranking
+// and freshness are worked out from those in assessPractice().
 function practiceItems() {
-  const R = shotRecords(), items = [];
+  const R = shotRecords(), items = [], at = x => x.r.date;
   // Tee accuracy, by club
   const tee = {};
   for (const x of R.filter(x => x.kind === 'tee' && x.club)) { const t = tee[x.club] = tee[x.club] || { n: 0, fw: 0, lies: {}, recs: [] }; t.n++; if (x.lie === 'fairway') t.fw++; else t.lies[x.lie] = (t.lies[x.lie] || 0) + 1; t.recs.push(x); }
   const W = { trees: .8, water: 1, bunker: .5, rough: .3 };
   for (const [club, t] of Object.entries(tee)) {
     if (t.fw === t.n) continue; const cs = clubStats(club), ref = carryRef(club);
-    items.push({ kind: 'tee', n: t.n, score: Object.entries(t.lies).reduce((a, [l, c]) => a + (W[l] ?? .3) * c, 0),
+    items.push({ key: 'tee:' + club, kind: 'tee', n: t.n, score: Object.entries(t.lies).reduce((a, [l, c]) => a + (W[l] ?? .3) * c, 0),
+      ev: t.recs.filter(x => x.lie !== 'fairway').map(x => ({ date: at(x), cost: W[x.lie] ?? .3 })), chances: t.recs.map(x => ({ date: at(x), hit: x.lie !== 'fairway' })),
       title: `${club} off the tee: ${t.fw} of ${t.n} fairways`, detail: `Misses: ${Object.entries(t.lies).map(([l, c]) => `${c} ${l}`).join(', ')}. Distance isn't the issue${ref && ref.measured ? ` (stock carry ${fmt(ref.v)}m)` : ''}; direction is.`,
       range: cs ? `On the range: ${pct(cs.pure, cs.n)}% pure, ${pct(cs.top, cs.n)}% topped` : null,
       block: { club, swing: 'full', target: ref ? round5(ref.v) : null, intent: 'Accuracy: pick two markers about 30m apart and count how many finish between them' }, recs: t.recs });
   }
   // Approaches: clubbed short, and clubs that should be covering these distances but aren't measured
   const appr = R.filter(x => (x.kind === 'approach' || (x.i === 0 && x.h.par === 3)) && x.from >= 60 && x.club);
-  const short = appr.filter(x => { const c = carryRef(x.club); return c && c.measured && x.from - c.v > 15; });
+  const measuredAppr = appr.filter(x => { const c = carryRef(x.club); return c && c.measured; });
+  const isShort = x => x.from - carryRef(x.club).v > 15;
+  const short = measuredAppr.filter(isShort);
   if (short.length) {
     const med = median(short.map(x => x.from)), f = clubFit(med);
-    items.push({ kind: 'approach', n: appr.length, score: .5 * short.length, title: `Approaches clubbed short: ${short.length} of ${appr.length}`,
+    items.push({ key: 'approach', kind: 'approach', n: appr.length, score: .5 * short.length,
+      ev: short.map(x => ({ date: at(x), cost: .5 })), chances: measuredAppr.map(x => ({ date: at(x), hit: isShort(x) })),
+      title: `Approaches clubbed short: ${short.length} of ${appr.length}`,
       detail: short.map(x => `${x.club} (stock ${fmt(carryRef(x.club).v)}m) from ${fmt(x.from)}m`).join('; ') + '.',
-      advice: f.best ? `From ${fmt(Math.min(...short.map(x => x.from)))}–${fmt(Math.max(...short.map(x => x.from)))}m, your measured club is ${f.best.c.code} (${fmt(f.best.ref.v)}m).` : null, recs: short });
+      advice: f.best ? `From ${fmt(Math.min(...short.map(x => x.from)))}–${fmt(Math.max(...short.map(x => x.from)))}m, your measured club is ${f.best.c.code} (${fmt(f.best.ref.v)}m).` : null,
+      block: f.best ? { club: f.best.c.code, swing: 'full', target: round5(med), intent: `Commit to the ${f.best.c.code} at the distance your approaches came up short from` } : null, recs: short });
   }
   const bestUnmeasured = {};
   for (const x of appr) { const u = clubFit(x.from).unmeasured; if (u) (bestUnmeasured[u.c.code] = bestUnmeasured[u.c.code] || { ref: u.ref, xs: [] }).xs.push(x); }
   for (const [code, u] of Object.entries(bestUnmeasured)) {
     const ds = u.xs.map(x => x.from);
-    items.push({ kind: 'measure', n: u.xs.length, score: .4 * u.xs.length, title: `Measure your ${code}`,
+    items.push({ key: 'measure:' + code, kind: 'measure', n: u.xs.length, score: .4 * u.xs.length, ev: u.xs.map(x => ({ date: at(x), cost: .4 })),
+      title: `Measure your ${code}`,
       detail: `${plural(u.xs.length, 'approach', 'approaches')} of ${fmt(Math.min(...ds))}${ds.length > 1 ? '–' + fmt(Math.max(...ds)) : ''}m, where it should sit (about ${fmt(u.ref.v)}m, ${u.ref.src}). It has no range data, so the app can't recommend it.`,
-      block: { club: code, swing: 'full', target: round5(median(ds)), intent: 'Establish a stock carry: 20 balls, paste carry and total' }, recs: u.xs });
+      block: { club: code, swing: 'full', target: round5(median(ds)), intent: 'Establish a stock carry: 20 balls, then add the screenshots' }, recs: u.xs });
   }
+  // Clubs in the bag with no range data at all, whether or not a course has asked for them yet
+  for (const c of activeClubs().filter(c => c.category !== 'putter')) {
+    const ref = carryRef(c.code);
+    if ((ref && ref.measured) || items.some(x => x.key === 'measure:' + c.code)) continue;
+    items.push({ key: 'measure:' + c.code, kind: 'measure', n: 0, score: .3, fixedWeight: .3, ev: [], note: 'No range data yet.',
+      title: `Measure your ${c.code}`, detail: `No range data for the ${c.code} yet, so it can't be planned with or recommended${ref ? ` (you've assumed about ${fmt(ref.v)}m)` : ''}.`,
+      block: { club: c.code, swing: 'full', target: ref ? round5(ref.v) : null, intent: 'Establish a stock carry: 20 balls, then add the screenshots' } });
+  }
+  // Strike, from the range: a club that too often comes off as a low runner or a top
+  for (const c of activeClubs().filter(c => c.category !== 'putter')) { const it = strikeItem(c.code); if (it) items.push(it); }
   // Short game
   const sg = R.filter(x => x.kind === 'short' && x.club), sgMiss = sg.filter(x => x.lie !== 'green');
   if (sgMiss.length) {
     const main = Object.entries(sg.reduce((a, x) => (a[x.club] = (a[x.club] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1])[0][0];
     const chip = rangeBlocksFor(main).filter(b => b.swing === 'chip').sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
     const cs = chip && blockSummary(chip);
-    items.push({ kind: 'short', n: sg.length, score: .5 * sgMiss.length, title: `Short game: ${sgMiss.length} of ${sg.length} missed the green`,
+    items.push({ key: 'short', kind: 'short', n: sg.length, score: .5 * sgMiss.length,
+      ev: sgMiss.map(x => ({ date: at(x), cost: .5 })), chances: sg.map(x => ({ date: at(x), hit: x.lie !== 'green' })),
+      title: `Short game: ${sgMiss.length} of ${sg.length} missed the green`,
       detail: sgMiss.map(x => `${x.club} from ${fmt(x.from)}m, finished in the ${x.lie}`).join('; ') + '.',
       range: cs && cs.fromPinTotal != null ? `On the range: your ${chip.target}m chip block finished ${fmt(cs.fromPinTotal, 1)}m from the pin on average` : null,
       block: { club: main, swing: 'chip', target: round5(median(sg.map(x => x.from))) || 20, intent: 'Land it on the green: count how many finish inside 3m' }, recs: sgMiss });
@@ -1434,13 +1459,104 @@ function practiceItems() {
   // Putting and penalties, from holes where they were logged
   const ph = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
   const threes = ph.filter(p => p.h.putts >= 3);
-  if (threes.length) items.push({ kind: 'putting', n: ph.length, score: threes.length, title: `Three-putts: ${threes.length} in ${plural(ph.length, 'hole')}`,
+  if (threes.length) items.push({ key: 'putting', kind: 'putting', n: ph.length, score: threes.length,
+    ev: threes.map(p => ({ date: p.r.date, cost: 1 })), chances: ph.map(p => ({ date: p.r.date, hit: p.h.putts >= 3 })),
+    title: `Three-putts: ${threes.length} in ${plural(ph.length, 'hole')}`,
     detail: `${sum(ph.map(p => p.h.putts))} putts over ${plural(ph.length, 'hole')}, ${(sum(ph.map(p => p.h.putts)) / ph.length).toFixed(1)} a hole.`, practice: 'Putting green: 20 lag putts from 8–12m, trying to finish inside a metre.', recs: threes.map(p => ({ r: p.r, h: p.h })) });
-  const pens = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => (h.shots || []).length && h.penalties).map(h => ({ r, h })));
-  if (pens.length) items.push({ kind: 'penalty', n: shotHoleCount(), score: .6 * sum(pens.map(p => p.h.penalties)), title: `Penalty strokes: ${sum(pens.map(p => p.h.penalties))} in ${plural(shotHoleCount(), 'hole')}`,
+  const traced = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
+  const pens = traced.filter(p => p.h.penalties);
+  if (pens.length) items.push({ key: 'penalty', kind: 'penalty', n: shotHoleCount(), score: .6 * sum(pens.map(p => p.h.penalties)),
+    ev: pens.map(p => ({ date: p.r.date, cost: .6 * p.h.penalties })), chances: traced.map(p => ({ date: p.r.date, hit: !!p.h.penalties })),
+    title: `Penalty strokes: ${sum(pens.map(p => p.h.penalties))} in ${plural(shotHoleCount(), 'hole')}`,
     detail: `On ${pens.map(p => 'hole ' + p.h.n).join(', ')}. Worth checking the trace to see what caused it.`, recs: pens });
   items.push(...swingItems());
   return items.sort((a, b) => b.score - a.score);
+}
+
+// Strike, measured on the range. Flags a club when at least STRIKE_FLAG of
+// its full swings (in the recency window) are low runners or tops, and
+// says whether the latest session still shows it — the case where an old
+// tip is still coming up today.
+const STRIKE_FLAG = 0.35, STRIKE_MIN = 10;
+function strikeItem(code) {
+  const shots = fullShots(code); if (shots.length < STRIKE_MIN) return null;
+  const prof = classify(shots), bad = (_, i) => prof[i] === 'runner' || prof[i] === 'top';
+  const nBad = shots.filter(bad).length; if (nBad / shots.length < STRIKE_FLAG) return null;
+  const s = clubStats(code);
+  const dates = [...new Set(shots.map(x => x.date))].sort(), latest = dates[dates.length - 1];
+  const inLatest = shots.map((x, i) => [x, i]).filter(([x]) => x.date === latest), before = shots.map((x, i) => [x, i]).filter(([x]) => x.date !== latest);
+  const rate = xs => xs.filter(([, i]) => bad(null, i)).length / xs.length;
+  let status = null, note = null;
+  if (inLatest.length >= 5 && before.length >= 5) {
+    const now = rate(inLatest), was = rate(before);
+    if (now < STRIKE_FLAG && now <= was * 0.6) { status = 'quiet'; note = `Improving: ${Math.round(now * 100)}% in the latest session (${dateLabel(latest)}) against ${Math.round(was * 100)}% before.`; }
+    else note = `Still showing up in the latest range session (${dateLabel(latest)}): ${inLatest.filter(([, i]) => bad(null, i)).length} of ${inLatest.length}, against ${Math.round(was * 100)}% before.`;
+  } else note = `Last seen in the range session of ${dateLabel(latest)}.`;
+  return { key: 'strike:' + code, kind: 'strike', n: shots.length, score: .05 * nBad, status, note,
+    ev: shots.filter(bad).map(x => ({ date: x.date, cost: .05 })),
+    title: `${code} strike: ${pct(nBad, shots.length)}% low runners or topped`,
+    detail: `${s.runner} low runners and ${s.top} tops in ${shots.length} full swings.${s.pureCarry ? ` Stock carry ${fmt(s.stockCarry)}m against ${fmt(s.pureCarry)}m when you catch it pure.` : ''}`,
+    block: { club: code, swing: 'full', target: round5(s.pureCarry || s.stockCarry), intent: 'Strike: count pure strikes against low runners — ball first, then turf' } };
+}
+
+/* ---------- weighting and freshness ----------
+   The list grows with every round, so each item is judged on how recent its
+   evidence is and whether it's still happening. Worked out on every draw
+   from the dated evidence; nothing is stored.
+   - weight: sum of each piece of evidence's cost, halved every
+     PRACTICE_HALF_LIFE days. A judgement about how fast a beginner's game
+     moves, not a measurement.
+   - quiet: it had enough clean chances since it was last seen that, at its
+     old rate, it would probably (80%) have happened again; or it was last
+     seen more than STALE_AFTER days ago. Quiet items leave the list and the
+     plan, and are listed separately with the reason.
+   - practised: a range block for its club and swing was hit on or after the
+     day it was last seen, and the course hasn't confirmed it yet. It stays
+     on the list at half weight. */
+const PRACTICE_HALF_LIFE = 60, STALE_AFTER = 180;
+const ageDays = d => d ? Math.max(0, (Date.now() - new Date(d + 'T00:00:00').getTime()) / 86400000) : 0;
+const decay = d => Math.pow(0.5, ageDays(d) / PRACTICE_HALF_LIFE);
+// The latest day a range block for this club and swing was actually hit, on or after `since`.
+function practisedSince(block, since) {
+  if (!block) return null;
+  return S.sessions.filter(s => s.type === 'range' && s.date && (!since || s.date >= since)
+    && (s.blocks || []).some(b => b.club === block.club && (b.swing || 'full') === (block.swing || 'full') && !b.plan && ((b.shots || []).length || b.summary)))
+    .map(s => s.date).sort().pop() || null;
+}
+function assessPractice(it) {
+  const ev = it.ev || [], lastSeen = ev.map(e => e.date).filter(Boolean).sort().pop() || null;
+  const weight = it.fixedWeight != null ? it.fixedWeight : sum(ev.map(e => e.cost * (e.date ? decay(e.date) : 1)));
+  let status = it.status || 'active', note = it.note || (lastSeen ? `Last seen ${dateLabel(lastSeen)}.` : '');
+  if (!it.status && lastSeen && ageDays(lastSeen) > STALE_AFTER) {
+    status = 'quiet'; note = `Last seen ${dateLabel(lastSeen)}, more than six months ago — too old to plan around.`;
+  } else if (!it.status && lastSeen && it.kind !== 'strike' && it.kind !== 'swing') {
+    const ch = it.chances || [], hits = ch.filter(c => c.hit).length, clean = ch.filter(c => c.date > lastSeen).length;
+    const rate = ch.length ? hits / ch.length : 1;
+    const needed = rate >= 1 ? 3 : Math.max(3, Math.ceil(Math.log(0.2) / Math.log(1 - rate)));
+    const practised = practisedSince(it.block, lastSeen);
+    if (ch.length && clean >= needed) { status = 'quiet'; note = `Not seen in ${plural(clean, 'chance')} since ${dateLabel(lastSeen)}; at the old rate (${hits} in ${ch.length}) it would probably have shown up by now.`; }
+    else if (practised) { status = 'practised'; note = `Last seen ${dateLabel(lastSeen)}. Worked on at the range ${dateLabel(practised)} — ${clean ? `${plural(clean, 'clean chance')} on course since, not yet enough to call it fixed` : 'not tested on course since'}.`; }
+    else if (clean) note = `Last seen ${dateLabel(lastSeen)}; ${plural(clean, 'clean chance')} since, not yet enough to call it fixed.`;
+  }
+  return { ...it, lastSeen, status, note, weight: weight * (status === 'practised' ? 0.5 : 1) };
+}
+// What to practise now, ranked; and what has gone quiet.
+// A current swing reading about a club that already has a ball-data item
+// joins that item as supporting evidence instead of being listed on its
+// own: video ranks below ball data, and adds weight (half its own) only
+// when it agrees with it.
+function rankedPractice() {
+  const all = practiceItems().map(assessPractice), byWeight = (a, b) => b.weight - a.weight;
+  let now = all.filter(x => x.status !== 'quiet');
+  for (const sw of now.filter(x => x.kind === 'swing' && x.club)) {
+    const host = now.filter(x => x.kind !== 'swing' && x.block && x.block.club === sw.club).sort(byWeight)[0];
+    if (!host) continue;
+    host.support = [...(host.support || []), sw];
+    if (sw.agrees) host.weight += sw.weight / 2;
+    if (sw.drillName) host.block = { ...host.block, intent: `${host.block.intent}. Drill from the video: ${sw.drillName}` };
+    now = now.filter(x => x !== sw);
+  }
+  return { now: now.sort(byWeight), quiet: all.filter(x => x.status === 'quiet').sort(byWeight) };
 }
 
 /* ---------- 3. calibration: course distance vs range ---------- */
@@ -1457,21 +1573,23 @@ function calibration() {
 }
 
 /* ---------- views ---------- */
-const KIND_LABEL = { tee: 'Off the tee', approach: 'Approach', measure: 'Gapping', short: 'Short game', putting: 'Putting', penalty: 'Penalties', swing: 'Swing video' };
+const KIND_LABEL = { tee: 'Off the tee', approach: 'Approach', measure: 'Gapping', strike: 'Strike', short: 'Short game', putting: 'Putting', penalty: 'Penalties', swing: 'Swing video' };
+const freshLine = it => it.note ? `<div class="fresh small ${it.status}">${it.status === 'practised' ? '<span class="tag">worked on</span> ' : ''}${esc(it.note)}</div>` : '';
 function practiceCard(it, i) {
   const b = it.block;
   // Video readings collapse: they are long, and they rank below ball data.
   if (it.kind === 'swing') return `<details class="pcard k-swing">
     <summary><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span> <b>${esc(it.title)}</b> <span class="tag">read from video</span></summary>
-    <div class="small" style="margin-top:6px">${esc(it.detail)}</div>
+    ${freshLine(it)}<div class="small" style="margin-top:6px">${esc(it.detail)}</div>
     ${it.advice ? `<div class="small" style="margin-top:4px"><b>Video vs numbers:</b> ${esc(String(it.advice).replace(/^Video vs numbers: /, ''))}</div>` : ''}
     ${it.practice ? `<div class="small" style="margin-top:4px"><b>Drill:</b> ${esc(it.practice)}</div>` : ''}
     ${it.range ? `<div class="small muted" style="margin-top:4px">${esc(it.range)}</div>` : ''}
   </details>`;
   return `<div class="pcard k-${it.kind}">
     <div class="spread"><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span><span class="tag ${it.n >= 12 ? 'green' : ''}">${it.video ? 'read from video' : confidence(it.n) + ', n=' + it.n}</span></div>
-    <div class="pt">${esc(it.title)}</div><div class="small">${esc(it.detail)}</div>
+    <div class="pt">${esc(it.title)}</div>${freshLine(it)}<div class="small">${esc(it.detail)}</div>
     ${it.range ? `<div class="small muted" style="margin-top:4px">${esc(it.range)}</div>` : ''}
+    ${(it.support || []).map(v => `<div class="small" style="margin-top:4px"><span class="tag">read from video</span> ${esc(v.title)}${v.note ? ` <span class="muted">${esc(v.note)}</span>` : ''}${v.agrees ? ' <span class="muted">Agrees with the ball data.</span>' : ''}</div>`).join('')}
     ${it.advice ? `<div class="small" style="margin-top:4px"><b>On course:</b> ${esc(it.advice)}</div>` : ''}
     ${it.practice ? `<div class="small" style="margin-top:4px"><b>Practice:</b> ${esc(it.practice)}</div>` : ''}
     ${b ? `<div class="pblock"><span class="tag green">${esc(b.club)} · ${b.swing}${b.target ? ' · ' + b.target + 'm' : ''}</span> <span class="small muted">${esc(b.intent)}</span></div>` : ''}
@@ -1479,14 +1597,15 @@ function practiceCard(it, i) {
   </div>`;
 }
 function practiceSection(limit) {
-  const items = practiceItems(), holes = shotHoleCount();
-  if (!holes) return `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and this fills with what to practise, ranked by what's costing you on course.</p></div>`;
-  if (!items.length) return `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`;
-  const shown = limit ? items.slice(0, limit) : items;
-  return basisLine() + `<p class="small muted">Ranked by estimated cost on course${holes < 9 ? ' — early signals, not conclusions' : ''}.</p>` +
-    shown.map(practiceCard).join('') +
-    (limit && items.length > limit ? `<button class="quiet" data-go="range">All ${items.length} items</button>` : '') +
-    (items.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
+  const { now, quiet } = rankedPractice(), holes = shotHoleCount();
+  if (!now.length && !quiet.length) return holes ? `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`
+    : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
+  const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
+  return basisLine() + `<p class="small muted">Ranked by estimated cost, weighted toward recent evidence: something last seen ${PRACTICE_HALF_LIFE} days ago counts half as much as something seen today. Anything worked on at the range since it was last seen counts half again until the course confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''}</p>` +
+    (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
+    (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
+    (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
+    (now.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
 }
 function calibrationSection() {
   const rows = calibration(); if (!rows.length) return '';
@@ -1538,13 +1657,33 @@ function vCourseHole() {
 }
 
 /* ---------- plan a session from the practice list ---------- */
+// Up to five blocks, one per club and swing, in the order given. A second
+// item wanting the same club and swing adds its reason to that block.
+function planBlocks(items) {
+  const blocks = [];
+  for (const it of items.filter(x => x.block)) {
+    const k = it.block.club + '|' + it.block.swing, have = blocks.find(b => b.club + '|' + b.swing === k);
+    if (have) { have.reason += `; ${it.title}`; continue; }
+    if (blocks.length >= 5) continue;
+    blocks.push({ id: uid('b'), seq: blocks.length + 1, club: it.block.club, swing: it.block.swing, target: it.block.target, intent: it.block.intent, reason: it.title, plan: true, shots: [] });
+  }
+  return blocks;
+}
 Object.assign(ACTIONS, {
+  // Plans from what's current across everything — rounds, range strike data,
+  // swing readings and unmeasured clubs — in the ranked order, leaving out
+  // what has gone quiet. Replaces a planned session that hasn't been hit yet
+  // rather than piling up another.
   async planSession() {
-    const items = practiceItems().filter(x => x.block); if (!items.length) return;
-    const seen = new Set(), blocks = [];
-    for (const it of items) { const k = it.block.club + it.block.swing; if (seen.has(k)) continue; seen.add(k); blocks.push({ id: uid('b'), seq: blocks.length + 1, club: it.block.club, swing: it.block.swing, target: it.block.target, intent: it.block.intent, plan: true, shots: [] }); if (blocks.length >= 5) break; }
-    const doc = { id: uid('s'), type: 'range', date: today(), created: Date.now(), planned: true, focus: 'Planned from on-course data', ballType: 'range', source: 'toptracer', blocks };
-    if (await save('sessions', doc.id, doc)) { toast('Session planned'); go('range', { sessionId: doc.id }); }
+    const { now } = rankedPractice(), blocks = planBlocks(now);
+    if (!blocks.length) { toast('Nothing current to plan from'); return; }
+    const off = now.filter(x => !x.block && x.practice && x.kind !== 'swing').map(x => x.practice);
+    const notes = off.length ? `Also, off the range: ${off.join(' ')}` : null;
+    const pending = S.sessions.find(s => s.type === 'range' && s.planned && (s.blocks || []).length && s.blocks.every(b => b.plan));
+    if (pending && !await confirmAsk(`You already have a planned session from ${dateLabel(pending.date)} that hasn't been hit. Replace it with this plan?`, 'Replace plan')) return;
+    const base = pending || { id: uid('s'), type: 'range', created: Date.now(), ballType: 'range', source: 'toptracer' };
+    const doc = { ...base, v: SCHEMA_VERSION, date: today(), planned: true, focus: 'Planned from your latest rounds, range sessions and swings', notes, blocks };
+    if (await save('sessions', doc.id, doc)) { toast(pending ? 'Plan replaced' : 'Session planned'); go('range', { sessionId: doc.id }); }
   },
   viewHole(d) { go('courses', { courseId: d.id, hole: d.n }); },
 });
@@ -1689,59 +1828,6 @@ async function analyseSwing(sessionId, swingId, onText) {
     return { data };
   } catch (e) { return { error: e && e.code ? e.code : 'failed', text: e && e.text }; }
 }
-// One save prompt, not one per frame: the platform rate-limits repeated
-// prompts, so the frames go out as a single stored (uncompressed) zip.
-const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let i = 0; i < 256; i++) { let c = i; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[i] = c >>> 0; } return t; })();
-function crc32(bytes) { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
-function zipStore(files, when = new Date()) {
-  const enc = new TextEncoder(), parts = [], central = [];
-  let offset = 0;
-  const dosTime = ((when.getHours() & 31) << 11) | ((when.getMinutes() & 63) << 5) | ((when.getSeconds() / 2) & 31);
-  const dosDate = (((when.getFullYear() - 1980) & 127) << 9) | (((when.getMonth() + 1) & 15) << 5) | (when.getDate() & 31);
-  const u32 = v => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
-  const u16 = v => [v & 255, (v >>> 8) & 255];
-  for (const f of files) {
-    const name = enc.encode(f.name), data = f.bytes, crc = crc32(data);
-    const local = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(dosTime), ...u16(dosDate),
-      ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0)]);
-    parts.push(local, name, data);
-    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(dosTime), ...u16(dosDate),
-      ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset)]), name);
-    offset += local.length + name.length + data.length;
-  }
-  const cdStart = offset;
-  let cdLen = 0; for (const c of central) cdLen += c.length;
-  const eocd = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdLen), ...u32(cdStart), ...u16(0)]);
-  return new Blob([...parts, ...central, eocd], { type: 'application/zip' });
-}
-
-// When this view can't send images, the frames and the prompt can still go
-// somewhere that can: a normal Claude chat.
-async function swingHandoff(sessionId, swingId, mode) {
-  const s = session(sessionId), sw = swingsOf(s).find(x => x.id === swingId);
-  if (!sw) return 'gone';
-  if (mode === 'prompt') {
-    const text = swingPrompt(sw, s);
-    try { await navigator.clipboard.writeText(text); return 'copied'; }
-    catch (e) { openSheet(`<h2>Analysis prompt</h2><p class="small muted">Copy this, then drop the frames into a Claude chat with it.</p><textarea readonly style="min-height:260px">${esc(text)}</textarea>`); return 'shown'; }
-  }
-  const dl = await claude.use('downloads');
-  if (!dl) return 'no_downloads';
-  const files = [];
-  for (let i = 0; i < sw.frames.length; i++) {
-    try {
-      const r = await fetch('/_blob/' + sw.frames[i].asset); if (!r.ok) continue;
-      const b = await r.blob(), ext = (b.type || '').includes('jpeg') ? 'jpg' : 'webp';
-      files.push({ name: `swing-${sw.view}-${String(i + 1).padStart(2, '0')}.${ext}`, bytes: new Uint8Array(await b.arrayBuffer()) });
-    } catch (e) {}
-  }
-  if (!files.length) return 'none';
-  try {
-    await dl.save({ filename: `swing-${sw.view}${sw.club ? '-' + sw.club : ''}-${s.date || today()}.zip`, data: zipStore(files) });
-    return 'saved';
-  } catch (e) { return (e && e.code) || 'failed'; }
-}
-
 /* ---------- views ---------- */
 function swingCard(sw, s, opts = {}) {
   const a = sw.analysis;
@@ -1763,7 +1849,6 @@ function swingCard(sw, s, opts = {}) {
     ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet — tap Analyse and Claude reads these frames against your ball data for this club.</div>`}
     <div class="row-actions">
       <button class="${a ? '' : 'primary'}" data-act="analyseSwing" data-sid="${s.id}" data-wid="${sw.id}">${a ? 'Analyse again' : 'Analyse'}</button>
-      <button data-act="chatRoute" data-sid="${s.id}" data-wid="${sw.id}">Analyse in a chat</button>
       ${sw.video ? `<button data-act="playSwing" data-sid="${s.id}" data-wid="${sw.id}">Play video</button>` : ''}
       <button class="danger" data-act="deleteSwing" data-sid="${s.id}" data-wid="${sw.id}">Delete</button>
     </div>
@@ -1849,9 +1934,8 @@ Object.assign(ACTIONS, {
     const prog = document.getElementById('prog_' + d.wid);
     const res = await analyseSwing(d.sid, d.wid, ({ text }) => { if (prog) prog.textContent = text.slice(-400); });
     if (res.error) {
-      const imageProblem = ['no_images', 'images_unavailable', 'image_rejected'].includes(res.error);
-      const msg = { unavailable: 'This view of the page cannot reach Claude. Open the artifact from claude.ai rather than a shared or embedded copy.', no_images: "This view can't send images to Claude. That's usually the client, not the page — the Claude mobile app blocks it where a desktop browser at claude.ai generally allows it.", images_unavailable: "This view can't send images to Claude. That's usually the client, not the page — the Claude mobile app blocks it where a desktop browser at claude.ai generally allows it.", image_rejected: 'One of the frames was rejected as an image.', not_granted: 'You declined the request, so nothing was sent. Tap Analyse again to allow it.', rate_limited: 'Too many requests just now — wait a moment and try again.', frames_unreadable: "Couldn't load the stored frames.", invalid_json: 'Claude replied but not in the expected format. Try again.', cancelled: 'Stopped.' }[res.error] || 'Analysis failed.';
-      box.innerHTML = `<div class="notice warn">${esc(msg)} <span class="muted small">(${esc(res.error)})</span>${imageProblem ? `<div class="row-actions"><button data-act="swingPrompt" data-sid="${d.sid}" data-wid="${d.wid}">Copy the prompt</button><button data-act="swingFrames" data-sid="${d.sid}" data-wid="${d.wid}">Save the frames</button></div><div class="small" style="margin-top:6px">Then paste both into a Claude chat — it reads images there, and the prompt already carries your ball data for this club.</div>` : ''}</div>`; return;
+      const msg = { unavailable: "Analysis needs Claude, and this server can't reach it — check ANTHROPIC_API_KEY on the server.", rate_limited: 'Too many requests just now — wait a moment and try again.', frames_unreadable: "Couldn't load the stored frames.", invalid_json: 'Claude replied but not in the expected format. Try again.' }[res.error] || 'Analysis failed.';
+      box.innerHTML = `<div class="notice warn">${esc(msg)} <span class="muted small">(${esc(res.error)})</span></div>`; return;
     }
     const s = session(d.sid);
     // Read in the app this time, so drop any earlier "read in a chat" credit.
@@ -1865,35 +1949,6 @@ Object.assign(ACTIONS, {
       if (S.assets) { for (const f of sw.frames) { try { await S.assets.delete(f.asset); } catch (e) {} } if (sw.video) { try { await S.assets.delete(sw.video); } catch (e) {} } }
       toast('Swing deleted'); render();
     }
-  },
-  chatRoute(d) {
-    const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw) return;
-    openSheet(`<h2>Analyse in a chat</h2>
-      <p class="small muted">This view can't send images to Claude, but a normal Claude chat reads them fine. Three steps, then the result comes back in here.</p>
-      <ol class="steps">
-        <li><b>Save the frames</b><div class="row-actions"><button type="button" data-act="swingFrames" data-sid="${d.sid}" data-wid="${d.wid}">Save ${sw.frames.length} frames (one zip)</button></div></li>
-        <li><b>Copy the prompt</b> — it carries the camera view and your ball data for ${sw.club ? esc(sw.club) : 'this club'}.<div class="row-actions"><button type="button" data-act="swingPrompt" data-sid="${d.sid}" data-wid="${d.wid}">Copy prompt</button></div></li>
-        <li><b>Paste Claude's reply below.</b> The JSON block is what it asks for; plain prose works too.</li>
-      </ol>
-      <label>Claude's reply<textarea name="reply" placeholder='{ "observations": [ ... ], "one_thing": "..." }' style="min-height:170px"></textarea></label>`,
-      async root => {
-        const raw = (val(root, 'reply') || '').trim();
-        if (!raw) { toast('Paste the reply first'); return false; }
-        const data = parseAnalysis(raw);
-        const cur = session(d.sid);
-        const swings = swingsOf(cur).map(x => x.id === d.wid ? { ...x, analysis: data, analysedOn: today(), analysedIn: 'chat' } : x);
-        const ok = await save('sessions', d.sid, { ...cur, swings });
-        if (ok) { toast(data.parsed === false ? 'Saved as notes' : 'Analysis saved'); render(); }
-        return ok;
-      });
-  },
-  async swingPrompt(d) { const r = await swingHandoff(d.sid, d.wid, 'prompt'); if (r === 'copied') toast('Prompt copied'); },
-  async swingFrames(d) {
-    toast('Packing frames…');
-    const r = await swingHandoff(d.sid, d.wid, 'frames');
-    toast({ saved: 'Frames saved as a zip', no_downloads: "This view can't save files", declined: 'Save cancelled',
-      rate_limited: 'A save prompt is already open — finish it, then try again', too_large: 'That zip is too large to save here',
-      rejected_extension: "This view won't accept a zip", none: 'No frames to save' }[r] || 'Save failed');
   },
   async dropFrame(d) {
     const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw) return;
@@ -1909,35 +1964,30 @@ Object.assign(ACTIONS, {
   },
 });
 
-// Claude's reply, however it arrives: the JSON it was asked for, the same
-// JSON inside a code fence, or plain prose (kept verbatim as one note).
-function parseAnalysis(raw) {
-  const tryJson = t => { try { const v = JSON.parse(t); return v && typeof v === 'object' ? v : null; } catch (e) { return null; } };
-  let v = tryJson(raw);
-  if (!v) { const m = raw.match(/```(?:json)?\s*([\s\S]*?)```/); if (m) v = tryJson(m[1].trim()); }
-  if (!v) { const a = raw.indexOf('{'), b = raw.lastIndexOf('}'); if (a >= 0 && b > a) v = tryJson(raw.slice(a, b + 1)); }
-  if (!v) return { one_thing: raw.split(/\n\s*\n/)[0].slice(0, 300), notes: raw.slice(0, 4000), parsed: false };
-  return v;
-}
-
 /* ---------- into the loop ---------- */
 // A swing reading is evidence, not measurement: it ranks below anything
 // derived from ball flight, and only rises when the two agree.
 function swingItems() {
-  const items = [];
-  for (const sw of allSwings()) {
-    const a = sw.analysis; if (!a) continue;
+  const items = [], latest = {};
+  // A newer reading of the same club from the same angle supersedes an older one.
+  const when = sw => sw.analysedOn || sw.session.date || '';
+  for (const sw of allSwings().filter(sw => sw.analysis)) { const k = (sw.club || '') + '|' + sw.view; if (!latest[k] || when(sw) > when(latest[k])) latest[k] = sw; }
+  for (const sw of Object.values(latest)) {
+    const a = sw.analysis;
     const strong = (a.observations || []).filter(o => o.confidence === 'high');
     if (!strong.length && !a.one_thing) continue;
     const cs = sw.club ? clubStats(sw.club) : null;
     const agrees = /line[s]? up|matches|consistent|agree/i.test(a.matches_ball_data || '') && !/not|doesn't|does not|contradict/i.test(a.matches_ball_data || '');
-    items.push({ kind: 'swing', n: strong.length || 1, score: (agrees ? 0.9 : 0.45) * (strong.length || 1),
+    const score = (agrees ? 0.9 : 0.45) * (strong.length || 1), date = when(sw) || null;
+    items.push({ key: 'swing:' + (sw.club || '') + ':' + sw.view, kind: 'swing', n: strong.length || 1, score, ev: [{ date, cost: score }],
+      note: date ? `Read ${dateLabel(date)}.` : '',
       title: `${VIEWS[sw.view] || 'Swing'}${sw.club ? ' · ' + sw.club : ''}: ${a.one_thing || strong[0].what}`,
       detail: strong.slice(0, 2).map(o => `${o.what} (${o.evidence})`).join('; ') || (a.observations || [])[0]?.what || '',
       range: cs ? `Ball data for ${sw.club}: ${pct(cs.pure, cs.n)}% pure, ${pct(cs.runner, cs.n)}% low runners` : null,
       advice: a.matches_ball_data ? `Video vs numbers: ${a.matches_ball_data}` : null,
       practice: a.drill ? `${a.drill.name} — ${a.drill.why || ''}` : null,
-      video: true, session: sw.session });
+      block: sw.club && a.drill && a.drill.name ? { club: sw.club, swing: 'full', target: cs && cs.stockCarry ? round5(cs.stockCarry) : null, intent: `Drill: ${a.drill.name}` } : null,
+      video: true, session: sw.session, club: sw.club || null, agrees, drillName: (a.drill && a.drill.name) || null });
   }
   return items;
 }
