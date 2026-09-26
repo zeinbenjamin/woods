@@ -24,7 +24,7 @@ services:
     user: "568:568"
 
     ports:
-      - "8080:8080"
+      - "1818:1818"
 
     environment:
       ANTHROPIC_API_KEY: "sk-ant-REPLACE_ME"
