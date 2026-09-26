@@ -146,7 +146,7 @@ test('the list shows the top five with freshness, the rest folded, and the quiet
 
 test('the Overview\'s next session leaves out what has gone quiet', () => {
   app.go('overview');
-  const next = app.$$('#view .nextlist li').map(li => li.textContent);
+  const next = app.$$('#view .wcard').map(li => li.textContent);
   assert.equal(next.length, 3);
   assert.ok(!next.some(t => /D off the tee/.test(t)));
 });
