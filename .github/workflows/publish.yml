@@ -23,6 +23,13 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      # Nothing is published from a red main: the tests run here first, so a
+      # merge that broke them stops before an image or a tag exists.
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm ci
+      - run: npm test
+
       - id: v
         name: Work out the version and whether it's new
         run: |

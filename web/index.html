@@ -245,7 +245,10 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const fmt = (n, d = 0) => (n == null || isNaN(n)) ? '–' : Number(n).toFixed(d);
 const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
 const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const today = () => new Date().toISOString().slice(0, 10);
+// A round belongs to his calendar day in Sydney, not UTC's: toISOString() would
+// date anything before 10am as yesterday.
+const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const today = () => localDay(new Date());
 const dateLabel = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }); };
 const sum = a => a.reduce((x, y) => x + y, 0);
 const mean = a => a.length ? sum(a) / a.length : null;
@@ -347,7 +350,20 @@ $('#brand').addEventListener('click', openVersion);
 
 /* ---------- analytics ---------- */
 // Full-swing shots for one club across every range session.
-function fullShots(code) {
+// Derived numbers are worked out once per state of the data and reused until
+// it changes: a screen used to recompute each club's range data thousands of
+// times per draw. The cache key is the identity of the state arrays, which
+// are always replaced (never mutated) when data arrives.
+let memo = { key: [], map: new Map() };
+function memoised(name, arg, fn) {
+  const key = [S.sessions, S.clubs, S.courses, S.settings];
+  if (key.some((k, i) => k !== memo.key[i])) memo = { key, map: new Map() };
+  const id = name + '|' + arg;
+  if (!memo.map.has(id)) memo.map.set(id, fn(arg));
+  return memo.map.get(id);
+}
+const fullShots = code => memoised('fullShots', code, c => fullShotsUncached(c));
+function fullShotsUncached(code) {
   const out = [];
   for (const s of S.sessions) if (s.type === 'range' && withinWindow(s.date)) for (const b of (s.blocks || [])) {
     if (b.club !== code || (b.swing || 'full') !== 'full') continue;
@@ -373,7 +389,8 @@ function classify(shots) {
     return 'short';
   });
 }
-function clubStats(code) {
+const clubStats = code => memoised('clubStats', code, clubStatsUncached);
+function clubStatsUncached(code) {
   const shots = fullShots(code);
   if (!shots.length) return null;
   const prof = classify(shots);
@@ -453,7 +470,10 @@ function parseGo(str) {
 function render() {
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
   const views = { overview: vOverview, range: vRange, rounds: vRounds, courses: vCourses, bag: vBag };
+  // Every save redraws the view; panels he opened stay open (matched by id).
+  const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
   $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
+  for (const id of open) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
 }
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-go]'); if (a) { const [tab, sub] = parseGo(a.dataset.go); go(tab, sub); return; }
@@ -562,7 +582,7 @@ function vBlock() {
   h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>mph</small></span>` : ''}</div>`;
   if (b.fromImages) { const fi = b.fromImages; h += `<p class="small muted" style="margin-top:10px">Read from ${plural((fi.assets || []).length, 'screenshot')} on ${dateLabel(fi.readOn)}${fi.converted ? ', converted from yards' : ''}${fi.units === 'unknown' ? ', units not shown on the screen' : ''}, then checked before saving.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`; }
   if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
-  if (shots.length) h += `<details><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Speed</th><th></th></tr></thead><tbody>` +
+  if (shots.length) h += `<details id="shotTable"><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Speed</th><th></th></tr></thead><tbody>` +
     shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td><td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
   else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}.${b.reason ? ` Why: ${esc(b.reason)}.` : ''} After you hit it, tap Edit and paste the shots.</div>`;
   else h += `<p class="muted small">Summary only. Edit the block to paste shots.</p>`;
@@ -1029,7 +1049,17 @@ function vHoleLog() {
   if (shots.length) html += `<h2>Shots</h2><div class="shotlist">` + shots.map((s, i) => { const from = i ? toGreen(h, shots[i - 1]) : hole.metres, len = shotLen(h, i); return `<button class="shotrow" data-act="editShot" data-sid="${r.id}" data-n="${n}" data-i="${i}"><span>${i + 1}. ${esc(s.club || '?')}${from == null ? '' : ` from ${Math.round(from)}m`}${s.penalty ? ' <span class="tag flag">penalty</span>' : ''}${s.verified ? ' <span class="tag green">real</span>' : ''}</span><span class="muted">${len == null ? 'not measurable' : Math.round(len) + 'm'}, ${lieOf(h, s)} ›</span></button>`; }).join('') + `</div><p class="small muted">Tap a shot to change its club or lie, move it, or delete it.</p>`;
   return html;
 }
-async function updateHole(r, n, fn) {
+// One write per round at a time, each applied to the latest copy: two quick
+// taps used to both start from the same old round, and the second save
+// overwrote the first shot.
+const writeQueues = {};
+function queued(key, job) {
+  const run = (writeQueues[key] || Promise.resolve()).then(job, job);
+  writeQueues[key] = run.catch(() => {});
+  return run;
+}
+function updateHole(r, n, fn) { return queued('sessions/' + r.id, () => applyHoleUpdate(session(r.id) || r, n, fn)); }
+async function applyHoleUpdate(r, n, fn) {
   const holes = r.holes.map(h => {
     if (h.n !== n) return h; const nh = { ...h }; fn(nh);
     if ((nh.shots || []).length) { if (nh.manualStrokes == null && h.strokes != null && !(h.shots || []).length) nh.manualStrokes = h.strokes; nh.strokes = holeStrokes(nh); }
@@ -1334,7 +1364,8 @@ const plural = (n, w, p) => `${n} ${n === 1 ? w : (p || w + 's')}`;
 //   recovery  played from trees, bunker or water
 //   short     inside 60m (pitches, chips)
 //   approach  everything else, including par-3 tee shots
-function shotRecords() {
+const shotRecords = () => memoised('shotRecords', '', shotRecordsUncached);
+function shotRecordsUncached() {
   const out = [];
   for (const r of S.sessions) if (r.type === 'round') for (const h of holesOf(r)) {
     const shots = h.shots || [];
@@ -1578,7 +1609,7 @@ const freshLine = it => it.note ? `<div class="fresh small ${it.status}">${it.st
 function practiceCard(it, i) {
   const b = it.block;
   // Video readings collapse: they are long, and they rank below ball data.
-  if (it.kind === 'swing') return `<details class="pcard k-swing">
+  if (it.kind === 'swing') return `<details class="pcard k-swing" id="pc-${esc(it.key || i)}">
     <summary><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span> <b>${esc(it.title)}</b> <span class="tag">read from video</span></summary>
     ${freshLine(it)}<div class="small" style="margin-top:6px">${esc(it.detail)}</div>
     ${it.advice ? `<div class="small" style="margin-top:4px"><b>Video vs numbers:</b> ${esc(String(it.advice).replace(/^Video vs numbers: /, ''))}</div>` : ''}
@@ -1614,7 +1645,7 @@ function calibrationSection() {
   <div class="scroll"><table><thead><tr><th>Club</th><th>Range total</th><th>Course</th><th>Δ</th><th></th></tr></thead><tbody>` +
     rows.map(r => `<tr><td><b>${esc(r.club)}</b></td><td>${r.ref ? fmt(r.ref.v) + (r.ref.measured ? '' : '*') : '–'}</td><td class="num">${fmt(r.med)} <span class="muted small">n=${r.n}</span></td><td>${r.status === 'too few' || r.delta == null ? '<span class="muted">–</span>' : (r.delta >= 0 ? '+' : '') + fmt(r.delta)}</td><td><span class="tag ${r.status === 'calibrated' ? 'green' : ''}">${r.status}</span></td></tr>`).join('') +
     `</tbody></table></div><p class="small muted">Δ appears from 3 course shots, and counts from 8. * = your estimate, not measured.</p>`;
-  if (suspects.length) h += `<div class="notice warn"><b>Check ${suspects.length === 1 ? 'this tap' : 'these taps'}:</b> ${suspects.map(x => `${x.club} on hole ${x.h.n} (${dateLabel(x.r.date)}) reads ${fmt(x.len)}m, longer than your range allows (${fmt(x.ref.v)}m${x.ref.max ? ', max ' + fmt(x.ref.max) : ''}). <button class="quiet" style="padding:0 4px" data-go="rounds:sessionId=${x.r.id},hole=${x.h.n}">Fix the tap</button><button class="quiet" style="padding:0 4px" data-act="verifyShot" data-sid="${x.r.id}" data-n="${x.h.n}" data-i="${x.i}">It's real</button>`).join(' ')} Usually a tap in the wrong spot — but a bladed wedge really does run, so if it happened, mark it real: it stays in the numbers and stops being flagged.</div>`;
+  if (suspects.length) h += `<div class="notice warn"><b>Check ${suspects.length === 1 ? 'this tap' : 'these taps'}:</b> ${suspects.map(x => `${esc(x.club)} on hole ${x.h.n} (${dateLabel(x.r.date)}) reads ${fmt(x.len)}m, longer than your range allows (${fmt(x.ref.v)}m${x.ref.max ? ', max ' + fmt(x.ref.max) : ''}). <button class="quiet" style="padding:0 4px" data-go="rounds:sessionId=${x.r.id},hole=${x.h.n}">Fix the tap</button><button class="quiet" style="padding:0 4px" data-act="verifyShot" data-sid="${x.r.id}" data-n="${x.h.n}" data-i="${x.i}">It's real</button>`).join(' ')} Usually a tap in the wrong spot — but a bladed wedge really does run, so if it happened, mark it real: it stays in the numbers and stops being flagged.</div>`;
   return h;
 }
 
@@ -2545,7 +2576,7 @@ function quickScoreSection(r) {
   const holes = holesOf(r);
   const untraced = holes.filter(h => !(h.shots || []).length);
   if (!untraced.length) return '';
-  return `<details class="sec"><summary><b>Quick score</b> <span class="small muted">— ${plural(untraced.length, 'hole')} without shots, one tap each</span></summary>
+  return `<details class="sec" id="quickScore"><summary><b>Quick score</b> <span class="small muted">— ${plural(untraced.length, 'hole')} without shots, one tap each</span></summary>
     <div class="quick">${untraced.map(h => `<div class="qrow"><span class="qn">${h.n}<small>par ${h.par ?? '–'}</small></span>
       <div class="chips">${(h.par ? [h.par - 1, h.par, h.par + 1, h.par + 2, h.par + 3, h.par + 4] : [3, 4, 5, 6, 7, 8]).filter(v => v > 0).map(v => `<button class="chip" data-act="quickScore" data-sid="${r.id}" data-n="${h.n}" data-s="${v}" aria-pressed="${h.strokes === v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
     <p class="small muted">Par is highlighted for reference — tap the score you made. Holes with traced shots aren't listed; their score comes from the shots.</p></details>`;

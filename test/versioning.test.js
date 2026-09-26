@@ -73,3 +73,11 @@ test('the release notes are that version\'s bullets, and a missing version fails
   assert.ok(out.length > 0 && out.every(l => l.startsWith('- ')));
   assert.notEqual(spawnSync('node', ['scripts/changelog-section.js', '0.0.1']).status, 0);
 });
+
+test('the publish workflow runs the tests before it builds and pushes anything', () => {
+  const wf = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const tests = wf.indexOf('run: npm test'), build = wf.indexOf('uses: docker/build-push-action'), tag = wf.indexOf('git tag "v$VERSION"');
+  assert.ok(tests > 0, 'npm test is a step');
+  assert.ok(tests < build && tests < tag, 'and it comes before the image push and the tag');
+  assert.match(wf, /npm ci/);
+});

@@ -3,7 +3,7 @@
 // Everything the browser can do goes through here, so the Anthropic key,
 // the database and the uploaded files all stay server-side.
 import express from 'express';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,8 +30,9 @@ app.get('/api/version', (_req, res) => res.set('Cache-Control', 'no-store').json
 // call; leave it empty only on a LAN you trust.
 app.use('/api', (req, res, next) => {
   if (!TOKEN) return next();
-  const given = req.get('x-carry-token') || req.query.token;
-  if (given === TOKEN) return next();
+  const given = Buffer.from(String(req.get('x-carry-token') || req.query.token || ''));
+  const want = Buffer.from(TOKEN);
+  if (given.length === want.length && timingSafeEqual(given, want)) return next();
   res.status(401).json({ error: 'unauthorised' });
 });
 
@@ -63,12 +64,25 @@ app.delete('/api/assets/:id', (req, res) => {
   res.json({ deleted: deleteAsset(req.params.id) });
 });
 // Served unauthenticated so <img src> works; ids are unguessable.
+// Streamed with byte ranges (a phone's video player needs them), and never
+// runnable: only photo and video types are served inline; anything else
+// (an SVG, say, which can carry script) is a download, and nothing is
+// sniffed or allowed to run even if opened directly.
+const INLINE = new Set(['image/webp', 'image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime']);
 app.get('/_blob/:id', (req, res) => {
   const a = getAsset(req.params.id);
   if (!a) return res.status(404).end();
-  const p = join(ASSET_DIR, `${req.params.id}.${EXT[a.content_type] || 'bin'}`);
-  if (!existsSync(p)) return res.status(404).end();
-  res.type(a.content_type).set('Cache-Control', 'public, max-age=31536000, immutable').send(readFileSync(p));
+  const file = `${req.params.id}.${EXT[a.content_type] || 'bin'}`;
+  if (!existsSync(join(ASSET_DIR, file))) return res.status(404).end();
+  const inline = INLINE.has(a.content_type);
+  res.set({
+    'Content-Type': inline ? a.content_type : 'application/octet-stream',
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+  });
+  if (!inline) res.set('Content-Disposition', `attachment; filename="${file}"`);
+  res.sendFile(file, { root: ASSET_DIR, dotfiles: 'deny', acceptRanges: true, cacheControl: false });
 });
 
 /* ---------- documents ---------- */
@@ -125,4 +139,7 @@ app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'server error' });
 });
 
-app.listen(PORT, () => console.log(`Carry ${VERSION} (${COMMIT}) listening on http://0.0.0.0:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Carry ${VERSION} (${COMMIT}) listening on http://0.0.0.0:${PORT}`);
+  if (!TOKEN) console.warn('WARNING: API_TOKEN is empty, so the API is open to anyone who can reach this port. Set it unless this is a trusted LAN.');
+});

@@ -66,6 +66,47 @@ test('deletes an asset: the record and the file on disk', async () => {
   assert.equal(existsSync(join(DATA, 'assets', `${up.id}.png`)), false, 'file removed from disk');
 });
 
+test('stored files stream with byte ranges, so a phone can play a swing video', async () => {
+  const bytes = Buffer.from(Array.from({ length: 5000 }, (_, i) => i % 251));
+  const up = await (await fetch(`${base}/api/assets`, { method: 'POST', headers: { 'x-carry-token': TOKEN, 'content-type': 'video/mp4' }, body: bytes })).json();
+  const full = await fetch(`${base}/_blob/${up.id}`);
+  assert.equal(full.status, 200);
+  assert.equal(full.headers.get('accept-ranges'), 'bytes');
+  assert.equal(full.headers.get('content-type'), 'video/mp4');
+  const part = await fetch(`${base}/_blob/${up.id}`, { headers: { Range: 'bytes=100-199' } });
+  assert.equal(part.status, 206);
+  assert.equal(part.headers.get('content-range'), 'bytes 100-199/5000');
+  assert.deepEqual(Buffer.from(await part.arrayBuffer()), bytes.subarray(100, 200));
+});
+
+test('stored files can never run as a page: only photos and video are served inline, and nothing is sniffed', async () => {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>';
+  const up = await (await fetch(`${base}/api/assets`, { method: 'POST', headers: { 'x-carry-token': TOKEN, 'content-type': 'image/svg+xml' }, body: svg })).json();
+  const r = await fetch(`${base}/_blob/${up.id}`);
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('content-type'), 'application/octet-stream');
+  assert.match(r.headers.get('content-disposition'), /^attachment/);
+  assert.equal(r.headers.get('x-content-type-options'), 'nosniff');
+  assert.match(r.headers.get('content-security-policy'), /sandbox/);
+  const png = await (await fetch(`${base}/api/assets`, { method: 'POST', headers: { 'x-carry-token': TOKEN, 'content-type': 'image/png' }, body: Buffer.from('png') })).json();
+  const p = await fetch(`${base}/_blob/${png.id}`);
+  assert.equal(p.headers.get('content-type'), 'image/png');
+  assert.equal(p.headers.get('content-disposition'), null, 'photos stay inline');
+  assert.equal(p.headers.get('x-content-type-options'), 'nosniff');
+});
+
+test('an empty API_TOKEN is announced loudly at startup, not silently open', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'carry-open-'));
+  const p = spawn('node', ['server/index.js'], { env: { ...process.env, DATA_DIR: dir, PORT: String(PORT + 60), API_TOKEN: '' } });
+  let out = '';
+  p.stdout.on('data', d => out += d); p.stderr.on('data', d => out += d);
+  try {
+    for (let i = 0; i < 50 && !/listening/.test(out); i++) await new Promise(r => setTimeout(r, 100));
+    assert.match(out, /API_TOKEN is empty/);
+  } finally { p.kill(); rmSync(dir, { recursive: true, force: true }); }
+  assert.doesNotMatch(readFileSync('server/index.js', 'utf8'), /given === TOKEN/, 'token compared in constant time');
+});
+
 test('deletes a document', async () => {
   await fetch(`${base}/api/sessions/s_x`, { method: 'PUT', headers: hdr, body: JSON.stringify({ id: 's_x', type: 'range', date: '2026-01-01' }) });
   const del = await (await fetch(`${base}/api/sessions/s_x`, { method: 'DELETE', headers: hdr })).json();

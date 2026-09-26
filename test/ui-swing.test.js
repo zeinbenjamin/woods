@@ -212,7 +212,7 @@ test('a swing reading gains weight only when it agrees with the ball data', () =
 
 test('video items render collapsed and labelled "read from video"', () => {
   const html = app.E(`practiceCard(swingItems()[0], 0)`);
-  assert.match(html, /^<details class="pcard k-swing">/);
+  assert.match(html, /^<details class="pcard k-swing"[^>]*>/);
   assert.match(html, /read from video/);
 });
 
