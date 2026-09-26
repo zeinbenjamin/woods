@@ -141,7 +141,13 @@ accident is not.
   the app recommends. Otherwise the loop grades its own homework.
 - **Video ranks below ball data.** A swing reading is interpretation; ball
   flight is measurement. Swing items only gain weight when the two agree.
-  Every analysis is labelled "a reading, not a measurement".
+  A reading about a club that already has a ball-data item joins that item
+  as support rather than being listed on its own. Every analysis is
+  labelled "a reading, not a measurement".
+- **Old evidence fades; absence has to be earned.** The practice list is
+  weighted toward recent evidence, and an item only goes quiet after
+  enough clean chances that, at its old rate, it would probably have shown
+  up. Not playing a club is not evidence it's fixed.
 - **Nominal vs measured stays separate.** `nominalCarry`/`nominalTotal`
   are what he believes; measured numbers are derived and never written
   back over them.
@@ -191,9 +197,6 @@ Each of these cost real debugging time. Don't reintroduce them.
   decoder paints, so the frame is blank. Extraction starts at 0.05s,
   waits for `requestVideoFrameCallback`, samples pixels to detect blank
   frames, and retries. Every stored frame has `t >= 0.05`.
-- **One download prompt, not many.** The platform rate-limits repeated
-  save prompts — eight frames meant five prompts then silent failure.
-  Frames now go out as a single zip (hand-rolled writer, no library).
 - **`window.confirm` is blocked** in the artifact sandbox and returns
   false, silently no-oping every destructive action. There's an in-page
   `confirmAsk()` instead. Don't reach for `confirm`.
@@ -218,6 +221,43 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
+## What to practise: weighting and freshness
+
+`practiceItems()` builds the candidates; each carries dated evidence
+(`ev: {date, cost}`) and, where they can be counted, every chance it had
+to happen (`chances: {date, hit}`). `assessPractice()` and
+`rankedPractice()` turn that into the list, on every draw; nothing is
+stored.
+
+- **Weight** = sum of evidence cost, halved every `PRACTICE_HALF_LIFE`
+  (60) days. The costs per kind (tree 0.8, water 1, three-putt 1, …) and
+  the half-life are judgements, not measurements; tune them deliberately.
+- **Quiet** when the clean chances since it was last seen reach
+  `ceil(ln 0.2 / ln(1 − rate))` (at least 3) — the point where, at its
+  old rate, it would have shown up 80% of the time — or when it was last
+  seen over `STALE_AFTER` (180) days ago. Quiet items are listed apart,
+  with the reason, and never planned.
+- **Practised** when a range block for its club and swing was hit on or
+  after the day it was last seen. It stays, at half weight, until the
+  course confirms it.
+- **Strike** items come from range data: a club with at least 35%
+  (`STRIKE_FLAG`) low runners or tops over 10+ full swings. Status
+  compares the latest session with the ones before; it goes quiet as
+  "improving" when the latest is under the flag and at most 60% of the
+  earlier rate.
+- **Swing readings:** only the latest per club and camera angle counts.
+- **Unmeasured clubs** in the bag are always listed to measure (fixed
+  weight 0.3).
+- **The plan** (`planBlocks`) takes current items in ranked order: up to
+  five blocks, one per club and swing, merged reasons, each block
+  carrying `reason`. It replaces an unhit planned session (after asking)
+  rather than adding another; off-range practice (putting) goes in the
+  session notes.
+
+The chat route for swing analysis (save frames as a zip, copy a prompt,
+paste the reply back) was removed in 1.3.0; analyses already saved with
+`analysedIn: 'chat'` still show with that label.
+
 ## Range data from screenshots
 
 Range shots come from screenshots of the bay's shot list, not typing:
@@ -238,8 +278,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 117 tests, about 12s (25s on one core). Needs `python3` on the
-path: the zip test opens the app's zip output with Python's `zipfile`.
+`npm test` — 133 tests, about 12s (30s on one core).
 
 - `api.test.js` (13) — the server alone: auth, documents, assets, import,
   `/api/version`, the stamped and revalidated page, and `/api/analyse`
@@ -255,7 +294,8 @@ path: the zip test opens the app's zip output with Python's `zipfile`.
   `ui-crud` (clubs, courses, range blocks, rounds), `ui-analytics`
   (strike classes, derived-never-stored, nominal vs measured, recency
   window, calibration, unmeasurable → null), `ui-tees-migrations`,
-  `ui-swing` (frame extraction, zip, one download, chat paste, analysis),
+  `ui-swing` (frame extraction, analysis, video below ball data),
+  `ui-practice` (recency weighting, freshness, quiet items, the planner),
   `ui-logging` (armed club, putts, penalties, quick score, first putt),
   `ui-range-images` (screenshots → review → blocks, units, warnings,
   export/import/delete of the screenshots), `ui-version` (the stamped
@@ -269,8 +309,9 @@ fake decoder that reproduces the real one's timing: `seeked` fires before
 the frame is painted.
 
 Every gotcha above has a test, and each was checked by reintroducing the
-bug and watching the test fail (22 mutations, all caught; 18 more for
-versioning and screenshots, all caught).
+bug and watching the test fail (22 mutations for the original suites,
+18 for versioning and screenshots, 8 for the practice list; all caught.
+The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
 regression tests: the New round tee control not following a course

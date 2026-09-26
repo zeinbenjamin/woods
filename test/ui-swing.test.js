@@ -1,13 +1,7 @@
 // The swing analyzer: frame extraction (never t=0, blank frames retried and
-// dropped), the hand-rolled zip writer (opened with a real zip reader), one
-// download rather than one per frame, pasting a chat reply back, analysis
-// through the server, and video ranking below ball data.
+// dropped), analysis through the server, and video ranking below ball data.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { startApp, club, rangeSession, block, sleep } from './harness.js';
 
 /* ---------- a fake decoder with the real browser's timing problem ----------
@@ -51,21 +45,6 @@ function installFakeMedia(win, { duration = 2, width = 1920, height = 1080, blan
   };
   log.restore = () => { win.document.createElement = realCreate; };
   return log;
-}
-
-// Open a zip with Python's zipfile — a real reader, not ours.
-function readZip(bytes) {
-  const dir = mkdtempSync(join(tmpdir(), 'carry-zip-')), p = join(dir, 'x.zip');
-  try {
-    writeFileSync(p, bytes);
-    const out = execFileSync('python3', ['-c', `
-import zipfile, json, sys, base64
-z = zipfile.ZipFile(sys.argv[1])
-bad = z.testzip()
-print(json.dumps({ "bad": bad, "entries": [ { "name": i.filename, "date": list(i.date_time), "method": i.compress_type,
-  "data": base64.b64encode(z.read(i.filename)).decode() } for i in z.infolist() ] }))`, p]);
-    return JSON.parse(out);
-  } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
 const SEVEN = [[130, 140], [128, 138], [125, 135], [124, 150], [100, 108], [15, 40], [118, 127]];
@@ -150,67 +129,26 @@ test('adding a swing end to end: frames and video land as fetchable assets, ever
   } finally { log.restore(); }
 });
 
-/* ---------- zip and download ---------- */
+/* ---------- one route to an analysis ---------- */
 
-test('the hand-rolled zip opens cleanly in a real zip reader', async () => {
-  const bytes = Buffer.from(await app.win.eval(`zipStore([
-      { name: 'a.txt', bytes: new TextEncoder().encode('hello') },
-      { name: 'b.bin', bytes: Uint8Array.from({ length: 5000 }, (_, i) => (i * 7) % 256) },
-      { name: 'empty', bytes: new Uint8Array(0) },
-    ], new Date(2026, 8, 26, 10, 30, 42)).arrayBuffer()`));
-  const z = readZip(bytes);
-  assert.equal(z.bad, null, 'CRCs check out');
-  assert.deepEqual(z.entries.map(e => e.name), ['a.txt', 'b.bin', 'empty']);
-  assert.equal(Buffer.from(z.entries[0].data, 'base64').toString(), 'hello');
-  assert.deepEqual([...Buffer.from(z.entries[1].data, 'base64')], Array.from({ length: 5000 }, (_, i) => (i * 7) % 256));
-  assert.equal(z.entries[2].data, '');
-  assert.deepEqual(z.entries[0].date, [2026, 9, 26, 10, 30, 42]);
-  assert.equal(z.entries[0].method, 0, 'stored, uncompressed');
-});
-
-test('saving frames is one download — a single zip — not one prompt per frame', async () => {
-  app.downloads.length = 0;
-  await app.act('swingFrames', { sid: 's_sw', wid: 'sw_1' });
-  await sleep(100);
-  assert.equal(app.downloads.length, 1);
-  assert.equal(app.downloads[0].filename, 'swing-dtl-7i-2026-09-02.zip');
-  assert.match(app.toast(), /Frames saved as a zip/);
-  const z = readZip(Buffer.from(await app.downloads[0].blob.arrayBuffer()));
-  assert.equal(z.bad, null);
-  assert.deepEqual(z.entries.map(e => e.name), ['swing-dtl-01.webp', 'swing-dtl-02.webp', 'swing-dtl-03.webp', 'swing-dtl-04.webp', 'swing-dtl-05.webp']);
-  z.entries.forEach((e, i) => assert.deepEqual(Buffer.from(e.data, 'base64'), frameBytes(i), `frame ${i + 1} is the stored bytes`));
-});
-
-/* ---------- reading a chat reply back in ---------- */
-
-test('a chat reply parses as bare JSON, fenced JSON, JSON inside prose, or plain prose', () => {
-  const p = raw => app.J(`parseAnalysis(${JSON.stringify(raw)})`);
-  assert.deepEqual(p('{"one_thing":"a"}'), { one_thing: 'a' });
-  assert.deepEqual(p('Here you go:\n```json\n{"one_thing":"b"}\n```\nGood luck'), { one_thing: 'b' });
-  assert.deepEqual(p('Reading: {"one_thing":"c"} — hope that helps'), { one_thing: 'c' });
-  const prose = p('Your hips stall.\n\nTry the pump drill.');
-  assert.equal(prose.parsed, false);
-  assert.equal(prose.one_thing, 'Your hips stall.');
-  assert.match(prose.notes, /pump drill/);
-});
-
-test('pasting a reply saves it on the swing, labelled as read in a chat and as a reading', async () => {
+test('there is no "Analyse in a chat" route any more: Analyse is the one way in', () => {
   app.go('range', { sessionId: 's_sw' });
-  app.act('chatRoute', { sid: 's_sw', wid: 'sw_1' });
-  app.fill('reply', '```json\n' + JSON.stringify({
-    observations: [{ what: 'Early extension', evidence: 'frames 5-6', confidence: 'high' }],
-    matches_ball_data: 'This lines up with the low runners in the strike mix.',
-    one_thing: 'Keep the hips back through impact', drill: { name: 'Chair drill', why: 'keeps posture' }, cannot_tell: ['low point'],
-  }) + '\n```');
-  assert.equal(await app.save(), true);
-  const got = (await app.api.get('sessions', 's_sw')).swings[0];
-  assert.equal(got.analysis.one_thing, 'Keep the hips back through impact');
-  assert.equal(got.analysedIn, 'chat');
-  assert.match(got.analysedOn, /^\d{4}-\d{2}-\d{2}$/);
-  const card = app.text('#view .swing');
-  assert.match(card, /Keep the hips back through impact/);
-  assert.match(card, /in a chat/);
-  assert.match(card, /a reading, not a measurement/);
+  const acts = app.$$('#view .swing [data-act]').map(b => b.dataset.act);
+  assert.ok(acts.includes('analyseSwing'));
+  assert.deepEqual(acts.filter(a => /chat|swingPrompt|swingFrames/.test(a)), []);
+  assert.doesNotMatch(app.text('#view .swing'), /in a chat/);
+  const gone = app.J(`['chatRoute', 'swingPrompt', 'swingFrames'].filter(k => k in ACTIONS)`);
+  assert.deepEqual(gone, []);
+  for (const fn of ['swingHandoff', 'zipStore', 'parseAnalysis']) assert.equal(app.E(`typeof ${fn}`), 'undefined', `${fn} removed`);
+});
+
+test('an older analysis read in a chat still shows, labelled as such', async () => {
+  const s = await app.api.get('sessions', 's_sw');
+  await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: { one_thing: 'Keep the hips back', observations: [] }, analysedOn: '2026-09-10', analysedIn: 'chat' }] });
+  await app.waitFor(() => app.E(`session('s_sw').swings[0].analysedIn === 'chat'`), { what: 'poll' });
+  app.go('range', { sessionId: 's_sw' });
+  assert.match(app.text('#view .swing'), /Keep the hips back/);
+  assert.match(app.text('#view .swing'), /Read from frames by Claude in a chat on .* a reading, not a measurement/);
 });
 
 /* ---------- analysis through the server ---------- */
@@ -222,7 +160,7 @@ test('with no API key on the server, Analyse says so instead of failing silently
   await sleep(600);
   app.go('range', { sessionId: 's_sw' });
   app.click('#view [data-act="analyseSwing"]');
-  await app.waitFor(() => /cannot reach Claude/.test(app.text('#an_sw_1')), { what: 'unavailable notice' });
+  await app.waitFor(() => /check ANTHROPIC_API_KEY on the server/.test(app.text('#an_sw_1')), { what: 'unavailable notice' });
   assert.match(app.text('#an_sw_1'), /\(unavailable\)/);
 });
 
@@ -245,8 +183,10 @@ test('Analyse sends the frames with the ball data and view brief, and stores the
 // Regression: in-app analysis used to keep a stale analysedIn: 'chat'.
 test('re-analysing in the app clears the "read in a chat" label', async () => {
   const got = (await app.api.get('sessions', 's_sw')).swings[0];
-  assert.equal(got.analysis.one_thing, 'Rotate through', 'this is the in-app reading');
+  assert.equal(got.analysis.one_thing, 'Rotate through', 'this is the in-app reading, replacing the chat one');
   assert.equal(got.analysedIn, undefined);
+  app.go('range', { sessionId: 's_sw' });
+  assert.doesNotMatch(app.text('#view .swing'), /in a chat/);
 });
 
 test('each camera view gets its own brief; an unknown view is treated as "other"', () => {
