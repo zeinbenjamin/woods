@@ -1106,11 +1106,11 @@ function courseMapSection(c) {
     if (m === undefined) return `<section class="sec" id="courseMap"><h2>Course map</h2><p class="small muted">Loading the map…</p></section>`;
     if (m === null) return `<section class="sec" id="courseMap"><h2>Course map</h2><div class="notice warn">This course uses the map "${esc(c.map.id)}", which isn't on this server. Its holes are drawn from the outline until it's back.</div><div class="row-actions"><button data-act="unlinkMap" data-id="${c.id}">Stop using it</button></div></section>`;
     const tee = primaryTee(c);
-    const rows = c.holes.map(h => ({ n: h.n, x: m.byN[h.n] ? HoleMap.mismatch(m.byN[h.n], teeMetres(h, tee)) : null }));
+    const rows = c.holes.map(h => ({ n: h.n, x: m.byN[h.n] ? HoleMap.mismatch(m.byN[h.n], teeMetres(h, tee), m) : null }));
     const missing = rows.filter(r => !r.x).map(r => r.n), flagged = rows.filter(r => r.x && r.x.flagged);
     return `<section class="sec" id="courseMap"><h2>Course map</h2>
       <p class="small">Holes are drawn from <b>${esc(m.osm.name)}</b> on OpenStreetMap; hole lines from ${esc(m.holesFrom)}. Distances are real metres, and the ${esc(tee)} tee sits its card distance from the middle of the green, along the hole line. The lie is read from the shape you tap; where nothing is mapped, you pick it.</p>
-      ${flagged.length ? `<div class="notice warn" id="mapFlags">${flagged.length === 1 ? 'One hole' : flagged.length + ' holes'} where the card and the mapped line are more than 10% apart, so the tee is placed from the card rather than on the mapped tee: ${flagged.map(r => `hole ${r.n} (card ${r.x.card}m, map ${Math.round(r.x.line)}m)`).join(', ')}.</div>` : ''}
+      ${flagged.length ? `<div class="notice warn" id="mapFlags">${flagged.length === 1 ? 'One hole' : flagged.length + ' holes'} where the card distance doesn't land on a mapped tee box and the card and the mapped line are more than 10% apart, so the tee is placed from the card alone: ${flagged.map(r => `hole ${r.n} (card ${r.x.card}m, map ${Math.round(r.x.line)}m)`).join(', ')}.</div>` : ''}
       ${missing.length ? `<p class="small muted">Not on the map, so drawn from the outline: hole ${missing.join(', ')}.</p>` : ''}
       <p class="small muted">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL.</p>
       <div class="row-actions"><button data-act="unlinkMap" data-id="${c.id}">Stop using this map</button></div></section>`;
@@ -1125,7 +1125,7 @@ function courseMapSection(c) {
 // On a hole's own page: how the card compares with the mapped line.
 function holeCheck(h) {
   const x = h.hm && h.hm.check; if (!x || !x.flagged) return '';
-  return `<p class="small muted" id="holeCheck" style="text-align:center">Card ${x.card}m, mapped line ${Math.round(x.line)}m. The tee is placed from the card, ${x.diff > 0 ? 'ahead of' : 'behind'} the mapped tee.</p>`;
+  return `<p class="small muted" id="holeCheck" style="text-align:center">Card ${x.card}m, mapped line ${Math.round(x.line)}m, and no mapped tee box at the card distance. The tee is placed from the card, ${x.diff > 0 ? 'ahead of' : 'behind'} the mapped tee.</p>`;
 }
 
 /* ---------- bag ---------- */

@@ -27,7 +27,7 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'randwick']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
@@ -41,13 +41,16 @@ test('every map credits OpenStreetMap and has a fixed origin', () => {
   }
 });
 
-test('Randwick: its own 18 hole lines, not the neighbour\'s, checked against the red card', () => {
+test('Randwick: its own 18 hole lines, not the neighbour\'s, and every red tee on a mapped box', () => {
   const m = mapOf('randwick'), c = card('randwick');
   // The export had second lines numbered 13 and 14 from the course next door.
   assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1));
   assert.ok(Math.abs(lineLen(m.byN[13].line) - 144) < 3 && Math.abs(lineLen(m.byN[14].line) - 286) < 3);
-  const flagged = m.holes.filter(h => HM.mismatch(h, c[h.n].metres).flagged).map(h => h.n);
-  assert.deepEqual(flagged, [3, 5]);
+  // 3 and 5 are 24 m and 15 m apart from the card, but the red tee lands on
+  // the mapped tee box both times (hole 3's is 45 m long), so neither is flagged.
+  const checks = m.holes.map(h => HM.mismatch(h, c[h.n].metres, m));
+  assert.deepEqual(checks.filter(x => x.flagged).map((x, i) => i), []);
+  assert.ok(checks[2].diff > 20 && checks[2].onTee && checks[4].diff > 14 && checks[4].onTee);
 });
 
 test('a neighbour\'s fairway poking over the boundary belongs to no hole', () => {
@@ -74,6 +77,22 @@ test('Bardwell Valley: holes from the mapping, the putting green and the range l
   assert.ok(lineLen(m.byN[17].line) > dist(m.byN[17].line[0], m.byN[17].line.at(-1)) * 1.2);
 });
 
+test('The Coast: OSM lines from the back tees, the yellows on mapped boxes, 4 and 14 by hand', () => {
+  const m = mapOf('the-coast'), c = card('the-coast'), src = JSON.parse(readFileSync('course-maps/src/the-coast.json', 'utf8'));
+  assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1));
+  for (const n of ['4', '14']) assert.equal(m.features[m.byN[n].green].osm, src.addHoles[n].green, `hole ${n}'s green is the one he confirmed`);
+  assert.ok(Math.abs(lineLen(m.byN[4].line) - 140) < 3 && Math.abs(lineLen(m.byN[14].line) - 321) < 1);
+  const x = m.holes.map(h => HM.mismatch(h, c[h.n].metres, m));
+  // 2, 3 and 7 run 60-73 m past the yellow card, and the yellow tee still lands on a mapped box.
+  for (const n of [2, 3, 7]) assert.ok(x[n - 1].diff > 60 && x[n - 1].onTee, `hole ${n}`);
+  assert.deepEqual(x.map((y, i) => y.flagged ? i + 1 : 0).filter(Boolean), [18], 'only 18 has no box within 15 m');
+});
+
+test('Bardwell Valley flags only the hole whose yellow tee is off every mapped box', () => {
+  const m = mapOf('bardwell-valley'), c = card('bardwell-valley');
+  assert.deepEqual(m.holes.filter(h => HM.mismatch(h, c[h.n].metres, m).flagged).map(h => h.n), [11]);
+});
+
 test('the tee rule: the card distance from the middle of the green, along the line', () => {
   const hole = { n: 1, line: [[0, 0], [0, 100], [60, 180]] };   // 100 m, then 100 m bending right
   const L = lineLen(hole.line);
@@ -86,11 +105,18 @@ test('the tee rule: the card distance from the middle of the green, along the li
   // Before the bend: straight to the bend, then along. After it: straight at the green.
   assert.equal(HM.toGreen(long, [10, 40]), dist([10, 40], [0, 100]) + 100);
   assert.equal(HM.toGreen(long, [50, 150]), dist([50, 150], [60, 180]));
-  // Flagged strictly over 10%.
+  // With no tee boxes to land on, flagged strictly over 10%.
   assert.equal(HM.mismatch(hole, 220).flagged, false);
   assert.equal(HM.mismatch(hole, 182).flagged, false);   // 18 m on 182 is 9.9%
   assert.equal(HM.mismatch(hole, 180).flagged, true);
   assert.equal(HM.mismatch(hole, null).flagged, false, 'no card, nothing to compare');
+  // A mapped tee box where the card puts the tee clears it; 15 m is near enough, 16 isn't.
+  const box = (y0, y1) => ({ k: 'tee', r: [[[-5, y0], [5, y0], [5, y1], [-5, y1]]] });
+  const withBox = b => ({ features: [b] }), h2 = { ...hole, tees: [0] };
+  assert.equal(HM.mismatch(h2, 150, withBox(box(45, 55))).flagged, false, 'the tee (0, 50) is on the box');
+  assert.equal(HM.mismatch(h2, 150, withBox(box(65, 75))).flagged, false, '15 m short of it');
+  assert.equal(HM.mismatch(h2, 150, withBox(box(66, 75))).flagged, true, '16 m short of it');
+  assert.equal(HM.mismatch({ ...hole, tees: [] }, 150, withBox(box(45, 55))).flagged, true, 'another hole\'s box doesn\'t count');
 });
 
 test('lies come from the shape under the tap; nothing mapped means null, never rough', () => {

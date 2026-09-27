@@ -86,14 +86,28 @@
     const a = l[0], b = l[1], d = dist(a, b) || 1, k = (metres - L) / d;
     return [[a[0] - (b[0] - a[0]) * k, a[1] - (b[1] - a[1]) * k]].concat(l.map(p => p.slice()));
   }
-  // How the scorecard and the mapped line compare. Over 10% apart is
-  // flagged on the course page rather than hidden.
-  const FLAG_AT = 0.10;
-  function mismatch(hole, metres) {
+  // How the scorecard and the map agree. OSM lines often start at the back
+  // tee, so a card 60 m shorter can still be exactly right: what matters is
+  // whether the tee the card puts there lands on a mapped tee box. A hole is
+  // flagged (on the course page, never hidden) when the card and the line
+  // are over 10% apart AND no mapped tee box of the hole is within 15 m of
+  // where the card puts the tee.
+  const FLAG_AT = 0.10, TEE_NEAR = 15;
+  function teeGap(map, hole, p) {
+    let best = Infinity;
+    for (const i of hole.tees || []) {
+      const f = map.features[i]; if (!f || !f.r) continue;
+      if (inRings(p, f.r)) return 0;
+      for (const r of f.r) for (let k = 1; k < r.length; k++) best = Math.min(best, segDist(p, r[k - 1], r[k]).d);
+    }
+    return best;
+  }
+  function mismatch(hole, metres, map) {
     const line = lineLen(hole.line);
-    if (!(metres > 0)) return { line, card: null, diff: null, flagged: false };
-    const diff = line - metres;
-    return { line, card: metres, diff, flagged: Math.abs(diff) / metres > FLAG_AT };
+    if (!(metres > 0)) return { line, card: null, diff: null, teeGap: null, onTee: false, flagged: false };
+    const diff = line - metres, gap = map ? teeGap(map, hole, playLine(hole, metres)[0]) : Infinity;
+    const onTee = gap <= TEE_NEAR;
+    return { line, card: metres, diff, teeGap: gap, onTee, flagged: Math.abs(diff) / metres > FLAG_AT && !onTee };
   }
   // Metres to the middle of the green from p, along the play line: straight
   // to the next bend ahead of it, then along the line. On the last leg this
@@ -201,7 +215,7 @@
     const map = get(mapId); if (!map) return map;   // undefined while loading, null if not available
     const hole = map.byN[n]; if (!hole) return null;
     const pl = playLine(hole, metres);
-    return { map, hole, pl, tee: pl[0], green: pl[pl.length - 1], check: mismatch(hole, metres) };
+    return { map, hole, pl, tee: pl[0], green: pl[pl.length - 1], check: mismatch(hole, metres, map) };
   }
 
   /* ---------- drawing ---------- */
@@ -320,7 +334,7 @@
     get, list, forHole, svg, tapToMap, mapToView, lieAt, toGreen, playLine, mismatch, stripFor,
     set onLoad(f) { onLoad = typeof f === 'function' ? f : () => {}; },
     geom: { dist, lineLen, pointAt, sub, segDist, lineDist, inRings, centroid, bbox },
-    FLAG_AT, STRIP_W, STRIP_FROM, VW, VH,
+    FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH,
     // Tests put a map in directly; the app always goes through get().
     _put(id, m) { files[id] = m ? prepare(m) : null; },
   };

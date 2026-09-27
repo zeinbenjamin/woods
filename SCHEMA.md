@@ -111,12 +111,19 @@ database document. Metres on a local plane: x east, y north, from `origin`.
   ],                                    // h: the hole it belongs to; null = none (drawn faded)
   "holes": [{ "n": 7, "line": [[x, y], …], "green": 58, "tees": [77] }]
 }                                       // line: mapped tee → middle of the green; green/tees index features
+                                        // tees: the hole's mapped tee boxes (on its line, or named by hand)
 ```
 
 - The **tee rule**: the tee a round was played from sits `teeMetres(hole, tee)`
   from the end of `line`, along it (forward of the mapped tee if the card is
   shorter, straight back behind it if longer). Worked out on every draw.
-- Card vs mapped line more than 10% apart is flagged on the course page, never hidden.
+- A hole is flagged on the course page (never hidden) when the card and the mapped line
+  are more than 10% apart and the tee the card puts there is more than 15 m from every
+  one of the hole's `tees`.
+- Sources (`course-maps/src/<id>.json`): `holes` is `"osm"` (OSM hole lines) or a
+  per-hole mapping `{ tees: [osm id | {id, half: "nearest"}], green, via?, straight? }`;
+  `addHoles` adds hand-mapped holes where `"osm"` has gaps; `holesFrom` is the phrase
+  the course page shows; `ignore` lists features that aren't part of any hole.
 
 ---
 

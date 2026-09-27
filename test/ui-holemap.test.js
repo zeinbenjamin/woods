@@ -10,7 +10,9 @@ import { startApp, club, card } from './harness.js';
 // Randwick's red card, as the screenshots gave it.
 const PARS = [3, 4, 3, 3, 3, 3, 4, 3, 4, 3, 3, 3, 3, 4, 3, 4, 3, 3];
 const REDS = [159, 330, 100, 200, 112, 230, 260, 130, 225, 103, 90, 144, 146, 285, 160, 351, 156, 174];
-const holes = card(18, { tee: 'red', par: PARS, metres: REDS });
+// Except hole 3: the real 100 m lands on Randwick's long mapped tee box, so
+// nothing is flagged. 60 m doesn't land on any box, which is what a flag is for.
+const holes = card(18, { tee: 'red', par: PARS, metres: REDS.map((m, i) => i === 2 ? 60 : m) });
 const roundHoles = () => holes.map(h => ({ n: h.n, par: h.par, metres: h.metres }));
 
 let app;
@@ -52,14 +54,19 @@ test('a course is linked to its map from the course page, and the card is checke
   const c = await app.api.get('courses', 'c_rw');
   assert.deepEqual(Object.keys(c.map).sort(), ['id', 'linked'], 'only the link is stored, never the shapes');
   await app.waitFor(() => app.$('#mapFlags'), { what: 'card check' });
-  assert.match(app.text('#mapFlags'), /2 holes/);
-  assert.match(app.text('#mapFlags'), /hole 3 \(card 100m, map 124m\), hole 5 \(card 112m, map 127m\)/);
+  assert.match(app.text('#mapFlags'), /^One hole where the card distance doesn't land on a mapped tee box/);
+  assert.match(app.text('#mapFlags'), /: hole 3 \(card 60m, map 124m\)\.$/);
+  // Hole 5's card is 15 m (12%) shorter than its line, but that tee is mapped: not flagged.
+  assert.doesNotMatch(app.text('#mapFlags'), /hole 5/);
   assert.equal(app.$$('.tile svg.holemap').length, 18, 'every hole is drawn from the map');
   assert.match(app.text('#courseMap'), /© OpenStreetMap contributors/);
   // The hole's own page says how its card and line compare.
   app.go('courses', { courseId: 'c_rw', hole: '3' });
   await app.waitFor(() => app.$('#holeCheck'), { what: 'hole check' });
-  assert.match(app.text('#holeCheck'), /Card 100m, mapped line 124m\. The tee is placed from the card, ahead of the mapped tee\./);
+  assert.match(app.text('#holeCheck'), /Card 60m, mapped line 124m, and no mapped tee box at the card distance\. The tee is placed from the card, ahead of the mapped tee\./);
+  app.go('courses', { courseId: 'c_rw', hole: '5' });
+  await app.waitFor(() => app.$('.map-credit'), { what: 'hole 5 page' });
+  assert.equal(app.$('#holeCheck'), null, 'on a mapped tee: nothing to say');
 });
 
 test('taps are stored in metres, measured from the tee the card puts there', async () => {
