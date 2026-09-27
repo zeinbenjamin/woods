@@ -22,87 +22,87 @@
       "feeWeekday": 30,
       "feeWeekend": 35,
       "tee": "white",
-      "notes": "9-hole clifftop short course, par 28: eight par 3s and a 280m par 4 (hole 5). No tee times for social play: first come, first served (weekdays 7am, weekends from 11am, after competitions). Groups of 10+ book through the Pro Shop, 02 9130 3170. Green fees above are for 9 holes; 18 holes (two loops) is $35 midweek, $37 weekend. Club hire $20 half set / $30 full set; cart $45 / $50. HOLE 5: the club site (Sept 2026) describes the course as nine par 3s, and a July 2026 review says construction has temporarily shortened the par 4 to a par 3. If it plays as a par 3 when you are there, change hole 5 on the round, not here. No handicap rating stored: sources disagree (53.0/92, 56/97 for 18, 70.0/110) and none is Golf Australia's 9-hole rating. Take the scratch rating and slope from the card or GolfLink at the club. Stroke index is the 9-hole order from Offcourse, which matches BlueGolf and GolfingRecord; 18Birdies lists a different order. Distances in metres (18Birdies and mScorecard say metres; BlueGolf and Offcourse label the same numbers as yards). Tee named white after Offcourse and GolfingRecord.",
-      "source": "Scorecard: 18Birdies, mScorecard, BlueGolf, Offcourse (hole lengths agree, total 1344m); fees and booking: bondigolf.com.au/cms/play-golf (Sept 2026); location: OpenStreetMap way 175817978 (ODbL, © OpenStreetMap contributors).",
+      "notes": "9-hole clifftop short course, par 28: eight par 3s and a 257m par 4 (hole 5). No tee times for social play: first come, first served (weekdays 7am, weekends from 11am, after competitions). Groups of 10+ book through the Pro Shop, 02 9130 3170. Green fees above are for 9 holes; 18 holes (two loops) is $35 midweek, $37 weekend. Club hire $20 half set / $30 full set; cart $45 / $50. HOLE 5: the club site (Sept 2026) describes the course as nine par 3s, and a July 2026 review says construction has temporarily shortened the par 4 to a par 3. If it plays as a par 3 when you are there, change hole 5 on the round, not here. No handicap rating stored: sources disagree (53.0/92, 56/97 for 18, 70.0/110) and none is Golf Australia's 9-hole rating. Take the scratch rating and slope from the card or GolfLink at the club. Stroke index is the 9-hole order from Offcourse, which matches BlueGolf and GolfingRecord; 18Birdies lists a different order. Distances in metres, from a course GPS app's \"Mens metres\" card (Sept 2026). The published card (145, 113, 121, 150, 280, 110, 163, 128, 134) is in yards: 18Birdies and mScorecard label those numbers metres, but the GPS app's metres are exactly them × 0.9144, and the OpenStreetMap hole lines agree with the metres. The GPS app gives a different stroke index (5, 17, 13, 1, 7, 11, 3, 9, 15 for holes 1–9); the club's printed card would settle which is right. Tee named white after Offcourse and GolfingRecord.",
+      "source": "Scorecard: 18Birdies, mScorecard, BlueGolf, Offcourse (hole lengths agree, total 1344 — yards; stored here as metres, 1235 m total, from a course GPS app's \"Mens metres\" card); fees and booking: bondigolf.com.au/cms/play-golf (Sept 2026); location: OpenStreetMap way 175817978 (ODbL, © OpenStreetMap contributors).",
       "holes": [
         {
           "n": 1,
           "par": 3,
-          "metres": 145,
+          "metres": 133,
           "tees": {
-            "white": 145
+            "white": 133
           },
           "si": 4
         },
         {
           "n": 2,
           "par": 3,
-          "metres": 113,
+          "metres": 104,
           "tees": {
-            "white": 113
+            "white": 104
           },
           "si": 9
         },
         {
           "n": 3,
           "par": 3,
-          "metres": 121,
+          "metres": 111,
           "tees": {
-            "white": 121
+            "white": 111
           },
           "si": 8
         },
         {
           "n": 4,
           "par": 3,
-          "metres": 150,
+          "metres": 138,
           "tees": {
-            "white": 150
+            "white": 138
           },
           "si": 2
         },
         {
           "n": 5,
           "par": 4,
-          "metres": 280,
+          "metres": 257,
           "tees": {
-            "white": 280
+            "white": 257
           },
           "si": 1
         },
         {
           "n": 6,
           "par": 3,
-          "metres": 110,
+          "metres": 101,
           "tees": {
-            "white": 110
+            "white": 101
           },
           "si": 5
         },
         {
           "n": 7,
           "par": 3,
-          "metres": 163,
+          "metres": 150,
           "tees": {
-            "white": 163
+            "white": 150
           },
           "si": 6
         },
         {
           "n": 8,
           "par": 3,
-          "metres": 128,
+          "metres": 118,
           "tees": {
-            "white": 128
+            "white": 118
           },
           "si": 7
         },
         {
           "n": 9,
           "par": 3,
-          "metres": 134,
+          "metres": 123,
           "tees": {
-            "white": 134
+            "white": 123
           },
           "si": 3
         }
