@@ -1,0 +1,114 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-09-27T23:11:08.062Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_bondigolf",
+      "v": 2,
+      "created": 1790550668062,
+      "name": "Bondi Golf & Diggers Club",
+      "suburb": "North Bondi",
+      "state": "NSW",
+      "address": "5 Military Road, North Bondi NSW 2026",
+      "phone": "02 9130 3170",
+      "website": "https://www.bondigolf.com.au/",
+      "lat": -33.8873,
+      "lng": 151.2848,
+      "bookable": true,
+      "prereg": false,
+      "feeWeekday": 30,
+      "feeWeekend": 35,
+      "tee": "white",
+      "notes": "9-hole clifftop short course, par 28: eight par 3s and a 280m par 4 (hole 5). No tee times for social play: first come, first served (weekdays 7am, weekends from 11am, after competitions). Groups of 10+ book through the Pro Shop, 02 9130 3170. Green fees above are for 9 holes; 18 holes (two loops) is $35 midweek, $37 weekend. Club hire $20 half set / $30 full set; cart $45 / $50. HOLE 5: the club site (Sept 2026) describes the course as nine par 3s, and a July 2026 review says construction has temporarily shortened the par 4 to a par 3. If it plays as a par 3 when you are there, change hole 5 on the round, not here. No handicap rating stored: sources disagree (53.0/92, 56/97 for 18, 70.0/110) and none is Golf Australia's 9-hole rating. Take the scratch rating and slope from the card or GolfLink at the club. Stroke index is the 9-hole order from Offcourse, which matches BlueGolf and GolfingRecord; 18Birdies lists a different order. Distances in metres (18Birdies and mScorecard say metres; BlueGolf and Offcourse label the same numbers as yards). Tee named white after Offcourse and GolfingRecord.",
+      "source": "Scorecard: 18Birdies, mScorecard, BlueGolf, Offcourse (hole lengths agree, total 1344m); fees and booking: bondigolf.com.au/cms/play-golf (Sept 2026); location: OpenStreetMap way 175817978 (ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 3,
+          "metres": 145,
+          "tees": {
+            "white": 145
+          },
+          "si": 4
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 113,
+          "tees": {
+            "white": 113
+          },
+          "si": 9
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 121,
+          "tees": {
+            "white": 121
+          },
+          "si": 8
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 150,
+          "tees": {
+            "white": 150
+          },
+          "si": 2
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 280,
+          "tees": {
+            "white": 280
+          },
+          "si": 1
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 110,
+          "tees": {
+            "white": 110
+          },
+          "si": 5
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 163,
+          "tees": {
+            "white": 163
+          },
+          "si": 6
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 128,
+          "tees": {
+            "white": 128
+          },
+          "si": 7
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 134,
+          "tees": {
+            "white": 134
+          },
+          "si": 3
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}
