@@ -118,3 +118,19 @@ test('a block\'s page tags each shot with its strike class (the tags used to be 
   assert.deepEqual(tags, ['pure', 'pure']);
   assert.ok(app.$$('#view .strip circle.dot-pure').length === 2, 'and the dots are coloured');
 });
+
+test('a shot\'s weight is set by its day, so the clock ticking mid-calculation changes nothing', async () => {
+  // Weights used to come from Date.now() to the millisecond, read once per shot,
+  // so shots from the same day could weigh a hair apart and a mean came out as
+  // 125.25000000025072 (a CI failure in 1.6.1). Make the clock move on every read.
+  const pure = () => app.J(`(() => { const s = clubStats('7i'); return [s.stockCarry, s.pureCarry, s.nEff]; })()`);
+  const before = pure();
+  app.win.eval(`window.__now = Date.now; { let t = __now.call(Date); Date.now = () => (t += 1); }`);
+  try {
+    await app.api.put('settings', 'app', { ...(await app.api.get('settings', 'app')), marker: Date.now() });
+    await app.waitFor(() => app.E(`!!settings().marker`), { what: 'data state changed, cache cleared' });
+    assert.deepEqual(pure(), before);
+    assert.equal(app.E(`shotWeight(today())`), 1, 'today weighs exactly 1');
+    assert.equal(app.E(`shotWeight(localDay(new Date(Date.now() - 60 * 864e5)))`), 0.5, 'sixty days ago exactly half');
+  } finally { app.win.eval(`Date.now = __now`); }
+});

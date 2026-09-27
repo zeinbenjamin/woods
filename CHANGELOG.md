@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.6.2 — 2026-09-27
+- Club distances weigh every shot from the same day exactly the same, so a number can no longer come out a hair off (like 125.25000000025 instead of 125.25). A shot from today now counts fully, and one from 60 days ago exactly half.
+
 ## 1.6.1 — 2026-09-27
 - When there's no handicap estimate yet, the Overview now lists every round that can't count and why, instead of just showing a dash.
 - A hole left blank no longer stops a round counting before you have a handicap: it counts as net par, as the World Handicap System does.
