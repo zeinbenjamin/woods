@@ -472,7 +472,14 @@ scorecard sets every length.
   holes; 4 and 14 are in the source's `addHoles`, proposed from the routing and
   the card and confirmed by him (14 drawn `straight`: the straight distance is
   the card's 321 m, while the route along the fairway zig-zagged to 355). OSM has 11 as a
-  par 5; his card says 4, and the card wins. Northbridge and Long Reef are
+  par 5; his card says 4, and the card wins. Bondi (1.11.0) is 9 holes, all
+  OSM lines, checked against his GPS-app card ("Mens metres": 133, 104, 111,
+  138, 257, 101, 150, 118, 123). Those are exactly the published scorecard's
+  numbers × 0.9144, so the published card is in **yards**, and the course
+  import (`imports/bondi-golf-diggers.json`, 145/113/…/134 "metres") holds
+  yards as metres. OSM agrees with the metres: 81 m off in total against 121,
+  and only hole 8 flagged against 6 and 8. The two sources' stroke indexes also
+  disagree. Northbridge and Long Reef are
   tier A; Hurstville has
   lines but no greens; Barnwell Park, Beverley Park and Lane Cove have only
   a boundary; Hunter Valley's only nearby course is unnamed and partial, so
@@ -498,7 +505,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 215 tests, about 25s.
+`npm test` — 216 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -535,10 +542,10 @@ fixture would let the reading be pinned.
   `ui-holemap` (linking a map, the card check, taps in metres and lies
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking).
-- `course-maps.test.js` (10) — the committed maps match their sources,
+- `course-maps.test.js` (11) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
   a token already replaced), request logging without

@@ -1,0 +1,80 @@
+{
+ "id": "bondi",
+ "name": "Bondi Golf & Diggers Club",
+ "osm": {
+  "course": "way/175817978",
+  "name": "Bondi Golf Course",
+  "exported": "2026-09-27"
+ },
+ "origin": [
+  -33.88727,
+  151.28466
+ ],
+ "holes": "osm",
+ "card": {
+  "tee": "white",
+  "source": "Course GPS app screenshots (\"Mens metres\"), tee to middle of the green, 2026-09-28",
+  "fields": [
+   "n",
+   "par",
+   "metres",
+   "si"
+  ],
+  "holes": [
+   [
+    1,
+    3,
+    133,
+    5
+   ],
+   [
+    2,
+    3,
+    104,
+    17
+   ],
+   [
+    3,
+    3,
+    111,
+    13
+   ],
+   [
+    4,
+    3,
+    138,
+    1
+   ],
+   [
+    5,
+    4,
+    257,
+    7
+   ],
+   [
+    6,
+    3,
+    101,
+    11
+   ],
+   [
+    7,
+    3,
+    150,
+    3
+   ],
+   [
+    8,
+    3,
+    118,
+    9
+   ],
+   [
+    9,
+    3,
+    123,
+    15
+   ]
+  ]
+ }
+}
