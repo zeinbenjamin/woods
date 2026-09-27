@@ -475,11 +475,11 @@ scorecard sets every length.
   par 5; his card says 4, and the card wins. Bondi (1.11.0) is 9 holes, all
   OSM lines, checked against his GPS-app card ("Mens metres": 133, 104, 111,
   138, 257, 101, 150, 118, 123). Those are exactly the published scorecard's
-  numbers × 0.9144, so the published card is in **yards**, and the course
-  import (`imports/bondi-golf-diggers.json`, 145/113/…/134 "metres") holds
-  yards as metres. OSM agrees with the metres: 81 m off in total against 121,
-  and only hole 8 flagged against 6 and 8. The two sources' stroke indexes also
-  disagree. Northbridge and Long Reef are
+  numbers × 0.9144, so the published card is in **yards**. The course import
+  (`imports/bondi-golf-diggers.json`) first held those yards as metres; it now
+  holds the metres. OSM agrees with the metres: 81 m off in total against 121,
+  and only hole 8 flagged against 6 and 8. The two sources' stroke indexes
+  disagree; the import keeps the published order until the club's card settles it. Northbridge and Long Reef are
   tier A; Hurstville has
   lines but no greens; Barnwell Park, Beverley Park and Lane Cove have only
   a boundary; Hunter Valley's only nearby course is unnamed and partial, so
