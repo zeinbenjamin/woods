@@ -343,6 +343,17 @@ shot and by where the ball went; holes ranked, and one is "a repeat" only
 when penalties came in more than one round. Scorecard-only rounds are left
 out and counted, never treated as clean.
 
+## Courses list order
+
+`courseSort()` / `sortedCourses()`: Closest (straight-line km from `home`),
+Recently added, A–Z; the choice is `settings.courseSort`. Default is Closest
+when his location is set and a course has coordinates, else Recently added.
+"When added" (`addedAt`) is `course.created`, stamped on new courses, or the
+time `uid()` put in an app-made id — only if the id also contains a digit,
+because a 12-letter hand-made id like `c_lanecovegcsy` decodes to a
+plausible 2022 date otherwise. Unknowns (no coordinates / no date) go last,
+A–Z, and the list says so.
+
 ## Estimated handicap
 
 `handicap()` (memoised, never stored) replays every round in date order under
@@ -404,7 +415,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 192 tests, about 20s (55s on one core).
+`npm test` — 197 tests, about 20s (55s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -436,7 +447,8 @@ fixture would let the reading be pinned.
   `ui-distances` (recency weighting, nEff, ball filter, left-out
   sessions), `ui-penalties` (the penalty report), `ui-handicap` (the
   WHS estimate against hand-worked scores: caps, the table, exceptional
-  scores, pairing nines, soft and hard caps, 54.0, the ratings form).
+  scores, pairing nines, soft and hard caps, 54.0, the ratings form),
+  `ui-courses-sort` (closest / recently added / A–Z, defaults, dates from ids).
 - `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
   a token already replaced), request logging without
   the query string, a clean SIGTERM exit, the YAML's replace markers.

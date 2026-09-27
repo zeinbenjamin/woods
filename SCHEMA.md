@@ -47,6 +47,8 @@ values. Measured numbers are derived from shots and never written back.
   "lat": -32.7795, "lng": 151.418,   // for distance-from-home only
   "bookable": true, "prereg": false, "walkable": true,
   "feeWeekday": 45, "feeWeekend": 55,
+  "created": 1790000000000,          // ms, set when added in the app (1.7.0 on); older app-made
+                                     // ids carry the time too (uid), hand-made ids don't
   "tee": "white",                    // primary tee: which set `metres` mirrors
   "ratings": {                       // for the handicap estimate, typed from the scorecard
     "white": { "cr": 69.5, "slope": 121 }   // course (scratch) rating and slope, per tee (key lower case,
@@ -208,7 +210,8 @@ still come back blank.
   "home": { "label": "Home", "lat": -33.89, "lng": 151.19 },
   "window": "all|365|180|90",        // recency window on range-derived numbers
   "weighting": "recent|equal",       // default recent: a shot counts half after DISTANCE_HALF_LIFE (60) days
-  "balls": "all|range|better"        // which ball types count; better = premium + own. No ballType counts only under all
+  "balls": "all|range|better",       // which ball types count; better = premium + own. No ballType counts only under all
+  "courseSort": "near|recent|az"     // Courses list order; unset = near when home and a course have coordinates, else recent
 }
 ```
 

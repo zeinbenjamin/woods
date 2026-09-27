@@ -1033,11 +1033,44 @@ function vCourses() {
   let h = `<div class="spread"><h1>Courses</h1><button class="primary" data-act="newCourse">Add course</button></div>
   <p class="lead small">Your shortlist. Live tee times for NSW public courses are on <a href="https://www.myteetimes.com.au" target="_blank" rel="noopener">MyTeeTimes</a>.</p>
   <div class="row-actions" style="margin-bottom:6px"><button class="quiet" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
-  h += S.courses.length ? `<div class="list">` + S.courses.map(c => {
+  const sort = courseSort(), list = sortedCourses(sort);
+  if (S.courses.length > 1) h += `<div class="seg" id="courseSort" style="margin-bottom:8px">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>`;
+  const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
+  h += S.courses.length ? `<div class="list">` + list.map(c => {
     const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const best = played.length ? Math.min(...played.map(r => roundStats(r).gross)) : null;
     return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${esc(c.suburb || '')}${c.bookable ? ' <span class="tag green">public booking</span>' : ''}${c.prereg ? ' <span class="tag">pre-register</span>' : ''}${played.length ? ', played ' + played.length : ''}${distanceLabel(c) ? ` · ${distanceLabel(c)} away` : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
-  }).join('') + `</div>` : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
+  }).join('') + `</div>` + (tail ? `<p class="small muted" id="courseSortNote">${sort === 'near' ? `${plural(tail, 'course')} with no location on ${tail === 1 ? 'its' : 'their'} card ${tail === 1 ? 'is' : 'are'} listed last, A–Z. Add a latitude and longitude to place ${tail === 1 ? 'it' : 'them'}.` : `${plural(tail, 'course')} added before the app kept the date ${tail === 1 ? 'is' : 'are'} listed last, A–Z.`}</p>` : '') : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
   return h;
+}
+// Sorting the course list. Default: closest first when his location is set
+// (and at least one course has coordinates), otherwise most recently added.
+// A choice he makes is kept in settings.
+const COURSE_SORTS = [['near', 'Closest'], ['recent', 'Recently added'], ['az', 'A–Z']];
+const nearAvailable = () => S.courses.some(c => distanceTo(c) != null);
+function courseSort() {
+  const want = settings().courseSort;
+  if (want === 'near' && nearAvailable() || want === 'recent' || want === 'az') return want;
+  return nearAvailable() ? 'near' : 'recent';
+}
+// When a course was added: its `created` stamp (1.6.4 on), else the time in an
+// app-made id (uid() puts Date.now() in base 36 before 4 random characters).
+// Hand-made ids from the artifact (c_huntervalley) carry no date: null.
+function addedAt(c) {
+  if (c.created) return c.created;
+  // A word-like hand-made id of the same length could decode to a plausible
+  // time by chance, so it must also contain a digit, as app-made ids almost always do.
+  const m = /^c_([0-9a-z]{8,9})[0-9a-z]{4}$/.exec(c.id || ''); if (!m || !/\d/.test(c.id)) return null;
+  const t = parseInt(m[1], 36);
+  return t > Date.UTC(2020, 0, 1) && t <= Date.now() + 864e5 ? t : null;
+}
+const byName = (a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+function sortedCourses(sort) {
+  const cs = S.courses.slice();
+  // Known values first in order, then the unknowns A–Z.
+  const by = key => (a, b) => { const x = key(a), y = key(b); return x == null && y == null ? byName(a, b) : x == null ? 1 : y == null ? -1 : x - y || byName(a, b); };
+  if (sort === 'near') return cs.sort(by(distanceTo));
+  if (sort === 'recent') return cs.sort(by(c => { const t = addedAt(c); return t == null ? null : -t; }));
+  return cs.sort(byName);
 }
 function vCourse() {
   const c = course(S.sub.courseId); if (!c) return back('courses', null, 'Courses') + `<p>Course not found.</p>`;
@@ -1268,7 +1301,7 @@ const ACTIONS = {
   async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
   newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
-  newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c') })); wireHoleCount(sheetInner, false, []); },
+  newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c'), created: Date.now() })); wireHoleCount(sheetInner, false, []); },
   editCourse(d) { const c = course(d.id); openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); },
   async deleteCourse(d) { if (!await confirmAsk('Delete this course? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
   newClub() { openSheet(clubForm(), async root => saveClub(root, {})); },
@@ -2893,6 +2926,7 @@ ACTIONS.setWindow = async function (d) {
   render();
 };
 ACTIONS.setWeighting = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, weighting: d.v }); render(); };
+ACTIONS.setCourseSort = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, courseSort: d.v }); render(); };
 ACTIONS.setBalls = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, balls: d.v }); render(); };
 ACTIONS.toggleExclude = async function (d) {
   const s = session(d.id); if (!s) return;
