@@ -101,7 +101,9 @@ test('an empty API_TOKEN is announced loudly at startup, not silently open', asy
   let out = '';
   p.stdout.on('data', d => out += d); p.stderr.on('data', d => out += d);
   try {
-    for (let i = 0; i < 50 && !/listening/.test(out); i++) await new Promise(r => setTimeout(r, 100));
+    // The warning goes to stderr and "listening" to stdout: separate pipes, so wait for the warning itself.
+    for (let i = 0; i < 50 && !/API_TOKEN is empty/.test(out); i++) await new Promise(r => setTimeout(r, 100));
+    assert.match(out, /listening/);
     assert.match(out, /API_TOKEN is empty/);
   } finally { p.kill(); rmSync(dir, { recursive: true, force: true }); }
   assert.doesNotMatch(readFileSync('server/index.js', 'utf8'), /given === TOKEN/, 'token compared in constant time');

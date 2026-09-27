@@ -48,6 +48,9 @@ values. Measured numbers are derived from shots and never written back.
   "bookable": true, "prereg": false, "walkable": true,
   "feeWeekday": 45, "feeWeekend": 55,
   "tee": "white",                    // primary tee: which set `metres` mirrors
+  "ratings": {                       // for the handicap estimate, typed from the scorecard
+    "white": { "cr": 69.5, "slope": 121 }   // course (scratch) rating and slope, per tee;
+  },                                 // a 9-hole card carries 9-hole ratings
   "notes": "…", "source": "club scorecard PDF",
   "holes": [
     {

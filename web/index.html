@@ -183,6 +183,7 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .gaps .gap { display: grid; grid-template-columns: 90px 50px 1fr; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--rule); font-size: 14px; } .gaps .gap b { font-family: var(--cond); text-align: right; } .gaps .gap small { color: var(--ink-3); } .gaps .gap.flag small { color: var(--flag); }
 .hbar em { grid-column: 1 / -1; margin: -4px 0 2px 80px; font-style: normal; } .hbar.brk { grid-template-columns: 80px 1fr 40px; } .hbar.brk em { margin-left: 90px; } .trend sup { font-size: 9px; margin-left: 2px; color: var(--ink-3); }
 .ftile.long b { font-size: 19px; }
+.hcp { background: var(--paper-2); border-radius: var(--r); padding: 10px 12px; margin: 4px 0 8px; } .hcp .hcp-v { font-family: var(--cond); font-size: 26px; } .hcp p { margin: 4px 0; } .hrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); } .hrow .t { font-size: 14px; } .hrow .s { font-size: 12px; color: var(--ink-3); } .hrow .d { font-family: var(--cond); font-size: 18px; color: var(--ink-3); font-weight: 400; } .hrow.counted .d { color: var(--ink); font-weight: 700; }
 .item.recent { font-size: 14px; padding: 9px 0; }
 details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label { margin-top: 8px; } .pcard.k-strike { border-left-color: var(--sand-2); }
 .fresh { color: var(--ink-2); margin: 2px 0 4px; } .fresh.practised { color: var(--green); }
@@ -635,6 +636,126 @@ function vPenalties() {
   return h;
 }
 
+/* ---------- estimated handicap ----------
+   The World Handicap System, as Golf Australia runs it, applied to his own
+   rounds. An estimate, not an official GA handicap: no playing conditions
+   calculation (PCC is taken as 0), and it only knows the rounds logged here.
+   Nothing is stored; the whole history is replayed on every draw, because
+   each round's hole caps depend on the index he had before it.
+
+   Score differential = 113 / Slope × (adjusted gross score − Course Rating),
+   to one decimal. Adjusted gross caps each hole at net double bogey (par + 2
+   + strokes received), or at par + 5 until there is an index. Index = mean
+   of the lowest differentials among the latest 20 (HCP_TABLE), capped at
+   54.0, with the exceptional-score reduction and the soft and hard caps.
+   9-hole scores are paired in date order into one 18-hole score. */
+const HCP_MAX = 54;
+// Scores available (3..20) → [how many of the lowest count, adjustment].
+const HCP_TABLE = { 3: [1, -2], 4: [1, -1], 5: [1, 0], 6: [2, -1], 7: [2, 0], 8: [2, 0], 9: [3, 0], 10: [3, 0], 11: [3, 0], 12: [4, 0], 13: [4, 0], 14: [4, 0], 15: [5, 0], 16: [5, 0], 17: [6, 0], 18: [6, 0], 19: [7, 0], 20: [8, 0] };
+const tenth = v => Math.round(v * 10) / 10;
+const ratingOf = (c, tee) => { const r = c && c.ratings && c.ratings[tee]; return r && r.cr > 0 && r.slope > 0 ? r : null; };
+// Strokes received on each hole: ch spread by stroke index across N holes
+// (a plus handicap gives strokes back from the easiest hole). undefined
+// where it depends on a stroke index the card doesn't have.
+function strokesReceived(holes, ch) {
+  const N = holes.length, base = Math.floor(ch / N), extra = ((ch % N) + N) % N;
+  const ranked = holes.every(h => h.si != null) ? holes.slice().sort((a, b) => a.si - b.si).map(h => h.n) : null;
+  return n => !extra ? base : ranked ? base + (ranked.indexOf(n) < extra ? 1 : 0) : undefined;
+}
+// One round as a handicap score: 18 holes (14+ played) or 9 (7–9 played,
+// all in one nine). { why } when it can't count.
+function handicapScore(r, hi) {
+  const c = course(r.courseId), tee = r.tee || primaryTee(c);
+  if (!c) return { why: 'course not in your list' };
+  const rating = ratingOf(c, tee);
+  if (!rating) return { why: `no course rating for the ${tee} tees`, needsRating: { id: c.id, name: c.name, tee } };
+  const card = (c.holes || []).filter(h => h.par != null), played = (r.holes || []).filter(h => h.strokes != null);
+  const byN = Object.fromEntries(played.map(h => [h.n, h]));
+  let holes, cr = rating.cr, estimated = false;
+  if (card.length === 18 && played.length >= 14) holes = card;
+  else if (card.length === 9 && played.length >= 7) holes = card;
+  else if (card.length === 18 && played.length >= 7 && played.length <= 9) {
+    const front = played.every(h => h.n <= 9), backNine = played.every(h => h.n >= 10);
+    if (!front && !backNine) return { why: 'nine holes from both nines' };
+    holes = card.filter(h => front ? h.n <= 9 : h.n >= 10);
+    cr = rating.cr / 2; estimated = true;   // the card carries an 18-hole rating; half of it for one nine
+  } else return { why: `${played.length} holes scored — a score needs 14 or more of 18, or 7 or more of 9` };
+  const N = holes.length, par = sum(holes.map(h => h.par));
+  let ags = 0;
+  if (hi == null) {
+    if (holes.some(h => !byN[h.n])) return { why: 'every hole needs a score until you have an index' };
+    for (const h of holes) ags += Math.min(byN[h.n].strokes, h.par + 5);
+  } else {
+    const ch = Math.round((N === 18 ? hi : hi / 2) * rating.slope / 113 + (cr - par));
+    const got = strokesReceived(holes, ch), least = Math.floor(ch / N);
+    for (const h of holes) {
+      const s = got(h.n), score = byN[h.n] ? byN[h.n].strokes : null;
+      if (score != null && score <= h.par + 2 + least) { ags += score; continue; }   // under any cap: no stroke index needed
+      if (s === undefined) return { why: 'the course has no stroke index, which this score needs' };
+      ags += score == null ? h.par + s : Math.min(score, h.par + 2 + s);             // not played: net par
+    }
+  }
+  return { n: N, ags, cr, slope: rating.slope, par, estimated, date: r.date, rounds: [r] };
+}
+const handicap = () => memoised('handicap', '', handicapUncached);
+function handicapUncached() {
+  const rounds = S.sessions.filter(s => s.type === 'round' && s.date && (s.holes || []).some(h => h.strokes != null))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.created || 0) - (b.created || 0));
+  let hi = null, waiting = null;
+  const scores = [], left = [], history = [];
+  for (const r of rounds) {
+    const sc = handicapScore(r, hi);
+    if (sc.why) { left.push({ r, why: sc.why, needsRating: sc.needsRating }); continue; }
+    let s = sc;
+    if (sc.n === 9) {
+      if (!waiting) { waiting = sc; continue; }
+      s = { n: 18, ags: waiting.ags + sc.ags, cr: waiting.cr + sc.cr, slope: Math.round((waiting.slope + sc.slope) / 2), par: waiting.par + sc.par,
+        estimated: waiting.estimated || sc.estimated, date: sc.date, rounds: [...waiting.rounds, ...sc.rounds], paired: true };
+      waiting = null;
+    }
+    s.diff = tenth(113 / s.slope * (s.ags - s.cr)); s.adj = 0; s.indexBefore = hi;
+    scores.push(s);
+    // Exceptional score: 7 or more below the index he had, lowers the latest 20 by 1 (10 or more: by 2).
+    const drop = hi == null ? 0 : hi - s.diff >= 10 ? 2 : hi - s.diff >= 7 ? 1 : 0;
+    if (drop) { s.exceptional = drop; for (const x of scores.slice(-20)) x.adj -= drop; }
+    const last = scores.slice(-20);
+    if (last.length < 3) continue;
+    const [k, adjust] = HCP_TABLE[last.length];
+    let next = tenth(mean(last.map(x => x.diff + x.adj).sort((a, b) => a - b).slice(0, k)) + adjust);
+    // Soft and hard caps, once there are 20 scores: against the lowest index of the year before.
+    if (scores.length >= 20) {
+      const since = localDay(new Date(new Date(s.date + 'T00:00:00').getTime() - 365 * 864e5));
+      const lows = history.filter(x => x.date >= since).map(x => x.hi);
+      if (lows.length) { const low = Math.min(...lows); if (next - low > 3) next = tenth(Math.min(low + 3 + (next - low - 3) / 2, low + 5)); }
+    }
+    hi = Math.min(HCP_MAX, next);
+    history.push({ date: s.date, hi });
+  }
+  const last = scores.slice(-20), rule = last.length >= 3 ? HCP_TABLE[last.length] : null;
+  const counted = rule ? new Set(last.slice().sort((a, b) => (a.diff + a.adj) - (b.diff + b.adj)).slice(0, rule[0])) : new Set();
+  const needs = {}; for (const x of left) if (x.needsRating) needs[x.needsRating.id + '|' + x.needsRating.tee] = x.needsRating;
+  return { index: hi, scores, recent: last, counted, rule, left, waiting, history, needsRatings: Object.values(needs) };
+}
+function overviewHandicap() {
+  const hc = handicap();
+  if (!hc.scores.length && !hc.left.length) return '';
+  const fix = hc.needsRatings.map(x => `<button class="quiet" data-go="courses:courseId=${x.id}">${esc(x.name)} (${esc(x.tee)})</button>`).join(' ');
+  const missing = hc.needsRatings.length ? `<p class="small muted" id="hcpNeeds">Rounds at a course without its course rating and slope can't count. Add them from the scorecard: ${fix}</p>` : '';
+  if (hc.index == null) return `<div class="hcp" id="hcp"><div class="spread"><div><b>Handicap</b> <span class="muted small">estimate</span></div><b class="muted">—</b></div>
+    <p class="small muted">An index needs 3 scores; you have ${hc.scores.length}${hc.waiting ? ', plus a 9-hole score waiting for another to pair with' : ''}.</p>${missing}</div>`;
+  const est = hc.recent.some(s => s.estimated);
+  const row = s => `<div class="hrow${hc.counted.has(s) ? ' counted' : ''}"><div><div class="t">${dateLabel(s.date)} · ${esc(s.rounds.map(r => r.courseName).join(' + '))}</div>
+    <div class="s">adjusted ${s.ags} · rating ${fmt(s.cr, 1)} / ${s.slope}${s.paired ? ' · two nines' : ''}${s.estimated ? ' · est. rating' : ''}${s.adj ? ` · ${signed(s.adj, 0)} exceptional score` : ''}</div></div>
+    <b class="d">${fmt(s.diff + s.adj, 1)}</b></div>`;
+  return `<div class="hcp" id="hcp"><div class="spread"><div><b>Handicap</b> <span class="muted small">estimate</span></div><b class="hcp-v">${fmt(hc.index, 1)}</b></div>
+    <p class="small muted">World Handicap System: the average of your lowest ${plural(hc.rule[0], 'score differential')} of the last ${hc.recent.length}${hc.rule[1] ? `, ${signed(hc.rule[1], 1)}` : ''}. Not an official Golf Australia handicap${est ? '; some 9-hole ratings are half the 18-hole rating' : ''}.</p>
+    ${missing}
+    <details id="hcpDetail"><summary class="small">The scores behind it</summary>
+      <div class="hrows">${hc.recent.slice().reverse().map(row).join('')}</div>
+      <p class="small muted">Differentials in bold count. Each hole is capped at net double bogey (par + 5 before you had an index), 9-hole rounds are paired into one score, and no playing-conditions adjustment is made.${hc.waiting ? ' A 9-hole score is waiting for another to pair with.' : ''}${hc.left.length ? ` ${plural(hc.left.length, 'round')} can't count: ${hc.left.slice(0, 5).map(x => `${esc(x.r.courseName || '?')} ${dateLabel(x.r.date)} (${esc(x.why)})`).join('; ')}${hc.left.length > 5 ? '; …' : ''}.` : ''}</p>
+    </details></div>`;
+}
+
 /* ---------- overview ---------- */
 // The home screen: how he's playing, what to work on, then the picture
 // behind it. Built from the same derived numbers the other tabs use; a
@@ -673,7 +794,7 @@ function overviewForm(rounds) {
   for (const { st } of recent) { if (st.fir) { fir.hit += st.fir.hit; fir.of += st.fir.of; } if (st.gir) { gir.hit += st.gir.hit; gir.of += st.gir.of; } }
   if (fir.of >= 5) tiles.push(tile(`${pct(fir.hit, fir.of)}%`, 'fairways', `${fir.hit} of ${fir.of}`));
   if (gir.of >= 5) tiles.push(tile(`${pct(gir.hit, gir.of)}%`, 'greens in reg', `${gir.hit} of ${gir.of}`));
-  return `<h2>Current form</h2>${tileGrid('formTiles', tiles.slice(0, 6))}`;
+  return `<h2>Current form</h2>${tileGrid('formTiles', tiles.slice(0, 6))}` + overviewHandicap();
 }
 
 /* ---------- what to work on ---------- */
@@ -918,6 +1039,7 @@ function vCourse() {
   }
   h += `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${c.bookingUrl ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
     ${c.feeWeekday || c.feeWeekend ? `<dt>Green fee</dt><dd>${c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : ''}${c.feeWeekday && c.feeWeekend ? ', ' : ''}${c.feeWeekend ? '$' + c.feeWeekend + ' weekend' : ''}</dd>` : ''}
+    ${Object.keys(c.ratings || {}).length ? `<dt>Ratings</dt><dd id="courseRatings">${Object.entries(c.ratings).map(([t, r]) => `${esc(t)}: ${fmt(r.cr, 1)} / slope ${r.slope}`).join(' · ')}</dd>` : ''}
     ${c.walkable != null ? `<dt>Walking</dt><dd>${c.walkable ? 'Walkable' : 'Cart advised'}</dd>` : ''}${c.transport ? `<dt>Getting there</dt><dd>${esc(c.transport)}</dd>` : ''}${c.notes ? `<dt>Notes</dt><dd>${esc(c.notes)}</dd>` : ''}</dl>`;
   if (rounds.length) h += `<h2>Rounds here</h2><div class="list">${rounds.map(sessionItem).join('')}</div>`;
   h += `<div class="row-actions"><button class="danger" data-act="deleteCourse" data-id="${c.id}">Delete course</button></div>`;
@@ -1026,8 +1148,30 @@ function courseForm(c = {}) {
   <div class="grid2">${field('Latitude', 'lat', 'number', c.lat, 'step="0.0001"')}${field('Longitude', 'lng', 'number', c.lng, 'step="0.0001"')}</div>
   ${field('Getting there', 'transport', 'text', c.transport)}
   <label>Notes<textarea name="notes" style="min-height:60px">${esc(c.notes || '')}</textarea></label>
+  ${ratingFields(c)}
   <h3>Scorecard</h3>${gaps.length ? `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing. Fill ${gaps.length > 1 ? 'them' : 'it'} in below.</div>` : ''}<div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
   <div id="holesWrap">${holesEditor(holes, false)}</div>`;
+}
+// Course Rating ("scratch rating" on Australian cards) and Slope Rating
+// per tee, for the handicap estimate. Typed from the scorecard, never
+// guessed. A course with no tees named yet gets one row for the tee above.
+const ratingTees = c => { const t = teeNames(c); return t.length ? t : ['']; };
+function ratingFields(c) {
+  return `<h3>Handicap ratings</h3><p class="small muted">From the scorecard or Golf Australia: the course (scratch) rating and slope for each tee${(c.holes || []).length === 9 ? ', for 9 holes' : ''}. Leave blank if you don't have them.</p>` +
+    ratingTees(c).map(t => { const r = (c.ratings || {})[t] || {};
+      return `<div class="grid2">${field(`${t ? esc(t[0].toUpperCase() + t.slice(1)) + ' tees: course' : 'Course'} rating`, `cr_${t}`, 'number', r.cr, 'step="0.1" inputmode="decimal"')}${field('Slope', `slope_${t}`, 'number', r.slope, 'step="1" inputmode="numeric"')}</div>`; }).join('');
+}
+function readRatings(root, c, tee) {
+  const out = { ...(c.ratings || {}) };
+  for (const t of ratingTees(c)) {
+    const cr = val(root, `cr_${t}`), slope = val(root, `slope_${t}`), key = t || tee;
+    if (cr == null && slope == null) { delete out[key]; continue; }
+    if (cr == null || slope == null) return { error: `Add both the course rating and the slope for the ${key} tees` };
+    if (!(cr >= 25 && cr <= 90)) return { error: `A course rating of ${cr} doesn't look right: it's usually near par, between 25 and 90` };
+    if (!(slope >= 55 && slope <= 155)) return { error: `Slope runs from 55 to 155; ${slope} is outside that` };
+    out[key] = { cr, slope };
+  }
+  return { ratings: out };
 }
 // A scorecard is always holes 1..N (9 or 18). Gaps become blank rows so a
 // missing hole is visible and fixable instead of silently absent.
@@ -1180,9 +1324,10 @@ async function saveCourse(root, c) {
   const name = val(root, 'name'); if (!name) { toast('Name the course'); return false; }
   const n = Number(root.querySelector('[data-holes][aria-pressed="true"]')?.dataset.holes || 18);
   const tee = (val(root, 'tee') || primaryTee(c) || 'white').toLowerCase();
+  const rt = readRatings(root, c, tee); if (rt.error) { toast(rt.error); return false; }
   const near = S.courses.find(x => x.id !== c.id && x.name && name && x.name.toLowerCase().replace(/[^a-z]/g, '') === name.toLowerCase().replace(/[^a-z]/g, ''));
   if (near && !await confirmAsk(`"${near.name}" is already in your courses. Add this as a second one?`, 'Add anyway')) return false;
-  const doc = { ...c, v: SCHEMA_VERSION, tee, name, suburb: val(root, 'suburb'), state: val(root, 'state'), bookable: val(root, 'bookable'), prereg: val(root, 'prereg'), walkable: val(root, 'walkable'), feeWeekday: val(root, 'feeWeekday'), feeWeekend: val(root, 'feeWeekend'), bookingUrl: val(root, 'bookingUrl'), lat: val(root, 'lat'), lng: val(root, 'lng'), transport: val(root, 'transport'), notes: val(root, 'notes'), // Keep everything the form doesn't edit (artwork, outline shape, stroke
+  const doc = { ...c, v: SCHEMA_VERSION, tee, name, suburb: val(root, 'suburb'), state: val(root, 'state'), bookable: val(root, 'bookable'), prereg: val(root, 'prereg'), walkable: val(root, 'walkable'), feeWeekday: val(root, 'feeWeekday'), feeWeekend: val(root, 'feeWeekend'), bookingUrl: val(root, 'bookingUrl'), lat: val(root, 'lat'), lng: val(root, 'lng'), transport: val(root, 'transport'), notes: val(root, 'notes'), ratings: rt.ratings, // Keep everything the form doesn't edit (artwork, outline shape, stroke
 // index); only par and metres come from the inputs.
     holes: readHoles(root, n, false).map(h => { const { par, metres, n: _n, ...keep } = (c.holes || []).find(x => x.n === h.n) || {}; return { ...keep, ...h, tees: { ...(keep.tees || {}), ...(h.metres == null ? {} : { [tee]: h.metres }) } }; }) };
   const noPar = doc.holes.filter(h => h.par == null).map(h => h.n);
