@@ -433,7 +433,12 @@ function ballOk(s) {
   return f === 'range' ? s.ballType === 'range' : s.ballType === 'premium' || s.ballType === 'own';   // unrecorded ball type counts only under "all"
 }
 const countsForNumbers = s => s.type === 'range' && !s.excluded && withinWindow(s.date) && ballOk(s);
-const shotWeight = date => weighting() === 'equal' || !date ? 1 : Math.pow(0.5, ageDays(date) / DISTANCE_HALF_LIFE);
+// Age in whole local days: every shot from the same day weighs exactly the
+// same (today 1, sixty days ago 0.5). Timing to the millisecond made
+// same-day weights differ in the tenth decimal, and a mean came out as
+// 125.25000000025072.
+const daysAgo = d => Math.max(0, Math.round((new Date(today() + 'T00:00:00') - new Date(d + 'T00:00:00')) / 864e5));
+const shotWeight = date => weighting() === 'equal' || !date ? 1 : Math.pow(0.5, daysAgo(date) / DISTANCE_HALF_LIFE);
 // [value, weight] pairs. With equal weights this is exactly the ordinary median.
 function weightedMedian(pairs) {
   const xs = pairs.filter(([v, w]) => v != null && w > 0).sort((a, b) => a[0] - b[0]);

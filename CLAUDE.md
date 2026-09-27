@@ -319,8 +319,11 @@ hand, outside the date `window`, or its `ballType` doesn't match the
 left-out session's own page still shows its shots (`shotsWithSession`).
 
 Within that, `weighting: 'recent'` (the default) gives each shot weight
-`0.5^(age / DISTANCE_HALF_LIFE)` (60 days) and takes a weighted median /
-mean; `'equal'` is the plain median. `clubStats` also returns `nEff`
+`0.5^(age / DISTANCE_HALF_LIFE)` (60 days), age in **whole local days**
+(`daysAgo`), and takes a weighted median / mean. Age to the millisecond made
+same-day weights differ in the tenth decimal (a 1.6.1 publish failed on
+125.25000000025072); the test runs the calculation with a clock that moves on
+every read; `'equal'` is the plain median. `clubStats` also returns `nEff`
 = (Σw)²/Σw², so the Overview can say "5 shots · counts like 4 recent".
 The strike profile stays a plain count, because it describes what
 happened, not what to plan on. `weightedMean` scales weights against the
@@ -396,7 +399,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 190 tests, about 20s (55s on one core).
+`npm test` — 191 tests, about 20s (55s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
