@@ -49,7 +49,8 @@ values. Measured numbers are derived from shots and never written back.
   "feeWeekday": 45, "feeWeekend": 55,
   "tee": "white",                    // primary tee: which set `metres` mirrors
   "ratings": {                       // for the handicap estimate, typed from the scorecard
-    "white": { "cr": 69.5, "slope": 121 }   // course (scratch) rating and slope, per tee;
+    "white": { "cr": 69.5, "slope": 121 }   // course (scratch) rating and slope, per tee (key lower case,
+                                            // matched to a round's tee ignoring case);
   },                                 // a 9-hole card carries 9-hole ratings
   "notes": "…", "source": "club scorecard PDF",
   "holes": [

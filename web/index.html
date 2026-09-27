@@ -183,6 +183,7 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .gaps .gap { display: grid; grid-template-columns: 90px 50px 1fr; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--rule); font-size: 14px; } .gaps .gap b { font-family: var(--cond); text-align: right; } .gaps .gap small { color: var(--ink-3); } .gaps .gap.flag small { color: var(--flag); }
 .hbar em { grid-column: 1 / -1; margin: -4px 0 2px 80px; font-style: normal; } .hbar.brk { grid-template-columns: 80px 1fr 40px; } .hbar.brk em { margin-left: 90px; } .trend sup { font-size: 9px; margin-left: 2px; color: var(--ink-3); }
 .ftile.long b { font-size: 19px; }
+.rating-row { margin-top: 12px; }
 .hcp { background: var(--paper-2); border-radius: var(--r); padding: 10px 12px; margin: 4px 0 8px; } .hcp .hcp-v { font-family: var(--cond); font-size: 26px; } .hcp p { margin: 4px 0; } .hrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); } .hrow .t { font-size: 14px; } .hrow .s { font-size: 12px; color: var(--ink-3); } .hrow .d { font-family: var(--cond); font-size: 18px; color: var(--ink-3); font-weight: 400; } .hrow.counted .d { color: var(--ink); font-weight: 700; }
 .item.recent { font-size: 14px; padding: 9px 0; }
 details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label { margin-top: 8px; } .pcard.k-strike { border-left-color: var(--sand-2); }
@@ -1167,22 +1168,45 @@ function courseForm(c = {}) {
 // Course Rating ("scratch rating" on Australian cards) and Slope Rating
 // per tee, for the handicap estimate. Typed from the scorecard, never
 // guessed. A course with no tees named yet gets one row for the tee above.
-const ratingTees = c => { const t = teeNames(c); return t.length ? t : ['']; };
+// Every tee this course knows about: tees with distances on the card, tees
+// already rated, and tees his rounds here were played off (the round's tee is
+// free text when the card has one set, so it can name a tee the card doesn't).
+// Matched ignoring case; the card's primary tee first, then by rounds played. [''] for a course with
+// none yet, which rates the tee typed above.
+function ratingTees(c) {
+  const seen = new Map(), add = t => { t = String(t || '').trim(); if (t && t !== 'default' && !seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t); };
+  add(c.tee); teeNames(c).forEach(add); Object.keys(c.ratings || {}).forEach(add);
+  if (c.id) S.sessions.filter(r => r.type === 'round' && r.courseId === c.id).forEach(r => add(r.tee));
+  if (!seen.size) return [''];
+  const [first, ...rest] = [...seen.values()];
+  return [first, ...rest.map(t => [t, roundsOffTee(c, t)]).sort((a, b) => b[1] - a[1]).map(x => x[0])];   // then the tees played most
+}
+const roundsOffTee = (c, t) => c.id ? S.sessions.filter(r => r.type === 'round' && r.courseId === c.id && String(r.tee || primaryTee(c)).toLowerCase() === t.toLowerCase()).length : 0;
+const teeLabel = t => t ? esc(t[0].toUpperCase() + t.slice(1)) + ' tees' : 'These tees';
 function ratingFields(c) {
-  return `<h3>Handicap ratings</h3><p class="small muted">From the scorecard or Golf Australia: the course (scratch) rating and slope for each tee${(c.holes || []).length === 9 ? ', for 9 holes' : ''}. Leave blank if you don't have them.</p>` +
-    ratingTees(c).map(t => { const r = (c.ratings || {})[t] || {};
-      return `<div class="grid2">${field(`${t ? esc(t[0].toUpperCase() + t.slice(1)) + ' tees: course' : 'Course'} rating`, `cr_${t}`, 'number', r.cr, 'step="0.1" inputmode="decimal"')}${field('Slope', `slope_${t}`, 'number', r.slope, 'step="1" inputmode="numeric"')}</div>`; }).join('');
+  const rows = ratingTees(c).map((t, i) => { const r = ratingOf(c, t) || {}, n = t ? roundsOffTee(c, t) : 0;
+    return `<div class="rating-row" data-tee="${esc(t)}"><div class="small"><b>${teeLabel(t)}</b>${n ? ` <span class="muted">· ${plural(n, 'round')} here</span>` : ''}</div>
+      <input type="hidden" name="rtee_${i}" value="${esc(t)}"><div class="grid2">${field('Course rating', `cr_${i}`, 'number', r.cr, 'step="0.1" inputmode="decimal"')}${field('Slope', `slope_${i}`, 'number', r.slope, 'step="1" inputmode="numeric"')}</div></div>`; });
+  return `<h3>Handicap ratings</h3><p class="small muted">From the scorecard or Golf Australia: the course (scratch) rating and slope for each tee${(c.holes || []).length === 9 ? ', for 9 holes' : ''}. Leave blank if you don't have them.</p>` + rows.join('') +
+    `<div class="rating-row"><div class="small"><b>Another tee</b></div><div class="grid3">${field('Tee', 'rtee_new', 'text', '', 'placeholder="e.g. blue" autocapitalize="off"')}${field('Course rating', 'cr_new', 'number', '', 'step="0.1" inputmode="decimal"')}${field('Slope', 'slope_new', 'number', '', 'step="1" inputmode="numeric"')}</div></div>`;
 }
 function readRatings(root, c, tee) {
   const out = { ...(c.ratings || {}) };
-  for (const t of ratingTees(c)) {
-    const cr = val(root, `cr_${t}`), slope = val(root, `slope_${t}`), key = t || tee;
-    if (cr == null && slope == null) { delete out[key]; continue; }
-    if (cr == null || slope == null) return { error: `Add both the course rating and the slope for the ${key} tees` };
-    if (!(cr >= 25 && cr <= 90)) return { error: `A course rating of ${cr} doesn't look right: it's usually near par, between 25 and 90` };
-    if (!(slope >= 55 && slope <= 155)) return { error: `Slope runs from 55 to 155; ${slope} is outside that` };
-    out[key] = { cr, slope };
+  const drop = key => { for (const k of Object.keys(out)) if (k.toLowerCase() === key.toLowerCase()) delete out[k]; };
+  const one = (key, cr, slope) => {
+    if (cr == null && slope == null) { drop(key); return null; }
+    if (cr == null || slope == null) return `Add both the course rating and the slope for the ${key} tees`;
+    if (!(cr >= 25 && cr <= 90)) return `A course rating of ${cr} doesn't look right: it's usually near par, between 25 and 90`;
+    if (!(slope >= 55 && slope <= 155)) return `Slope runs from 55 to 155; ${slope} is outside that`;
+    drop(key); out[key.toLowerCase()] = { cr, slope }; return null;
+  };
+  for (let i = 0; root.querySelector(`[name="rtee_${i}"]`); i++) {
+    const err = one(root.querySelector(`[name="rtee_${i}"]`).value || tee, val(root, `cr_${i}`), val(root, `slope_${i}`));
+    if (err) return { error: err };
   }
+  const extra = (val(root, 'rtee_new') || '').trim(), cr = val(root, 'cr_new'), slope = val(root, 'slope_new');
+  if (!extra && (cr != null || slope != null)) return { error: 'Name the tee for the extra rating' };
+  if (extra) { const err = one(extra, cr, slope); if (err) return { error: err }; }
   return { ratings: out };
 }
 // A scorecard is always holes 1..N (9 or 18). Gaps become blank rows so a

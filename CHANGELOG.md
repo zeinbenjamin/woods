@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.6.3 — 2026-09-27
+- Handicap ratings on a course now have a row for every tee you've played there, not just the tees on the scorecard, with how many rounds you played off each.
+- There's also an "Another tee" row, to add the rating and slope for a tee you haven't played yet.
+
 ## 1.6.2 — 2026-09-27
 - Club distances weigh every shot from the same day exactly the same, so a number can no longer come out a hair off (like 125.25000000025 instead of 125.25). A shot from today now counts fully, and one from 60 days ago exactly half.
 

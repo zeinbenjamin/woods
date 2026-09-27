@@ -81,12 +81,13 @@ test('the Overview shows the estimate, how it was worked out, and the scores beh
 test('the ratings are typed on the course form, checked, and kept with everything else on the course', async () => {
   app.go('courses', { courseId: 'u' });
   app.click('#view [data-act="editCourse"]');
-  app.fill('cr_white', '71.5');
-  app.fill('slope_white', '300');
+  assert.equal(app.field('rtee_0').value, 'white');
+  app.fill('cr_0', '71.5');
+  app.fill('slope_0', '300');
   assert.equal(await app.save(), false, 'a slope outside 55–155 is refused');
-  app.fill('slope_white', '');
+  app.fill('slope_0', '');
   assert.equal(await app.save(), false, 'a rating without a slope is refused');
-  app.fill('slope_white', '128');
+  app.fill('slope_0', '128');
   assert.equal(await app.save(), true);
   const c = await app.api.get('courses', 'u');
   assert.deepEqual(c.ratings, { white: { cr: 71.5, slope: 128 } });
@@ -186,4 +187,33 @@ test('with no index yet, the Overview still lists every round that can\'t count,
 test('a tee typed with different capitals still finds its rating', async () => {
   const x = await startApp({ seed: { courses: [rated], sessions: [round('a', 10, scores(all(18, 6)), { tee: 'White' })] } });
   try { assert.deepEqual(x.J(`handicap().scores.map(s => s.diff)`), [34.4]); } finally { x.stop(); }
+});
+
+test('every tee he has played gets a rating row, even one the scorecard has no distances for; and another can be added', async () => {
+  // The card only has white distances, so the round form's tee is free text:
+  // rounds here were logged off "Blue" and "red".
+  const c = { id: 'k', v: 2, name: 'Kensington', tee: 'white', holes: card(18) };
+  const x = await startApp({ seed: { courses: [c], sessions: [
+    round('a', 30, scores(all(18, 6)), { courseId: 'k', courseName: 'Kensington', tee: 'Blue' }),
+    round('b', 20, scores(all(18, 6)), { courseId: 'k', courseName: 'Kensington', tee: 'Blue' }),
+    round('c', 10, scores(all(18, 6)), { courseId: 'k', courseName: 'Kensington', tee: 'red' }),
+  ] } });
+  try {
+    assert.deepEqual(x.J('handicap().needsRatings.map(n => n.tee)'), ['Blue', 'red']);
+    x.go('courses', { courseId: 'k' });
+    x.click('#view [data-act="editCourse"]');
+    const rows = x.$$('#sheetInner .rating-row[data-tee]').map(r => r.textContent.replace(/\s+/g, ' ').trim().split(' Course rating')[0]);
+    assert.deepEqual(rows, ['White tees', 'Blue tees · 2 rounds here', 'Red tees · 1 round here']);
+    x.fill('cr_1', '69.8'); x.fill('slope_1', '124');
+    x.fill('cr_new', '72'); x.fill('slope_new', '130');
+    assert.equal(await x.save(), false, 'an extra rating needs a tee name');
+    x.fill('rtee_new', 'Black');
+    assert.equal(await x.save(), true);
+    assert.deepEqual((await x.api.get('courses', 'k')).ratings, { blue: { cr: 69.8, slope: 124 }, black: { cr: 72, slope: 130 } });
+    await x.waitFor(() => x.E('handicap().scores.length') === 2, { what: 'the two blue rounds count' });
+    assert.deepEqual(x.J('handicap().needsRatings.map(n => n.tee)'), ['red']);
+    x.click('#view [data-act="editCourse"]');
+    assert.equal(x.field('cr_1').value, '69.8', 'the blue rating shows on its row');
+    assert.equal(x.field('rtee_3').value, 'black', 'and the added tee has its own row now');
+  } finally { x.stop(); }
 });
