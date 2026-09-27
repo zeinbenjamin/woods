@@ -1,0 +1,14 @@
+[
+ {
+  "id": "bardwell-valley",
+  "name": "Bardwell Valley Golf Club",
+  "osmName": "Bardwell Valley Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "randwick",
+  "name": "Randwick Golf Club",
+  "osmName": "Randwick Golf Course",
+  "holes": 18
+ }
+]

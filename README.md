@@ -21,10 +21,14 @@ server/         API, SQLite storage, Anthropic proxy
   anthropic.js  swing analysis (holds the API key, server-side only)
   index.js      routes, auth, static hosting
 web/            the app
-  index.html    the whole thing, one file
+  index.html    the app, one file
   platform.js   the shim that makes the app work off this server
+  holemap.js    course maps: tee rule, lies, the yardage-book drawing
+  course-maps/  built map files (from OpenStreetMap, committed)
 scripts/
   import-export.js   load a "carry-export" JSON into this server
+  course-maps.js     build course maps from OpenStreetMap exports
+course-maps/    map sources: per-course notes, cards and OSM extracts
 test/           end-to-end tests, including app-through-shim-to-SQLite
 SCHEMA.md       every document shape, the invariants, what's derived
 ```
@@ -197,10 +201,31 @@ Deferred deliberately, in rough order of value:
 - **Pose estimation** on swing frames, server-side, for measured angles
   rather than a reading. Impossible in the artifact; straightforward here.
 - **Recency weighting** beyond the current window selector.
-- **Course data from OpenStreetMap** — `golf=hole` ways carry par, length
-  and stroke index, and the polygons would give true hole shapes instead
-  of drawn outlines.
-- Session filtering, artwork for the remaining courses.
+- **More course maps.** Randwick and Bardwell Valley are done (1.8.0).
+  Coverage of the rest is uneven; see *Course maps* below.
+- Session filtering.
+
+## Course maps
+
+Holes can be drawn from OpenStreetMap (map data © OpenStreetMap contributors,
+ODbL). Each course has a source in `course-maps/src/<id>.json` (which OSM course,
+where the hole lines come from, the card the lengths were checked against, and
+a fixed `origin`), an extract of the OSM data in `course-maps/osm/<id>.geojson`,
+and the built file the app reads in `web/course-maps/<id>.json`.
+
+Adding a course:
+
+1. Export the area from overpass-turbo.eu (golf features, plus trees and
+   woods inside golf courses) as GeoJSON.
+2. Write `course-maps/src/<id>.json`. Use `"holes": "osm"` where OSM has hole
+   lines (`golf=hole`); otherwise map each hole's tees and green by OSM id.
+   Pick an `origin` near the middle of the course and never change it once
+   rounds are logged on the map.
+3. `node scripts/course-maps.js extract <id> export.geojson [trees.geojson]`
+4. `node scripts/course-maps.js build` prints every hole against the card
+   and flags any more than 10% apart. Commit all three files; a test fails
+   if the built file doesn't match its sources.
+5. After deploying, open the course in the app and choose *Use this map*.
 
 ## Licence
 

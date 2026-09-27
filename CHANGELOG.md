@@ -6,6 +6,14 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.8.0 — 2026-09-28
+- Holes can now be drawn from the course's real shapes on OpenStreetMap, in a yardage-book style that also has a dark version: greens, tees, fairways, bunkers, water and trees where they're mapped. Randwick and Bardwell Valley have maps; turn one on from the course's page under "Course map".
+- On a mapped course, distances are real metres. Your tee sits its scorecard distance from the middle of the green, along the hole line, so the card always sets the length.
+- The course page lists any hole whose card and mapped line are more than 10% apart, and that hole's own page says whether the tee sits ahead of or behind the mapped tee box.
+- Par 4s and 5s without a mapped fairway get a dashed, estimated fairway. It's there to help you see the hole, and never decides a lie.
+- Where you tap sets the lie from the shape underneath (bunker, water, green, fairway, trees). Where nothing is mapped, including the estimated fairway, you pick the lie yourself; it's never assumed to be rough.
+- Holes you've already traced on the drawn outline or on artwork stay that way for that round. Turning a map off keeps every shot, and turning it back on measures them again.
+
 ## 1.7.0 — 2026-09-27
 - The Courses list can be sorted by Closest, Recently added or A–Z. It starts on Closest when your location is set, and on Recently added otherwise; the order you pick is remembered.
 - Courses with no location sort last under Closest, and courses added before the app kept the date sort last under Recently added, both A–Z, with a note saying so.

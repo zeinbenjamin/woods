@@ -135,7 +135,7 @@ app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION, commit
 const INDEX_HTML = readFileSync(join(here, '..', 'web', 'index.html'), 'utf8')
   .replace('content="__APP_VERSION__"', `content="${VERSION}"`)
   .replace('content="__APP_COMMIT__"', `content="${COMMIT}"`);
-// The app shell (page, shim, manifest) is revalidated on every load, or a
+// The app shell (page, shim, hole maps, manifest) is revalidated on every load, or a
 // phone keeps the old app after a redeploy. no-cache still allows a cheap
 // 304 via the ETag. The shim must never lag the page it was written for.
 const revalidate = res => res.set('Cache-Control', 'no-cache');
@@ -143,7 +143,8 @@ const sendIndex = (_req, res) => { revalidate(res); res.type('html').send(INDEX_
 app.get(['/', '/index.html'], sendIndex);           // before express.static, or the unstamped file wins
 app.use(express.static(join(here, '..', 'web'), {
   index: false, maxAge: '1h',
-  setHeaders: (res, file) => { if (/\.(html|js|webmanifest)$/.test(file)) revalidate(res); },
+  // Course maps are revalidated too: a rebuilt map must reach the phone with the page that reads it.
+  setHeaders: (res, file) => { if (/\.(html|js|webmanifest|json)$/.test(file)) revalidate(res); },
 }));
 
 app.use((err, req, res, _next) => {
