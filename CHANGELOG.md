@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.9.0 — 2026-09-28
+- The Coast now has a course map. Holes 4 and 14 aren't mapped on OpenStreetMap, so they use the tees and greens you confirmed.
+- The course page now flags a hole only when your tee doesn't land on any mapped tee box. OpenStreetMap often measures from the back tee, so a scorecard 60 m shorter can still be spot on; a hole is flagged only when neither the line nor any tee box matches your card. Randwick has no flagged holes now, Bardwell Valley has one (11), and The Coast has one (18).
+
 ## 1.8.0 — 2026-09-28
 - Holes can now be drawn from the course's real shapes on OpenStreetMap, in a yardage-book style that also has a dark version: greens, tees, fairways, bunkers, water and trees where they're mapped. Randwick and Bardwell Valley have maps; turn one on from the course's page under "Course map".
 - On a mapped course, distances are real metres. Your tee sits its scorecard distance from the middle of the green, along the hole line, so the card always sets the length.

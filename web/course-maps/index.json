@@ -10,5 +10,11 @@
   "name": "Randwick Golf Club",
   "osmName": "Randwick Golf Course",
   "holes": 18
+ },
+ {
+  "id": "the-coast",
+  "name": "The Coast Golf Club",
+  "osmName": "The Coast Golf Club",
+  "holes": 18
  }
 ]

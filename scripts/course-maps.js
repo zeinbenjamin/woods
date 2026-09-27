@@ -194,8 +194,13 @@ function build(id) {
       const line = l.slice(0, -1).concat([gc]);
       holes.push({ n, line, green: gi, osmLine: idOf(f) });
     }
-  } else {
-    for (const [ns, m] of Object.entries(src.holes)) {
+  }
+  // Holes mapped by hand: every hole where OSM has no lines (holes: {...}),
+  // or the few it lacks (addHoles: {...} alongside holes: "osm").
+  const byHand = src.holes === 'osm' ? (src.addHoles || {}) : src.holes;
+  {
+    for (const [ns, m] of Object.entries(byHand)) {
+      if (holes.some(h => h.n === Number(ns))) throw new Error(`${id}: hole ${ns} has an OSM line and a hand mapping`);
       const n = Number(ns), gi = greenOf(m.green), gr = features[gi], gc = centroid(gr.r[0]).map(r1);
       const card = cardBy[n] || {};
       const teeSpots = m.tees.map(t => {
@@ -206,6 +211,7 @@ function build(id) {
       });
       const lineFrom = tp => {
         let fw = null;
+        if (m.straight) return [tp, gc].map(p => p.map(r1));
         if (m.via) { const ix = byOsm[m.via]; if (!ix) throw new Error(`${id}: fairway ${m.via} not in the extract`); fw = features[ix[0]]; }
         else if (card.par >= 4) {
           // The fairway that runs into this green and starts within reach of the tee.
@@ -227,7 +233,7 @@ function build(id) {
       // With several tee boxes, the line starts at the one closest to the card.
       const cands = teeSpots.map(t => ({ t, line: lineFrom(t.p) }));
       const pick = card.metres ? cands.reduce((a, b) => Math.abs(lineLen(b.line) - card.metres) < Math.abs(lineLen(a.line) - card.metres) ? b : a) : cands[0];
-      holes.push({ n, line: pick.line, green: gi, teeFrom: pick.t.osm + (pick.t.half ? ' (half)' : '') });
+      holes.push({ n, line: pick.line, green: gi, teeFrom: pick.t.osm + (pick.t.half ? ' (half)' : ''), teeOsm: teeSpots.map(t => t.osm) });
     }
   }
   holes.sort((a, b) => a.n - b.n);
@@ -245,12 +251,23 @@ function build(id) {
     for (const h of holes) { const d = Math.min(...pts(f).map(p => lineDist(p, h.line))); if (d < bd) { bd = d; best = h.n; } }
     f.h = best;
   });
-  for (const h of holes) h.tees = features.map((f, i) => f.k === 'tee' && f.h === h.n && dist(centroid(f.r[0]), h.line[0]) < 40 ? i : -1).filter(i => i >= 0);
+  // A hole's tee boxes: its own mapped tees standing on its line (within
+  // 20 m), in the tee half of it. A card distance that lands on one is a real
+  // tee, however far it is from where the line starts. A box another hole
+  // owns counts only if the line runs right over it (one box, two holes).
+  const along = (p, l) => { let s = 0, best = 0, bd = Infinity; for (let k = 1; k < l.length; k++) { const q = segDist(p, l[k - 1], l[k]); if (q.d < bd) { bd = q.d; best = s + q.t * dist(l[k - 1], l[k]); } s += dist(l[k - 1], l[k]); } return best; };
+  for (const h of holes) h.tees = features.map((f, i) => {
+    if (f.k !== 'tee' || !inside(f)) return -1;
+    const c = centroid(f.r[0]), d = lineDist(c, h.line);
+    // The tees a hand mapping names for this hole are its own, whoever is nearer.
+    if ((h.teeOsm || []).includes(f.osm)) return i;
+    return d <= 20 && (f.h === h.n || d <= 3) && along(c, h.line) < 0.6 * lineLen(h.line) ? i : -1;
+  }).filter(i => i >= 0);
 
   const out = {
     v: 1, id, name: src.name,
     osm: src.osm, attribution: '© OpenStreetMap contributors', licence: 'ODbL-1.0',
-    origin: src.origin, holesFrom: src.holes === 'osm' ? 'OpenStreetMap hole lines' : (src.holesSource || 'mapped by hand'),
+    origin: src.origin, holesFrom: src.holesFrom || (src.holes === 'osm' ? 'OpenStreetMap' : 'a mapping by hand'),
     boundary,
     features: features.map(({ osm, ...f }) => ({ ...f, osm })),
     holes: holes.map(h => ({ n: h.n, line: h.line, green: h.green, tees: h.tees })),
@@ -260,12 +277,13 @@ function build(id) {
 
   // The report: every hole against the card, as the app will flag it.
   const rows = holes.map(h => {
-    const c = cardBy[h.n] || {}, mm = HM.mismatch(h, c.metres);
-    return { n: h.n, par: c.par ?? '', card: c.metres ?? '', line: Math.round(mm.line), diff: mm.diff == null ? '' : Math.round(mm.diff), flagged: mm.flagged };
+    const c = cardBy[h.n] || {}, mm = HM.mismatch(h, c.metres, out);
+    return { n: h.n, par: c.par ?? '', card: c.metres ?? '', line: Math.round(mm.line), diff: mm.diff == null ? '' : Math.round(mm.diff), gap: mm.teeGap, flagged: mm.flagged };
   });
   console.log(`\n${src.name} (${id}): ${holes.length} holes, ${features.length} shapes → web/course-maps/${id}.json`);
   console.log(`card: ${src.card ? src.card.tee + ' tees' : 'none'}`);
-  for (const r of rows) console.log(`  ${String(r.n).padStart(2)}  par ${r.par}  card ${String(r.card).padStart(3)}  line ${String(r.line).padStart(3)}  ${r.diff === '' ? '' : (r.diff >= 0 ? '+' : '') + r.diff}${r.flagged ? '  ⚑ over 10%' : ''}`);
+  const gapTxt = g => g == null ? '' : g === Infinity ? 'no tee box on the line' : g <= HM.TEE_NEAR ? `on a mapped tee (${Math.round(g)} m)` : `nearest tee box ${Math.round(g)} m away`;
+  for (const r of rows) console.log(`  ${String(r.n).padStart(2)}  par ${r.par}  card ${String(r.card).padStart(3)}  line ${String(r.line).padStart(3)}  ${r.diff === '' ? '' : ((r.diff >= 0 ? '+' : '') + r.diff).padEnd(4)}  ${gapTxt(r.gap)}${r.flagged ? '  ⚑' : ''}`);
   return { id, name: src.name, osmName: src.osm.name, holes: holes.length };
 }
 

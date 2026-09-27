@@ -427,10 +427,17 @@ scorecard sets every length.
   (`teeMetres(hole, round.tee)`) from the middle of the green along the hole
   line; forward along it if the card is shorter than the line, straight
   back behind the mapped tee if longer. Distances are real metres.
-- **Card vs line** over 10% apart is listed on the course page and the
-  hole's page, never hidden. Randwick 3 and 5 (reds) are flagged: OSM maps
-  one tee there, not the red. Bardwell's par 3s run 13–38 m short of the
-  yellows the same way; 17 is long because its line follows the curved fairway.
+- **The card check** (`mismatch`): a hole is flagged, on the course page and
+  the hole's page and never hidden, when the card and the line are over 10%
+  apart **and** the tee the card puts there isn't within 15 m (`TEE_NEAR`)
+  of one of the hole's mapped tee boxes. OSM lines usually start at the back
+  tee: The Coast's run up to 73 m past the yellow card, and the yellow tee
+  still lands on a mapped box, so a flag on length alone was noise (1.8.0
+  flagged 9 of its 18). A hole's tee boxes (`hole.tees`) are its own mapped
+  tees within 20 m of its line in the tee 60% of it, a box the line runs over
+  (≤ 3 m, for one box shared by two holes), and any tee a hand mapping names.
+  Flagged now: Bardwell 11 (28 m from any box), The Coast 18 (17 m). Randwick
+  3 and 5 aren't: the red tee is on the box (3's is 45 m long).
 - **Lies** come from the shape under the tap: water, bunker, green, tee or
   fairway (→ fairway), trees (woods, merged crowns, lone trees), mapped
   rough. Anything else is `null` and he picks: rough is never assumed,
@@ -457,8 +464,12 @@ scorecard sets every length.
   drawn (ODbL).
 - **Where the courses stand** (export of 2026-09-27): Randwick has OSM hole
   lines (tier A). Bardwell Valley has shapes but no lines, so its holes come
-  from his mapping in the source file. The others: Northbridge, Long Reef and The
-  Coast are tier A (The Coast lacks lines for 4 and 14); Hurstville has
+  from his mapping in the source file. The Coast (1.9.0) has OSM lines for 16
+  holes; 4 and 14 are in the source's `addHoles`, proposed from the routing and
+  the card and confirmed by him (14 drawn `straight`: the straight distance is
+  the card's 321 m, while the route along the fairway zig-zagged to 355). OSM has 11 as a
+  par 5; his card says 4, and the card wins. Northbridge and Long Reef are
+  tier A; Hurstville has
   lines but no greens; Barnwell Park, Beverley Park and Lane Cove have only
   a boundary; Hunter Valley's only nearby course is unnamed and partial, so
   it keeps its artwork (holes 1–9), and converting its old rounds waits for a map.
@@ -483,7 +494,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 212 tests, about 25s.
+`npm test` — 214 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -519,10 +530,11 @@ fixture would let the reading be pinned.
   `ui-courses-sort` (closest / recently added / A–Z, defaults, dates from ids),
   `ui-holemap` (linking a map, the card check, taps in metres and lies
   from shapes, outline holes staying put, edits keeping the link, unlinking).
-- `course-maps.test.js` (8) — the committed maps match their sources,
+- `course-maps.test.js` (10) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
-  ownership inside the boundary, Bardwell's mapping, the tee rule, lies,
-  the view's orientation and tap round trip.
+  ownership inside the boundary, Bardwell's and The Coast's hand-mapped
+  holes, which holes are flagged and why, the tee rule and the tee-box
+  check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
   a token already replaced), request logging without
   the query string, a clean SIGTERM exit, the YAML's replace markers.
@@ -538,7 +550,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps; all caught.
+9 for course maps, 4 for the 1.9.0 tee-box check; all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
@@ -560,8 +572,8 @@ In rough order of value:
 2. **Pose estimation on swing frames**, server-side. Turns swing analysis
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
-3. **More course maps** (see *Course maps*). Next: Northbridge, Long Reef,
-   The Coast (tier A); Hurstville needs estimated greens; Hunter Valley
+3. **More course maps** (see *Course maps*). Next: Hurstville (needs
+   estimated greens), then Northbridge and Long Reef (tier A); Hunter Valley
    waits for OSM, then its art rounds convert to approximate map positions.
 
 Done in 1.5.0: recency weighting of club distances, session filtering

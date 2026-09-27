@@ -1,0 +1,155 @@
+{
+ "id": "the-coast",
+ "name": "The Coast Golf Club",
+ "osm": {
+  "course": "relation/4237853",
+  "name": "The Coast Golf Club",
+  "exported": "2026-09-27"
+ },
+ "holesFrom": "OpenStreetMap, with holes 4 and 14 matched to the card by hand",
+ "origin": [
+  -33.98067,
+  151.2512
+ ],
+ "holes": "osm",
+ "addHoles": {
+  "4": {
+   "tees": [
+    "way/394668916",
+    "way/394668870"
+   ],
+   "green": "way/394668903"
+  },
+  "14": {
+   "tees": [
+    "way/394856006",
+    "way/394855995",
+    "way/394855997",
+    "way/394856099"
+   ],
+   "green": "way/394856208",
+   "straight": true
+  }
+ },
+ "addHolesSource": "OSM has no hole lines for 4 and 14; tees and greens proposed from the routing and the yellow card, confirmed by Zein. 14 is drawn straight: the straight distance matches the card (321 m) and the fairway lies along it.",
+ "card": {
+  "tee": "yellow",
+  "source": "Course GPS app screenshots, yellow tee to middle of the green, 2026-09-28",
+  "fields": [
+   "n",
+   "par",
+   "metres",
+   "si"
+  ],
+  "holes": [
+   [
+    1,
+    4,
+    350,
+    2
+   ],
+   [
+    2,
+    5,
+    387,
+    18
+   ],
+   [
+    3,
+    5,
+    385,
+    16
+   ],
+   [
+    4,
+    3,
+    140,
+    13
+   ],
+   [
+    5,
+    4,
+    333,
+    6
+   ],
+   [
+    6,
+    5,
+    460,
+    9
+   ],
+   [
+    7,
+    4,
+    317,
+    1
+   ],
+   [
+    8,
+    3,
+    155,
+    14
+   ],
+   [
+    9,
+    3,
+    150,
+    10
+   ],
+   [
+    10,
+    4,
+    238,
+    11
+   ],
+   [
+    11,
+    4,
+    344,
+    8
+   ],
+   [
+    12,
+    3,
+    141,
+    15
+   ],
+   [
+    13,
+    4,
+    370,
+    3
+   ],
+   [
+    14,
+    4,
+    321,
+    4
+   ],
+   [
+    15,
+    3,
+    123,
+    12
+   ],
+   [
+    16,
+    4,
+    317,
+    7
+   ],
+   [
+    17,
+    4,
+    335,
+    5
+   ],
+   [
+    18,
+    4,
+    250,
+    17
+   ]
+  ]
+ }
+}

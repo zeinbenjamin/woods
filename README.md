@@ -218,7 +218,8 @@ Adding a course:
 1. Export the area from overpass-turbo.eu (golf features, plus trees and
    woods inside golf courses) as GeoJSON.
 2. Write `course-maps/src/<id>.json`. Use `"holes": "osm"` where OSM has hole
-   lines (`golf=hole`); otherwise map each hole's tees and green by OSM id.
+   lines (`golf=hole`), plus `addHoles` for any it lacks; otherwise map each
+   hole's tees and green by OSM id.
    Pick an `origin` near the middle of the course and never change it once
    rounds are logged on the map.
 3. `node scripts/course-maps.js extract <id> export.geojson [trees.geojson]`
