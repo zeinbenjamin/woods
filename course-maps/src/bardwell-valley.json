@@ -1,0 +1,265 @@
+{
+ "id": "bardwell-valley",
+ "name": "Bardwell Valley Golf Club",
+ "osm": {
+  "course": "way/174113617",
+  "name": "Bardwell Valley Golf Course",
+  "exported": "2026-09-27"
+ },
+ "origin": [
+  -33.93754,
+  151.12662
+ ],
+ "holes": {
+  "1": {
+   "tees": [
+    "way/1305186317",
+    "way/1305186322",
+    "way/1305186323"
+   ],
+   "green": "way/1305178865"
+  },
+  "2": {
+   "tees": [
+    "way/1305186325"
+   ],
+   "green": "way/1305206632"
+  },
+  "3": {
+   "tees": [
+    "way/1305186328",
+    "way/1305186329",
+    "way/1305186330"
+   ],
+   "green": "way/1305186331"
+  },
+  "4": {
+   "tees": [
+    "way/1305214170",
+    "way/1305214169",
+    "way/1305214168"
+   ],
+   "green": "way/1305217820"
+  },
+  "5": {
+   "tees": [
+    "way/1305229299"
+   ],
+   "green": "way/1305218204"
+  },
+  "6": {
+   "tees": [
+    "way/1305229880"
+   ],
+   "green": "way/1305229888"
+  },
+  "7": {
+   "tees": [
+    "way/1305230437"
+   ],
+   "green": "way/1305230438"
+  },
+  "8": {
+   "tees": [
+    "way/1305230893",
+    "way/1305230892"
+   ],
+   "green": "way/1305233087"
+  },
+  "9": {
+   "tees": [
+    "way/1305186318",
+    "way/1305186324"
+   ],
+   "green": "way/1305246944"
+  },
+  "10": {
+   "tees": [
+    {
+     "id": "way/1305247217",
+     "half": "nearest"
+    }
+   ],
+   "green": "way/1305247469"
+  },
+  "11": {
+   "tees": [
+    "way/1305248951"
+   ],
+   "green": "way/1305249646"
+  },
+  "12": {
+   "tees": [
+    "way/1305250030"
+   ],
+   "green": "way/1305250439"
+  },
+  "13": {
+   "tees": [
+    "way/1305251051"
+   ],
+   "green": "way/1305256441"
+  },
+  "14": {
+   "tees": [
+    "way/1305257516"
+   ],
+   "green": "way/1305258367"
+  },
+  "15": {
+   "tees": [
+    "way/1305258723"
+   ],
+   "green": "way/1305259235"
+  },
+  "16": {
+   "tees": [
+    "way/1305260140"
+   ],
+   "green": "way/1305260728",
+   "via": "way/1305261819"
+  },
+  "17": {
+   "tees": [
+    "way/1305261864"
+   ],
+   "green": "way/1305273526",
+   "via": "way/1305274197"
+  },
+  "18": {
+   "tees": [
+    {
+     "id": "way/1305247217",
+     "half": "nearest"
+    }
+   ],
+   "green": "way/1305275130"
+  }
+ },
+ "holesSource": "Zein's mapping from playing the course (OSM has no hole lines here). Holes 10 and 18 share one mapped tee, split along its length; each hole uses the half nearer its green.",
+ "ignore": {
+  "way/1305274269": "driving range tee (lessons)",
+  "way/1305275489": "driving range target",
+  "way/1305186319": "practice putting green"
+ },
+ "card": {
+  "tee": "yellow",
+  "source": "Course GPS app screenshots, yellow tee to middle of the green, 2026-09-27",
+  "fields": [
+   "n",
+   "par",
+   "metres",
+   "si"
+  ],
+  "holes": [
+   [
+    1,
+    3,
+    128,
+    7
+   ],
+   [
+    2,
+    4,
+    332,
+    10
+   ],
+   [
+    3,
+    3,
+    145,
+    9
+   ],
+   [
+    4,
+    4,
+    373,
+    4
+   ],
+   [
+    5,
+    4,
+    275,
+    11
+   ],
+   [
+    6,
+    3,
+    140,
+    17
+   ],
+   [
+    7,
+    3,
+    140,
+    16
+   ],
+   [
+    8,
+    4,
+    281,
+    15
+   ],
+   [
+    9,
+    3,
+    117,
+    18
+   ],
+   [
+    10,
+    4,
+    331,
+    12
+   ],
+   [
+    11,
+    3,
+    151,
+    6
+   ],
+   [
+    12,
+    3,
+    199,
+    2
+   ],
+   [
+    13,
+    4,
+    377,
+    3
+   ],
+   [
+    14,
+    3,
+    164,
+    8
+   ],
+   [
+    15,
+    3,
+    167,
+    13
+   ],
+   [
+    16,
+    4,
+    363,
+    1
+   ],
+   [
+    17,
+    4,
+    286,
+    14
+   ],
+   [
+    18,
+    3,
+    162,
+    5
+   ]
+  ]
+ }
+}

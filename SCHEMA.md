@@ -55,6 +55,7 @@ values. Measured numbers are derived from shots and never written back.
                                             // matched to a round's tee ignoring case);
   },                                 // a 9-hole card carries 9-hole ratings
   "notes": "…", "source": "club scorecard PDF",
+  "map": { "id": "randwick", "linked": "2026-09-28" },  // optional: drawn from web/course-maps/<id>.json
   "holes": [
     {
       "n": 1,                        // 1..18, contiguous, no gaps
@@ -85,7 +86,37 @@ values. Measured numbers are derived from shots and never written back.
   `teeMetres(hole, tee)`.
 - `art` coordinates are **image pixels**, meaningless without that image.
 - Editing a course must preserve every hole field the form doesn't own
-  (`art`, `shape`, `si`, `tees`).
+  (`art`, `shape`, `si`, `tees`), and the course's `map`.
+- `map` stores only which map file the course uses. The shapes live in the
+  file (see *Course maps* below), never in the database.
+
+### Course maps (`web/course-maps/<id>.json`)
+
+Built by `scripts/course-maps.js` from OpenStreetMap data and committed; not a
+database document. Metres on a local plane: x east, y north, from `origin`.
+
+```jsonc
+{
+  "v": 1, "id": "randwick", "name": "Randwick Golf Club",
+  "osm": { "course": "relation/5702325", "name": "Randwick Golf Course", "exported": "2026-09-27" },
+  "attribution": "© OpenStreetMap contributors", "licence": "ODbL-1.0",
+  "origin": [-33.97271, 151.25582],     // fixed forever: map shots are stored in this plane
+  "holesFrom": "OpenStreetMap hole lines",
+  "boundary": [[[x, y], …]],            // rings
+  "features": [
+    { "k": "green|tee|fairway|bunker|water|rough|canopy", "r": [[[x, y], …]], "h": 7, "osm": "way/…" },
+    { "k": "path", "l": [[x, y], …], "h": 7, "osm": "…" },
+    { "k": "crowns", "c": [[x, y, radius], …], "h": null, "osm": "…" },   // merged mapped trees
+    { "k": "tree", "c": [x, y], "rad": 5.5, "h": 7, "osm": "…" }           // a lone tree
+  ],                                    // h: the hole it belongs to; null = none (drawn faded)
+  "holes": [{ "n": 7, "line": [[x, y], …], "green": 58, "tees": [77] }]
+}                                       // line: mapped tee → middle of the green; green/tees index features
+```
+
+- The **tee rule**: the tee a round was played from sits `teeMetres(hole, tee)`
+  from the end of `line`, along it (forward of the mapped tee if the card is
+  shorter, straight back behind it if longer). Worked out on every draw.
+- Card vs mapped line more than 10% apart is flagged on the course page, never hidden.
 
 ---
 
@@ -119,7 +150,7 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 }
 ```
 
-**Shots** exist in one of two coordinate frames, never mixed within a hole:
+**Shots** exist in one of three coordinate frames, never mixed within a hole:
 
 ```jsonc
 // art frame — tapped on hole artwork, image pixels
@@ -128,7 +159,13 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 
 // outline frame — tapped on the drawn stencil
 { "t": 0.55, "u": 0.2, "club": "5W", "lie": "rough" }
+
+// map frame — tapped on a course map, metres on the map's plane
+{ "mx": -24.1, "my": -140.3, "club": "7i", "lie": "bunker" }
 ```
+
+- On a map, `lie` is set from the shape under the tap, and left out where nothing
+  is mapped (he picks it). A map shot on a course without its map is not measurable.
 
 - `t` runs 0 at the tee to 1 at the green; `u` is lateral, -1..1 across the rough.
 - `verified: true` means a flagged long shot was confirmed real, not a mis-tap.

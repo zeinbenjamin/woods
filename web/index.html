@@ -233,6 +233,7 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 <dialog class="sheet" id="confirmDlg"><div class="inner"><p id="confirmMsg" style="margin:8px 0 0"></p><div class="sheet-actions"><button id="confirmNo">Cancel</button><button class="danger-solid" id="confirmYes">Delete</button></div></div></dialog>
 <div class="toast" id="toast"></div>
 <script src="platform.js"></script>
+<script src="holemap.js"></script>
 <script>
 /* ============================================================
    Carry — range and round tracker
@@ -558,6 +559,7 @@ function parseGo(str) {
   const j = rest.indexOf(':'); return [tab, { [rest.slice(0, j)]: rest.slice(j + 1) }];
 }
 function render() {
+  if (window.HoleMap) HoleMap.onLoad = () => render();
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
   const views = { overview: vOverview, range: vRange, rounds: vRounds, courses: vCourses, bag: vBag };
   // Every save redraws the view; panels he opened stay open (matched by id).
@@ -1081,8 +1083,9 @@ function vCourse() {
   if (c.holes && c.holes.length) {
     const gaps = missingHoles(c.holes);
     if (gaps.length) h += `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing from this scorecard. <button class="quiet" data-act="editCourse" data-id="${c.id}">Add ${gaps.length > 1 ? 'them' : 'it'}</button></div>`;
-    h += stencilGrid(fullCard(c.holes).map(x => ({ ...x, _dots: x.par != null ? dotsFor(c.id, x) : [] })), { act: 'viewHole', id: c.id }) + `<p class="small muted">Dots show where your shots finished across every round here. Tap a hole for its history and layout.</p>`;
+    h += stencilGrid(fullCard(c.holes).map(x => { const y = withHm(c, x); return { ...y, _dots: y.par != null ? dotsFor(c.id, y) : [] }; }), { act: 'viewHole', id: c.id }) + `<p class="small muted">Dots show where your shots finished across every round here. Tap a hole for its history and layout.</p>`;
   }
+  h += courseMapSection(c);
   h += `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${c.bookingUrl ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
     ${c.feeWeekday || c.feeWeekend ? `<dt>Green fee</dt><dd>${c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : ''}${c.feeWeekday && c.feeWeekend ? ', ' : ''}${c.feeWeekend ? '$' + c.feeWeekend + ' weekend' : ''}</dd>` : ''}
     ${Object.keys(c.ratings || {}).length ? `<dt>Ratings</dt><dd id="courseRatings">${Object.entries(c.ratings).map(([t, r]) => `${esc(t)}: ${fmt(r.cr, 1)} / slope ${r.slope}`).join(' · ')}</dd>` : ''}
@@ -1090,6 +1093,39 @@ function vCourse() {
   if (rounds.length) h += `<h2>Rounds here</h2><div class="list">${rounds.map(sessionItem).join('')}</div>`;
   h += `<div class="row-actions"><button class="danger" data-act="deleteCourse" data-id="${c.id}">Delete course</button></div>`;
   return h;
+}
+
+/* ---------- course map (OpenStreetMap) ----------
+   Linking stores only which map the course uses; the shapes stay in the
+   map file. The tee check is worked out on every draw from the card. */
+const plainName = x => String(x || '').toLowerCase().replace(/golf|club|course|country|links|\bthe\b|[^a-z]/g, '');
+function courseMapSection(c) {
+  if (!window.HoleMap || !(c.holes || []).length) return '';
+  if (c.map && c.map.id) {
+    const m = HoleMap.get(c.map.id);
+    if (m === undefined) return `<section class="sec" id="courseMap"><h2>Course map</h2><p class="small muted">Loading the map…</p></section>`;
+    if (m === null) return `<section class="sec" id="courseMap"><h2>Course map</h2><div class="notice warn">This course uses the map "${esc(c.map.id)}", which isn't on this server. Its holes are drawn from the outline until it's back.</div><div class="row-actions"><button data-act="unlinkMap" data-id="${c.id}">Stop using it</button></div></section>`;
+    const tee = primaryTee(c);
+    const rows = c.holes.map(h => ({ n: h.n, x: m.byN[h.n] ? HoleMap.mismatch(m.byN[h.n], teeMetres(h, tee)) : null }));
+    const missing = rows.filter(r => !r.x).map(r => r.n), flagged = rows.filter(r => r.x && r.x.flagged);
+    return `<section class="sec" id="courseMap"><h2>Course map</h2>
+      <p class="small">Holes are drawn from <b>${esc(m.osm.name)}</b> on OpenStreetMap; hole lines from ${esc(m.holesFrom)}. Distances are real metres, and the ${esc(tee)} tee sits its card distance from the middle of the green, along the hole line. The lie is read from the shape you tap; where nothing is mapped, you pick it.</p>
+      ${flagged.length ? `<div class="notice warn" id="mapFlags">${flagged.length === 1 ? 'One hole' : flagged.length + ' holes'} where the card and the mapped line are more than 10% apart, so the tee is placed from the card rather than on the mapped tee: ${flagged.map(r => `hole ${r.n} (card ${r.x.card}m, map ${Math.round(r.x.line)}m)`).join(', ')}.</div>` : ''}
+      ${missing.length ? `<p class="small muted">Not on the map, so drawn from the outline: hole ${missing.join(', ')}.</p>` : ''}
+      <p class="small muted">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL.</p>
+      <div class="row-actions"><button data-act="unlinkMap" data-id="${c.id}">Stop using this map</button></div></section>`;
+  }
+  const idx = HoleMap.list();
+  if (!idx || !idx.length) return '';
+  const guess = idx.find(x => plainName(x.name) === plainName(c.name) || plainName(x.osmName) === plainName(c.name));
+  return `<section class="sec" id="courseMap"><h2>Course map</h2><p class="small muted">A map drawn from OpenStreetMap can replace the outline: the real shapes, real distances, and the lie read from where you tap.</p>
+    ${selectF('Map', 'mapPick', idx.map(x => [x.id, x.name]), guess ? guess.id : idx[0].id)}
+    <div class="row-actions"><button class="primary" data-act="linkMap" data-id="${c.id}">Use this map</button></div></section>`;
+}
+// On a hole's own page: how the card compares with the mapped line.
+function holeCheck(h) {
+  const x = h.hm && h.hm.check; if (!x || !x.flagged) return '';
+  return `<p class="small muted" id="holeCheck" style="text-align:center">Card ${x.card}m, mapped line ${Math.round(x.line)}m. The tee is placed from the card, ${x.diff > 0 ? 'ahead of' : 'behind'} the mapped tee.</p>`;
 }
 
 /* ---------- bag ---------- */
@@ -1411,6 +1447,20 @@ async function saveClub(root, c) {
 }
 
 
+Object.assign(ACTIONS, {
+  async linkMap(d) {
+    const c = course(d.id), pick = document.querySelector('#courseMap [name=mapPick]'); if (!c || !pick) return;
+    if (await save('courses', c.id, { ...c, map: { id: pick.value, linked: today() } })) { toast('Course map on'); render(); }
+  },
+  async unlinkMap(d) {
+    const c = course(d.id); if (!c) return;
+    const traced = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id && (s.holes || []).some(h => (h.shots || []).some(x => x.mx != null))).length;
+    if (!await confirmAsk(traced ? `Stop using the map? ${plural(traced, 'round')} here ${traced === 1 ? 'has' : 'have'} shots traced on it; they'll show as not measurable until the map is used again. Nothing is deleted.` : 'Stop using the course map? Holes go back to their outline.', 'Stop using it')) return;
+    const { map: _, ...rest } = c;
+    if (await save('courses', c.id, rest)) { toast('Course map off'); render(); }
+  },
+});
+
 /* ============================================================
    Hole stencils
    Each hole is a schematic: a fairway ribbon along a quadratic
@@ -1475,7 +1525,7 @@ function stencilGrid(holes, opts = {}) {
     const st = opts.scores ? scoreClass(h) : '';
     const sub = opts.scores && h.strokes != null ? `${h.strokes}` : `${h.metres || '–'}m`;
     return `<button class="tile ${st === 'b3' || st === 'b2' ? 'hot' : ''}" data-act="${opts.act}" data-n="${h.n}" data-id="${esc(opts.id || '')}" title="Hole ${h.n}">
-      ${usesArt(h) ? artSVG(h, { dots: h._dots }) : stencilSVG(h, { lenFrac: (h.metres || maxM) / maxM, shots: h.shots, dots: h._dots })}
+      ${usesMap(h) ? HoleMap.svg(h.hm, { par: h.par, shots: mapShots(h), dots: (h._dots || []).filter(s => s.mx != null).map(s => ({ p: [s.mx, s.my], first: s.first })) }) : usesArt(h) ? artSVG(h, { dots: h._dots }) : stencilSVG(h, { lenFrac: (h.metres || maxM) / maxM, shots: h.shots, dots: h._dots })}
       <div class="lab"><b>${h.n}</b><span>par ${h.par ?? '–'}</span><span>${sub}</span></div></button>`;
   }).join('') + `</div>`;
 }
@@ -1512,7 +1562,7 @@ function vHoleLog() {
   const r = session(S.sub.sessionId); if (!r) return back('rounds', null, 'Rounds') + `<p>Round not found.</p>`;
   const n = Number(S.sub.hole); const all = holesOf(r); const h = all.find(x => x.n === n); if (!h) return back('rounds', 'sessionId:' + r.id, r.courseName) + `<p>Hole not found.</p>`;
   const hole = h; const maxM = Math.max(...all.map(x => x.metres || 0), 1);
-  const shots = h.shots || []; const last = shots[shots.length - 1]; const art = usesArt(h);
+  const shots = h.shots || []; const last = shots[shots.length - 1]; const map = usesMap(h), art = !map && usesArt(h);
   const leftRaw = toGreen(h, last), distLeft = leftRaw == null ? null : Math.round(leftRaw);
   const onGreen = last && lieOf(h, last) === 'green';
   const strokes = holeStrokes(hole);
@@ -1520,8 +1570,8 @@ function vHoleLog() {
   let html = back('rounds', 'sessionId:' + r.id, r.courseName) + `<div class="spread"><h1>Hole ${n} <span class="muted">par ${hole.par}, ${hole.metres || '–'}m</span></h1>
     <div class="row-actions" style="margin:0">${n > 1 ? `<button data-go="rounds:sessionId=${r.id},hole=${n - 1}">‹</button>` : ''}${n < all.length ? `<button data-go="rounds:sessionId=${r.id},hole=${n + 1}">›</button>` : ''}</div></div>`;
   if (S.moving && S.moving.n === n) html += `<div class="notice">Moving shot ${S.moving.i + 1} — tap where it finished. <button class="quiet" data-act="cancelMove">Cancel</button></div>`;
-  html += `<div class="bigmap">${art ? artSVG(h, { big: true, attrs: 'id="logMap"' }) : stencilSVG(h, { lenFrac: (hole.metres || maxM) / maxM, big: true, shots, attrs: 'id="logMap"' })}</div>
-    <div class="map-hint">${onGreen ? 'On the green. Add putts below.' : distLeft == null ? 'Tap where the next shot finished.' : shots.length ? `${distLeft}m to the green. Tap where the next shot finished.` : 'Tap where your tee shot finished.'}${h.art && !art ? ' <span class="muted">(Shots here were logged on the drawn outline, so it stays for this round.)</span>' : ''}</div>
+  html += `<div class="bigmap">${map ? HoleMap.svg(h.hm, { big: true, par: h.par, shots: mapShots(h), attrs: 'id="logMap"' }) : art ? artSVG(h, { big: true, attrs: 'id="logMap"' }) : stencilSVG(h, { lenFrac: (hole.metres || maxM) / maxM, big: true, shots, attrs: 'id="logMap"' })}</div>${map ? MAP_CREDIT : ''}
+    <div class="map-hint">${h.hm === undefined ? 'Loading the course map… ' : ''}${onGreen ? 'On the green. Add putts below.' : distLeft == null ? 'Tap where the next shot finished.' : shots.length ? `${distLeft}m to the green. Tap where the next shot finished.` : 'Tap where your tee shot finished.'}${(h.art || h.hm) && !art && !map && shots.length ? ` <span class="muted">(Shots here were logged on ${shots.some(s => s.x != null) ? 'the artwork' : 'the drawn outline'}, so it stays for this round.)</span>` : ''}</div>
     ${!onGreen && adviceFor(distLeft) ? `<p class="small advice" style="text-align:center">${adviceFor(distLeft)}</p>` : ''}`;
   html += clubArmRow(r, h, distLeft);
   if (last) html += `<div class="chips" style="justify-content:center;margin:-2px 0 10px">${['green', 'fairway', 'rough', 'bunker', 'water', 'trees'].map(l => `<button class="chip lie" data-lie="${l}" aria-pressed="${lieOf(h, last) === l}">${l}</button>`).join('')}</div>`;
@@ -1564,7 +1614,21 @@ document.addEventListener('click', async e => {
     const h = holesOf(r).find(x => x.n === n); const prev = (h.shots || []).slice(-1)[0];
     const moving = S.moving && S.moving.n === n ? S.moving.i : null;
     const club = armedClubFor(h, toGreen(h, prev));
-    if (usesArt(h)) {
+    // A linked map that hasn't arrived yet: don't let the tap land on the outline instead.
+    if (h.hm === undefined) { toast('The course map is still loading'); return; }
+    if (usesMap(h)) {
+      const q = svgPoint(svg, e), [mx, my] = HoleMap.tapToMap(h.hm, [q.x, q.y]).map(v => +v.toFixed(1));
+      const lie = HoleMap.lieAt(h.hm.map, [mx, my]);   // null where nothing is mapped: he picks
+      await updateHole(r, n, hh => {
+        if (moving != null) { hh.shots = hh.shots.map((s, j) => { if (j !== moving) return s; const { lie: _, ...rest } = s; return { ...rest, mx, my, ...(lie ? { lie } : {}) }; }); return; }
+        const s = { mx, my, club }; if (lie) s.lie = lie; hh.shots = (hh.shots || []).concat(s);
+        if (lie === 'green' && hh.firstPutt == null) {
+          const d = toGreen({ ...h, shots: hh.shots }, s);
+          if (d != null && d <= 40) { hh.firstPutt = +d.toFixed(1); hh.firstPuttEstimated = true; }
+        }
+      });
+      if (moving != null) { S.moving = null; toast('Shot moved'); render(); }
+    } else if (usesArt(h)) {
       const p = svgPoint(svg, e), x = Math.max(0, Math.min(h.art.w, p.x)), y = Math.max(0, Math.min(h.art.h, p.y));
       const lie = await lieAt(h.art, x, y);
       await updateHole(r, n, hh => {
@@ -1628,6 +1692,7 @@ const metresPerPx = h => (h.metres || 0) / (pxToGreen(h.art, h.art.tee) || 1);
 // Metres from a shot's finishing spot to the green, for either kind of hole.
 function toGreen(h, s) {
   if (!s) return h.metres || 0;
+  if (s.mx != null) return h.hm ? HoleMap.toGreen(h.hm.pl, [s.mx, s.my]) : null;
   if (s.x != null) return h.art ? Math.max(0, pxToGreen(h.art, [s.x, s.y]) * metresPerPx(h)) : null;
   if (s.t != null) return Math.max(0, (1 - s.t) * (h.metres || 0));
   return null;   // a shot this hole can't place (e.g. artwork removed under it)
@@ -1638,8 +1703,10 @@ function bezLen(g) { let L = 0, p = bez(g, 0); for (let i = 1; i <= 60; i++) { c
 // artwork) and outline units. Both ends of a shot must be measured in the
 // SAME frame, or the numbers are meaningless — so the frame is chosen by
 // the shot being measured and the tee is placed in that same frame.
-const frameOf = s => s == null ? null : s.x != null ? 'art' : s.t != null ? 'outline' : null;
+const frameOf = s => s == null ? null : s.mx != null ? 'map' : s.x != null ? 'art' : s.t != null ? 'outline' : null;
 function spot(h, s, frame) {
+  // On a map the scale is 1: it's already metres. The tee is where the tee rule puts it.
+  if (frame === 'map') return h.hm ? { p: s ? [s.mx, s.my] : h.hm.tee, k: 1 } : null;
   if (frame === 'art') return h.art ? { p: s ? [s.x, s.y] : h.art.tee, k: metresPerPx(h) } : null;
   if (s && s.t == null) return null;
   const g = holeGeom(h, 1), q = s ? holePt(g, s.t, s.u) : holePt(g, 0, 0);
@@ -1663,11 +1730,21 @@ function holesOf(r) {
     // Distance resolves through the tee the round was played off; the
     // round's own snapshot is the fallback.
     const m = r.tee && src ? teeMetres(src, r.tee) : null;
-    return { ...h, metres: m ?? h.metres, shape: (src && src.shape) || h.shape, art: src && src.art };
+    const metres = m ?? h.metres;
+    return { ...h, metres, shape: (src && src.shape) || h.shape, art: src && src.art, hm: hmFor(c, h.n, metres) };
   });
 }
 // Use art only when every logged shot on the hole was tapped on art.
 const usesArt = h => !!h.art && (h.shots || []).every(s => s.x != null);
+/* Course maps (web/holemap.js). A course linked to a map draws its holes
+   from real shapes: shots tapped on it are {mx, my}, metres on the map's
+   own plane. hm is undefined while the map file loads, null without one. */
+const hmFor = (c, n, metres) => c && c.map && c.map.id && window.HoleMap ? HoleMap.forHole(c.map.id, n, metres) : null;
+const withHm = (c, h) => ({ ...h, hm: hmFor(c, h.n, h.metres) });
+// The map wins over art and the outline, unless shots were logged on another one.
+const usesMap = h => !!h.hm && (h.shots || []).every(s => s.mx != null);
+const mapShots = h => (h.shots || []).filter(s => s.mx != null).map(s => ({ p: [s.mx, s.my], pen: !!s.penalty }));
+const MAP_CREDIT = `<p class="small muted map-credit" style="text-align:center;margin:4px 0 0">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>`;
 
 function artSVG(h, opts = {}) {
   const a = h.art, big = !!opts.big;
@@ -2139,15 +2216,15 @@ function calibrationSection() {
 /* ---------- per-hole history on the course page ---------- */
 function holePlays(courseId, n) { return S.sessions.filter(s => s.type === 'round' && s.courseId === courseId).map(r => ({ r, h: holesOf(r).find(x => x.n === n) })).filter(p => p.h && p.h.strokes != null); }
 function dotsFor(courseId, hole) {
-  const art = !!hole.art;
-  return holePlays(courseId, hole.n).flatMap(p => (p.h.shots || []).map((s, i) => ({ ...s, first: i === 0 })).filter(s => art ? s.x != null : s.t != null));
+  const frame = hole.hm ? 'map' : hole.art ? 'art' : 'outline';
+  return holePlays(courseId, hole.n).flatMap(p => (p.h.shots || []).map((s, i) => ({ ...s, first: i === 0 })).filter(s => frameOf(s) === frame));
 }
 function vCourseHole() {
-  const c = course(S.sub.courseId), n = Number(S.sub.hole); const hole = c && fullCard(c.holes).find(h => h.n === n);
+  const c = course(S.sub.courseId), n = Number(S.sub.hole); const card = c && fullCard(c.holes).find(h => h.n === n), hole = card && withHm(c, card);
   if (!hole || hole.par == null) return back('courses', c ? 'courseId:' + c.id : null, c ? c.name : 'Courses') + `<p>Hole not found.</p>`;
   const plays = holePlays(c.id, n), dots = dotsFor(c.id, hole);
   let h = back('courses', 'courseId:' + c.id, c.name) + `<div class="spread"><h1>Hole ${n} <span class="muted">par ${hole.par}, ${hole.metres || '–'}m</span></h1><div class="row-actions" style="margin:0">${n > 1 ? `<button data-go="courses:courseId=${c.id},hole=${n - 1}">‹</button>` : ''}${n < fullCard(c.holes).length ? `<button data-go="courses:courseId=${c.id},hole=${n + 1}">›</button>` : ''}</div></div>`;
-  h += `<div class="bigmap">${hole.art ? artSVG({ ...hole, shots: [] }, { big: true, dots }) : stencilSVG(hole, { big: true, dots })}</div>`;
+  h += `<div class="bigmap">${hole.hm ? HoleMap.svg(hole.hm, { big: true, par: hole.par, dots: dots.map(s => ({ p: [s.mx, s.my], first: s.first })) }) : hole.art ? artSVG({ ...hole, shots: [] }, { big: true, dots }) : stencilSVG(hole, { big: true, dots })}</div>${hole.hm ? MAP_CREDIT + holeCheck(hole) : ''}`;
   if (dots.length) h += `<div class="legend" style="justify-content:center"><span><i class="l-teedot"></i>tee shots</span><span><i class="l-dot"></i>other shots</span><span>${plural(plays.filter(p => (p.h.shots || []).length).length, 'round')} traced</span></div>`;
   const par3 = hole.par === 3 && adviceFor(hole.metres) ? `<p class="small advice">${adviceFor(hole.metres)}</p>` : '';
   if (!plays.length) {

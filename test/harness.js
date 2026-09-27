@@ -71,12 +71,15 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
   const downloads = [];        // { filename, blob }
   const objectURLs = new Map();
   let win;
-  const shim = readFileSync('web/platform.js', 'utf8');
   // The page as the server serves it (version stamped into its meta tags),
-  // with the shim inlined: jsdom's resource loader is slow and unnecessary.
+  // with its scripts inlined: jsdom's resource loader is slow and unnecessary.
   const served = await (await fetch(`${base}/`)).text();
-  const html = served.replace('<script src="platform.js"></script>', `<script>${shim}</script>`);
-  if (html === served) throw new Error('harness: platform.js script tag not found in the served page');
+  let html = served;
+  for (const f of ['platform.js', 'holemap.js']) {
+    const tag = `<script src="${f}"></script>`;
+    if (!html.includes(tag)) throw new Error(`harness: ${f} script tag not found in the served page`);
+    html = html.replace(tag, () => `<script>${readFileSync('web/' + f, 'utf8')}</script>`);
+  }
 
   const dom = new JSDOM(html, {
     url: base + '/' + query, runScripts: 'dangerously', pretendToBeVisual: true,

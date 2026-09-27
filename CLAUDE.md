@@ -116,11 +116,23 @@ server knowledge through the app.
 server/index.js     routes, token auth, static hosting
 server/db.js        SQLite: JSON documents + asset metadata
 server/anthropic.js the Messages API call — the only place the key exists
-web/index.html      the entire app, one file, ~2,250 lines (~2,030 of them JS)
+web/index.html      the app, one file, ~3,200 lines
 web/platform.js     the shim: artifact capability surface → this API
+web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
+web/course-maps/    built map files, one per course, + index.json (committed)
+course-maps/        map sources: src/<id>.json (card, mapping, origin), osm/<id>.geojson
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
+scripts/course-maps.js     extract a course from an OSM export; build its map file
 deploy/truenas-compose.yml paste-ready for the SCALE Custom App form
 ```
+
+`holemap.js` is a separate file on purpose: two chats work on this repo at
+once, and keeping the map code out of `index.html` keeps their changes
+apart. `index.html` only calls it at the few places a hole is drawn or
+tapped. The build script and the tests load the same file in a `vm`
+sandbox, so the tee rule and the lie rules can't drift between the build
+report and the app. It's served `no-cache` like the page, and so are the
+map files (`.json` under `web/`).
 
 Storage is SQLite holding JSON documents. Documents are small and always
 read whole, so a document store is the right shape — but it's SQLite
@@ -398,6 +410,59 @@ shows it under Current form with the scores behind it.
   everyone's scores that day), and the daily review GA runs. It's labelled an
   estimate, not an official GA handicap.
 
+## Course maps
+
+Holes can be drawn from OpenStreetMap instead of the outline or artwork
+(1.8.0). The decision behind it: **AI decides nothing about where things
+are.** Image generation moved hazards, and pixel colour was deciding lies,
+so an illustration drifting would have corrupted distances and lies. Now
+shapes come from OSM, the look is a fixed style drawn by code, and the
+scorecard sets every length.
+
+- **What's stored:** a course carries only `map: {id, linked}`. The shapes
+  are in `web/course-maps/<id>.json`, built by `scripts/course-maps.js` from
+  `course-maps/src/<id>.json` + `course-maps/osm/<id>.geojson` and committed.
+  A test rebuilds them and fails if the committed files differ.
+- **The tee rule:** the tee played sits the card distance
+  (`teeMetres(hole, round.tee)`) from the middle of the green along the hole
+  line; forward along it if the card is shorter than the line, straight
+  back behind the mapped tee if longer. Distances are real metres.
+- **Card vs line** over 10% apart is listed on the course page and the
+  hole's page, never hidden. Randwick 3 and 5 (reds) are flagged: OSM maps
+  one tee there, not the red. Bardwell's par 3s run 13–38 m short of the
+  yellows the same way; 17 is long because its line follows the curved fairway.
+- **Lies** come from the shape under the tap: water, bunker, green, tee or
+  fairway (→ fairway), trees (woods, merged crowns, lone trees), mapped
+  rough. Anything else is `null` and he picks: rough is never assumed,
+  because trees are patchy in OSM (Bankstown, Camden and Pymble show
+  none).
+- **Estimated fairway:** a par 4/5 with no mapped fairway of its own gets a
+  dashed 32 m strip from 120 m out (or 40% of the way) to the green's edge.
+  It's decoration only: it never sets a lie.
+- **Frames:** a map shot is `{mx, my}` in metres from the map's fixed
+  `origin`. Three frames now (map, art, outline), still never mixed on one
+  hole: a hole already traced on another frame keeps it for that round.
+  The origin never changes once rounds are logged. Unlinking keeps the
+  shots; they're "not measurable" until the map is back.
+- **Ownership:** a shape belongs to the nearest hole line only if its
+  middle is inside the course boundary. With "any vertex inside", a
+  neighbour's fairway poking over the fence became Randwick 7's and its
+  estimated strip vanished. Features that aren't part of any hole
+  (Bardwell's range, putting green) are listed in the source's `ignore`.
+- **Trees:** mapped single trees within 14 m of each other, in groups of 3
+  or more, merge into one canopy; lone trees stay single. Canopy is drawn
+  outline-then-fill, so touching crowns read as one scalloped edge with no
+  boolean geometry.
+- **Credit:** "Map data © OpenStreetMap contributors" wherever a map is
+  drawn (ODbL).
+- **Where the courses stand** (export of 2026-09-27): Randwick has OSM hole
+  lines (tier A). Bardwell Valley has shapes but no lines, so its holes come
+  from his mapping in the source file. The others: Northbridge, Long Reef and The
+  Coast are tier A (The Coast lacks lines for 4 and 14); Hurstville has
+  lines but no greens; Barnwell Park, Beverley Park and Lane Cove have only
+  a boundary; Hunter Valley's only nearby course is unnamed and partial, so
+  it keeps its artwork (holes 1–9), and converting its old rounds waits for a map.
+
 ## Range data from screenshots
 
 Range shots come from screenshots of the bay's shot list, not typing:
@@ -418,7 +483,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 197 tests, about 20s (55s on one core).
+`npm test` — 212 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -451,7 +516,13 @@ fixture would let the reading be pinned.
   sessions), `ui-penalties` (the penalty report), `ui-handicap` (the
   WHS estimate against hand-worked scores: caps, the table, exceptional
   scores, pairing nines, soft and hard caps, 54.0, the ratings form),
-  `ui-courses-sort` (closest / recently added / A–Z, defaults, dates from ids).
+  `ui-courses-sort` (closest / recently added / A–Z, defaults, dates from ids),
+  `ui-holemap` (linking a map, the card check, taps in metres and lies
+  from shapes, outline holes staying put, edits keeping the link, unlinking).
+- `course-maps.test.js` (8) — the committed maps match their sources,
+  attribution and fixed origins, Randwick's own lines (not the neighbour's),
+  ownership inside the boundary, Bardwell's mapping, the tee rule, lies,
+  the view's orientation and tap round trip.
 - `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
   a token already replaced), request logging without
   the query string, a clean SIGTERM exit, the YAML's replace markers.
@@ -466,8 +537,8 @@ the frame is painted.
 Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
-1.5.0's distances, penalties and housekeeping, 26 for the handicap;
-all caught.
+1.5.0's distances, penalties and housekeeping, 26 for the handicap,
+9 for course maps; all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
@@ -489,11 +560,9 @@ In rough order of value:
 2. **Pose estimation on swing frames**, server-side. Turns swing analysis
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
-3. **Course data from OpenStreetMap.** `golf=hole` ways carry par, length
-   and stroke index; the polygons would give true hole shapes instead of
-   drawn outlines or hand-placed artwork. Licence is ODbL — attribution
-   required, fine for personal use.
-4. Artwork for the remaining courses.
+3. **More course maps** (see *Course maps*). Next: Northbridge, Long Reef,
+   The Coast (tier A); Hurstville needs estimated greens; Hunter Valley
+   waits for OSM, then its art rounds convert to approximate map positions.
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
