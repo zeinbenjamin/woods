@@ -38,7 +38,15 @@ test('when a course was added: its stamp, the time inside an app-made id, or unk
   assert.equal(app.E(`addedAt(course('${courses[1].id}'))`), parseInt(courses[1].id.slice(2, -4), 36));
   assert.equal(app.E(`addedAt(course('c_zeta'))`), null);
   assert.equal(app.E(`addedAt(course('c_lanecovegcsy'))`), null, 'a word-like id of the right length is not read as a date');
-  assert.ok(Math.abs(app.E(`(() => { const t = Date.now(); return addedAt({ id: uid('c') }) - t; })()`)) < 1000, 'a fresh uid decodes to now');
+  // A fresh uid() decodes to now, unless (about 1 in 50) it happens to have no
+  // digit: then it is undated, never misdated. Checked deterministically, since a
+  // random id made this test fail 1 run in 50 (the 1.7.0 publish).
+  const at = t => app.E(`addedAt({ id: 'c_${t.toString(36)}' + ${JSON.stringify(t.toString(36).match(/\d/) ? 'abcd' : 'ab1d')} })`);
+  const now = Date.now();
+  assert.equal(at(now), now, 'an id made now decodes to now');
+  const ids = app.J(`Array.from({ length: 200 }, () => uid('c'))`);
+  for (const id of ids) { const t = app.E(`addedAt({ id: ${JSON.stringify(id)} })`); assert.ok(t === null ? !/\d/.test(id) : Math.abs(t - now) < 60000, id); }
+  assert.equal(app.E(`addedAt({ id: 'c_' + Date.now().toString(36).replace(/[0-9]/g, 'a') + 'wxyz' })`), null, 'no digit at all: undated');
 });
 
 test('with a location set: closest by default, courses without coordinates last A–Z', async () => {
