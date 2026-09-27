@@ -350,8 +350,13 @@ the World Handicap System, as Golf Australia applies it, and `overviewHandicap()
 shows it under Current form with the scores behind it.
 
 - **Score differential** = 113 / slope × (adjusted gross − course rating), to a
-  tenth. Ratings come from `course.ratings[tee]`, typed from the scorecard on the
-  course form (`ratingFields` / `readRatings`, range-checked). No rating: the
+  tenth. Ratings come from `course.ratings[tee]` (keys lower case), typed from the
+  scorecard on the course form (`ratingFields` / `readRatings`, range-checked).
+  The form has a row per tee in `ratingTees(c)`: the card's tees, tees already
+  rated, and **tees his rounds there were played off** — the round form's tee is
+  free text when the card has one tee set, so rounds can name tees the card
+  doesn't (1.6.0 offered only card tees, so those could never be rated) — plus
+  an "Another tee" row. No rating: the
   round is listed as not counting, and the Overview links the course to fix.
 - **Adjusted gross**: net double bogey per hole (par + 2 + strokes received,
   allocated by stroke index), or par + 5 before there is an index. Each round is
@@ -399,7 +404,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 191 tests, about 20s (55s on one core).
+`npm test` — 192 tests, about 20s (55s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
