@@ -27,12 +27,12 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
     assert.deepEqual(m.origin, src.origin, 'shots are stored in this plane, so it never moves');
-    assert.equal(m.holes.length, 18);
+    assert.equal(m.holes.length, src.card.holes.length, 'a line for every hole on the card');
     for (const h of m.holes) {
       const g = m.features[h.green];
       assert.equal(g.k, 'green', `hole ${h.n} ends on a green`);
@@ -91,6 +91,18 @@ test('The Coast: OSM lines from the back tees, the yellows on mapped boxes, 4 an
 test('Bardwell Valley flags only the hole whose yellow tee is off every mapped box', () => {
   const m = mapOf('bardwell-valley'), c = card('bardwell-valley');
   assert.deepEqual(m.holes.filter(h => HM.mismatch(h, c[h.n].metres, m).flagged).map(h => h.n), [11]);
+});
+
+test('Bondi: nine OSM lines against the metres card; the card in yards would fit worse', () => {
+  const m = mapOf('bondi'), c = card('bondi');
+  assert.deepEqual(m.holes.map(h => h.n), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  assert.deepEqual(m.holes.filter(h => HM.mismatch(h, c[h.n].metres, m).flagged).map(h => h.n), [8]);
+  // The same card in yards (what 1.10's course import holds as metres) sits
+  // further from the mapped lines, and flags 6 as well.
+  const yards = [145, 113, 121, 150, 280, 110, 163, 128, 134];
+  const off = cardOf => m.holes.reduce((s, h) => s + Math.abs(HM.mismatch(h, cardOf(h), m).diff), 0);
+  assert.ok(off(h => c[h.n].metres) < off(h => yards[h.n - 1]) - 30);
+  assert.deepEqual(m.holes.filter(h => HM.mismatch(h, yards[h.n - 1], m).flagged).map(h => h.n), [6, 8]);
 });
 
 test('the tee rule: the card distance from the middle of the green, along the line', () => {

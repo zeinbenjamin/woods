@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.11.0 — 2026-09-28
+- Bondi Golf & Diggers Club now has a course map: all nine holes from OpenStreetMap. Turn it on from the course's page under "Course map".
+- Hole 8 is flagged: your tee lands 20 m from the nearest mapped tee box.
+
 ## 1.10.0 — 2026-09-28
 - A course map now has a legend under it, when you log shots and on each hole's page: what the green, fairway, estimated fairway, tee box, bunker, water, trees, rough, paths, your tee, your shots and the distance rings look like.
 - It lists only what that hole shows, so a hole with no water has no "Water" entry. It uses the map's own colours, in light and dark mode.

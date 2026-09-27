@@ -6,6 +6,12 @@
   "holes": 18
  },
  {
+  "id": "bondi",
+  "name": "Bondi Golf & Diggers Club",
+  "osmName": "Bondi Golf Course",
+  "holes": 9
+ },
+ {
   "id": "randwick",
   "name": "Randwick Golf Club",
   "osmName": "Randwick Golf Course",
