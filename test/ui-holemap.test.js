@@ -83,6 +83,25 @@ test('taps are stored in metres, measured from the tee the card puts there', asy
   assert.match(app.text('.shotrow'), /from 260m/, 'the first shot starts at the card distance');
 });
 
+test('the legend under the map lists only what this hole shows', async () => {
+  const keys = () => app.$$('#mapLegend [data-k]').map(e => e.dataset.k);
+  // Hole 7: a pond, trees, no mapped fairway of its own, and the shot just logged.
+  await openHole(R, 7);
+  for (const k of ['green', 'strip', 'water', 'trees', 'rough', 'off', 'teemark', 'shot', 'arc']) assert.ok(keys().includes(k), `hole 7 shows ${k}`);
+  assert.match(app.text('#mapLegend'), /Estimated fairway/);
+  assert.match(app.text('#mapLegend'), /Rough or unmapped \(you pick the lie\)/);
+  // Hole 8: a par 3 with no water, bunkers or paths in view, and nothing logged.
+  await openHole(R, 8);
+  for (const k of ['strip', 'water', 'bunker', 'path', 'shot']) assert.ok(!keys().includes(k), `hole 8 has no ${k}`);
+  assert.ok(keys().includes('green') && keys().includes('teemark'));
+  // The swatches draw with the map's own classes, so they follow dark mode with it.
+  assert.ok(app.$('#mapLegend [data-k="water"]') === null && app.$('#mapLegend svg.holemap .hm-green'));
+  // And on the hole's own page.
+  app.go('courses', { courseId: 'c_rw', hole: '7' });
+  await app.waitFor(() => app.$('#mapLegend [data-k="water"]'), { what: 'legend on the hole page' });
+  assert.equal(app.$('#mapLegend [data-k="shot"]'), null, 'no shots drawn there, so no shot key');
+});
+
 test('the lie is read from the shape under the tap', async () => {
   await openHole(R, 17);
   const bunker = 'HoleMap.geom.centroid(hm.map.features.find(f => f.k === "bunker" && f.h === 17).r[0])';
