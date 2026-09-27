@@ -354,9 +354,14 @@ shows it under Current form with the scores behind it.
   allocated by stroke index), or par + 5 before there is an index. Each round is
   capped with the index he had *before* it, which is why it replays history.
   Without a stroke index a round still counts if no hole's cap depends on one.
-  A hole not played counts as net par.
-- **Which rounds**: 14+ holes of 18 is an 18-hole score; 7–9 holes in one nine
-  (or of a 9-hole card) is a 9-hole score. 10–13 holes don't count.
+  A hole with no score counts as net par — before there is an index, net par
+  for the maximum index, 54.0 (it used to reject the round, which left him
+  with no index at all).
+- **Which rounds**: 14+ holes of 18 is an 18-hole score; 7+ holes of a 9-hole
+  card, or 7–13 of 18 with 7 in one nine, is a 9-hole score (the nine with more
+  holes played). A card missing a par can't be scored and says so.
+- **Why a round doesn't count is always shown** (`#hcpLeft`), with or without
+  an index; ratings are matched to the round's tee ignoring case.
 - **9-hole scores are paired** in date order into one 18-hole score (ratings
   summed, slopes averaged). That is the WHS method before 2024; the 2024 rules
   use an "expected score" for the other nine instead, whose formula isn't
@@ -391,7 +396,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 187 tests, about 20s (55s on one core).
+`npm test` — 190 tests, about 20s (55s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -438,7 +443,7 @@ the frame is painted.
 Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
-1.5.0's distances, penalties and housekeeping, 20 for the handicap;
+1.5.0's distances, penalties and housekeeping, 26 for the handicap;
 all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 

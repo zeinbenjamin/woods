@@ -19,7 +19,7 @@
 //       108 against 35.0 + 35.0 (half the 18-hole rating each) → 34.4
 //       6 scores: lowest 2 (17.0, 32.4) averaged, − 1.0 → 23.7
 //   r8  at a course with no rating: can't count, and says which rating is missing
-//   r9  12 holes scored: can't count
+//   r9  12 holes scored (1–12): posted as a front-nine score, waiting for a pair
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startApp, card } from './harness.js';
@@ -58,7 +58,8 @@ test('each score and the index after it, worked by hand', () => {
 
 test('rounds that can\'t count say why, and name the rating that is missing', () => {
   const left = app.J(`handicap().left.map(x => [x.r.id, x.why])`);
-  assert.deepEqual(left, [['r8', 'no course rating for the white tees'], ['r9', '12 holes scored — a score needs 14 or more of 18, or 7 or more of 9']]);
+  assert.deepEqual(left, [['r8', 'no course rating for the white tees']]);
+  assert.deepEqual(app.J(`(() => { const w = handicap().waiting; return [w.rounds[0].id, w.n, w.ags, w.cr]; })()`), ['r9', 9, 54, 35], '12 holes post the nine with more of them');
   assert.deepEqual(app.J('handicap().needsRatings'), [{ id: 'u', name: 'Unrated GC', tee: 'white' }]);
 });
 
@@ -90,7 +91,7 @@ test('the ratings are typed on the course form, checked, and kept with everythin
   const c = await app.api.get('courses', 'u');
   assert.deepEqual(c.ratings, { white: { cr: 71.5, slope: 128 } });
   assert.equal(c.holes[4].si, 5, 'stroke index kept');
-  await app.waitFor(() => app.E(`handicap().left.length`) === 1, { what: 'r8 now counts' });
+  await app.waitFor(() => app.E(`handicap().left.length`) === 0, { what: 'r8 now counts' });
   assert.match(app.text('#courseRatings'), /white: 71\.5 \/ slope 128/);
 });
 
@@ -151,4 +152,38 @@ test('an index is never above 54.0', async () => {
     assert.deepEqual(x.J(`handicap().scores.map(s => s.diff)`), [83.2, 83.2, 83.2]);
     assert.equal(x.E('handicap().index'), 54);
   } finally { x.stop(); }
+});
+
+test('before there is an index, a hole with no score is net par for 54.0, and the round still counts', async () => {
+  // Course handicap for 54.0: round(54 × 125/113 + (70 − 72)) = 58, i.e. three
+  // strokes a hole and a fourth on SI 1–4. Hole 2 (SI 2) left blank: 4 + 4 = 8.
+  // 17 × 6 + 8 = 110 → 0.904 × 40 = 36.2.
+  const x = await startApp({ seed: { courses: [rated], sessions: [round('a', 10, scores(all(18, 6)).map(h => h.n === 2 ? { ...h, strokes: null } : h))] } });
+  try {
+    assert.deepEqual(x.J(`handicap().scores.map(s => [s.ags, s.diff, s.unscored])`), [[110, 36.2, [2]]]);
+    x.go('overview');
+    assert.match(x.text('#hcp'), /you have 1\./);
+  } finally { x.stop(); }
+});
+
+test('with no index yet, the Overview still lists every round that can\'t count, and why', async () => {
+  const noPar = { ...rated, id: 'p', name: 'Gappy GC', holes: card(18).map(h => h.n === 7 ? { ...h, par: null } : h) };
+  const x = await startApp({ seed: { courses: [rated, noPar], sessions: [
+    round('a', 30, scores(all(18, 6))),
+    round('b', 20, scores(all(5, 6))),
+    round('c', 10, scores(all(18, 6)), { courseId: 'p', courseName: 'Gappy GC' }),
+  ] } });
+  try {
+    x.go('overview');
+    const items = x.$$('#hcpLeft li').map(li => li.textContent);
+    assert.deepEqual(items, [
+      `Test GC, ${x.E(`dateLabel('${daysAgo(20)}')`)}: 5 holes scored — a score needs 14 or more of 18, or 7 or more of 9`,
+      `Gappy GC, ${x.E(`dateLabel('${daysAgo(10)}')`)}: the scorecard has no par for hole 7`,
+    ]);
+  } finally { x.stop(); }
+});
+
+test('a tee typed with different capitals still finds its rating', async () => {
+  const x = await startApp({ seed: { courses: [rated], sessions: [round('a', 10, scores(all(18, 6)), { tee: 'White' })] } });
+  try { assert.deepEqual(x.J(`handicap().scores.map(s => s.diff)`), [34.4]); } finally { x.stop(); }
 });
