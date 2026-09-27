@@ -351,7 +351,10 @@ when his location is set and a course has coordinates, else Recently added.
 "When added" (`addedAt`) is `course.created`, stamped on new courses, or the
 time `uid()` put in an app-made id — only if the id also contains a digit,
 because a 12-letter hand-made id like `c_lanecovegcsy` decodes to a
-plausible 2022 date otherwise. Unknowns (no coordinates / no date) go last,
+plausible 2022 date otherwise. The cost: about 1 in 50 app-made ids has no
+digit and reads as undated (listed last), never misdated. The test checks ids
+built from a known time; an assertion on a random `uid()` failed the 1.7.0
+publish exactly that 1 time in 50. Unknowns (no coordinates / no date) go last,
 A–Z, and the list says so.
 
 ## Estimated handicap
