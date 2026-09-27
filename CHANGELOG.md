@@ -6,6 +6,12 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.6.1 — 2026-09-27
+- When there's no handicap estimate yet, the Overview now lists every round that can't count and why, instead of just showing a dash.
+- A hole left blank no longer stops a round counting before you have a handicap: it counts as net par, as the World Handicap System does.
+- Rounds of 10 to 13 holes now count as a 9-hole score, from the nine with more holes played.
+- A tee name typed with different capitals ("White" and "white") now finds its rating.
+
 ## 1.6.0 — 2026-09-27
 - New on the Overview: an estimated handicap, worked out the way the World Handicap System does it (the system Golf Australia uses), with the scores behind it.
 - Each hole is capped at net double bogey (par + 5 until you have a handicap), 9-hole rounds are paired into one score, and an unusually good round lowers it the way the real system does.
