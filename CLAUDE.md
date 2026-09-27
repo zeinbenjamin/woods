@@ -340,6 +340,37 @@ shot and by where the ball went; holes ranked, and one is "a repeat" only
 when penalties came in more than one round. Scorecard-only rounds are left
 out and counted, never treated as clean.
 
+## Estimated handicap
+
+`handicap()` (memoised, never stored) replays every round in date order under
+the World Handicap System, as Golf Australia applies it, and `overviewHandicap()`
+shows it under Current form with the scores behind it.
+
+- **Score differential** = 113 / slope × (adjusted gross − course rating), to a
+  tenth. Ratings come from `course.ratings[tee]`, typed from the scorecard on the
+  course form (`ratingFields` / `readRatings`, range-checked). No rating: the
+  round is listed as not counting, and the Overview links the course to fix.
+- **Adjusted gross**: net double bogey per hole (par + 2 + strokes received,
+  allocated by stroke index), or par + 5 before there is an index. Each round is
+  capped with the index he had *before* it, which is why it replays history.
+  Without a stroke index a round still counts if no hole's cap depends on one.
+  A hole not played counts as net par.
+- **Which rounds**: 14+ holes of 18 is an 18-hole score; 7–9 holes in one nine
+  (or of a 9-hole card) is a 9-hole score. 10–13 holes don't count.
+- **9-hole scores are paired** in date order into one 18-hole score (ratings
+  summed, slopes averaged). That is the WHS method before 2024; the 2024 rules
+  use an "expected score" for the other nine instead, whose formula isn't
+  public enough to reproduce faithfully. A nine on an 18-hole card uses half the
+  18-hole rating, flagged "est. rating", because only 18-hole ratings are typed.
+- **Index** = mean of the lowest of the latest 20 (`HCP_TABLE`, with −2/−1/−1
+  at 3/4/6 scores), max 54.0. Exceptional score (7+ below the index he had)
+  takes 1 (10+: 2) off the latest 20 differentials. With 20+ scores, the soft
+  cap halves any rise more than 3 over the lowest index of the prior 365 days,
+  and the hard cap stops it at 5 over.
+- **Not modelled**: the playing conditions calculation (PCC is 0; it needs
+  everyone's scores that day), and the daily review GA runs. It's labelled an
+  estimate, not an official GA handicap.
+
 ## Range data from screenshots
 
 Range shots come from screenshots of the bay's shot list, not typing:
@@ -360,7 +391,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 178 tests, about 18s (50s on one core).
+`npm test` — 187 tests, about 20s (55s on one core).
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -390,7 +421,9 @@ fixture would let the reading be pinned.
   export/import/delete of the screenshots), `ui-version` (the stamped
   label, the version sheet, behind-the-server detection),
   `ui-distances` (recency weighting, nEff, ball filter, left-out
-  sessions), `ui-penalties` (the penalty report).
+  sessions), `ui-penalties` (the penalty report), `ui-handicap` (the
+  WHS estimate against hand-worked scores: caps, the table, exceptional
+  scores, pairing nines, soft and hard caps, 54.0, the ratings form).
 - `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
   a token already replaced), request logging without
   the query string, a clean SIGTERM exit, the YAML's replace markers.
@@ -405,7 +438,8 @@ the frame is painted.
 Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
-1.5.0's distances, penalties and housekeeping; all caught.
+1.5.0's distances, penalties and housekeeping, 20 for the handicap;
+all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
