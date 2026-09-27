@@ -462,6 +462,10 @@ scorecard sets every length.
   boolean geometry.
 - **Credit:** "Map data © OpenStreetMap contributors" wherever a map is
   drawn (ODbL).
+- **Legend** (1.10.0): `HoleMap.legend()` under the map in the logger and on
+  the hole page. `legendKinds()` lists only what the hole's view shows (no
+  "Water" on a dry hole); swatches use the map's own classes, so dark mode
+  follows. Unmapped ground is labelled "you pick the lie", matching the rule.
 - **Where the courses stand** (export of 2026-09-27): Randwick has OSM hole
   lines (tier A). Bardwell Valley has shapes but no lines, so its holes come
   from his mapping in the source file. The Coast (1.9.0) has OSM lines for 16
@@ -494,7 +498,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 214 tests, about 25s.
+`npm test` — 215 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -529,7 +533,8 @@ fixture would let the reading be pinned.
   scores, pairing nines, soft and hard caps, 54.0, the ratings form),
   `ui-courses-sort` (closest / recently added / A–Z, defaults, dates from ids),
   `ui-holemap` (linking a map, the card check, taps in metres and lies
-  from shapes, outline holes staying put, edits keeping the link, unlinking).
+  from shapes, the legend showing only what the hole has, outline holes
+  staying put, edits keeping the link, unlinking).
 - `course-maps.test.js` (10) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
@@ -550,7 +555,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check; all caught.
+9 for course maps, 4 for the 1.9.0 tee-box check, 2 for the legend; all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by

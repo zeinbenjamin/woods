@@ -293,6 +293,46 @@
       `<rect class="hm-off" width="${VW}" height="${VH}"/><rect class="hm-offh" width="${VW}" height="${VH}"/>` +
       `<g transform="matrix(${view.m.map(x => +x.toFixed(5)).join(' ')})">${g}</g>${o}</svg>`;
   }
+  /* ---------- the legend ----------
+     What each mark means, for the hole in view only: a dry hole has no
+     "water" entry. Swatches use the map's own classes, so they follow
+     light and dark with it. */
+  const LEGEND = [
+    ['green', 'Green', '<rect class="hm-green" x="3" y="2" width="16" height="10" rx="5"/>'],
+    ['fairway', 'Fairway', '<rect class="hm-fw" x="1" y="3" width="20" height="8" rx="3"/>'],
+    ['strip', 'Estimated fairway', '<rect class="hm-fwe" x="1" y="3" width="20" height="8" rx="3"/>'],
+    ['tee', 'Tee box', '<rect class="hm-tee" x="6" y="3" width="10" height="8" rx="1"/>'],
+    ['bunker', 'Bunker', '<ellipse class="hm-bunker" cx="11" cy="7" rx="8" ry="5"/><ellipse class="hm-sandd" cx="11" cy="7" rx="8" ry="5"/>'],
+    ['water', 'Water', '<rect class="hm-water" x="1" y="2" width="20" height="10" rx="4"/><rect class="hm-wave" x="1" y="2" width="20" height="10" rx="4"/>'],
+    ['trees', 'Trees', '<g class="hm-can-edge"><circle cx="7" cy="7" r="5"/><circle cx="15" cy="7" r="5"/></g><g class="hm-can"><circle cx="7" cy="7" r="5"/><circle cx="15" cy="7" r="5"/></g><g class="hm-can-h"><circle cx="7" cy="7" r="5"/><circle cx="15" cy="7" r="5"/></g>'],
+    ['rough', 'Rough or unmapped (you pick the lie)', '<rect class="hm-course" x="1" y="2" width="20" height="10"/><rect class="hm-stipple" x="1" y="2" width="20" height="10"/>'],
+    ['off', 'Off the course', '<rect class="hm-off" x="1" y="2" width="20" height="10"/><rect class="hm-offh" x="1" y="2" width="20" height="10"/><rect class="hm-edge" x="1" y="2" width="20" height="10"/>'],
+    ['path', 'Path', '<line class="hm-path" x1="1" y1="7" x2="21" y2="7"/>'],
+    ['teemark', 'Your tee', '<circle class="hm-teemark" cx="11" cy="7" r="4.5"/>'],
+    ['shot', 'Shot', '<polyline class="hm-trace" points="1,11 11,7"/><circle class="hm-ball" cx="13" cy="6" r="4"/>'],
+    ['arc', 'Metres to the green', '<path class="hm-arc" d="M1,12 Q11,0 21,12"/>'],
+    ['other', 'Faded: another hole', '<rect class="hm-green hm-other" x="3" y="2" width="16" height="10" rx="5"/>'],
+  ];
+  // Which entries this hole's view needs. opts as for svg().
+  function legendKinds(hm, opts = {}) {
+    const { map, hole, pl } = hm, n = hole.n, box = viewOf(map, hole, pl).box;
+    const F = map.features.filter(f => vis(f, box)), has = k => F.some(f => f.k === k);
+    const out = new Set(['green', 'rough', 'off', 'teemark']);
+    if (has('fairway')) out.add('fairway');
+    if (stripFor(map, hole, opts.par, pl)) out.add('strip');
+    for (const k of ['tee', 'bunker', 'water', 'path']) if (has(k)) out.add(k);
+    if (has('canopy') || has('crowns') || has('tree')) out.add('trees');
+    if ((opts.shots || []).length) out.add('shot');
+    if (opts.big && lineLen(pl) > 75) out.add('arc');
+    if (F.some(f => ['green', 'tee', 'fairway', 'bunker', 'water', 'path'].includes(f.k) && f.h !== n && map.features.indexOf(f) !== hole.green)) out.add('other');
+    return LEGEND.map(e => e[0]).filter(k => out.has(k));
+  }
+  function legend(hm, opts = {}) {
+    const want = new Set(legendKinds(hm, opts));
+    return `<div class="hm-legend" id="mapLegend"><svg class="holemap" width="0" height="0" aria-hidden="true" style="position:absolute">${DEFS}</svg>` +
+      LEGEND.filter(e => want.has(e[0])).map(([k, label, sw]) => `<span data-k="${k}"><svg class="holemap" viewBox="0 0 22 14" aria-hidden="true">${sw}</svg>${label}</span>`).join('') + `</div>`;
+  }
+
   // A tap at view coordinates, as a point on the map.
   function tapToMap(hm, q) { return viewOf(hm.map, hm.hole, hm.pl).toMap(q); }
   function mapToView(hm, p) { return viewOf(hm.map, hm.hole, hm.pl).toView(p); }
@@ -323,7 +363,11 @@
 .holemap .hm-pole{stroke:var(--hm-ink);stroke-width:1.3} .holemap .hm-cloth{fill:var(--hm-flag)}
 .holemap .hm-trace{fill:none;stroke:var(--hm-flag);stroke-width:1.8;stroke-dasharray:3 3}
 .holemap .hm-ball{fill:var(--hm-ball);stroke:var(--hm-ink);stroke-width:1.4} .holemap .hm-ball.pen{stroke:var(--hm-flag);stroke-width:2.2}
-.holemap .hm-dot{fill:var(--hm-ball);stroke:var(--hm-ink);stroke-width:1;opacity:.9} .holemap .hm-dot.first{fill:#F2C94C}`;
+.holemap .hm-dot{fill:var(--hm-ball);stroke:var(--hm-ink);stroke-width:1;opacity:.9} .holemap .hm-dot.first{fill:#F2C94C}
+.hm-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:3px 10px;max-width:340px;margin:8px auto 2px;font-size:11px;line-height:1.3;color:var(--ink-2, #4A5A4F)}
+.holemap .hm-edge{fill:none;stroke:var(--hm-ink);stroke-width:.6;opacity:.5}
+.hm-legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.hm-legend svg{width:22px;height:14px;flex:none;border-radius:2px}`;
   function injectStyle(doc) {
     if (!doc || doc.getElementById('holemap-style')) return;
     const st = doc.createElement('style'); st.id = 'holemap-style'; st.textContent = CSS; doc.head.appendChild(st);
@@ -331,7 +375,7 @@
   if (root.document) injectStyle(root.document);
 
   root.HoleMap = {
-    get, list, forHole, svg, tapToMap, mapToView, lieAt, toGreen, playLine, mismatch, stripFor,
+    get, list, forHole, svg, legend, legendKinds, tapToMap, mapToView, lieAt, toGreen, playLine, mismatch, stripFor,
     set onLoad(f) { onLoad = typeof f === 'function' ? f : () => {}; },
     geom: { dist, lineLen, pointAt, sub, segDist, lineDist, inRings, centroid, bbox },
     FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH,
