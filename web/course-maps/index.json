@@ -12,6 +12,12 @@
   "holes": 9
  },
  {
+  "id": "massey-park",
+  "name": "Massey Park Golf Club",
+  "osmName": "Massey Park Golf Course",
+  "holes": 18
+ },
+ {
   "id": "randwick",
   "name": "Randwick Golf Club",
   "osmName": "Randwick Golf Course",
