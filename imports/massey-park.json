@@ -1,0 +1,196 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-14T09:59:14.992Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_masseypark",
+      "v": 2,
+      "created": 1791971954991,
+      "name": "Massey Park Golf Club",
+      "suburb": "Concord",
+      "state": "NSW",
+      "address": "1 Ian Parade, Concord NSW 2137",
+      "phone": "02 9743 3737",
+      "website": "https://www.masseypark.com.au/",
+      "bookingUrl": "https://masseypark.miclub.com.au/cms/public-bookings/",
+      "lat": -33.8537,
+      "lng": 151.111,
+      "bookable": true,
+      "walkable": true,
+      "feeWeekday": 42.5,
+      "feeWeekend": 42.5,
+      "tee": "blue",
+      "notes": "18 holes beside Exile Bay, par 66 (women 68: holes 1 and 18 are par 5 for women). Blue tees 4525m; GolfFinder also lists white 4312m and red 4366m, but no hole-by-hole lengths for those. Green fees are for 18 holes, any day (from 1 July 2026): 9 holes $30.50, twilight $25. Book online (MiClub public bookings) or call the pro shop, 02 9743 3737; same-day bookings and cancellations by phone. Hole 18a is a spare hole used when another is out for maintenance; not on the card here. Stroke index from Hole19. The club's course guide calls the 1st the toughest hole and the 7th the easiest, which matches Hole19 (SI 1 and 18); 18Birdies has a different order (1st = 2, 18th = 1) and conflicts with the club on both. No handicap rating stored: none published by Golf Australia was found. Seen elsewhere: 63.5 / 113 (18Birdies, men, these tees), 63.0 / 113 (a forum handicap post), slope 117-119 (GolfFinder). Take the scratch rating and slope from the card or GolfLink.",
+      "source": "Card: Hole19 (blue, metres) and 18Birdies (same tee in yards; every hole agrees within 1m); par 66 and hole notes: masseypark.com.au/course-layout; fees: GolfFinder and GreatClubReview (Oct 2026), the club's fee card is an image; location: OpenStreetMap way 173947871 (ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 410,
+          "tees": {
+            "blue": 410
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 163,
+          "tees": {
+            "blue": 163
+          },
+          "si": 5
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 254,
+          "tees": {
+            "blue": 254
+          },
+          "si": 16
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 247,
+          "tees": {
+            "blue": 247
+          },
+          "si": 10
+        },
+        {
+          "n": 5,
+          "par": 5,
+          "metres": 458,
+          "tees": {
+            "blue": 458
+          },
+          "si": 4
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 144,
+          "tees": {
+            "blue": 144
+          },
+          "si": 13
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 303,
+          "tees": {
+            "blue": 303
+          },
+          "si": 18
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 294,
+          "tees": {
+            "blue": 294
+          },
+          "si": 11
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 156,
+          "tees": {
+            "blue": 156
+          },
+          "si": 8
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 302,
+          "tees": {
+            "blue": 302
+          },
+          "si": 15
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 141,
+          "tees": {
+            "blue": 141
+          },
+          "si": 7
+        },
+        {
+          "n": 12,
+          "par": 3,
+          "metres": 205,
+          "tees": {
+            "blue": 205
+          },
+          "si": 3
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 262,
+          "tees": {
+            "blue": 262
+          },
+          "si": 17
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 168,
+          "tees": {
+            "blue": 168
+          },
+          "si": 9
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 120,
+          "tees": {
+            "blue": 120
+          },
+          "si": 6
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 261,
+          "tees": {
+            "blue": 261
+          },
+          "si": 14
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 267,
+          "tees": {
+            "blue": 267
+          },
+          "si": 12
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 370,
+          "tees": {
+            "blue": 370
+          },
+          "si": 2
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}
