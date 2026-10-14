@@ -105,6 +105,16 @@ test('Bondi: nine OSM lines against the metres card; the card in yards would fit
   assert.deepEqual(m.holes.filter(h => HM.mismatch(h, yards[h.n - 1], m).flagged).map(h => h.n), [6, 8]);
 });
 
+test('Massey Park: every red tee on a mapped box, hole 9 with no red length', () => {
+  const m = mapOf('massey-park'), c = card('massey-park');
+  assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1));
+  assert.equal(c[5].par, 5, 'the card\'s par 5, though OSM says 4');
+  assert.equal(c[9].metres, null, 'the GPS app shows no red for 9: none invented');
+  const x = m.holes.map(h => HM.mismatch(h, c[h.n].metres, m));
+  assert.deepEqual(x.map((y, i) => y.flagged ? i + 1 : 0).filter(Boolean), []);
+  assert.ok(x[6].onTee && x[6].teeGap > 14, 'hole 7 lands right at the 15 m limit');
+});
+
 test('the tee rule: the card distance from the middle of the green, along the line', () => {
   const hole = { n: 1, line: [[0, 0], [0, 100], [60, 180]] };   // 100 m, then 100 m bending right
   const L = lineLen(hole.line);

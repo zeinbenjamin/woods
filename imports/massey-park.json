@@ -23,7 +23,7 @@
       "feeWeekday": 42.5,
       "feeWeekend": 42.5,
       "tee": "blue",
-      "notes": "18 holes beside Exile Bay, par 66 (women 68: holes 1 and 18 are par 5 for women). Blue tees 4525m; GolfFinder also lists white 4312m and red 4366m, but no hole-by-hole lengths for those. Green fees are for 18 holes, any day (from 1 July 2026): 9 holes $30.50, twilight $25. Book online (MiClub public bookings) or call the pro shop, 02 9743 3737; same-day bookings and cancellations by phone. Hole 18a is a spare hole used when another is out for maintenance; not on the card here. Stroke index from Hole19. The club's course guide calls the 1st the toughest hole and the 7th the easiest, which matches Hole19 (SI 1 and 18); 18Birdies has a different order (1st = 2, 18th = 1) and conflicts with the club on both. No handicap rating stored: none published by Golf Australia was found. Seen elsewhere: 63.5 / 113 (18Birdies, men, these tees), 63.0 / 113 (a forum handicap post), slope 117-119 (GolfFinder). Take the scratch rating and slope from the card or GolfLink.",
+      "notes": "18 holes beside Exile Bay, par 66 (women 68: holes 1 and 18 are par 5 for women). Blue tees 4525m; GolfFinder also lists white 4312m and red 4366m, but no hole-by-hole lengths for those. Green fees are for 18 holes, any day (from 1 July 2026): 9 holes $30.50, twilight $25. Book online (MiClub public bookings) or call the pro shop, 02 9743 3737; same-day bookings and cancellations by phone. Hole 18a is a spare hole used when another is out for maintenance; not on the card here. Stroke index from Hole19. The club's course guide calls the 1st the toughest hole and the 7th the easiest, which matches Hole19 (SI 1 and 18); 18Birdies has a different order (1st = 2, 18th = 1) and conflicts with the club on both. No handicap rating stored: none published by Golf Australia was found. Seen elsewhere: 63.5 / 113 (18Birdies, men, these tees), 63.0 / 113 (a forum handicap post), slope 117-119 (GolfFinder). Take the scratch rating and slope from the card or GolfLink. Red tees (Oct 2026) from a course GPS app, red tee to middle of the green, metres: 391, 159, 248, 246, 450, 126, 299, 267, –, 292, 137, 195, 257, 161, 118, 257, 257, 365 (4,243 m without hole 9). The app shows no red length for hole 9, so hole 9 has no red here and falls back to the blue 156 m when the red tee is chosen. The same app gives a different stroke index from Hole19's (holes 1–18: 2, 7, 12, 13, 6, 9, 16, 10, 5, 11, 15, 3, 14, 8, 4, 17, 18, 1); the stored order is still Hole19's until the club's card settles it.",
       "source": "Card: Hole19 (blue, metres) and 18Birdies (same tee in yards; every hole agrees within 1m); par 66 and hole notes: masseypark.com.au/course-layout; fees: GolfFinder and GreatClubReview (Oct 2026), the club's fee card is an image; location: OpenStreetMap way 173947871 (ODbL, © OpenStreetMap contributors).",
       "holes": [
         {
@@ -31,7 +31,8 @@
           "par": 4,
           "metres": 410,
           "tees": {
-            "blue": 410
+            "blue": 410,
+            "red": 391
           },
           "si": 1
         },
@@ -40,7 +41,8 @@
           "par": 3,
           "metres": 163,
           "tees": {
-            "blue": 163
+            "blue": 163,
+            "red": 159
           },
           "si": 5
         },
@@ -49,7 +51,8 @@
           "par": 4,
           "metres": 254,
           "tees": {
-            "blue": 254
+            "blue": 254,
+            "red": 248
           },
           "si": 16
         },
@@ -58,7 +61,8 @@
           "par": 4,
           "metres": 247,
           "tees": {
-            "blue": 247
+            "blue": 247,
+            "red": 246
           },
           "si": 10
         },
@@ -67,7 +71,8 @@
           "par": 5,
           "metres": 458,
           "tees": {
-            "blue": 458
+            "blue": 458,
+            "red": 450
           },
           "si": 4
         },
@@ -76,7 +81,8 @@
           "par": 3,
           "metres": 144,
           "tees": {
-            "blue": 144
+            "blue": 144,
+            "red": 126
           },
           "si": 13
         },
@@ -85,7 +91,8 @@
           "par": 4,
           "metres": 303,
           "tees": {
-            "blue": 303
+            "blue": 303,
+            "red": 299
           },
           "si": 18
         },
@@ -94,7 +101,8 @@
           "par": 4,
           "metres": 294,
           "tees": {
-            "blue": 294
+            "blue": 294,
+            "red": 267
           },
           "si": 11
         },
@@ -112,7 +120,8 @@
           "par": 4,
           "metres": 302,
           "tees": {
-            "blue": 302
+            "blue": 302,
+            "red": 292
           },
           "si": 15
         },
@@ -121,7 +130,8 @@
           "par": 3,
           "metres": 141,
           "tees": {
-            "blue": 141
+            "blue": 141,
+            "red": 137
           },
           "si": 7
         },
@@ -130,7 +140,8 @@
           "par": 3,
           "metres": 205,
           "tees": {
-            "blue": 205
+            "blue": 205,
+            "red": 195
           },
           "si": 3
         },
@@ -139,7 +150,8 @@
           "par": 4,
           "metres": 262,
           "tees": {
-            "blue": 262
+            "blue": 262,
+            "red": 257
           },
           "si": 17
         },
@@ -148,7 +160,8 @@
           "par": 3,
           "metres": 168,
           "tees": {
-            "blue": 168
+            "blue": 168,
+            "red": 161
           },
           "si": 9
         },
@@ -157,7 +170,8 @@
           "par": 3,
           "metres": 120,
           "tees": {
-            "blue": 120
+            "blue": 120,
+            "red": 118
           },
           "si": 6
         },
@@ -166,7 +180,8 @@
           "par": 4,
           "metres": 261,
           "tees": {
-            "blue": 261
+            "blue": 261,
+            "red": 257
           },
           "si": 14
         },
@@ -175,7 +190,8 @@
           "par": 4,
           "metres": 267,
           "tees": {
-            "blue": 267
+            "blue": 267,
+            "red": 257
           },
           "si": 12
         },
@@ -184,7 +200,8 @@
           "par": 4,
           "metres": 370,
           "tees": {
-            "blue": 370
+            "blue": 370,
+            "red": 365
           },
           "si": 2
         }
