@@ -86,7 +86,8 @@ values. Measured numbers are derived from shots and never written back.
   `teeMetres(hole, tee)`.
 - `art` coordinates are **image pixels**, meaningless without that image.
 - Editing a course must preserve every hole field the form doesn't own
-  (`art`, `shape`, `si`, `tees`), and the course's `map`.
+  (`art`, `shape`, `tees`), and the course's `map`. The form owns `par`,
+  `metres` (for its tee) and, since 1.13.0, `si`: 1..N, each value once.
 - `map` stores only which map file the course uses. The shapes live in the
   file (see *Course maps* below), never in the database.
 

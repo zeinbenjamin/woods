@@ -216,8 +216,10 @@ Each of these cost real debugging time. Don't reintroduce them.
   false, silently no-oping every destructive action. There's an in-page
   `confirmAsk()` instead. Don't reach for `confirm`.
 - **Editing a course must preserve hole fields the form doesn't own** —
-  artwork, outline shape, stroke index, tee sets. A previous version
-  dropped artwork on any course edit.
+  artwork, outline shape, tee sets. A previous version dropped artwork on
+  any course edit. Stroke index is now the form's (1.13.0: the scorecard's
+  fourth column, 1..N, each once; a cleared box removes it), because there
+  was no other way to add one and Randwick came over without it.
 - **Contact sheets above ~1400px or in portrait have caused rendering
   failures.** Individual frames at 800–900px are reliable.
 - **TrueNAS runs containers as 568:568.** The dataset must be owned by it
@@ -513,7 +515,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 217 tests, about 25s.
+`npm test` — 218 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -570,7 +572,8 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check, 2 for the legend; all caught.
+9 for course maps, 4 for the 1.9.0 tee-box check, 2 for the legend, 5 for the
+stroke index column; all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by

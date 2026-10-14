@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.13.0 — 2026-10-14
+- The course scorecard editor has a stroke index (SI) column, so a course without one (like Randwick) can have it added, and a wrong one fixed.
+- Each hole's SI must be between 1 and the number of holes, and no two holes can share one; the app says which number is wrong.
+
 ## 1.12.0 — 2026-10-14
 - Massey Park now has a course map: all 18 holes from OpenStreetMap, checked against your red tees. No hole is flagged.
 - Hole 9 has no red length yet (your GPS app doesn't show one), so on the reds it measures from the blue tee until the red length is known.

@@ -1206,13 +1206,14 @@ function wireShotCount(root) {
   ta.addEventListener('input', upd); upd();
 }
 function holesEditor(holes, withScores) {
-  return `<div class="hole-grid"><div class="h">Hole</div><div class="h">Par</div><div class="h">Metres</div><div class="h">${withScores ? 'Score' : ''}</div>` +
-    holes.map(h => `<div>${h.n}</div><input type="number" name="par_${h.n}" value="${h.par ?? ''}" inputmode="numeric"><input type="number" name="m_${h.n}" value="${h.metres ?? ''}" inputmode="numeric">${withScores ? `<input type="number" name="s_${h.n}" value="${h.strokes ?? ''}" inputmode="numeric">` : '<div></div>'}`).join('') + `</div>`;
+  // The fourth column is the score on a round, the stroke index on a course.
+  return `<div class="hole-grid"><div class="h">Hole</div><div class="h">Par</div><div class="h">Metres</div><div class="h">${withScores ? 'Score' : 'SI'}</div>` +
+    holes.map(h => `<div>${h.n}</div><input type="number" name="par_${h.n}" value="${h.par ?? ''}" inputmode="numeric"><input type="number" name="m_${h.n}" value="${h.metres ?? ''}" inputmode="numeric">${withScores ? `<input type="number" name="s_${h.n}" value="${h.strokes ?? ''}" inputmode="numeric">` : `<input type="number" name="si_${h.n}" value="${h.si ?? ''}" inputmode="numeric" aria-label="Stroke index, hole ${h.n}">`}`).join('') + `</div>`;
 }
 const blankHoles = n => Array.from({ length: n }, (_, i) => ({ n: i + 1 }));
 function readHoles(root, n, withScores) {
   const out = [];
-  for (let i = 1; i <= n; i++) { const par = val(root, 'par_' + i), metres = val(root, 'm_' + i), strokes = withScores ? val(root, 's_' + i) : undefined; const h = { n: i }; if (par != null) h.par = par; if (metres != null) h.metres = metres; if (withScores && strokes != null) h.strokes = strokes; out.push(h); }
+  for (let i = 1; i <= n; i++) { const par = val(root, 'par_' + i), metres = val(root, 'm_' + i), strokes = withScores ? val(root, 's_' + i) : undefined; const h = { n: i }; if (par != null) h.par = par; if (metres != null) h.metres = metres; if (withScores && strokes != null) h.strokes = strokes; if (!withScores) { const si = val(root, 'si_' + i); if (si != null) h.si = si; } out.push(h); }
   return out;
 }
 function courseForm(c = {}) {
@@ -1295,7 +1296,7 @@ function wireHoleCount(root, withScores, initial) {
   const shown = () => Number(root.querySelector('[data-holes][aria-pressed="true"]')?.dataset.holes || 18);
   root.querySelectorAll('[data-holes]').forEach(btn => btn.onclick = () => {
     const was = shown(), n = Number(btn.dataset.holes);
-    for (const h of readHoles(root, was, withScores)) { const { par, metres, strokes, ...rest } = cache[h.n] || {}; cache[h.n] = { ...rest, ...h }; }
+    for (const h of readHoles(root, was, withScores)) { const { par, metres, strokes, si, ...rest } = cache[h.n] || {}; cache[h.n] = { ...rest, ...h }; }
     root.querySelectorAll('[data-holes]').forEach(b => b.setAttribute('aria-pressed', b === btn));
     $('#holesWrap', root).innerHTML = holesEditor(Array.from({ length: n }, (_, i) => cache[i + 1] || { n: i + 1 }), withScores);
   });
@@ -1434,7 +1435,12 @@ async function saveCourse(root, c) {
   if (near && !await confirmAsk(`"${near.name}" is already in your courses. Add this as a second one?`, 'Add anyway')) return false;
   const doc = { ...c, v: SCHEMA_VERSION, tee, name, suburb: val(root, 'suburb'), state: val(root, 'state'), bookable: val(root, 'bookable'), prereg: val(root, 'prereg'), walkable: val(root, 'walkable'), feeWeekday: val(root, 'feeWeekday'), feeWeekend: val(root, 'feeWeekend'), bookingUrl: val(root, 'bookingUrl'), lat: val(root, 'lat'), lng: val(root, 'lng'), transport: val(root, 'transport'), notes: val(root, 'notes'), ratings: rt.ratings, // Keep everything the form doesn't edit (artwork, outline shape, stroke
 // index); only par and metres come from the inputs.
-    holes: readHoles(root, n, false).map(h => { const { par, metres, n: _n, ...keep } = (c.holes || []).find(x => x.n === h.n) || {}; return { ...keep, ...h, tees: { ...(keep.tees || {}), ...(h.metres == null ? {} : { [tee]: h.metres }) } }; }) };
+    holes: readHoles(root, n, false).map(h => { const { par, metres, si, n: _n, ...keep } = (c.holes || []).find(x => x.n === h.n) || {}; return { ...keep, ...h, tees: { ...(keep.tees || {}), ...(h.metres == null ? {} : { [tee]: h.metres }) } }; }) };
+  const sis = doc.holes.filter(h => h.si != null).map(h => h.si);
+  const badSi = sis.find(v => !Number.isInteger(v) || v < 1 || v > doc.holes.length);
+  if (badSi != null) { toast(`Stroke index runs 1 to ${doc.holes.length}; ${badSi} isn't on that scale`); return false; }
+  const twice = sis.find((v, i) => sis.indexOf(v) !== i);
+  if (twice != null) { toast(`Stroke index ${twice} is on two holes`); return false; }
   const noPar = doc.holes.filter(h => h.par == null).map(h => h.n);
   if (noPar.length) { toast(`Add a par for hole${noPar.length > 1 ? 's' : ''} ${noPar.join(', ')}`); return false; }
   const ok = await save('courses', doc.id, doc); if (ok) go('courses', { courseId: doc.id }); return ok;
