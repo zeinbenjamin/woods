@@ -479,7 +479,15 @@ scorecard sets every length.
   (`imports/bondi-golf-diggers.json`) first held those yards as metres; it now
   holds the metres. OSM agrees with the metres: 81 m off in total against 121,
   and only hole 8 flagged against 6 and 8. The two sources' stroke indexes
-  disagree; the import keeps the published order until the club's card settles it. Northbridge and Long Reef are
+  disagree; the import keeps the published order until the club's card settles it.
+  Massey Park (1.12.0): 18 OSM lines, checked against his GPS-app **red** card;
+  every red tee lands on a mapped box (hole 7 at 15 m, the limit), so nothing is
+  flagged. OSM has 5 as a par 4; the card's par 5 (450 m) wins. The app shows
+  no red for hole 9, so the source card has `null` there and the import's red
+  set skips 9 (it falls back to the blue 156 m via `teeMetres`). The import
+  (`imports/massey-park.json`, blue primary) gained the red set; its stroke
+  index is Hole19's, which differs from the GPS app's (noted in the import).
+  Northbridge and Long Reef are
   tier A; Hurstville has
   lines but no greens; Barnwell Park, Beverley Park and Lane Cove have only
   a boundary; Hunter Valley's only nearby course is unnamed and partial, so
@@ -505,7 +513,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 216 tests, about 25s.
+`npm test` — 217 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -542,10 +550,10 @@ fixture would let the reading be pinned.
   `ui-holemap` (linking a map, the card check, taps in metres and lies
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking).
-- `course-maps.test.js` (11) — the committed maps match their sources,
+- `course-maps.test.js` (12) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
   a token already replaced), request logging without

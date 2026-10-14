@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.12.0 — 2026-10-14
+- Massey Park now has a course map: all 18 holes from OpenStreetMap, checked against your red tees. No hole is flagged.
+- Hole 9 has no red length yet (your GPS app doesn't show one), so on the reds it measures from the blue tee until the red length is known.
+
 ## 1.11.0 — 2026-09-28
 - Bondi Golf & Diggers Club now has a course map: all nine holes from OpenStreetMap. Turn it on from the course's page under "Course map".
 - Hole 8 is flagged: your tee lands 20 m from the nearest mapped tee box.
