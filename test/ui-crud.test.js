@@ -8,7 +8,7 @@ import { startApp, club, card, rangeSession, block } from './harness.js';
 
 let app;
 const artHole = {
-  n: 1, par: 4, metres: 300, si: 7,
+  n: 1, par: 4, metres: 300, si: 1,   // the rest of the card has 2..18
   tees: { white: 300, blue: 320 },
   shape: { bend: 0.4, bendAt: 0.55, hazards: [{ kind: 'bunker', t: 0.5, side: -1 }] },
   art: { asset: 'a'.repeat(32), w: 540, h: 900, tee: [270, 810], green: [270, 108], gr: 30 },
@@ -131,13 +131,39 @@ test('editing a course preserves artwork, outline, stroke index and other tee se
   const h1 = c.holes[0];
   assert.deepEqual(h1.art, artHole.art, 'artwork kept');
   assert.deepEqual(h1.shape, artHole.shape, 'drawn outline kept');
-  assert.equal(h1.si, 7, 'stroke index kept');
+  assert.equal(h1.si, 1, 'stroke index kept');
   assert.equal(h1.tees.blue, 320, 'a tee set the form does not show is kept');
   assert.equal(h1.tees.white, 305, 'the edited tee set takes the new distance');
   assert.equal(h1.metres, 305);
   assert.equal(c.holes[1].par, 5);
   assert.equal(c.holes[1].si, 2, 'untouched holes keep their fields too');
   assert.equal(c.holes.length, 18);
+});
+
+test('stroke index is typed on the scorecard: 1 to N, each once; a cleared box removes it', async () => {
+  // Randwick came over with no stroke index and there was no way to add one.
+  await app.api.put('courses', 'c_nosi', { id: 'c_nosi', v: 2, name: 'No Index GC', tee: 'white', holes: card(9).map(({ si, ...h }) => h) });
+  await app.waitFor(() => !!app.E(`course('c_nosi')`), { what: 'course loaded' });
+  app.act('editCourse', { id: 'c_nosi' });
+  assert.equal(app.text('#sheetInner .hole-grid .h:nth-child(4)'), 'SI');
+  const order = [6, 8, 2, 9, 1, 4, 3, 7, 5];
+  order.forEach((v, i) => app.fill(`si_${i + 1}`, v));
+  app.fill('si_9', 6);
+  assert.equal(await app.save(), false, 'two holes with SI 6 are refused');
+  app.fill('si_9', 10);
+  assert.equal(await app.save(), false, 'SI 10 on a 9-hole card is refused');
+  app.fill('si_9', 5);
+  app.click('#sheetInner [data-holes="18"]'); app.click('#sheetInner [data-holes="9"]');
+  assert.equal(app.field('si_4').value, '9', 'switching 9 ↔ 18 keeps typed values');
+  assert.equal(await app.save(), true);
+  assert.deepEqual((await app.api.get('courses', 'c_nosi')).holes.map(h => h.si), order);
+  app.act('editCourse', { id: 'c_nosi' });
+  assert.equal(app.field('si_1').value, '6', 'the saved index shows when editing again');
+  app.fill('si_9', '');
+  assert.equal(await app.save(), true);
+  const c = await app.api.get('courses', 'c_nosi');
+  assert.equal(c.holes[8].si, undefined, 'a cleared box removes that hole\'s index');
+  assert.equal(c.holes[0].si, 6);
 });
 
 test('deleting a course uses the in-page confirm, never window.confirm', async () => {
@@ -261,7 +287,7 @@ test('a new round prefills par and metres from the course and needs a score', as
 
 test('the course field searches by name or suburb and Enter picks the match', async () => {
   await app.api.put('courses', 'c_sub', { id: 'c_sub', v: 2, name: 'Zed Park', suburb: 'Northbridge', tee: 'white', holes: card(9) });
-  await app.waitFor(() => app.E('S.courses.length') >= 3, { what: 'poll' });
+  await app.waitFor(() => app.E(`!!course('c_sub')`), { what: 'poll' });
   app.act('newRound');
   const box = app.$('#courseSearch');
   box.value = 'north'; box.dispatchEvent(new app.win.Event('input'));
