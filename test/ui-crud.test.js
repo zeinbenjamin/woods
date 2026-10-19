@@ -314,3 +314,26 @@ test('editing a round keeps traced shots, putts and the typed score', async () =
   assert.equal(got.holes[1].strokes, 7);
   assert.equal(got.detail, 'shot_level');
 });
+
+test('an unfinished round: unscored holes are their own kind of square, and the list says how many holes were played', async () => {
+  // A round cut short (daylight) on 14 of 18. Its unscored squares used to carry
+  // the class "empty", which is also the empty-state box (22px padding); on a
+  // phone that swelled the score strip 415px past the screen and the page
+  // zoomed out. Layout itself was checked in a real browser at 390px.
+  const holes = card(18).map(h => ({ n: h.n, par: h.par, metres: h.metres }));
+  await app.api.put('sessions', 'r_short', { id: 'r_short', v: 2, type: 'round', date: '2026-10-19', courseId: 'c_art', courseName: 'Artwork GC', tee: 'white', detail: 'score_only',
+    holes: holes.map((h, i) => i < 14 ? { ...h, strokes: h.par + 1 } : h) });
+  await app.waitFor(() => !!app.E(`session('r_short')`), { what: 'round loaded' });
+  app.go('rounds', { sessionId: 'r_short' });
+  const sq = app.$$('#view .scorestrip .sq');
+  assert.equal(sq.length, 18);
+  assert.deepEqual(sq.slice(14).map(b => [...b.classList].sort().join(' ')), Array(4).fill('sq unscored'));
+  assert.equal(app.$$('#view .scorestrip .empty').length, 0, 'no score square takes the empty-state style');
+  assert.match(app.text('#view'), /14 of 18 holes scored/);
+  app.go('rounds');
+  const item = app.$$('#view .item').find(b => b.dataset.go === 'rounds:sessionId:r_short');
+  assert.match(item.textContent, /14 of 18 holes/);
+  const css = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
+  assert.match(css, /\.scorestrip \{[^}]*repeat\(9, minmax\(0, 1fr\)\)/, 'columns may shrink below their cells\' minimum');
+  assert.match(css, /\.scorestrip\.mini \{[^}]*repeat\(18, minmax\(0, 1fr\)\)/);
+});

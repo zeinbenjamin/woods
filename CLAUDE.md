@@ -296,6 +296,11 @@ Each of these cost real debugging time. Don't reintroduce them.
   SQLite and exits 0, and both compose files set `init: true` so the
   signal reaches node. Before this, a redeploy waited out Docker's 10s
   timeout and killed it.
+- **An unscored hole's square is `.sq.unscored`, never `.empty`.** `.empty`
+  is the empty-state box (22px padding); a round cut short on 14 holes gave
+  its four unscored squares that padding, and the 9-column `1fr` strip ran
+  415px past a phone, zooming the page out (1.13.1). The strips also use
+  `minmax(0, 1fr)` so a cell can't widen a column.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -548,7 +553,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 218 tests, about 25s.
+`npm test` — 219 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and

@@ -103,13 +103,16 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .prow { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; padding: 6px 0; } .prow b { font-family: var(--cond); font-size: 17px; } .prow small { text-align: right; color: var(--ink-3); font-size: 12px; }
 
 /* score strip */
-.scorestrip { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin: 6px 0; }
+/* minmax(0, 1fr), not 1fr: a plain 1fr column won't shrink below its cells' minimum size, so when an
+   unfinished round's squares took on the empty-state box's padding the strip ran 415px past a phone's width. */
+.scorestrip { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; margin: 6px 0; }
 .sq { aspect-ratio: 1; border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--cond); font-weight: 700; font-size: 15px; line-height: 1; border: 0; padding: 0; cursor: pointer; color: var(--ink); background: var(--paper-2); }
 .sq small { font: 400 9px var(--body); color: var(--ink-3); margin-top: 2px; } .sq.tiny { font-size: 11px; border-radius: 3px; }
 .sq.under { background: var(--green); color: #fff; } .sq.under small { color: rgba(255,255,255,.75); }
 .sq.par { background: var(--green-soft); } .sq.b1 { background: var(--sand); } .sq.b2 { background: var(--flag-soft); } .sq.b3 { background: var(--flag); color: #fff; } .sq.b3 small { color: rgba(255,255,255,.75); }
-.sq.empty { background: var(--paper-2); color: var(--ink-3); border: 1px dashed var(--rule); }
-.scorestrip.mini { grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 6px 0 0; } .scorestrip.mini .sq { border-radius: 2px; font-size: 0; min-height: 8px; aspect-ratio: auto; height: 8px; }
+/* Not "empty": that's the empty-state box, whose 22px padding swelled these squares. */
+.sq.unscored { background: var(--paper-2); color: var(--ink-3); border: 1px dashed var(--rule); }
+.scorestrip.mini { grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 2px; margin: 6px 0 0; } .scorestrip.mini .sq { border-radius: 2px; font-size: 0; min-height: 8px; aspect-ratio: auto; height: 8px; }
 
 /* hole stencils */
 .stencils { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin: 8px 0; }
@@ -590,7 +593,7 @@ function scoreStrip(holes, roundId, mini) {
 }
 function profileBar(s) { return `<div class="profile"><span class="p-pure" style="width:${pct(s.pure, s.n)}%"></span><span class="p-runner" style="width:${pct(s.runner, s.n)}%"></span><span class="p-short" style="width:${pct(s.short, s.n)}%"></span><span class="p-top" style="width:${pct(s.top, s.n)}%"></span></div>`; }
 function sessionItem(s) {
-  if (s.type === 'round') { const st = roundStats(s); return `<button class="item" data-go="rounds:sessionId:${s.id}"><div class="spread"><div><div class="t">${esc(s.courseName)}</div><div class="s">${dateLabel(s.date)}${st.shotLevel ? ', shot-level' : ''}</div></div><div class="n">${st.gross} <span class="muted small">${st.toPar >= 0 ? '+' : ''}${st.toPar}</span></div></div>${scoreStrip(s.holes || [], s.id, true)}</button>`; }
+  if (s.type === 'round') { const st = roundStats(s); return `<button class="item" data-go="rounds:sessionId:${s.id}"><div class="spread"><div><div class="t">${esc(s.courseName)}</div><div class="s">${dateLabel(s.date)}${st.shotLevel ? ', shot-level' : ''}${st.holes < (s.holes || []).length ? ` · ${st.holes} of ${(s.holes || []).length} holes` : ''}</div></div><div class="n">${st.gross} <span class="muted small">${st.toPar >= 0 ? '+' : ''}${st.toPar}</span></div></div>${scoreStrip(s.holes || [], s.id, true)}</button>`; }
   const blocks = s.blocks || [], shots = blocks.reduce((n, b) => n + (b.shots || []).length, 0);
   const clubs = [...new Set(blocks.map(b => b.club))];
   const planned = s.planned && !shots && !blocks.some(b => b.summary);
@@ -1535,7 +1538,7 @@ function stencilGrid(holes, opts = {}) {
       <div class="lab"><b>${h.n}</b><span>par ${h.par ?? '–'}</span><span>${sub}</span></div></button>`;
   }).join('') + `</div>`;
 }
-function scoreClass(h) { if (h.strokes == null || h.par == null) return 'empty'; const o = h.strokes - h.par; return o < 0 ? 'under' : o === 0 ? 'par' : o === 1 ? 'b1' : o === 2 ? 'b2' : 'b3'; }
+function scoreClass(h) { if (h.strokes == null || h.par == null) return 'unscored'; const o = h.strokes - h.par; return o < 0 ? 'under' : o === 0 ? 'par' : o === 1 ? 'b1' : o === 2 ? 'b2' : 'b3'; }
 
 /* ---------- hole editor (shape) ---------- */
 function openHoleEditor(courseId, n) {
