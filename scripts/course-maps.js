@@ -149,10 +149,14 @@ function build(id) {
   const KIND = { green: 'green', tee: 'tee', fairway: 'fairway', bunker: 'bunker', water_hazard: 'water', lateral_water_hazard: 'water', rough: 'rough' };
   const features = [], byOsm = {};
   const push = (f, osm) => { f.osm = osm; features.push(f); (byOsm[osm] = byOsm[osm] || []).push(features.length - 1); };
-  const treePts = [];
+  const treePts = [], pins = [];
   for (const f of geo) {
     const p = f.properties, fid = idOf(f), g = f.geometry;
     if (fid === src.osm.course) continue;
+    // A tee mapped as a point (no box drawn): kept as a point, so the card
+    // check can measure to it. It never sets a lie: it has no shape.
+    if (p.golf === 'tee' && g.type === 'Point') { push({ k: 'teept', c: P(g.coordinates) }, fid); continue; }
+    if (p.golf === 'pin' && g.type === 'Point') { pins.push({ p: P(g.coordinates), fid }); continue; }
     if (KIND[p.golf]) { for (const poly of polysOf(g)) push({ k: KIND[p.golf], r: ringsOf(poly) }, fid); continue; }
     if (p.golf === 'cartpath' || p.golf === 'path') { for (const l of linesOf(g)) push({ k: 'path', l: l.map(P) }, fid); continue; }
     if (['wood', 'scrub'].includes(p.natural) || p.landuse === 'forest') { for (const poly of polysOf(g)) push({ k: 'canopy', r: ringsOf(poly) }, fid); continue; }
@@ -184,8 +188,18 @@ function build(id) {
       if (seen[n]) throw new Error(`${id}: two hole lines numbered ${n}`);
       seen[n] = true;
       const end = l[l.length - 1];
-      const gi = features.findIndex(x => x.k === 'green' && inRings(end, x.r)) >= 0 ? features.findIndex(x => x.k === 'green' && inRings(end, x.r))
+      let gi = features.findIndex(x => x.k === 'green' && inRings(end, x.r)) >= 0 ? features.findIndex(x => x.k === 'green' && inRings(end, x.r))
         : features.reduce((b, x, i) => x.k === 'green' && (b < 0 || dist(centroid(x.r[0]), end) < dist(centroid(features[b].r[0]), end)) ? i : b, -1);
+      // No mapped green near the end of the line: an estimated one, a 12 m
+      // circle on the mapped pin (or the line's end). Drawn dashed, labelled
+      // estimated, and never read as a green lie.
+      if (gi < 0 || dist(centroid(features[gi].r[0]), end) > 40) {
+        const pin = pins.filter(q => dist(q.p, end) <= 30).sort((a, b) => dist(a.p, end) - dist(b.p, end))[0];
+        const c = pin ? pin.p : end, ring = [];
+        for (let k = 0; k < 24; k++) { const a = 2 * Math.PI * k / 24; ring.push([r1(c[0] + 12 * Math.cos(a)), r1(c[1] + 12 * Math.sin(a))]); }
+        push({ k: 'green', est: true, r: [ring] }, pin ? pin.fid : idOf(f));
+        gi = features.length - 1;
+      }
       const gc = centroid(features[gi].r[0]).map(r1);
       // End the line at the middle of the green: the card measures to it.
       const line = l.slice(0, -1).concat([gc]);
@@ -254,8 +268,8 @@ function build(id) {
   // owns counts only if the line runs right over it (one box, two holes).
   const along = (p, l) => { let s = 0, best = 0, bd = Infinity; for (let k = 1; k < l.length; k++) { const q = segDist(p, l[k - 1], l[k]); if (q.d < bd) { bd = q.d; best = s + q.t * dist(l[k - 1], l[k]); } s += dist(l[k - 1], l[k]); } return best; };
   for (const h of holes) h.tees = features.map((f, i) => {
-    if (f.k !== 'tee' || !inside(f)) return -1;
-    const c = centroid(f.r[0]), d = lineDist(c, h.line);
+    if ((f.k !== 'tee' && f.k !== 'teept') || !inside(f)) return -1;
+    const c = f.r ? centroid(f.r[0]) : f.c, d = lineDist(c, h.line);
     // The tees a hand mapping names for this hole are its own, whoever is nearer.
     if ((h.teeOsm || []).includes(f.osm)) return i;
     return d <= 20 && (f.h === h.n || d <= 3) && along(c, h.line) < 0.6 * lineLen(h.line) ? i : -1;

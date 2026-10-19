@@ -27,7 +27,7 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'hurstville', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
@@ -39,6 +39,7 @@ test('every map credits OpenStreetMap and has a fixed origin', () => {
       const g = m.features[h.green];
       assert.equal(g.k, 'green', `hole ${h.n} ends on a green`);
       assert.ok(dist(h.line[h.line.length - 1], centroid(g.r[0])) < 0.2, `hole ${h.n} is measured to the middle of its green`);
+      if (id !== 'hurstville') assert.ok(!g.est, `hole ${h.n}'s green is mapped, not estimated`);
     }
   }
 });
@@ -162,6 +163,28 @@ test('front, middle and back of the green along the line from where he stands', 
   assert.ok(Math.abs(on.back - 15) <= 0.5);
   const unmapped = HM.greenDistances({ ...hm, map: { features: [] } }, [0, 0]);
   assert.deepEqual([unmapped.front, unmapped.back], [null, null], 'no green shape: only the middle, never a guessed edge');
+});
+
+test('Hurstville: lines, tee points and pins only, so its greens are estimated and say so', () => {
+  const m = mapOf('hurstville'), geo = JSON.parse(readFileSync('course-maps/osm/hurstville.geojson', 'utf8')).features;
+  assert.equal(m.holes.length, 18);
+  const pins = geo.filter(f => f.properties.golf === 'pin').map(f => f.properties['@id']);
+  for (const h of m.holes) {
+    const g = m.features[h.green], mid = h.line.at(-1);
+    assert.ok(g.est, `hole ${h.n}: no green is mapped, so it's estimated`);
+    assert.ok(pins.includes(g.osm), `hole ${h.n}'s estimated green sits on its mapped pin`);
+    assert.equal(HM.lieAt(m, mid), null, 'an estimated green never reads as a green lie');
+    const hm = { map: m, hole: h, green: mid }, d = HM.greenDistances(hm, h.line[0]);
+    assert.deepEqual([d.front, d.back], [null, null], 'no front or back edge to an estimated green');
+    // The tee is mapped as a point; a card that puts the tee on it is on a mapped tee.
+    assert.equal(h.tees.length, 1);
+    const x = HM.mismatch(h, lineLen(h.line), m);
+    assert.ok(x.onTee && x.teeGap < 0.2, `hole ${h.n}`);
+  }
+  const hm = HM.forHole('hurstville', 3, 400);
+  assert.match(HM.svg(hm, { big: true, par: 4 }), /hm-green-est/);
+  assert.ok(HM.legendKinds(hm, { big: true, par: 4 }).includes('greenEst'));
+  assert.ok(!HM.legendKinds(hm, { big: true, par: 4 }).includes('green'), 'no mapped green on this hole, so no "Green" key');
 });
 
 test('the tee rule: the card distance from the middle of the green, along the line', () => {

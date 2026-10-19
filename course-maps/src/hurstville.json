@@ -1,0 +1,14 @@
+{
+ "id": "hurstville",
+ "name": "Hurstville Golf Club",
+ "osm": {
+  "course": "way/4369914",
+  "name": "Hurstville Golf Course",
+  "exported": "2026-09-27"
+ },
+ "origin": [
+  -33.97247,
+  151.06092
+ ],
+ "holes": "osm"
+}
