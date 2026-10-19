@@ -296,6 +296,11 @@ Each of these cost real debugging time. Don't reintroduce them.
   SQLite and exits 0, and both compose files set `init: true` so the
   signal reaches node. Before this, a redeploy waited out Docker's 10s
   timeout and killed it.
+- **An unscored hole's square is `.sq.unscored`, never `.empty`.** `.empty`
+  is the empty-state box (22px padding); a round cut short on 14 holes gave
+  its four unscored squares that padding, and the 9-column `1fr` strip ran
+  415px past a phone, zooming the page out (1.13.1). The strips also use
+  `minmax(0, 1fr)` so a cell can't widen a column.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -548,7 +553,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 218 tests, about 25s.
+`npm test` — 219 tests, about 25s.
 
 - `api.test.js` (16) — the server alone: auth, documents, assets (byte
   ranges, safe serving), import, `/api/version`, the stamped and
@@ -636,7 +641,19 @@ Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
 
 Deliberately out of scope: multi-user, booking integration, anything that
-sends his data anywhere.
+sends his data anywhere — with one exception he chose on 2026-10-19:
+**Cloudflare Tunnel** for off-LAN https (README, *Off the LAN*), because
+Play mode needs GPS and a phone only gives GPS to an https page. Access
+in front, `API_TOKEN` kept.
+
+**Next: Play mode** (asked for 2026-10-19; he wants it built with GPS from
+the start, not before). A *Start round* mode used during the round, instead
+of logging afterwards from 18Birdies: one hole at a time, his GPS position
+on the hole map, distances to the front, middle and back of the green and
+to hazards, tap or "mark my ball here" for each shot, putts and score,
+running total, and saves kept on the phone until there's signal. Waiting
+on (1) the tunnel being live, (2) `holemap.js` converting lat/long to map
+metres with the build's own projection (hole-maps chat; asked via Zein).
 
 ## Working agreements from the chat
 
