@@ -18,6 +18,9 @@
   --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
   --r: 8px; --nav-h: 56px;
+  /* The home-indicator strip under the tab bar (about 34px on an iPhone). The
+     bar and the page's bottom space both use it, so the page always clears the bar. */
+  --safe-b: env(safe-area-inset-bottom, 0px);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #10170F; --paper-2: #182119; --ink: #E6ECE5; --ink-2: #AAB6AC; --ink-3: #77857A; --rule: #29352C;
@@ -39,10 +42,11 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: 
 .brand small { font: 500 11px var(--body); color: var(--ink-3); margin-left: 5px; letter-spacing: 0; }
 .vlist { list-style: none; margin: 8px 0 0; padding: 0; } .vlist li { border-top: 1px solid var(--rule); padding: 10px 0; } .vlist ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; } .vlist ul li { border: 0; padding: 2px 0; }
 .status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
-main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + 24px); }
-nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: env(safe-area-inset-bottom, 0px); }
+main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + var(--safe-b) + 32px); }
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: var(--safe-b); }
 nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
-nav.tabs button { width: 100%; height: 100%; border: 0; background: none; color: var(--ink-3); font: 500 13px var(--body); cursor: pointer; border-top: 2px solid transparent; margin-top: -1px; }
+nav.tabs button { width: 100%; height: 100%; border: 0; border-radius: 0; background: none; color: var(--ink-3); font: 500 13px var(--body); cursor: pointer; border-top: 2px solid transparent; margin-top: -1px; -webkit-tap-highlight-color: transparent; }
+nav.tabs button:focus:not(:focus-visible) { outline: none; }
 nav.tabs button[aria-current="page"] { color: var(--ink); border-top-color: var(--green); }
 nav.tabs button:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; }
 
@@ -142,7 +146,7 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .notice { background: var(--paper-2); border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 0 var(--r) var(--r) 0; font-size: 13px; color: var(--ink-2); margin: 0 0 16px; } .notice.warn { border-left-color: var(--flag); }
 .back { margin: -4px 0 12px; } .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 14px; } .kv dt { color: var(--ink-3); } .kv dd { margin: 0; }
 .stat { display: inline-block; margin-right: 22px; margin-bottom: 8px; } .stat b { font-family: var(--cond); font-weight: 700; font-size: 28px; line-height: 1; display: block; } .stat small { color: var(--ink-3); font-size: 12px; }
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 14px); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: var(--r); font-size: 13px; z-index: 9; opacity: 0; transition: opacity .15s; pointer-events: none; } .toast.show { opacity: 1; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + var(--safe-b) + 14px); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: var(--r); font-size: 13px; z-index: 9; opacity: 0; transition: opacity .15s; pointer-events: none; } .toast.show { opacity: 1; }
 .hole-grid { display: grid; grid-template-columns: 36px 52px 1fr 1fr; gap: 6px 8px; align-items: center; font-size: 14px; } .hole-grid input { padding: 7px 8px; text-align: right; } .hole-grid .h { color: var(--ink-3); font-size: 12px; }
 dialog.sheet { border: 0; padding: 0; margin: 0; width: 100%; max-width: 720px; left: 50%; transform: translateX(-50%); top: auto; bottom: 0; max-height: calc(100% - 40px); background: var(--paper); color: var(--ink); border-radius: 14px 14px 0 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
 dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; }
@@ -210,6 +214,8 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .advice { background: var(--green-soft); color: var(--ink); border-radius: var(--r); padding: 8px 10px; margin: 8px 0; }
 .stencil .hdot { fill: #fff; stroke: #1B2A20; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; } .stencil .hdot.first { fill: #F2C94C; }
 .l-teedot { background: #F2C94C; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; } .l-dot { background: #fff; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; }
+.markrow { justify-content: center; margin: 12px 0 18px; } .markbtn { padding: 11px 22px; font-size: 15px; }
+#playLive > p { margin: 6px 0 4px; }
 .lastshot { border: 1px solid var(--rule); border-radius: var(--r); padding: 8px; margin: 4px 0 10px; }
 .greendist { display: flex; justify-content: center; gap: 4px; margin: 4px 0 0; } .greendist .stat { text-align: center; margin: 0 10px 4px; } .greendist .stat.mid b { font-size: 40px; }
 .hazards { max-width: 360px; margin: 0 auto 8px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: var(--r); } .hazards .spread { padding: 2px 0; }
@@ -3275,8 +3281,8 @@ function hazardsAhead(hm, p) {
 const metres = v => v == null ? '–' : String(Math.round(v));
 function playLiveHtml(h) {
   const g = gpsOn(h);
-  const mark = `<button class="primary" data-act="markBall" ${g.p && !g.off ? '' : 'disabled'}>Mark my ball here</button>`;
-  if (!g.p || g.off) return `<p class="small muted" id="gpsWhy" style="text-align:center">${esc(g.why)}</p>${h.hm ? `<div class="row-actions" style="justify-content:center">${mark}</div>` : ''}`;
+  const mark = `<button class="primary markbtn" data-act="markBall" ${g.p && !g.off ? '' : 'disabled'}>Mark my ball here</button>`;
+  if (!g.p || g.off) return `<p class="small muted" id="gpsWhy" style="text-align:center">${esc(g.why)}</p>${h.hm ? `<div class="row-actions markrow">${mark}</div>` : ''}`;
   const d = HoleMap.greenDistances(h.hm, g.p);
   const hz = hazardsAhead(h.hm, g.p);
   return `<div class="greendist" id="greenDist">
@@ -3285,7 +3291,7 @@ function playLiveHtml(h) {
       <span class="stat"><b>${metres(d.back)}</b><small>back</small></span></div>
     <p class="small muted" style="text-align:center;margin:-4px 0 6px">metres, straight line · GPS ±${Math.round(g.acc)} m${g.acc > GPS_ROUGH ? ' <span class="tag flag">rough fix</span>' : ''}</p>
     ${hz.length ? `<div class="hazards" id="hazards">${hz.map(x => `<div class="spread small"><span>${x.kind === 'water' ? 'Water' : 'Bunker'}, ${x.side}</span><span>${x.reach === 0 ? 'you’re in it' : `${metres(x.reach)} to reach · ${metres(x.carry)} to carry`}</span></div>`).join('')}</div>` : ''}
-    <div class="row-actions" style="justify-content:center">${mark}</div>`;
+    <div class="row-actions markrow">${mark}</div>`;
 }
 // The you-are-here dot, in view units, with the fix's accuracy as a ring.
 function youDot(h) {
