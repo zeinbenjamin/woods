@@ -1,6 +1,6 @@
 // Regressions from the 1.3.0 review, each reproduced before it was fixed:
 // local dates, quick taps, render cost at a season of data, panels that
-// snapped shut on every save, the token left in the URL, and an unescaped
+// snapped shut on every save, a token left in the URL, and an unescaped
 // club code.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +11,7 @@ const holes9 = card(9).map(({ n, par, metres }) => ({ n, par, metres }));
 
 let app;
 before(async () => {
-  app = await startApp({ query: '?token=secret-token&keep=1', seed: {
+  app = await startApp({ query: '?token=secret-token&keep=1', storage: { 'carry.token': 'old-1x-token' }, seed: {
     clubs: [club('7i', 'iron', { nominalTotal: 150 }), club('PW', 'wedge'), club('<i>x</i>', 'iron', { nominalTotal: 50 })],
     courses: [{ id: 'c', v: 2, name: 'C', tee: 'white', holes: card(9) }],
     sessions: [
@@ -72,10 +72,12 @@ test('a save of our own does not redraw the screen again when the poll sees it',
   assert.equal(renders, 2, 'one from the local write, one from the action — none from the poll echo');
 });
 
-/* ---------- 8. the token doesn't stay in the address bar ---------- */
+/* ---------- 8. an old token link doesn't stay in the address bar ---------- */
 
-test('a ?token= link is stored and then removed from the URL, keeping anything else', () => {
-  assert.equal(app.win.localStorage.getItem('carry.token'), 'secret-token');
+// 1.x stored a ?token= from the link; 2.0.0 signs in with Cloudflare Access,
+// so an old link's token is dropped, never kept.
+test('an old ?token= link is removed from the URL, keeping anything else, and a stored 1.x token is forgotten', () => {
+  assert.equal(app.win.localStorage.getItem('carry.token'), null);
   assert.equal(app.win.location.search, '?keep=1');
 });
 

@@ -14,7 +14,9 @@ services:
       - "1818:1818"
     environment:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      API_TOKEN: ${API_TOKEN}
+      CF_ACCESS_TEAM: ${CF_ACCESS_TEAM}
+      CF_ACCESS_AUD: ${CF_ACCESS_AUD}
+      OWNER_EMAIL: ${OWNER_EMAIL}
       CARRY_MODEL: ${CARRY_MODEL:-claude-sonnet-4-6}
       MAX_ASSET_MB: ${MAX_ASSET_MB:-200}
       TZ: ${TZ:-Australia/Sydney}

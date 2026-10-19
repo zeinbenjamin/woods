@@ -5,23 +5,32 @@
    backed by your own server, so the app code is unchanged.
    ============================================================ */
 (function () {
-  const TOKEN_KEY = 'carry.token';
-  const token = () => localStorage.getItem(TOKEN_KEY) || new URLSearchParams(location.search).get('token') || '';
-  // A ?token= link is remembered, then taken out of the address bar so it
-  // doesn't linger in history, bookmarks or a shared screenshot.
+  // Sign-in is Cloudflare Access (2.0.0): the browser carries Access's
+  // cookie and Cloudflare adds a signed header the server checks, so this
+  // file sends nothing of its own. The 1.x token is no longer used: forget
+  // a stored one, and take an old ?token= link out of the address bar.
+  try { localStorage.removeItem('carry.token'); } catch (e) {}
   const q = new URLSearchParams(location.search);
-  if (q.get('token')) {
-    localStorage.setItem(TOKEN_KEY, q.get('token'));
+  if (q.has('token')) {
     q.delete('token');
     try { history.replaceState(history.state, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (e) {}
   }
+  const fault = (code, message) => { const e = new Error(message || code); e.code = code; return e; };
 
   async function api(path, opts = {}) {
-    const sent = token();
-    const res = await fetch('/api' + path, { ...opts, headers: { ...(opts.headers || {}), ...(sent ? { 'x-carry-token': sent } : {}) } });
-    // Say which token was refused: a request still in flight when a new
-    // token was entered comes back 401 for the old one, and isn't news.
-    if (res.status === 401) { const e = new Error('unauthorised'); e.code = 'unauthorised'; e.token = sent; throw e; }
+    // redirect: 'manual' — when the Access session has run out, Cloudflare
+    // answers with a redirect to its login page instead of passing the
+    // request on. Following it would fail as a cross-site request; seeing it
+    // tells the app to send him to sign in again.
+    const res = await fetch('/api' + path, { ...opts, redirect: 'manual' });
+    if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) throw fault('signed_out');
+    // Carry itself refused (its own JSON says so): no valid Access token, so
+    // this didn't come through Cloudflare — the home address, for instance.
+    // Any other 401 is Cloudflare's, about an Access session that ran out.
+    if (res.status === 401) {
+      const body = await res.json().catch(() => null);
+      throw fault(body && body.error === 'unauthorised' ? 'unauthorised' : 'signed_out');
+    }
     if (!res.ok) { const e = new Error(await res.text().catch(() => res.statusText)); e.code = 'request_failed'; e.status = res.status; throw e; }
     return res.status === 204 ? null : res.json();
   }
@@ -60,9 +69,9 @@
         if (s[name] !== lastStamps[name]) { lastStamps[name] = s[name]; await refresh(name); }
       }
     } catch (e) {
-      // A rejected token is worth telling the app about (it asks for the
-      // token); anything else is probably offline: keep showing what we have.
-      if (e && e.code === 'unauthorised') errorHandlers.forEach(f => f(e));
+      // Being signed out is worth telling the app about (it offers to sign in
+      // again); anything else is probably offline: keep showing what we have.
+      if (e && (e.code === 'unauthorised' || e.code === 'signed_out')) errorHandlers.forEach(f => f(e));
     }
     finally { polling = false; }
   }
@@ -129,7 +138,7 @@
       });
     } catch (e) {
       const err = new Error(e.message);
-      err.code = e.status === 503 ? 'unavailable' : e.status === 429 ? 'rate_limited' : e.status === 401 ? 'unavailable' : 'failed';
+      err.code = e.status === 503 ? 'unavailable' : e.status === 429 ? 'rate_limited' : e.code === 'unauthorised' || e.code === 'signed_out' ? 'unavailable' : 'failed';
       throw err;
     }
     if (opts.onText) opts.onText({ text: out.text, delta: out.text });
@@ -158,6 +167,9 @@
       return { status: 'saved', filename };
     },
   };
+
+  // Who is signed in (the email Cloudflare Access vouched for).
+  window.carryMe = () => api('/me');
 
   window.claude = {
     async use(name) {

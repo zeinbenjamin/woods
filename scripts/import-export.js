@@ -2,7 +2,11 @@
 // Load a Carry export (the JSON the app's "Export everything" button
 // produces) into this server's database and asset store.
 //
-//   npm run import -- ./carry-export-2026-09-25.json
+//   npm run import -- ./carry-export-2026-09-25.json --owner you@example.com
+//
+// Since 2.0.0 clubs, sessions and settings belong to someone: --owner is the
+// email they sign in to Cloudflare Access with. Courses are shared and land
+// in everyone's list (an older copy of a course overwrites the current one).
 //
 // Asset ids are preserved, so every reference inside the documents keeps
 // resolving without rewriting. Safe to re-run: documents are upserted by
@@ -14,8 +18,11 @@ import { putDoc, recordAsset, listDocs, ASSET_DIR } from '../server/db.js';
 const EXT = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
   'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov' };
 
-const file = process.argv[2];
-if (!file) { console.error('usage: npm run import -- <carry-export.json>'); process.exit(1); }
+const args = process.argv.slice(2);
+const at = args.indexOf('--owner');
+const owner = at >= 0 ? String(args.splice(at, 2)[1] || '').trim().toLowerCase() : '';
+const file = args[0];
+if (!file || !owner.includes('@')) { console.error('usage: npm run import -- <carry-export.json> --owner <email>'); process.exit(1); }
 
 const data = JSON.parse(readFileSync(file, 'utf8'));
 if (data.format !== 'carry-export') { console.error('Not a Carry export (missing format marker)'); process.exit(1); }
@@ -28,7 +35,7 @@ for (const [id, dataUrl] of Object.entries(data.assets || {})) {
   const [, type, b64] = m;
   const buf = Buffer.from(b64, 'base64');
   writeFileSync(join(ASSET_DIR, `${id}.${EXT[type] || 'bin'}`), buf);
-  recordAsset(id, type, buf.length);
+  recordAsset(id, type, buf.length, owner);
   assets++;
 }
 
@@ -37,11 +44,11 @@ for (const name of ['clubs', 'courses', 'sessions']) {
   for (const doc of (data[name] || [])) {
     const id = name === 'clubs' ? doc.code : doc.id;
     if (!id) { console.warn(`  skipped a ${name} record with no id`); continue; }
-    putDoc(name, id, doc);
+    putDoc(name, owner, id, doc);
     counts[name] = (counts[name] || 0) + 1;
   }
 }
-if (data.settings && Object.keys(data.settings).length) { putDoc('settings', 'app', { ...data.settings, id: 'app' }); counts.settings = 1; }
+if (data.settings && Object.keys(data.settings).length) { putDoc('settings', owner, 'app', { ...data.settings, id: 'app' }); counts.settings = 1; }
 
 console.log(`Imported: ${Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', ')}, ${assets} assets`);
-console.log('Now in the database:', ['clubs', 'courses', 'sessions', 'settings'].map(c => `${listDocs(c).length} ${c}`).join(', '));
+console.log(`Now in the database for ${owner}:`, ['clubs', 'courses', 'sessions', 'settings'].map(c => `${listDocs(c, owner).length} ${c}`).join(', '));

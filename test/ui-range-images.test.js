@@ -136,7 +136,7 @@ test('fixes made in the sheet are what gets saved, with the screenshots kept alo
   assert.deepEqual([b.fromImages.units, b.fromImages.converted, b.fromImages.assets.length], ['m', false, 2]);
   assert.match(b.fromImages.readOn, /^\d{4}-\d{2}-\d{2}$/);
   for (const [i, id] of b.fromImages.assets.entries()) {
-    const r = await fetch(`${app.base}/_blob/${id}`);
+    const r = await app.api.blob(id);
     assert.equal(r.status, 200);
     assert.equal(await r.text(), ['screen-one', 'screen-two'][i], 'the original bytes');
   }
@@ -217,7 +217,7 @@ test('screenshots travel in exports, are re-linked on import, and go when their 
   const imp = await app.api.get('sessions', 's_imported');
   const newId = imp.blocks[0].fromImages.assets[0];
   assert.notEqual(newId, ids[0], 'rewritten to the re-uploaded copy');
-  assert.equal(await (await fetch(`${app.base}/_blob/${newId}`)).text(), 'imported-bytes');
+  assert.equal(await (await app.api.blob(newId)).text(), 'imported-bytes');
 
   app.act('deleteBlock', { sid: 's_img', bid: b.id });
   await app.answer(true);

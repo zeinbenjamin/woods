@@ -3,24 +3,23 @@
 // Everything the browser can do goes through here, so the Anthropic key,
 // the database and the uploaded files all stay server-side.
 import express from 'express';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { db, listDocs, getDoc, putDoc, deleteDoc, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR } from './db.js';
+import { db, listDocs, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR, COLLECTIONS } from './db.js';
+import { requireUser, authMode } from './auth.js';
 import { analyse, parseJson } from './anthropic.js';
 import { VERSION, COMMIT, CHANGELOG } from './version.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = Number(process.env.PORT || 1818);
-const TOKEN = process.env.API_TOKEN || '';
-const COLLECTIONS = new Set(['clubs', 'courses', 'sessions', 'settings']);
 const MAX_ASSET = Number(process.env.MAX_ASSET_MB || 200) * 1024 * 1024;
 
 // One line per request that changes something or fails, so the NAS's
 // container log says what happened. Quiet for successful reads (the page
-// polls every few seconds), and the path only: a ?token= never reaches the log.
+// polls every few seconds), and the path only: no query string reaches the log.
 app.use((req, res, next) => {
   const t0 = Date.now();
   res.on('finish', () => {
@@ -34,18 +33,14 @@ app.use(express.raw({ type: ['image/*', 'video/*', 'application/octet-stream'], 
 
 // Which build this is, and what changed in each version. Open like
 // /healthz — it says nothing about the data — and registered before the
-// auth check so the app can compare builds even before it has a token.
+// sign-in check so the app can compare builds before anyone is signed in.
 app.get('/api/version', (_req, res) => res.set('Cache-Control', 'no-store').json({ version: VERSION, commit: COMMIT, changelog: CHANGELOG }));
 
-// Single-user auth. Set API_TOKEN and the browser sends it back on every
-// call; leave it empty only on a LAN you trust.
-app.use('/api', (req, res, next) => {
-  if (!TOKEN) return next();
-  const given = Buffer.from(String(req.get('x-carry-token') || req.query.token || ''));
-  const want = Buffer.from(TOKEN);
-  if (given.length === want.length && timingSafeEqual(given, want)) return next();
-  res.status(401).json({ error: 'unauthorised' });
-});
+// Everyone is signed in through Cloudflare Access (server/auth.js); req.user
+// is their email. Everything below, files included, needs it.
+const signedIn = requireUser();
+app.use('/api', signedIn);
+app.get('/api/me', (req, res) => res.json({ email: req.user }));
 
 const collectionOf = req => {
   const c = req.params.collection;
@@ -66,21 +61,24 @@ app.post('/api/assets', (req, res) => {
   if (buf.length > MAX_ASSET) return res.status(413).json({ error: 'too large' });
   const id = randomBytes(16).toString('hex');
   writeFileSync(join(ASSET_DIR, `${id}.${EXT[type] || 'bin'}`), buf);
-  recordAsset(id, type, buf.length);
+  recordAsset(id, type, buf.length, req.user);
   res.json({ id, url: `/_blob/${id}`, sizeBytes: buf.length, contentType: type });
 });
 app.delete('/api/assets/:id', (req, res) => {
   const a = getAsset(req.params.id);
+  // Only the person who uploaded a file deletes it (files from before 2.0.0 belong to the owner).
+  if (a && a.owner && a.owner !== req.user) return res.status(403).json({ error: 'not yours' });
   if (a) { const p = join(ASSET_DIR, `${req.params.id}.${EXT[a.content_type] || 'bin'}`); if (existsSync(p)) unlinkSync(p); }
   res.json({ deleted: deleteAsset(req.params.id) });
 });
-// Served unauthenticated so <img src> works; ids are unguessable.
-// Streamed with byte ranges (a phone's video player needs them), and never
+// Signed-in only (an <img src> carries the Access cookie, and Cloudflare adds
+// the signed header on the way through). Any signed-in person can read a file:
+// course artwork is shared, and ids are unguessable. Streamed with byte ranges (a phone's video player needs them), and never
 // runnable: only photo and video types are served inline; anything else
 // (an SVG, say, which can carry script) is a download, and nothing is
 // sniffed or allowed to run even if opened directly.
 const INLINE = new Set(['image/webp', 'image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime']);
-app.get('/_blob/:id', (req, res) => {
+app.get('/_blob/:id', signedIn, (req, res) => {
   const a = getAsset(req.params.id);
   if (!a) return res.status(404).end();
   const file = `${req.params.id}.${EXT[a.content_type] || 'bin'}`;
@@ -88,7 +86,7 @@ app.get('/_blob/:id', (req, res) => {
   const inline = INLINE.has(a.content_type);
   res.set({
     'Content-Type': inline ? a.content_type : 'application/octet-stream',
-    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Cache-Control': 'private, max-age=31536000, immutable',   // behind sign-in: never a shared cache's
     'X-Content-Type-Options': 'nosniff',
     'Content-Security-Policy': "default-src 'none'; sandbox",
   });
@@ -97,17 +95,25 @@ app.get('/_blob/:id', (req, res) => {
 });
 
 /* ---------- documents ---------- */
-app.get('/api/stamps', (_req, res) => res.json(stamps()));
-app.get('/api/:collection', (req, res) => res.json({ docs: listDocs(collectionOf(req)) }));
+app.get('/api/stamps', (req, res) => res.json(stamps(req.user)));
+app.get('/api/:collection', (req, res) => res.json({ docs: listDocs(collectionOf(req), req.user) }));
 app.get('/api/:collection/:id', (req, res) => {
-  const doc = getDoc(collectionOf(req), req.params.id);
+  const doc = getDoc(collectionOf(req), req.user, req.params.id);
   return doc ? res.json(doc) : res.status(404).json({ error: 'not found' });
 });
 app.put('/api/:collection/:id', (req, res) => {
   if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'body must be an object' });
-  res.json(putDoc(collectionOf(req), req.params.id, { ...req.body, id: req.params.id }));
+  res.json(putDoc(collectionOf(req), req.user, req.params.id, { ...req.body, id: req.params.id }));
 });
-app.delete('/api/:collection/:id', (req, res) => res.json({ deleted: deleteDoc(collectionOf(req), req.params.id) }));
+app.delete('/api/:collection/:id', (req, res) => {
+  const col = collectionOf(req);
+  // A shared course someone else has played stays: their rounds point at it.
+  if (col === 'courses') {
+    const n = courseRoundsOfOthers(req.params.id, req.user);
+    if (n) return res.status(409).json({ error: 'in_use', message: `${n} round${n === 1 ? '' : 's'} by someone else ${n === 1 ? 'was' : 'were'} played on this course` });
+  }
+  res.json({ deleted: deleteDoc(col, req.user, req.params.id) });
+});
 
 /* ---------- swing analysis ---------- */
 app.post('/api/analyse', async (req, res) => {
@@ -126,7 +132,8 @@ app.post('/api/analyse', async (req, res) => {
 });
 
 /* ---------- static app ---------- */
-app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION, commit: COMMIT, collections: stamps() }));
+// Open for Docker's healthcheck, so it says nothing about anyone's data.
+app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION, commit: COMMIT }));
 
 // The page carries its own version in <meta> tags, stamped here as it's
 // served, so a phone running a cached copy can tell it's behind the server.
@@ -155,7 +162,9 @@ app.use((err, req, res, _next) => {
 
 const server = app.listen(PORT, () => {
   console.log(`Carry ${VERSION} (${COMMIT}) listening on http://0.0.0.0:${PORT}`);
-  if (!TOKEN) console.warn('WARNING: API_TOKEN is empty, so the API is open to anyone who can reach this port. Set it unless this is a trusted LAN.');
+  const mode = authMode();
+  if (mode === 'none') console.warn('WARNING: sign-in is not configured (CF_ACCESS_TEAM and CF_ACCESS_AUD), so every request for data is refused. Set them; see the README.');
+  if (mode === 'dev') console.warn(`WARNING: DEV_USER is set, so every request is ${process.env.DEV_USER} with no sign-in. For local development only, never on the NAS.`);
 });
 
 // docker stop sends SIGTERM. Node doesn't exit on it by default when it's

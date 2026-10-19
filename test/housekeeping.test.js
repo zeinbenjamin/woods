@@ -1,5 +1,5 @@
-// 1.5.0 housekeeping: the app asks for its token instead of failing with
-// "Storage error: unauthorised"; the server logs what changes and fails
+// Housekeeping: since 2.0.0 the app says how to sign in instead of failing
+// with "Storage error: unauthorised" (1.5.0 asked for a token); the server logs what changes and fails
 // (never a token), and shuts down at once on docker stop; the TrueNAS YAML
 // shouts about the three values to replace.
 import { test } from 'node:test';
@@ -9,67 +9,86 @@ import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startApp, club, sleep } from './harness.js';
+import { accessEnv, header } from './access.js';
 
-test('without the right token the app asks for it, re-asks after a wrong one, and loads once it is right', async () => {
-  const app = await startApp({ serverToken: 'right-token', seed: { clubs: [club('7i', 'iron')] } });
+test('opened at an address that skips Cloudflare, the app says where to open it, once', async () => {
+  const app = await startApp({ signedIn: false, seed: { clubs: [club('7i', 'iron')] } });
   try {
-    // Every time the app asks, and which token had been refused, for the failure message.
-    app.win.eval(`window.__asks = []; { const ask = askToken; askToken = r => { __asks.push([Math.round(performance.now()), r, localStorage.getItem('carry.token'), askingToken]); return ask(r); }; }`);
-    const asks = () => JSON.stringify(app.J('__asks'));
-    await app.waitFor(() => app.sheetOpen() && app.field('token'), { what: 'token prompt' });
-    assert.equal(app.text('#status'), 'Needs your access token');
-    assert.equal(app.E('S.clubs.length'), 0);
-    // A wrong token is stored and refused on the next poll, which can come
-    // back within milliseconds; so check for a fresh, empty prompt rather
-    // than for the sheet having closed in between.
-    const first = app.field('token');
-    app.fill('token', 'wrong-token');
-    app.click('#sheetInner [data-save]');
-    await app.waitFor(() => app.win.localStorage.getItem('carry.token') === 'wrong-token', { what: 'wrong token stored' });
-    await app.waitFor(() => app.sheetOpen() && app.field('token') && app.field('token') !== first && app.field('token').value === '',
-      { what: 'asked again after a wrong token' });
-    app.fill('token', 'right-token');
-    assert.equal(await app.save(), true, `the right token closes the sheet; asks: ${asks()}`);
-    await app.waitFor(() => app.E('S.clubs.length') === 1, { what: 'data loads with the right token' });
-    assert.equal(app.win.localStorage.getItem('carry.token'), 'right-token');
-    await sleep(400);
-    assert.equal(app.sheetOpen(), false, `and it stops asking; asks: ${asks()}`);
-    assert.doesNotMatch(app.text('#status'), /unauthorised/);
+    await app.waitFor(() => app.sheetOpen(), { what: 'sign-in sheet' });
+    assert.match(app.text('#sheetInner h2'), /Open Carry through Cloudflare/);
+    assert.match(app.text('#sheetInner'), /NAS's own address no longer works/);
+    assert.equal(app.text('#sheetInner [data-save]'), 'Try again');
+    assert.equal(app.text('#status'), 'Not signed in');
+    assert.equal(app.E('S.clubs.length'), 0, 'nothing loads');
+    assert.equal(app.field('token'), null, 'no token to paste any more');
+    // Dismissed, it stays dismissed: every poll fails the same way.
+    app.click('#sheetInner [data-close]');
+    await sleep(500);
+    assert.equal(app.sheetOpen(), false);
+    assert.equal(app.text('#status'), 'Not signed in');
   } finally { app.stop(); }
 });
 
-test('a refusal that comes back for a token already replaced does not ask again', async () => {
-  // Four collections load at once; each comes back 401 with the old token.
-  // If one is still in flight when the new token is saved, it must not
-  // reopen the sheet (on a slow runner it did, within 30ms).
-  const app = await startApp({ serverToken: 'right-token', seed: { clubs: [club('7i', 'iron')] } });
+test('when the Access session runs out, the app asks to sign in again', async () => {
+  // Cloudflare answers an expired session with a redirect to its login page
+  // (seen as one with redirect: 'manual'), or with a 401 of its own.
+  for (const expired of [
+    () => new Response(null, { status: 302, headers: { location: 'https://team.cloudflareaccess.com/cdn-cgi/access/login' } }),
+    () => new Response('<html>Forbidden</html>', { status: 401, headers: { 'content-type': 'text/html' } }),
+  ]) {
+    let out = false;
+    const app = await startApp({ seed: { clubs: [club('7i', 'iron')] }, intercept: url => (out && url.includes('/api/') ? expired() : null) });
+    try {
+      assert.equal(app.E('S.clubs.length'), 1, 'signed in, loaded');
+      out = true;
+      await app.waitFor(() => app.sheetOpen(), { what: 'sign-in sheet' });
+      assert.match(app.text('#sheetInner h2'), /Sign in again/);
+      assert.equal(app.text('#sheetInner [data-save]'), 'Sign in again');
+      assert.equal(app.text('#status'), 'Signed out');
+      assert.equal(app.E('S.clubs.length'), 1, 'what was on screen stays');
+    } finally { app.stop(); }
+  }
+});
+
+test('Bag says who is signed in, offers to sign out, and that courses are shared', async () => {
+  const app = await startApp({ user: 'Friend@Example.com' });
   try {
-    await app.waitFor(() => app.sheetOpen() && app.field('token'), { what: 'token prompt' });
-    app.fill('token', 'right-token');
-    assert.equal(await app.save(), true);
-    app.E(`askToken('')`);             // the first load, sent with no token
-    app.E(`askToken('wrong-token')`);  // or with an earlier wrong one
-    assert.equal(app.sheetOpen(), false, 'no second prompt for an old request');
-    await app.waitFor(() => app.E('S.clubs.length') === 1, { what: 'data loads' });
-    app.E(`askToken('right-token')`);  // but a refusal of the current token is real
-    assert.equal(app.sheetOpen(), true);
+    app.go('bag');
+    await app.waitFor(() => /friend@example\.com/.test(app.text('#account')), { what: 'signed-in email' });
+    assert.equal(app.$('#account a').getAttribute('href'), '/cdn-cgi/access/logout');
+    assert.match(app.text('#account'), /Courses are shared/);
+    app.act('newCourse');
+    assert.match(app.text('#courseShared'), /everyone who uses this Carry sees this card/);
+  } finally { app.stop(); }
+});
+
+test('deleting a course a friend has played on is refused, and says why', async () => {
+  const course = { id: 'c_s', v: 2, name: 'Shared', tee: 'white', holes: [] };
+  const app = await startApp({ seed: { courses: [course] } });
+  try {
+    await app.api.as('friend@example.com').put('sessions', 'r_f', { id: 'r_f', type: 'round', courseId: 'c_s', date: '2026-10-01' });
+    const done = app.act('deleteCourse', { id: 'c_s' });
+    await app.answer(true);
+    await done;
+    await app.waitFor(() => /Delete failed: 1 round by someone else was played on this course/.test(app.toast()), { what: 'the reason' });
+    assert.ok(await app.api.get('courses', 'c_s'), 'still there');
   } finally { app.stop(); }
 });
 
 async function server(env = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'carry-hk-'));
   const port = 18900 + Math.floor(Math.random() * 90), base = `http://127.0.0.1:${port}`;
-  const p = spawn('node', ['server/index.js'], { env: { ...process.env, DATA_DIR: dir, PORT: String(port), API_TOKEN: 'tok', ...env } });
+  const p = spawn('node', ['server/index.js'], { env: { ...process.env, DATA_DIR: dir, PORT: String(port), ...(await accessEnv()), ...env } });
   let out = '';
   p.stdout.on('data', d => out += d); p.stderr.on('data', d => out += d);
   for (let i = 0; i < 50 && !/listening/.test(out); i++) await sleep(100);
   return { p, base, log: () => out, dir, stop: () => { p.kill('SIGKILL'); rmSync(dir, { recursive: true, force: true }); } };
 }
 
-test('the server logs changes and failures, not reads, and never a token', async () => {
+test('the server logs changes and failures, not reads, and never the query string', async () => {
   const s = await server();
   try {
-    const h = { 'x-carry-token': 'tok', 'content-type': 'application/json' };
+    const h = { ...header('zein@example.com'), 'content-type': 'application/json' };
     await fetch(`${s.base}/api/clubs/7i`, { method: 'PUT', headers: h, body: JSON.stringify({ code: '7i' }) });
     await fetch(`${s.base}/api/clubs`, { headers: h });
     await fetch(`${s.base}/api/clubs/x`, { method: 'PUT', headers: h, body: '{not json' });
@@ -97,10 +116,11 @@ test('docker stop (SIGTERM) shuts the server down at once and cleanly', async ()
   } finally { s.stop(); }
 });
 
-test('the TrueNAS YAML marks the three values to replace and runs an init', () => {
+test('the TrueNAS YAML marks the five values to replace and runs an init', () => {
   const y = readFileSync('deploy/truenas-compose.yml', 'utf8');
-  assert.match(y, /BEFORE PASTING, REPLACE THE THREE MARKED VALUES/);
-  assert.equal((y.match(/# ← REPLACE \(\d\)/g) || []).length, 3);
+  assert.match(y, /BEFORE PASTING, REPLACE THE FIVE MARKED VALUES/);
+  assert.deepEqual((y.match(/# ← REPLACE \((\d)\)/g) || []).map(m => m.match(/\d/)[0]), ['1', '2', '3', '4', '5']);
+  assert.doesNotMatch(y, /API_TOKEN/, 'the 1.x token is gone');
   assert.match(y, /^\s+init: true$/m);
   assert.match(readFileSync('docker-compose.yml', 'utf8'), /^\s+init: true$/m);
 });
