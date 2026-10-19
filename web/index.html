@@ -52,6 +52,7 @@ h3 { font: 600 15px var(--body); margin: 16px 0 8px; }
 p { margin: 0 0 10px; } .muted { color: var(--ink-3); } .small { font-size: 13px; } .lead { color: var(--ink-2); max-width: 60ch; } a { color: var(--green); }
 
 button, .btn { font: 500 14px var(--body); color: var(--ink); background: var(--paper-2); border: 1px solid var(--rule); border-radius: var(--r); padding: 8px 12px; cursor: pointer; }
+a.btn { display: inline-block; text-decoration: none; }
 button.primary { background: var(--green); border-color: var(--green); color: #fff; }
 :root[data-theme="dark"] button.primary { color: #0F1A12; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.primary { color: #0F1A12; } }
 button.quiet { background: none; border-color: transparent; color: var(--green); padding: 6px 8px; } button.danger { color: var(--flag); }
@@ -292,38 +293,35 @@ async function connect() {
   const db = await claude.use('db');
   if (!db) { S.dbState = 'none'; setStatus('Storage unavailable in this view', true); render(); return; }
   S.db = db; S.dbState = 'ready'; setStatus('');
-  checkForUpdate();
+  checkForUpdate(); loadMe();
   try { S.assets = await claude.use('assets'); } catch (e) { S.assets = null; }
   // Swing analysis needs a view that can send images to Claude.
   try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
-  const onErr = e => { if (e && e.code === 'unauthorised') return askToken(e.token); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
+  const onErr = e => { if (e && (e.code === 'unauthorised' || e.code === 'signed_out')) return askSignIn(e.code); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
   db.collection('clubs').onSnapshot(snap => { S.clubs = snap.docs.map(d => d.data()).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); render(); }, onErr);
   db.collection('courses').onSnapshot(snap => { S.courses = snap.docs.map(d => d.data()).sort((a, b) => a.name.localeCompare(b.name)); render(); }, onErr);
   setTimeout(() => runMigrations(), 400);
   db.collection('settings').onSnapshot(snap => { S.settings = (snap.docs[0] && snap.docs[0].data()) || null; render(); }, onErr);
   db.collection('sessions').onSnapshot(snap => { S.sessions = snap.docs.map(d => d.data()).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.created || 0) - (a.created || 0)); render(); }, onErr);
 }
-// The server wants its API_TOKEN and this device doesn't have the right one
-// (a new phone, or the token was changed on the NAS). Ask once; the shim
-// sends it from then on, and the next poll loads everything.
-let askingToken = false;
-function askToken(refused) {
-  if (askingToken) return;
-  // Refused a token that has since been replaced: an old request, not a verdict on the new one.
-  let current = ''; try { current = localStorage.getItem('carry.token') || ''; } catch (e) {}
-  if (refused !== undefined && refused !== current) return;
-  askingToken = true;
-  setStatus('Needs your access token', true);
-  openSheet(`<h2>Access token</h2>
-    <p class="small muted">This server asks for its access token — the API_TOKEN in your TrueNAS app settings. It's stored on this device only.</p>
-    ${field('Token', 'token', 'text', '', 'autocomplete="off" autocapitalize="off" spellcheck="false"')}`,
-    async root => {
-      const t = val(root, 'token'); if (!t) { toast('Paste the token first'); return false; }
-      try { localStorage.setItem('carry.token', t); } catch (e) {}
-      askingToken = false; setStatus('Connecting…');
-      setTimeout(() => { if ($('#status').textContent === 'Connecting…') setStatus(''); }, 3000);
-      return true;
-    });
+// Sign-in is Cloudflare Access (2.0.0). Two ways to be refused, said once:
+// the Access session ran out (Cloudflare redirects instead of answering), or
+// the page was opened at an address that doesn't go through Cloudflare (the
+// NAS's own http://…:1818), which no longer opens anything. Asked once per
+// page load: every poll fails the same way, and Cancel should mean it.
+let askingSignIn = false;
+function askSignIn(code) {
+  if (askingSignIn) return;
+  askingSignIn = true;
+  const expired = code === 'signed_out';
+  setStatus(expired ? 'Signed out' : 'Not signed in', true);
+  openSheet(expired
+    ? `<h2>Sign in again</h2>
+      <p class="small muted">Your sign-in has expired. Nothing unsaved is lost from what's on screen, but changes can't be saved until you sign in again.</p>`
+    : `<h2>Open Carry through Cloudflare</h2>
+      <p class="small muted">Carry now signs you in with Cloudflare Access, so it only opens at its Cloudflare address (for example https://carry.elevengrant.com). The NAS's own address no longer works, on the LAN too.</p>`,
+    async () => { location.reload(); return true; });
+  const btn = $('#sheetInner [data-save]'); if (btn) btn.textContent = expired ? 'Sign in again' : 'Try again';
 }
 async function save(col, id, doc) {
   if (!S.db) { toast('Storage unavailable'); return false; }
@@ -333,7 +331,12 @@ async function save(col, id, doc) {
 async function remove(col, id) {
   if (!S.db) { toast('Storage unavailable'); return false; }
   try { await S.db.collection(col).doc(id).delete(); return true; }
-  catch (e) { toast('Delete failed: ' + (e && e.code || 'unknown')); return false; }
+  catch (e) {
+    // The server says why when it can (a shared course someone else has played on).
+    let why = e && e.code || 'unknown';
+    if (e && e.status === 409) { try { why = JSON.parse(e.message).message || why; } catch (x) {} }
+    toast('Delete failed: ' + why, 4000); return false;
+  }
 }
 const clubBy = code => S.clubs.find(c => c.code === code);
 const activeClubs = () => S.clubs.filter(c => !c.retired);
@@ -1135,7 +1138,7 @@ function holeCheck(h) {
 function vBag() {
   let h = `<div class="spread"><h1>Bag</h1><button class="primary" data-act="newClub">Add club</button></div>
   <p class="lead small">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
-  if (!S.clubs.length) return h + `<div class="empty"><p>No clubs yet.</p></div>`;
+  if (!S.clubs.length) return h + `<div class="empty"><p>No clubs yet.</p></div>` + accountSection();
   const row = c => { const s = clubStats(c.code); return `<tr class="${c.retired ? 'muted' : ''}"><td><b>${esc(c.code)}</b> <span class="muted small">${esc(c.name)}</span>${c.retired ? ' <span class="tag">retired</span>' : ''}</td><td>${c.loft ? c.loft + '°' : ''}</td><td>${fmt(c.nominalCarry)}</td><td>${fmt(c.nominalTotal)}</td><td class="num">${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td><td><button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></td></tr>`; };
   h += `<div class="scroll"><table><thead><tr><th>Club</th><th>Loft</th><th>Assumed carry</th><th>Assumed total</th><th>Stock carry</th><th></th></tr></thead><tbody>${S.clubs.map(row).join('')}</tbody></table></div>`;
   h += calibrationSection();
@@ -1144,7 +1147,19 @@ function vBag() {
     <div class="row-actions"><button class="primary" data-act="exportData">Export everything</button><button data-act="importData">Import a backup</button></div>
     <p class="small muted" style="margin-top:8px">${S.clubs.length} clubs, ${S.courses.length} courses, ${S.sessions.length} sessions, ${allSwings().length} swings.</p>
     <p class="small muted" id="about">Carry ${esc(APP.version)}, build ${esc(APP.commit)}. Tap the title for what's changed.</p></section>`;
-  return h;
+  return h + accountSection();
+}
+// Who this is (2.0.0): the email Cloudflare Access signed in. Clubs, rounds,
+// range sessions and settings are this person's own; courses are everyone's.
+function accountSection() {
+  return `<section class="sec" id="account"><h2>Signed in</h2>
+    <p class="small">${S.me ? 'As <b>' + esc(S.me) + '</b>.' : '<span class="muted">Checking who you are…</span>'}</p>
+    <p class="small muted">Your clubs, rounds and range sessions are yours alone. Courses are shared with everyone who uses this Carry, so an edit to a course is an edit for all of them.</p>
+    <div class="row-actions"><a class="btn" href="/cdn-cgi/access/logout">Sign out</a></div></section>`;
+}
+async function loadMe() {
+  if (typeof window.carryMe !== 'function') return;
+  try { const r = await window.carryMe(); if (r && r.email && r.email !== S.me) { S.me = r.email; render(); } } catch (e) {}
 }
 
 /* ---------- sheet ---------- */
@@ -1223,6 +1238,7 @@ function courseForm(c = {}) {
   const holes = fullCard(c.holes);
   const gaps = c.holes && c.holes.length ? missingHoles(c.holes) : [];
   return `<h2>${c.id ? 'Edit course' : 'Add course'}</h2>
+  <p class="small muted" id="courseShared">Courses are shared: everyone who uses this Carry sees this card, and your changes are theirs too.</p>
   ${field('Name', 'name', 'text', c.name)}
   <div class="grid2">${field('Suburb', 'suburb', 'text', c.suburb)}${field('State', 'state', 'text', c.state || 'NSW')}</div>
   ${field('Tee these distances are from', 'tee', 'text', primaryTee(c) === 'default' ? '' : primaryTee(c), 'placeholder="white, blue, black…"')}
@@ -1343,7 +1359,7 @@ const ACTIONS = {
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c'), created: Date.now() })); wireHoleCount(sheetInner, false, []); },
   editCourse(d) { const c = course(d.id); openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); },
-  async deleteCourse(d) { if (!await confirmAsk('Delete this course? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
+  async deleteCourse(d) { if (!await confirmAsk('Delete this course for everyone who uses this Carry? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
   newClub() { openSheet(clubForm(), async root => saveClub(root, {})); },
   editClub(d) { openSheet(clubForm(clubBy(d.id)), async root => saveClub(root, clubBy(d.id))); },
 };

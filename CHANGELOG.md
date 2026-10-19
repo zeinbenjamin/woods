@@ -6,6 +6,14 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.0.0 — 2026-10-19
+- You sign in with Cloudflare Access (the email one-time PIN) instead of pasting an access token. The token is gone.
+- Carry only opens at its Cloudflare address now, at home too: the NAS's own address shows a note saying where to open it instead.
+- Friends can use Carry: add their email to the Access policy. Each person has their own clubs, rounds, range sessions and swings; courses are shared, so one person's fix to a scorecard is everyone's.
+- Bag shows who you're signed in as, with a Sign out button. When your sign-in expires the app says so and offers to sign in again.
+- A course someone else has played on can't be deleted, and the app says why.
+- On the first start, your existing data becomes yours (set OWNER_EMAIL to your Access email), and a copy of the old database is kept beside it as carry-before-2.0.0.db.
+
 ## 1.15.0 — 2026-10-19
 - Northbridge now has a course map: all 18 holes from OpenStreetMap, with its tree-lined holes drawn. Turn it on from the course's page; the page checks the map against your scorecard and flags any hole that doesn't fit.
 - Behind the scenes, course maps can now place a GPS position on the hole and measure to the front, middle and back of the green, ready for Play mode.

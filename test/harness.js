@@ -10,7 +10,8 @@
 //   Blob.arrayBuffer/text    missing from jsdom's Blob
 //   TextEncoder              missing from jsdom's window
 //   canvas getContext        returns null (jsdom has no canvas) without the console noise
-//   fetch                    real network; jsdom Blob bodies sent as bytes, abort signals dropped
+//   fetch                    real network; jsdom Blob bodies sent as bytes, abort signals dropped,
+//                            and the signed Access header added, as Cloudflare adds it at its edge
 //
 // Everything else — the app, the shim, the server, SQLite — is the real thing.
 import { spawn } from 'node:child_process';
@@ -19,6 +20,8 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
+import { accessEnv, header, ME } from './access.js';
+export { ME };
 
 export const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -38,31 +41,40 @@ export async function waitFor(cond, { timeout = 4000, step = 20, what = 'conditi
 }
 
 // Start a server with `seed` already in SQLite, then boot the app against it.
-// seed: { clubs: [], courses: [], sessions: [], settings: {} }
-export async function startApp({ seed = {}, pollMs = 150, intercept, query = '', serverToken = '' } = {}) {
+// seed: { clubs: [], courses: [], sessions: [], settings: {} }, all as `user`.
+// signedIn: false boots the page with no Access header (straight to the NAS).
+// storage: localStorage as an earlier visit left it.
+export async function startApp({ seed = {}, pollMs = 150, intercept, query = '', user = ME, signedIn = true, env = {}, storage = {} } = {}) {
   const DATA = mkdtempSync(join(tmpdir(), 'carry-ui-'));
   const port = await freePort();
   const base = `http://127.0.0.1:${port}`;
   const proc = spawn('node', ['server/index.js'], {
-    env: { ...process.env, DATA_DIR: DATA, PORT: String(port), API_TOKEN: serverToken, ANTHROPIC_API_KEY: '' },
+    env: { ...process.env, DATA_DIR: DATA, PORT: String(port), ANTHROPIC_API_KEY: '', ...(await accessEnv()), ...env },
     stdio: 'ignore',
   });
   await waitFor(async () => (await fetch(`${base}/healthz`)).ok, { timeout: 8000, what: 'server start' });
 
-  const auth = serverToken ? { 'x-carry-token': serverToken } : {};
-  const api = {
+  // Seeding and checks go through the API as `user` (api.as(email) for someone else).
+  const makeApi = who => {
+  const auth = () => header(who);
+  return {
     async put(col, id, doc) {
-      const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { method: 'PUT', headers: { 'content-type': 'application/json', ...auth }, body: JSON.stringify(doc) });
+      const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { method: 'PUT', headers: { 'content-type': 'application/json', ...auth() }, body: JSON.stringify(doc) });
       if (!r.ok) throw new Error(`PUT ${col}/${id}: ${r.status}`);
       return r.json();
     },
-    async get(col, id) { const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { headers: auth }); return r.ok ? r.json() : null; },
-    async list(col) { return (await (await fetch(`${base}/api/${col}`, { headers: auth })).json()).docs; },
+    async get(col, id) { const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { headers: auth() }); return r.ok ? r.json() : null; },
+    async list(col) { return (await (await fetch(`${base}/api/${col}`, { headers: auth() })).json()).docs; },
+    async del(col, id) { const r = await fetch(`${base}/api/${col}/${encodeURIComponent(id)}`, { method: 'DELETE', headers: auth() }); return { status: r.status, body: await r.json() }; },
     async upload(bytes, type = 'image/png') {
-      return (await fetch(`${base}/api/assets`, { method: 'POST', headers: { 'content-type': type }, body: bytes })).json();
+      return (await fetch(`${base}/api/assets`, { method: 'POST', headers: { 'content-type': type, ...auth() }, body: bytes })).json();
     },
-    async blobStatus(id) { return (await fetch(`${base}/_blob/${id}`)).status; },
+    async blobStatus(id) { return (await fetch(`${base}/_blob/${id}`, { headers: auth() })).status; },
+    blob(id) { return fetch(`${base}/_blob/${id}`, { headers: auth() }); },
+    as: other => makeApi(other),
   };
+  };
+  const api = makeApi(user);
   for (const c of seed.clubs || []) await api.put('clubs', c.code, c);
   for (const c of seed.courses || []) await api.put('courses', c.id, c);
   for (const s of seed.sessions || []) await api.put('sessions', s.id, s);
@@ -86,6 +98,7 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
     beforeParse(w) {
       win = w;
       w.CARRY_POLL_MS = pollMs;
+      for (const [k, v] of Object.entries(storage)) w.localStorage.setItem(k, v);   // what an earlier visit left
       w.HTMLElement.prototype.showModal = function () { this.open = true; };
       w.HTMLElement.prototype.close = function () { const was = this.open; this.open = false; if (was && this.onclose) this.onclose(); };
       w.scrollTo = () => {};
@@ -115,7 +128,9 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
         let body = o.body;
         if (body instanceof w.Blob) body = Buffer.from(await toAB(body));
         const { signal, ...rest } = o;   // jsdom's AbortSignal isn't one node's fetch accepts
-        return fetch(url, { ...rest, body });
+        // Requests to Carry carry Access's signed header, as through the tunnel.
+        const headers = { ...(rest.headers || {}), ...(signedIn && url.startsWith(base) ? header(user) : {}) };
+        return fetch(url, { ...rest, headers, body });
       };
     },
   });

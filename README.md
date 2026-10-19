@@ -36,13 +36,14 @@ SCHEMA.md       every document shape, the invariants, what's derived
 ## Quick start (local)
 
 ```bash
-cp .env.example .env          # fill in ANTHROPIC_API_KEY and API_TOKEN
+cp .env.example .env          # fill in ANTHROPIC_API_KEY
 npm install
-DATA_DIR=./data node server/index.js
-# http://localhost:1818
+DATA_DIR=./data DEV_USER=you@example.com node server/index.js
+# http://localhost:1818 — DEV_USER signs every request in as that email,
+# with no Cloudflare. Local development only; never set it on the NAS.
 ```
 
-Run the tests with `npm test` — 133 of them, covering the API, the asset
+Run the tests with `npm test` — 233 of them, covering the API, the asset
 store, auth, the import path, and the real app driving the real server:
 CRUD through its forms, shot logging by tapping the hole map, analytics
 invariants, the practice list and planner, tee sets and migrations, range
@@ -84,7 +85,8 @@ screenshots, versioning, and the swing analyzer.
    Make the package public (Packages → carry → Settings → Change
    visibility), or add registry credentials in the app form. Then paste
    `deploy/truenas-compose.yml` into the form, having replaced the image
-   name, the token, the key and the dataset path.
+   name, the key, the Access values, your email and the dataset path
+   (the file marks all five).
 
    Delete any half-created `carry` app before retrying — a failed install
    leaves one behind, and the name clashes.
@@ -105,7 +107,9 @@ screenshots, versioning, and the swing analyzer.
    | Storage | host `/mnt/tank/apps/carry` → container `/data` |
    | User / Group ID | `568` / `568` |
    | `ANTHROPIC_API_KEY` | from console.anthropic.com |
-   | `API_TOKEN` | `openssl rand -hex 24` |
+   | `CF_ACCESS_TEAM` | your team domain, `<team>.cloudflareaccess.com` |
+   | `CF_ACCESS_AUD` | the Carry Access application's AUD tag |
+   | `OWNER_EMAIL` | the email you sign in with (see *Sign-in*) |
    | `TZ` | `Australia/Sydney` |
 
 4. **Bring your data over.** Open the artifact, *Bag → Export
@@ -113,25 +117,61 @@ screenshots, versioning, and the swing analyzer.
 
    ```bash
    docker cp carry-export-2026-09-25.json carry:/tmp/
-   docker exec carry node scripts/import-export.js /tmp/carry-export-2026-09-25.json
+   docker exec carry node scripts/import-export.js /tmp/carry-export-2026-09-25.json --owner you@example.com
    ```
 
    Asset ids are preserved, so hole artwork and swing frames keep
    resolving without rewriting a single reference. Re-running it is safe.
+   `--owner` is whose clubs, rounds and sessions they become; courses are
+   shared, and an export's copy of a course replaces the current one.
 
-5. **Open it** at `http://truenas:1818/?token=YOUR_API_TOKEN`. The token
-   is stored in the browser, so that's once per device. Add it to the
-   home screen — there's a manifest, so it installs like an app.
-   Open it without the token (or with a wrong one) and the app asks for
-   it.
+5. **Open it** at its Cloudflare address (next section) and sign in.
+   Add it to the home screen — there's a manifest, so it installs like an
+   app. Since 2.0.0 the NAS's own `http://truenas:1818` opens nothing:
+   every request has to come through Cloudflare Access.
+
+### Sign-in (2.0.0)
+
+Carry has no passwords of its own. Cloudflare Access signs you in (a
+one-time PIN to your email), and stamps every request it lets through
+with a signed token. Carry checks that signature against your team's
+published keys, the application's audience tag and the expiry, and takes
+your email from it. That email is whose data it is:
+
+- **Yours alone:** clubs, rounds, range sessions, swings, settings.
+- **Shared:** courses. One Randwick card for everyone; an edit is
+  everyone's edit. A course someone else has a round on can't be deleted.
+- **Files** (hole art, swing video, screenshots) can be read by anyone
+  signed in, and deleted only by whoever uploaded them.
+
+**Adding a friend:** Zero Trust → Access → Applications → Carry → the
+policy → add their email. They open the same address and start with an
+empty bag and every course.
+
+**Upgrading from 1.x**, once:
+
+1. In the TrueNAS app's YAML, remove `API_TOKEN` and set
+   `CF_ACCESS_TEAM` (the `<team>.cloudflareaccess.com` address the Access
+   login page is on; also under Zero Trust → Settings), `CF_ACCESS_AUD` (Access → Applications → Carry → *Overview* →
+   Application Audience (AUD) Tag) and `OWNER_EMAIL` (the email you sign
+   in with).
+2. Redeploy. On first start Carry copies the database to
+   `carry-before-2.0.0.db` in the dataset, then makes every existing
+   club, round and session yours. Without `OWNER_EMAIL` it refuses to
+   start and changes nothing; the log says why.
+3. Open the Cloudflare address. Bag shows *Signed in as …*.
+
+If the Access session expires the app says so and offers *Sign in again*.
+If Cloudflare's keys can't be fetched, Carry refuses everyone (503)
+rather than letting anyone in.
 
 ### Off the LAN: Cloudflare Tunnel
 
 Needed for Play mode on the course: a phone only gives a page its GPS
 position over **https**, and `http://truenas:1818` only works at home. A
 tunnel gives Carry an https address without opening a port. Requests pass
-through Cloudflare (TLS ends at their edge): that was a deliberate choice,
-so put Cloudflare Access in front (step 4) and keep `API_TOKEN` set.
+through Cloudflare (TLS ends at their edge): that was a deliberate choice.
+Since 2.0.0 Access (step 4) is also Carry's sign-in, so it isn't optional.
 
 **Already have a tunnel and `cloudflared` running** (for other apps)?
 Then it's two steps and no new container:
@@ -155,9 +195,10 @@ Then it's two steps and no new container:
    subdomain `carry`, your domain, service **HTTP**, URL `carry:1818`
    (the container's name on the app's own network).
 4. **Lock it to you.** Zero Trust → Access → Applications → *Add* →
-   Self-hosted, the same hostname, a policy that allows only your email,
-   login by one-time PIN. Then nobody else reaches even the page; the API
-   token stays as the second lock.
+   Self-hosted, the same hostname, a policy that allows your email (and
+   any friend's), login by one-time PIN. Then nobody else reaches even the
+   page. Copy the application's AUD tag into `CF_ACCESS_AUD`
+   (see *Sign-in*).
 5. **Run the tunnel beside Carry.** Edit the app in TrueNAS and add this
    under `services:` in the YAML, next to `carry:`, with your token:
 
@@ -174,17 +215,19 @@ Then it's two steps and no new container:
    ```
 
 6. **On the phone,** open `https://carry.<your domain>`, sign in to
-   Access, and add it to the home screen again. It's a new address, so it
-   asks for the API token once and keeps its own copy.
+   Access, and add it to the home screen again.
 
 The free plan cuts a request off after 100 seconds; swing analysis takes
-about 30. Inside the house the old `http://truenas:1818` keeps working.
+about 30. Use the Cloudflare address at home too: the NAS's own address
+no longer opens anything.
 
 ### Behind a reverse proxy
 
-Put it behind Traefik/NPM with TLS if you want it off the LAN. The app is
-a single page plus a JSON API, so nothing special is needed beyond
-`proxy_read_timeout 120s` — swing analysis can take 30 seconds or so.
+Since 2.0.0 Carry needs Cloudflare Access's signed token on every
+request, so a plain reverse proxy on its own won't get in. If you put one
+behind the tunnel, pass the `Cf-Access-Jwt-Assertion` header and cookies
+through, and allow `proxy_read_timeout 120s` — swing analysis can take 30
+seconds or so.
 
 ## Swing analysis
 
@@ -229,10 +272,15 @@ TrueNAS still won't redeploy by itself — update the app to do it.
 
 - The Anthropic key is only ever on the server. The browser talks to
   `/api/analyse`.
-- `API_TOKEN` guards every `/api` route. `/_blob/:id` is deliberately
-  open so `<img src>` works; ids are 128-bit random.
-- There's no multi-user concept. One token, one bag, one set of data.
-  Don't expose it publicly without putting real auth in front.
+- Every `/api` route and every `/_blob/:id` file needs a valid Cloudflare
+  Access token (RS256, checked against the team's keys, audience, issuer
+  and expiry). The `Cf-Access-Authenticated-User-Email` header is never
+  trusted on its own: anyone who can reach the port could send it.
+  `/api/version` and `/healthz` stay open and say nothing about the data.
+- Everyone signed in shares one Anthropic key: a friend's swing analysis
+  is on your bill. Put a spend cap on the key.
+- Courses are shared and editable by everyone signed in; each change
+  records who made it (`updated_by`).
 
 ## Backups
 

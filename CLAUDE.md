@@ -7,8 +7,9 @@ it holds every document shape and is the thing to keep current.
 
 ## What this is
 
-A golf tracker for one person — Zein, a beginner about a year in, playing
-public courses around Sydney. It replaces 18Birdies with something that
+A golf tracker built for Zein, a beginner about a year in, playing
+public courses around Sydney (since 2.0.0 his friends can sign in too, each
+with their own data and the courses shared; see *Sign-in and whose data*). It replaces 18Birdies with something that
 answers one question: *what is actually costing me strokes, and what
 should I practise next?*
 
@@ -74,8 +75,8 @@ reach the device unfilled. `index.html`, `platform.js` and the manifest
 must stay `Cache-Control: no-cache`.
 
 Where Carry differs from the kit, deliberately:
-- `/api/version` is registered **before** the token check (the rest of
-  `/api` needs the token); it says nothing about the data.
+- `/api/version` is registered **before** the sign-in check (the rest of
+  `/api` needs it); it says nothing about the data.
 - `platform.js` is revalidated like the page: it's a separate file the
   page depends on, and must never lag it.
 - No SPA fallback: Carry has no URL routes, so unknown paths stay 404.
@@ -113,7 +114,8 @@ behind it (or behind plain `fetch` to `/api`) rather than scattering
 server knowledge through the app.
 
 ```
-server/index.js     routes, token auth, static hosting
+server/index.js     routes, static hosting
+server/auth.js      Cloudflare Access sign-in: the JWT check, req.user
 server/db.js        SQLite: JSON documents + asset metadata
 server/anthropic.js the Messages API call — the only place the key exists
 web/index.html      the app, one file, ~3,200 lines
@@ -175,6 +177,39 @@ changes don't collide and each knows what it may change.
   edits only its own entry and section. Whichever PR merges second takes
   the next version number; the CI gate enforces it. Before opening a PR,
   merge the latest `main`.
+
+## Sign-in and whose data (2.0.0)
+
+Asked for 2026-10-19: drop `API_TOKEN`, sign in with Cloudflare Access, and
+tag data by email so friends can use it ("Friends, shared courses"; the home
+address closed: "Cloudflare only").
+
+- **Who:** `server/auth.js` verifies the `Cf-Access-Jwt-Assertion` header
+  (or `CF_Authorization` cookie): RS256 against
+  `https://<CF_ACCESS_TEAM>/cdn-cgi/access/certs` (cached an hour, refetched
+  for an unknown key id at most every 30s), `aud` contains
+  `CF_ACCESS_AUD`, `iss` is the team, `exp`/`nbf` with 60s skew, an email.
+  `req.user` is that email, lower-cased. The `Cf-Access-Authenticated-User-
+  Email` header is never trusted: anyone on the LAN can send it. Keys
+  unreachable → 503, never a yes. `DEV_USER` is local development only.
+- **Whose:** docs are keyed `(collection, owner, id)`. `courses` are shared
+  (owner `''`, `SHARED` in `db.js`) with `updated_by`; clubs, sessions,
+  settings are per person, so two people can both have a `7i` and an
+  `app` settings doc. Stamps are per person (own + shared). The app is
+  unchanged: it still sees "its" four collections.
+- **Files:** readable by anyone signed in (course art is shared, ids are
+  128-bit), deletable only by the uploader (403 otherwise).
+- **Guard:** deleting a course someone else has rounds on is 409 `in_use`;
+  the app toasts the server's reason. Rounds keep their own card copy, but
+  their course page would vanish.
+- **Migration from 1.x** (`migrateTo2`, at startup, once): needs
+  `OWNER_EMAIL` if there's any personal data or file, else refuses to start
+  having changed nothing; `VACUUM INTO carry-before-2.0.0.db` first; then
+  courses → shared, everything else → the owner. That's the major version:
+  stored data old code can't read.
+- **Known costs:** a friend's swing analysis uses his Anthropic key; an
+  import of an old export (`--owner` required) overwrites shared courses
+  with its copies.
 
 ## Invariants worth defending
 
@@ -259,9 +294,11 @@ Each of these cost real debugging time. Don't reintroduce them.
   or SQLite can't create `carry.db-wal` — which fails on first *write*,
   not at startup, so it looks like it's working.
 - **The SCALE Custom App form cannot build images and has no `.env`.** It
-  pulls only, and `${VARIABLES}` silently resolve to empty — including
-  `API_TOKEN`, which disables auth rather than erroring. Use
-  `deploy/truenas-compose.yml`, which is literal throughout.
+  pulls only, and `${VARIABLES}` silently resolve to empty (in 1.x that
+  silently disabled `API_TOKEN`'s auth). Use `deploy/truenas-compose.yml`,
+  which is literal throughout. Its `REPLACE` placeholders count as unset:
+  pasted as-is, sign-in is "not configured" and every data request is 503,
+  and a placeholder `OWNER_EMAIL` never becomes anyone's data.
 - **Express matches routes in registration order.** `DELETE
   /api/:collection/:id` once sat above `DELETE /api/assets/:id` and
   swallowed it with a 404, and the app ignores asset-delete errors, so in
@@ -283,15 +320,19 @@ Each of these cost real debugging time. Don't reintroduce them.
   phone's video player needs, and only photo/video types are served
   inline; anything else is an attachment, all with `nosniff` and a
   sandboxing CSP. An uploaded SVG used to be served as a live page on the
-  app's own origin, where the token lives.
+  app's own origin. Files are `Cache-Control: private` (they're behind
+  sign-in).
 - **Panels keep their state across redraws** by `id` (`render()` reopens
   them), and the shim doesn't redraw when a poll only brings back our own
   write. Give any new `<details>` an `id`.
-- **A wrong or missing token asks for it.** A 401 from the API or the poll
-  opens a token sheet (`askToken`) instead of the old dead-end "Storage
-  error: unauthorised"; the token is stored in `localStorage`.
+- **Being refused says how to sign in** (`askSignIn`, once per page load),
+  never the old dead-end "Storage error: unauthorised". The shim fetches
+  with `redirect: 'manual'`: an expired Access session comes back as a
+  redirect (or a 401 that isn't Carry's JSON) → `signed_out`, "Sign in
+  again"; Carry's own 401 → `unauthorised`, "open it through Cloudflare".
+  1.x's `?token=` and stored token are dropped, never kept.
 - **The server logs writes and errors**, never GETs that succeed, and never
-  the query string (the token can be in it).
+  the query string.
 - **The container stops cleanly**: SIGTERM closes the HTTP server and
   SQLite and exits 0, and both compose files set `init: true` so the
   signal reaches node. Before this, a redeploy waited out Docker's 10s
@@ -571,20 +612,27 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 223 tests, about 25s.
+`npm test` — 233 tests, about 30s.
 
-- `api.test.js` (16) — the server alone: auth, documents, assets (byte
-  ranges, safe serving), import, `/api/version`, the stamped and
-  revalidated page, the empty-token warning, and `/api/analyse`
-  against a fake Anthropic API (`ANTHROPIC_BASE_URL`).
+- `api.test.js` (24) — the server alone: sign-in (forged key, wrong
+  audience or team, expired, alg none, no email, the email header alone,
+  cookie, clock skew, keys unreachable, not configured, `DEV_USER`),
+  whose documents are whose (isolation, shared courses, per-person stamps,
+  the course-delete guard), assets (uploader-only delete, sign-in for
+  files, byte ranges, safe serving), the 1.x migration (refused without an
+  owner, converted with a backup, idempotent), import with `--owner`,
+  `/api/version`, the stamped page, and `/api/analyse` against a fake
+  Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
+  Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
 - `versioning.test.js` (7) — the changelog format and its agreement with
   `package.json` and the lockfile, the PR gate, the release notes, and
   that publishing runs the tests first.
 - `regressions.test.js` (7) — the 1.3.1 review fixes, each reproduced
   before it was fixed: local dates, quick taps, render cost with a season
-  of data, panels staying open, the token leaving the URL, escaping.
+  of data, panels staying open, an old token link leaving the URL, escaping.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
-  server: writes land in SQLite, uploads become blobs, polling works.
+  server signed in by `DEV_USER`: writes land in SQLite, uploads become
+  blobs, polling works.
 - `ui-*.test.js` (~100) — the app's own UI suites, rebuilt here. The
   originals from the artifact sandbox were never recovered, so these are
   new tests covering the same ground, driven through the real forms and
@@ -613,9 +661,11 @@ fixture would let the reading be pinned.
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
   holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
-- `housekeeping.test.js` (5) — the token prompt (and ignoring a 401 for
-  a token already replaced), request logging without
-  the query string, a clean SIGTERM exit, the YAML's replace markers.
+- `housekeeping.test.js` (7) — the sign-in sheets (home address, expired
+  session by redirect and by Cloudflare's 401, asked once), "Signed in as"
+  and the shared-courses notes, a refused course delete saying why, request
+  logging without the query string, a clean SIGTERM exit, the YAML's five
+  replace markers.
 
 `test/harness.js` boots a real server on a free port with seeded
 documents, loads the page as the server serves it into jsdom, and stubs only what jsdom lacks
@@ -629,7 +679,7 @@ bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
 9 for course maps, 4 for the 1.9.0 tee-box check, 2 for the legend, 5 for the
-stroke index column; all caught.
+stroke index column, 28 for 2.0.0's sign-in and whose-data rules; all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
@@ -658,11 +708,14 @@ In rough order of value:
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
 
-Deliberately out of scope: multi-user, booking integration, anything that
-sends his data anywhere — with one exception he chose on 2026-10-19:
-**Cloudflare Tunnel** for off-LAN https (README, *Off the LAN*), because
-Play mode needs GPS and a phone only gives GPS to an https page. Access
-in front, `API_TOKEN` kept.
+Deliberately out of scope: booking integration, anything that sends his
+data anywhere — with one exception he chose on 2026-10-19: **Cloudflare
+Tunnel** for off-LAN https (README, *Off the LAN*), because Play mode needs
+GPS and a phone only gives GPS to an https page. Access in front, and since
+2.0.0 Access *is* the sign-in (`API_TOKEN` is gone). Friends sharing it is
+in scope since 2.0.0 (he asked, 2026-10-19); anything beyond "friends on
+one NAS" (accounts, roles, invitations in the app) is not: who gets in is
+the Access policy.
 
 **Next: Play mode** (asked for 2026-10-19; he wants it built with GPS from
 the start, not before). A *Start round* mode used during the round, instead

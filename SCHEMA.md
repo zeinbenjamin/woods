@@ -6,6 +6,14 @@ Migrations must be idempotent — they run against documents that are already
 current.
 
 Four collections: `clubs`, `courses`, `sessions`, `settings`.
+
+**Whose (2.0.0):** every document belongs to an email (the Cloudflare
+Access sign-in), stored beside it, never inside it. `courses` are shared:
+one copy for everyone signed in, owner `''`, with `updated_by` recording the
+last editor. `clubs`, `sessions` and `settings` are each person's own, so
+ids are unique per person (two people can each have `clubs/7i` and
+`settings/app`). The documents' shapes are unchanged; the app never sees an
+owner. Assets carry their uploader, who alone can delete them.
 Distances are **metres** throughout. Dates are `YYYY-MM-DD` strings (local
 days, not timestamps — a round belongs to a calendar day).
 
@@ -282,3 +290,5 @@ Images live outside these documents and are referenced by id
 (`/_blob/<id>`): hole artwork, swing frames, swing video, range screenshots. An export embeds
 them as data URLs; an import re-uploads and rewrites every reference. A
 document that references a missing asset renders as a gap, never as an error.
+Any signed-in person can read any asset (course artwork is shared); only its
+uploader can delete it.

@@ -1,12 +1,19 @@
 # ========================================================================
-#  BEFORE PASTING, REPLACE THE THREE MARKED VALUES BELOW (search: REPLACE)
+#  BEFORE PASTING, REPLACE THE FIVE MARKED VALUES BELOW (search: REPLACE)
 #    1. ANTHROPIC_API_KEY  your key from console.anthropic.com
-#    2. API_TOKEN          the token your devices already use (keep it the
-#                          same, or every device will be asked for it again)
-#    3. the dataset path   where your existing data lives, e.g.
+#    2. CF_ACCESS_TEAM     your Zero Trust team domain, e.g.
+#                          yourteam.cloudflareaccess.com: the address the
+#                          Access login page is on
+#    3. CF_ACCESS_AUD      the Carry Access application's Audience (AUD)
+#                          tag (Access → Applications → Carry → Overview)
+#    4. OWNER_EMAIL        the email you sign in to Access with: data from
+#                          before 2.0.0 becomes yours. Needed once, on the
+#                          first start of 2.0.0; harmless after.
+#    5. the dataset path   where your existing data lives, e.g.
 #                          /mnt/tank/apps/carry — a wrong path starts an
 #                          EMPTY app (your data is still safe on disk)
-#  Pasted as-is, the app runs with a placeholder token and asks for it.
+#  Pasted as-is, sign-in isn't configured and every request for data is
+#  refused (the log says so).
 # ========================================================================
 #
 # Paste this into TrueNAS SCALE: Apps → Discover → Custom App →
@@ -22,7 +29,7 @@
 #   2. Values are literal. There's no .env file in this context, so
 #      variable placeholders would silently resolve to empty strings.
 #
-# Replace: the token, the API key, and the dataset path.
+# Replace: the API key, the two Access values, your email, and the dataset path.
 
 services:
   carry:
@@ -47,14 +54,16 @@ services:
 
     environment:
       ANTHROPIC_API_KEY: "sk-ant-REPLACE_ME"                # ← REPLACE (1)
-      API_TOKEN: "REPLACE_WITH_openssl_rand_hex_24"   # ← REPLACE (2)
+      CF_ACCESS_TEAM: "REPLACE_ME.cloudflareaccess.com"   # ← REPLACE (2)
+      CF_ACCESS_AUD: "REPLACE_WITH_the_AUD_tag"           # ← REPLACE (3)
+      OWNER_EMAIL: "REPLACE_WITH_you@example.com"         # ← REPLACE (4)
       CARRY_MODEL: "claude-sonnet-4-6"
       MAX_ASSET_MB: "200"
       TZ: "Australia/Sydney"
       HOME: "/tmp"
 
     volumes:
-      - /mnt/tank/apps/carry:/data     # ← REPLACE (3) the left-hand side only
+      - /mnt/tank/apps/carry:/data     # ← REPLACE (5) the left-hand side only
 
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:1818/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]

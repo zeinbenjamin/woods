@@ -1,6 +1,7 @@
 // The app, the shim and the server together: load the real index.html in
 // a DOM, point fetch at a live server, and check that writes land in
-// SQLite and reads come back.
+// SQLite and reads come back. Signed in with DEV_USER, the local-development
+// mode, so this also shows that mode runs the whole app with no Cloudflare.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -16,7 +17,7 @@ let proc, dom, win;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 before(async () => {
-  proc = spawn('node', ['server/index.js'], { env: { ...process.env, DATA_DIR: DATA, PORT: String(PORT), API_TOKEN: '' }, stdio: 'ignore' });
+  proc = spawn('node', ['server/index.js'], { env: { ...process.env, DATA_DIR: DATA, PORT: String(PORT), CF_ACCESS_TEAM: '', CF_ACCESS_AUD: '', DEV_USER: 'web@example.com' }, stdio: 'ignore' });
   for (let i = 0; i < 50; i++) { try { if ((await fetch(`${base}/healthz`)).ok) break; } catch {} await sleep(100); }
 
   // Inline the shim rather than letting jsdom fetch it: the resource
