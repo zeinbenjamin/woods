@@ -136,13 +136,28 @@ database document. Metres on a local plane: x east, y north, from `origin`.
     { "k": "green|tee|fairway|bunker|water|rough|canopy", "r": [[[x, y], …]], "h": 7, "osm": "way/…" },
     { "k": "path", "l": [[x, y], …], "h": 7, "osm": "…" },
     { "k": "crowns", "c": [[x, y, radius], …], "h": null, "osm": "…" },   // merged mapped trees
-    { "k": "tree", "c": [x, y], "rad": 5.5, "h": 7, "osm": "…" }           // a lone tree
+    { "k": "tree", "c": [x, y], "rad": 5.5, "h": 7, "osm": "…" },          // a lone tree
+    { "k": "teept", "c": [x, y], "h": 7, "osm": "node/…" },                // a tee mapped as a point (2.2.0)
+    { "k": "green", "est": true, "r": [[[x, y], …]], "h": 7, "osm": "node/…" } // estimated: a 12 m circle on the pin
   ],                                    // h: the hole it belongs to; null = none (drawn faded)
   "holes": [{ "n": 7, "line": [[x, y], …], "green": 58, "tees": [77] }]
 }                                       // line: mapped tee → middle of the green; green/tees index features
                                         // tees: the hole's mapped tee boxes (on its line, or named by hand)
 ```
 
+- `holes` is empty on a boundary-only map (`holesFrom: "your GPS marks"`:
+  Barnwell Park, Beverley Park, Lane Cove). Its file exists so the course has a
+  fixed `origin` before anything is logged there.
+- **Holes from marks** (2.4.0) are never in the file: `HoleMap.forHole(id, n,
+  metres, {marks, tee})` builds them on every read from the course hole's
+  `marks`, where the file has no line for the hole or only an estimated green.
+  Line: mean of the tee marks for the tee played (else the set nearest the
+  card) → mean of the flag marks; green: an estimated 12 m circle there
+  (`est`, `mk`). Marks used: `acc` ≤ 10, within 30 m of the boundary, and in
+  agreement (within 20 m of their set's median, a majority, else nothing is
+  drawn). On an OSM line with an estimated green, flags within 40 m of the
+  line's end move the green and the line's end there. A mapped green ignores
+  marks.
 - The **tee rule**: the tee a round was played from sits `teeMetres(hole, tee)`
   from the end of `line`, along it (forward of the mapped tee if the card is
   shorter, straight back behind it if longer). Worked out on every draw.

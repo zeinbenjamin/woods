@@ -19,6 +19,9 @@
 //   holes: "osm"                 golf=hole ways inside the course, numbered by ref
 //   holes: { "1": { tees: [osm id | {id, half: "nearest"}], green: osm id, via?: fairway id } }
 //                                for courses OSM has no hole lines for
+//   holes: "marks"               no hole lines anywhere: only the boundary (and
+//                                any shapes), so the course has a fixed origin;
+//                                its holes are drawn in the app from GPS marks
 //   origin: [lat, lng]           the fixed zero of the course's metre plane.
 //                                Never change it once rounds are logged on the
 //                                map: shots are stored in these metres.
@@ -208,7 +211,7 @@ function build(id) {
   }
   // Holes mapped by hand: every hole where OSM has no lines (holes: {...}),
   // or the few it lacks (addHoles: {...} alongside holes: "osm").
-  const byHand = src.holes === 'osm' ? (src.addHoles || {}) : src.holes;
+  const byHand = src.holes === 'osm' ? (src.addHoles || {}) : src.holes === 'marks' ? {} : src.holes;
   {
     for (const [ns, m] of Object.entries(byHand)) {
       if (holes.some(h => h.n === Number(ns))) throw new Error(`${id}: hole ${ns} has an OSM line and a hand mapping`);
@@ -278,7 +281,7 @@ function build(id) {
   const out = {
     v: 1, id, name: src.name,
     osm: src.osm, attribution: '© OpenStreetMap contributors', licence: 'ODbL-1.0',
-    origin: src.origin, holesFrom: src.holesFrom || (src.holes === 'osm' ? 'OpenStreetMap' : 'a mapping by hand'),
+    origin: src.origin, holesFrom: src.holesFrom || (src.holes === 'osm' ? 'OpenStreetMap' : src.holes === 'marks' ? 'your GPS marks' : 'a mapping by hand'),
     boundary,
     features: features.map(({ osm, ...f }) => ({ ...f, osm })),
     holes: holes.map(h => ({ n: h.n, line: h.line, green: h.green, tees: h.tees })),

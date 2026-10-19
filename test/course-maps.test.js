@@ -27,7 +27,7 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'hurstville', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'barnwell-park', 'beverley-park', 'bondi', 'hurstville', 'lane-cove', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
@@ -245,4 +245,101 @@ test('the view puts the tee at the bottom and the green at the top, and taps rou
     assert.match(HM.svg(hm, { big: true, par: 4 }), /^<svg class="stencil holemap"/);
   }
   assert.ok(m.features.some(f => f.k === 'crowns'), 'mapped single trees were merged into canopy');
+});
+
+/* ---------- holes from GPS marks ---------- */
+// Points inside a map's boundary, as GPS marks there would read.
+const inside = (m, step = 10) => {
+  const [x0, y0, x1, y1] = HM.geom.bbox(m.boundary.flat()), out = [];
+  for (let x = x0; x <= x1; x += step) for (let y = y0; y <= y1; y += step) if (HM.geom.inRings([x, y], m.boundary) && HM.offCourse(m, [x, y]) === 0) out.push([x, y]);
+  return out;
+};
+// Two points inside, about `d` metres apart, each with 25 m of course around it.
+const pairAt = (m, d) => {
+  const pts = inside(m).filter(p => [[25, 0], [-25, 0], [0, 25], [0, -25]].every(([dx, dy]) => HM.geom.inRings([p[0] + dx, p[1] + dy], m.boundary)));
+  let best = null;
+  for (let i = 0; i < pts.length; i += 7) for (let j = i + 1; j < pts.length; j += 7) { const e = Math.abs(dist(pts[i], pts[j]) - d); if (!best || e < best.e) best = { e, a: pts[i], b: pts[j] }; }
+  return [best.a, best.b];
+};
+const mark = (m, k, p, extra = {}) => { const { lat, lng } = HM.toLatLng(m, p); return { k, lat, lng, acc: 4, at: '2026-10-20T01:00:00.000Z', by: 'zein@test', ...(k === 'tee' ? { tee: 'white' } : {}), ...extra }; };
+const plus = (p, dx, dy = 0) => [p[0] + dx, p[1] + dy];
+
+test('Barnwell Park, Beverley Park and Lane Cove: a boundary and a fixed origin, holes only from marks', () => {
+  for (const id of ['barnwell-park', 'beverley-park', 'lane-cove']) {
+    const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
+    assert.equal(src.holes, 'marks'); assert.equal(m.holesFrom, 'your GPS marks');
+    assert.deepEqual(m.holes, [], 'OSM has no hole lines here');
+    assert.ok(inside(m, 25).length > 50, `${id} has a real boundary to place fixes on`);
+    assert.equal(HM.forHole(id, 1, 300), null, 'no marks, no hole: never a guess');
+    assert.equal(HM.forHole(id, 1, 300, { marks: [] }), null);
+  }
+});
+
+test('a hole drawn from marks: the tee played to the average of the flags, the green estimated', () => {
+  const m = mapOf('barnwell-park'), before = JSON.stringify(m.features), [t, g] = pairAt(m, 220);
+  const marks = [mark(m, 'tee', t), mark(m, 'flag', plus(g, 4)), mark(m, 'flag', plus(g, -4))];
+  const hm = HM.forHole('barnwell-park', 1, 220, { marks, tee: 'White' });
+  assert.ok(hm, 'a tee and a flag are enough');
+  assert.ok(dist(hm.hole.line[0], t) < 0.2 && dist(hm.green, g) < 0.2, 'from the tee mark to the mean of the flags');
+  assert.deepEqual({ ...hm.fromMarks }, { flags: 2, flagsOf: 2, tees: 1, line: true });
+  const green = hm.map.features[hm.hole.green];
+  assert.ok(green.est && green.mk && green.h === 1, 'the green is an estimate, from marks, on this hole');
+  assert.equal(HM.lieAt(hm.map, hm.green), null, 'never a green lie: he picks');
+  const gd = HM.greenDistances(hm, t);
+  assert.ok(gd.front === null && gd.back === null && Math.abs(gd.middle - dist(t, g)) < 1e-6, 'middle only');
+  // The card still sets the length; the tee mark is a tee box for the card check.
+  assert.ok(Math.abs(lineLen(hm.pl) - 220) < 0.5 && hm.check.onTee && !hm.check.flagged);
+  const far = HM.forHole('barnwell-park', 1, 280, { marks, tee: 'white' });
+  assert.ok(Math.abs(lineLen(far.pl) - 280) < 0.5 && far.check.flagged, 'a card 60 m longer puts the tee off every mark: flagged');
+  const kinds = HM.legendKinds(hm, { big: true, par: 4 });
+  for (const k of ['greenMarks', 'lineMarks', 'teeMarks']) assert.ok(kinds.includes(k), k);
+  for (const k of ['green', 'greenEst', 'tee']) assert.ok(!kinds.includes(k), `no ${k}`);
+  assert.match(HM.svg(hm, { big: true, par: 4 }), /hm-green-est/);
+  // Built on read: the map itself is untouched, and nothing derived goes back on the marks.
+  assert.equal(JSON.stringify(m.features), before); assert.deepEqual(m.holes, []);
+  assert.deepEqual(Object.keys(marks[0]).sort(), ['acc', 'at', 'by', 'k', 'lat', 'lng', 'tee']);
+  assert.equal(HM.forHole('barnwell-park', 2, 140, { marks }).hole.n, 2, 'marks are per hole: the app passes each hole its own');
+});
+
+test('marks have to agree: a stray flag is dropped, two that disagree draw nothing', () => {
+  const m = mapOf('barnwell-park'), [t, g] = pairAt(m, 220);
+  const tee = mark(m, 'tee', t);
+  // Three flags, one marked on the wrong hole: the two that agree set the green.
+  const three = HM.forHole('barnwell-park', 1, 220, { marks: [tee, mark(m, 'flag', plus(g, 5)), mark(m, 'flag', plus(g, -5)), mark(m, 'flag', plus(g, 0, 80))] });
+  assert.ok(dist(three.green, g) < 0.2); assert.deepEqual([three.fromMarks.flags, three.fromMarks.flagsOf], [2, 3]);
+  assert.equal(HM.forHole('barnwell-park', 1, 220, { marks: [tee, mark(m, 'flag', g), mark(m, 'flag', plus(g, 0, 60))] }), null, 'two flags 60 m apart: no way to tell which is right');
+  assert.equal(HM.forHole('barnwell-park', 1, 220, { marks: [mark(m, 'flag', g)] }), null, 'a flag without a tee is not a hole');
+  assert.equal(HM.forHole('barnwell-park', 1, 220, { marks: [tee] }), null, 'nor a tee without a flag');
+  assert.equal(HM.forHole('barnwell-park', 1, 220, { marks: [tee, mark(m, 'flag', g, { acc: 15 })] }), null, 'a fix rougher than ±10 m is not used');
+  const away = { ...mark(m, 'flag', g), lat: mark(m, 'flag', g).lat + 0.02 };
+  assert.equal(HM.forHole('barnwell-park', 1, 220, { marks: [tee, away] }), null, 'a fix 2 km off the course is not used');
+});
+
+test('with tee marks for two tees, the line starts at the tee played, else the one nearest the card', () => {
+  const m = mapOf('barnwell-park'), [back, g] = pairAt(m, 220);
+  // Red 40 m nearer the green, on the same line.
+  const u = [(g[0] - back[0]) / dist(back, g), (g[1] - back[1]) / dist(back, g)], red = [back[0] + u[0] * 40, back[1] + u[1] * 40];
+  const marks = [mark(m, 'tee', back), mark(m, 'tee', red, { tee: 'red' }), mark(m, 'flag', g)];
+  // The tee played wins even where the other set is nearer the card.
+  assert.ok(dist(HM.forHole('barnwell-park', 1, 220, { marks, tee: 'Red' }).hole.line[0], red) < 0.2);
+  assert.ok(dist(HM.forHole('barnwell-park', 1, 180, { marks, tee: 'white' }).hole.line[0], back) < 0.2);
+  assert.ok(dist(HM.forHole('barnwell-park', 1, 182, { marks, tee: 'blue' }).hole.line[0], red) < 0.2, 'no blue marks: the set nearest the card');
+  const hm = HM.forHole('barnwell-park', 1, 220, { marks, tee: 'white' });
+  assert.equal(hm.hole.tees.length, 2, 'both are tee boxes for the card check');
+});
+
+test('Hurstville: flag marks move an estimated green; mapped greens ignore marks', () => {
+  const m = mapOf('hurstville'), h = m.byN[3], end = h.line.at(-1), start = h.line[0];
+  const marks = [mark(m, 'flag', plus(end, 9, 3)), mark(m, 'flag', plus(end, 5, -1))];
+  const hm = HM.forHole('hurstville', 3, 300, { marks });
+  assert.ok(dist(hm.green, plus(end, 7, 1)) < 0.2, 'the green moves to the flags');
+  assert.ok(dist(hm.hole.line[0], start) < 0.2 && hm.hole.line.length === h.line.length, 'the OSM line is kept, only its end moves');
+  assert.deepEqual({ ...hm.fromMarks }, { flags: 2, flagsOf: 2, tees: 0, line: false });
+  assert.equal(hm.map.features.filter(f => f.k === 'green' && f.h === 3).length, 1, "one green for the hole, not the pin's and the marks' both");
+  assert.ok(HM.legendKinds(hm, { par: 4 }).includes('greenMarks') && !HM.legendKinds(hm, { par: 4 }).includes('lineMarks'));
+  assert.ok(dist(HM.forHole('hurstville', 3, 300, { marks: [mark(m, 'flag', plus(end, 0, 120))] }).green, end) < 0.2, "flags 120 m away are another hole's: the pin stays");
+  // Randwick's greens are mapped: marks change nothing there.
+  const r = mapOf('randwick'), rh = r.byN[7];
+  const rm = HM.forHole('randwick', 7, 260, { marks: [mark(r, 'flag', plus(rh.line.at(-1), 8)), mark(r, 'tee', rh.line[0])] });
+  assert.equal(rm.hole, rh); assert.equal(rm.fromMarks, null);
 });

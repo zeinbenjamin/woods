@@ -5,7 +5,9 @@
 // keeping the link, and unlinking without losing a shot.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { startApp, club, card } from './harness.js';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import { startApp, club, card, ME } from './harness.js';
 
 // Randwick's red card, as the screenshots gave it.
 const PARS = [3, 4, 3, 3, 3, 3, 4, 3, 4, 3, 3, 3, 3, 4, 3, 4, 3, 3];
@@ -15,8 +17,22 @@ const REDS = [159, 330, 100, 200, 112, 230, 260, 130, 225, 103, 90, 144, 146, 28
 const holes = card(18, { tee: 'red', par: PARS, metres: REDS.map((m, i) => i === 2 ? 60 : m) });
 const roundHoles = () => holes.map(h => ({ n: h.n, par: h.par, metres: h.metres }));
 
+// Barnwell Park: a boundary-only map, with GPS marks on hole 1 only. The
+// marks are placed with the app's own projection, 220 m apart on the course.
+const HM = (() => { const sb = {}; vm.runInNewContext(readFileSync('web/holemap.js', 'utf8'), sb); return sb.HoleMap; })();
+const BW = JSON.parse(readFileSync('web/course-maps/barnwell-park.json', 'utf8'));
+const [BW_TEE, BW_FLAG] = (() => {
+  const { bbox, inRings } = HM.geom, [x0, y0, x1, y1] = bbox(BW.boundary.flat()), ok = p => [[0, 0], [25, 0], [-25, 0], [0, 25], [0, -25]].every(([dx, dy]) => inRings([p[0] + dx, p[1] + dy], BW.boundary));
+  const pts = []; for (let x = x0; x <= x1; x += 10) for (let y = y0; y <= y1; y += 10) if (ok([x, y])) pts.push([x, y]);
+  let best = null;
+  for (let i = 0; i < pts.length; i += 5) for (let j = i + 1; j < pts.length; j += 5) { const e = Math.abs(Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]) - 220); if (!best || e < best.e) best = { e, a: pts[i], b: pts[j] }; }
+  return [best.a, best.b];
+})();
+const bwMark = (k, p) => ({ k, ...HM.toLatLng(BW, p), acc: 4, at: '2026-10-19T23:00:00.000Z', by: ME, ...(k === 'tee' ? { tee: 'white' } : {}) });
+const BW_HOLES = card(3, { par: [4, 3, 3], metres: [220, 140, 120] }).map(h => h.n === 1 ? { ...h, marks: [bwMark('tee', BW_TEE), bwMark('flag', BW_FLAG)] } : h);
+
 let app;
-const R = 'r_map', OLD = 'r_old';
+const R = 'r_map', OLD = 'r_old', BWR = 'r_bwp';
 const round = async id => app.api.get('sessions', id);
 // View coordinates of a map point on hole n of round id, as the logger draws it.
 const onView = (id, n, expr) => app.J(`(() => { const hm = holesOf(session('${id}')).find(h => h.n === ${n}).hm; return HoleMap.mapToView(hm, ${expr}); })()`);
@@ -26,12 +42,15 @@ const openHole = async (id, n) => { app.go('rounds', { sessionId: id, hole: Stri
 before(async () => {
   app = await startApp({ seed: {
     clubs: [club('7i', 'iron', { order: 3 }), club('PW', 'wedge', { order: 5 }), club('P', 'putter', { order: 9 })],
-    courses: [{ id: 'c_rw', v: 2, name: 'Randwick Golf Club', tee: 'red', holes: holes.map(h => h.n === 1 ? { ...h, shape: { bend: 0.3, bendAt: 0.5, hazards: [] } } : h) }],
+    courses: [{ id: 'c_rw', v: 2, name: 'Randwick Golf Club', tee: 'red', holes: holes.map(h => h.n === 1 ? { ...h, shape: { bend: 0.3, bendAt: 0.5, hazards: [] } } : h) },
+      { id: 'c_bwp', v: 2, name: 'Barnwell Park Golf Club', tee: 'white', map: { id: 'barnwell-park', linked: '2026-10-19' }, holes: BW_HOLES }],
     sessions: [
       { id: R, v: 2, type: 'round', date: '2026-09-20', courseId: 'c_rw', courseName: 'Randwick Golf Club', tee: 'red', detail: 'score_only', holes: roundHoles() },
       // Traced on the drawn outline before the course had a map.
       { id: OLD, v: 2, type: 'round', date: '2026-08-01', courseId: 'c_rw', courseName: 'Randwick Golf Club', tee: 'red', detail: 'shot_level',
         holes: roundHoles().map(h => h.n === 1 ? { ...h, shots: [{ t: 0.9, u: 0.1, club: '7i', lie: 'rough' }], strokes: 3, putts: 2 } : h) },
+      { id: BWR, v: 2, type: 'round', date: '2026-10-20', courseId: 'c_bwp', courseName: 'Barnwell Park Golf Club', tee: 'White', detail: 'score_only',
+        holes: BW_HOLES.map(({ n, par, metres }) => ({ n, par, metres })) },
     ],
   } });
 });
@@ -157,4 +176,32 @@ test('stopping the map warns, keeps every shot, and using it again brings them b
   await app.waitFor(async () => (await app.api.get('courses', 'c_rw')).map, { what: 'relinked' });
   await openHole(R, 7);
   await app.waitFor(() => /110m to the green/.test(app.text('.map-hint')), { what: 'measured again' });
+});
+
+test('a boundary-only map draws the holes he has marked, and says which are waiting for marks', async () => {
+  app.go('courses', { courseId: 'c_bwp' });
+  await app.waitFor(() => app.$('#mapMarks'), { what: 'course map section' });
+  assert.match(app.text('#courseMap'), /hole lines from your GPS marks/);
+  assert.match(app.text('#mapMarks'), /Drawn from your GPS marks, tee to the flags' average, with the green estimated: hole 1\.$/);
+  assert.match(app.text('#courseMap'), /Not on the map yet, so drawn from the outline: hole 2, 3\. In Play, Mark tee and Mark flag on a hole draw it here\./);
+  assert.equal(app.$$('.tile svg.holemap').length, 1, 'hole 1 from the map, 2 and 3 from the outline');
+  // In the logger, for the round's tee ("White" as typed).
+  await openHole(BWR, 1);
+  assert.ok(app.$('#logMap.holemap'));
+  const keys = app.$$('#mapLegend [data-k]').map(e => e.dataset.k);
+  for (const k of ['greenMarks', 'lineMarks', 'teeMarks']) assert.ok(keys.includes(k), k);
+  assert.match(app.text('#mapLegend'), /Green estimated from your flag marks/);
+  // 100 m along the line: 120 m left on the 220 m card, and no lie read from the estimate.
+  await tapAt(BWR, 1, 'HoleMap.geom.pointAt(hm.pl, 100)');
+  await app.waitFor(async () => ((await round(BWR)).holes[0].shots || []).length === 1, { what: 'shot saved' });
+  const s = (await round(BWR)).holes[0].shots[0];
+  assert.ok(typeof s.mx === 'number' && s.lie === undefined);
+  await app.waitFor(() => /120m to the green/.test(app.text('.map-hint')), { what: 'distance left' });
+  await tapAt(BWR, 1, 'hm.green');
+  await app.waitFor(async () => ((await round(BWR)).holes[0].shots || []).length === 2, { what: 'green tap' });
+  assert.equal((await round(BWR)).holes[0].shots[1].lie, undefined, 'the estimated green never sets a green lie');
+  // Hole 2 has no marks: no map, never a guess.
+  await openHole(BWR, 2);
+  assert.equal(app.$('#logMap.holemap'), null);
+  assert.deepEqual(Object.keys((await app.api.get('courses', 'c_bwp')).holes[0]).sort(), ['marks', 'metres', 'n', 'par', 'si', 'tees'], 'nothing derived is written to the course');
 });
