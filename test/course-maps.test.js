@@ -27,12 +27,14 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'long-reef', 'massey-park', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
     assert.deepEqual(m.origin, src.origin, 'shots are stored in this plane, so it never moves');
-    assert.equal(m.holes.length, src.card.holes.length, 'a line for every hole on the card');
+    // Holes 1..N with no gaps; with a card, a line for every hole on it.
+    assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: m.holes.length }, (_, i) => i + 1));
+    if (src.card) assert.equal(m.holes.length, src.card.holes.length, 'a line for every hole on the card');
     for (const h of m.holes) {
       const g = m.features[h.green];
       assert.equal(g.k, 'green', `hole ${h.n} ends on a green`);
@@ -124,6 +126,42 @@ test('Long Reef: OSM lines from the back tees; three whites off every mapped box
   assert.ok(x[16].diff > 60 && x[16].onTee);
   // 15 is the one hole whose card is longer than its line: the tee goes back, onto a box.
   assert.ok(x[14].diff < -20 && x[14].onTee);
+});
+
+test('Northbridge: built from OSM alone, no card; the app checks it against the NAS card', () => {
+  const m = mapOf('northbridge'), src = JSON.parse(readFileSync('course-maps/src/northbridge.json', 'utf8'));
+  assert.equal(src.card, undefined, 'no screenshots: the course page does the card check live');
+  assert.equal(m.holes.length, 18);
+  for (const h of m.holes) assert.ok(h.tees.length >= 1, `hole ${h.n} has a mapped tee box for the check to use`);
+});
+
+test('a GPS fix lands on the map where the build put the shapes', () => {
+  const m = mapOf('randwick'), geo = JSON.parse(readFileSync('course-maps/osm/randwick.geojson', 'utf8')).features;
+  // Every green's first corner, projected from its lat/long now, matches the
+  // committed map (built with the same projection, rounded to 0.1 m).
+  for (const f of geo.filter(f => f.properties.golf === 'green').slice(0, 5)) {
+    const [lng, lat] = f.geometry.coordinates[0][0];
+    const built = m.features.find(x => x.osm === f.properties['@id']).r[0][0];
+    assert.ok(dist(HM.fromLatLng(m, lat, lng), built) < 0.08, f.properties['@id']);
+  }
+  const back = HM.toLatLng(m, [123.4, -567.8]), again = HM.fromLatLng(m, back.lat, back.lng);
+  assert.ok(dist(again, [123.4, -567.8]) < 1e-6, 'round trip');
+  // A fix on the course is 0 m off it; one 2 km away is about 2 km off.
+  const h = m.byN[1];
+  assert.equal(HM.offCourse(m, h.line[1] || h.line[0]), 0);
+  assert.ok(HM.offCourse(m, [2000, 0]) > 1000);
+});
+
+test('front, middle and back of the green along the line from where he stands', () => {
+  const sq = [[[-10, 90], [10, 90], [10, 110], [-10, 110]]];
+  const hm = { map: { features: [{ k: 'green', r: sq }] }, hole: { green: 0 }, green: [0, 100] };
+  const d = HM.greenDistances(hm, [0, 0]);
+  assert.ok(Math.abs(d.front - 90) <= 0.5 && Math.abs(d.middle - 100) < 1e-9 && Math.abs(d.back - 110) <= 0.5, JSON.stringify(d));
+  const on = HM.greenDistances(hm, [0, 95]);
+  assert.equal(on.front, 0, 'standing on the green');
+  assert.ok(Math.abs(on.back - 15) <= 0.5);
+  const unmapped = HM.greenDistances({ ...hm, map: { features: [] } }, [0, 0]);
+  assert.deepEqual([unmapped.front, unmapped.back], [null, null], 'no green shape: only the middle, never a guessed edge');
 });
 
 test('the tee rule: the card distance from the middle of the green, along the line', () => {

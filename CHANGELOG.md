@@ -14,6 +14,10 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 - A course someone else has played on can't be deleted, and the app says why.
 - On the first start, your existing data becomes yours (set OWNER_EMAIL to your Access email), and a copy of the old database is kept beside it as carry-before-2.0.0.db.
 
+## 1.15.0 — 2026-10-19
+- Northbridge now has a course map: all 18 holes from OpenStreetMap, with its tree-lined holes drawn. Turn it on from the course's page; the page checks the map against your scorecard and flags any hole that doesn't fit.
+- Behind the scenes, course maps can now place a GPS position on the hole and measure to the front, middle and back of the green, ready for Play mode.
+
 ## 1.14.0 — 2026-10-19
 - Long Reef now has a course map: all 18 holes from OpenStreetMap, checked against your white tees.
 - Holes 4, 11 and 16 are flagged: your white tee lands more than 15 m from any mapped tee box, so it's placed from the card distance alone.

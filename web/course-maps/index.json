@@ -24,6 +24,12 @@
   "holes": 18
  },
  {
+  "id": "northbridge",
+  "name": "Northbridge Golf Club",
+  "osmName": "Northbridge Golf Club",
+  "holes": 18
+ },
+ {
   "id": "randwick",
   "name": "Randwick Golf Club",
   "osmName": "Randwick Golf Course",
