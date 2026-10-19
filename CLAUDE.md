@@ -143,6 +143,39 @@ The browser polls `/api/stamps` every 5s and refetches only collections
 whose stamp moved. Local writes notify listeners immediately, so the UI
 never waits for a poll.
 
+## Who works on what
+
+Two Claude chats work on this repo at once, each on its own branch, each
+merging to `main` through its own PRs. Ownership is by file, so their
+changes don't collide and each knows what it may change.
+
+| | **Hole-maps chat** (`claude/relaxed-einstein-tj8m13`) | **Carry chat** (`claude/gifted-carson-g3y6hd`) |
+|---|---|---|
+| **Owns** | `web/holemap.js`, `web/course-maps/`, `course-maps/`, `scripts/course-maps.js`, `test/course-maps.test.js`, `test/ui-holemap.test.js`, and the *Course maps* section below | Everything else: the app (`web/index.html`, `web/platform.js`), the server, `imports/` and every course record (pars, lengths, stroke index, tee sets, primary tee, ratings), the course form, handicap, releases tooling, all other tests and docs |
+| **Reads, doesn't change** | The course records: the card is what a map is checked against | The map files |
+
+- **Course data belongs to the Carry chat.** When the hole-maps chat finds
+  a scorecard problem while checking a map (Bondi's lengths in yards, a
+  missing tee set, conflicting stroke indexes), it doesn't edit `imports/`:
+  it writes a short note for Zein to paste into the Carry chat, with the
+  correct values and where they came from. (Before this split it did fix
+  both imports itself: Bondi to metres, Massey Park's red tees.)
+- **`web/index.html` belongs to the Carry chat.** The map reaches it at a
+  few places: `hmFor`/`withHm`/`usesMap` and the map frame in `holesOf`,
+  `toGreen` and `spot`; the tile, logger and hole page drawing; the tap
+  handler; `courseMapSection`/`holeCheck` and the link/unlink actions. The
+  hole-maps chat changes those only, and asks Zein first for anything new
+  in `index.html`.
+- **A new course**, in order: (1) the Carry chat adds the course and its
+  import, and Zein imports it on the NAS; (2) Zein sends the hole
+  screenshots to the hole-maps chat, which builds and checks the map and
+  passes any card corrections to the Carry chat as a note; (3) Zein links
+  the map in the app.
+- **Shared files** (`CHANGELOG.md`, `package.json`, this file): each chat
+  edits only its own entry and section. Whichever PR merges second takes
+  the next version number; the CI gate enforces it. Before opening a PR,
+  merge the latest `main`.
+
 ## Invariants worth defending
 
 These are decisions, not accidents. Changing them is fine; doing so by
