@@ -12,6 +12,12 @@
   "holes": 9
  },
  {
+  "id": "long-reef",
+  "name": "Long Reef Golf Club",
+  "osmName": "Long Reef Golf Course",
+  "holes": 18
+ },
+ {
   "id": "massey-park",
   "name": "Massey Park Golf Club",
   "osmName": "Massey Park Golf Course",
