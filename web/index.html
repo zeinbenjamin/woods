@@ -214,6 +214,18 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .advice { background: var(--green-soft); color: var(--ink); border-radius: var(--r); padding: 8px 10px; margin: 8px 0; }
 .stencil .hdot { fill: #fff; stroke: #1B2A20; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; } .stencil .hdot.first { fill: #F2C94C; }
 .l-teedot { background: #F2C94C; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; } .l-dot { background: #fff; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; }
+.rung .spread { position: absolute; top: 50%; height: 2px; margin-top: -1px; background: var(--ink); border-radius: 1px; } .rung .spread i { position: absolute; top: -3px; height: 8px; background: var(--ink); border-radius: 2px; }
+.legend .l-spread { width: 16px; height: 8px; background: linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat, linear-gradient(var(--ink), var(--ink)) center / 8px 8px no-repeat; border-radius: 0; } .rung .conf .mid { color: var(--ink-2); }
+.cards table.card { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 6px 0; font-size: 13px; font-variant-numeric: tabular-nums; } .cards th, .cards td { text-align: center; padding: 4px 0; border-bottom: 1px solid var(--rule); }
+.cards th:first-child { text-align: left; width: 44px; color: var(--ink-3); font-weight: 500; font-size: 11px; } .cards tr > :last-child { width: 34px; color: var(--ink-2); } .cards .ch th { color: var(--ink-3); font-weight: 500; font-size: 11px; }
+.cards [data-go] { cursor: pointer; } .cards .cp td { color: var(--ink-3); }
+.sc { display: inline-block; min-width: 22px; line-height: 22px; border-radius: 4px; font-weight: 600; } .sc.under { background: var(--green); color: var(--paper); border-radius: 50%; } .sc.par { background: transparent; } .sc.b1 { background: var(--sand); color: var(--ink); } .sc.b2 { background: var(--flag-soft); color: var(--ink); } .sc.b3 { background: var(--flag); color: #fff; }
+.card-key i.sc { min-width: 12px; width: 12px; height: 12px; line-height: 12px; vertical-align: -1px; } .card-key i.sc.par { border: 1px solid var(--ink-3); box-sizing: border-box; }
+.holemap .hit { fill: transparent; cursor: pointer; } .holemap .hit.on { fill: none; stroke: var(--hm-flag, #c8432a); stroke-width: 2; }
+.shotinfo { text-align: center; margin: 8px 0 4px; min-height: 2.6em; }
+.ghist { width: 100%; height: auto; display: block; margin: 4px 0; } .ghist .col { fill: var(--green); } .ghist .gx { stroke: var(--rule); stroke-width: 1; } .ghist .rg { stroke: var(--ink-2); stroke-width: 1.5; }
+.ghist .tk { font: 10px var(--body); fill: var(--ink-3); } .ghist .vl { font: 600 11px var(--body); fill: var(--ink); } .ghist .hitbox { fill: transparent; }
+table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mini td, table.mini th { text-align: left; padding: 3px 0; border-bottom: 1px solid var(--rule); }
 .fold { margin: 0; border-top: 1px solid var(--rule); padding: 10px 0; } .fold > summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; } .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary::after { content: '›'; font-size: 18px; color: var(--ink-3); transition: transform .15s; } .fold[open] > summary::after { transform: rotate(90deg); } .fold[open] > summary { margin-bottom: 10px; }
 .folds { border-bottom: 1px solid var(--rule); } .fold .warn { color: var(--flag); }
@@ -416,8 +428,13 @@ $('#brand').addEventListener('click', openVersion);
 // times per draw. The cache key is the identity of the state arrays, which
 // are always replaced (never mutated) when data arrives.
 let memo = { key: [], map: new Map() };
+// A course map arriving changes what's measurable (map shots get distances), so
+// it counts as a change of data state too: without it, numbers first worked out
+// while a map was still loading kept its shots as unmeasurable until the next save.
+let mapEpoch = 0;
+function mapArrived() { mapEpoch++; render(); }
 function memoised(name, arg, fn) {
-  const key = [S.sessions, S.clubs, S.courses, S.settings];
+  const key = [S.sessions, S.clubs, S.courses, S.settings, mapEpoch];
   if (key.some((k, i) => k !== memo.key[i])) memo = { key, map: new Map() };
   const id = name + '|' + arg;
   if (!memo.map.has(id)) memo.map.set(id, fn(arg));
@@ -584,7 +601,7 @@ function parseGo(str) {
   const j = rest.indexOf(':'); return [tab, { [rest.slice(0, j)]: rest.slice(j + 1) }];
 }
 function render() {
-  if (window.HoleMap) HoleMap.onLoad = () => render();
+  if (window.HoleMap) HoleMap.onLoad = mapArrived;
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
   const views = { overview: vOverview, range: vRange, rounds: vRounds, courses: vCourses, bag: vBag };
   // Every save redraws the view; panels he opened stay open (matched by id).
@@ -907,12 +924,12 @@ function overviewGapping(stats) {
   const ladder = stats.slice().sort((a, b) => b.s.stockCarry - a.s.stockCarry);
   const maxM = Math.max(200, ...ladder.map(x => Math.max(x.s.pureCarry || 0, x.s.stockCarry, x.c.nominalCarry || 0)));
   const w = m => (100 * m / maxM).toFixed(1) + '%';
-  let h = `<h2>Gapping</h2>` + rangeFilter() + `<div class="ladder">` + ladder.map(({ c, s }) => `<div class="rung">
+  let h = `<h2>Gapping</h2>` + rangeFilter() + `<div class="ladder">` + ladder.map(({ c, s }) => { const sp = carrySpread(c.code); return `<div class="rung">
       <div class="club">${esc(c.code)}</div>
-      <div class="bar">${s.pureCarry ? `<div class="pure" style="left:${w(s.stockCarry)};width:${w(Math.max(0, s.pureCarry - s.stockCarry))}"></div>` : ''}<div class="stock" style="width:${w(s.stockCarry)}"></div>${c.nominalCarry ? `<div class="assumed" style="left:${w(c.nominalCarry)}" title="assumed carry ${c.nominalCarry}m"></div>` : ''}</div>
+      <div class="bar">${s.pureCarry ? `<div class="pure" style="left:${w(s.stockCarry)};width:${w(Math.max(0, s.pureCarry - s.stockCarry))}"></div>` : ''}<div class="stock" style="width:${w(s.stockCarry)}"></div>${c.nominalCarry ? `<div class="assumed" style="left:${w(c.nominalCarry)}" title="assumed carry ${c.nominalCarry}m"></div>` : ''}${sp ? `<div class="spread" style="left:${w(sp.p10)};width:${w(sp.p90 - sp.p10)}" title="${esc(c.code)}: middle half ${fmt(sp.p25)}–${fmt(sp.p75)}m, most ${fmt(sp.p10)}–${fmt(sp.p90)}m (${sp.n} shots)"><i style="left:${(100 * (sp.p25 - sp.p10) / ((sp.p90 - sp.p10) || 1)).toFixed(1)}%;width:${(100 * (sp.p75 - sp.p25) / ((sp.p90 - sp.p10) || 1)).toFixed(1)}%"></i></div>` : ''}</div>
       <div class="val"><b>${fmt(s.stockCarry)}</b><small>${s.pureCarry ? 'pure ' + fmt(s.pureCarry) : 'carry'}</small></div>
-      <div class="conf small ${(s.weighted ? s.nEff : s.n) < 5 ? 'early' : ''}">${s.n} shots${s.weighted ? ` · counts like ${s.nEff} recent` : ''} · ${confidence(s.weighted ? s.nEff : s.n)}</div></div>`).join('') + `</div>
-    <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span></div>`;
+      <div class="conf small ${(s.weighted ? s.nEff : s.n) < 5 ? 'early' : ''}">${s.n} shots${s.weighted ? ` · counts like ${s.nEff} recent` : ''} · ${confidence(s.weighted ? s.nEff : s.n)}${sp ? ` · <span class="mid">${fmt(sp.p25) === fmt(sp.p75) ? `middle half at ${fmt(sp.p25)}m` : `middle half ${fmt(sp.p25)}–${fmt(sp.p75)}m`}</span>` : ''}</div></div>`; }).join('') + `</div>
+    <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span>${ladder.some(x => carrySpread(x.c.code)) ? '<span><i class="l-spread"></i>where they land: middle half, and 8 in 10</span>' : ''}</div>`;
   const g = gapHealth(stats);
   const flagged = g.pairs.filter(p => p.flag).length;
   if (g.pairs.length) h += fold('gapPanel', 'Distance gaps', flagged ? `<span class="warn">⚠ ${plural(flagged, 'gap')} worth a look</span>` : g.median ? `typical gap ${fmt(g.median)}m` : '',
@@ -922,6 +939,17 @@ function overviewGapping(stats) {
     ladder.map(({ c, s }) => `<div class="prow"><b>${esc(c.code)}</b>${profileBar(s)}<small>${pct(s.pure, s.n)}% pure</small></div>`).join('') +
     `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>low runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>topped</span></div></details>`;
   return h;
+}
+
+// Where a club's full swings actually land (tops left out, as for stock carry):
+// the middle half (25th–75th percentile) and 8 in 10 (10th–90th). A plain count
+// like the strike profile, since it describes what happened; 5 shots at least.
+function carrySpread(code) {
+  const shots = fullShots(code); if (!shots.length) return null;
+  const prof = classify(shots), xs = shots.filter((_, i) => prof[i] !== 'top').map(x => x.carry).sort((a, b) => a - b);
+  if (xs.length < 5) return null;
+  const q = p => { const k = (xs.length - 1) * p, lo = Math.floor(k), hi = Math.ceil(k); return xs[lo] + (xs[hi] - xs[lo]) * (k - lo); };
+  return { n: xs.length, p10: q(0.1), p25: q(0.25), p75: q(0.75), p90: q(0.9) };
 }
 
 /* ---------- scoring trend ---------- */
@@ -1081,7 +1109,7 @@ function vRound() {
   <p class="muted small">${dateLabel(r.date)}${r.tee ? ', ' + esc(r.tee) + ' tees' : ''}${st.holes < (r.holes || []).length ? ` · ${st.holes} of ${(r.holes || []).length} holes scored` : ''}${r.notes ? '. ' + esc(r.notes) : ''}</p>
   <div><span class="stat"><b>${st.gross}</b><small>gross</small></span><span class="stat"><b>${st.toPar >= 0 ? '+' : ''}${st.toPar}</b><small>to par ${st.par}</small></span>${st.putts != null ? `<span class="stat"><b>${st.putts}</b><small>putts</small></span>` : ''}${st.fir ? `<span class="stat"><b>${st.fir.hit}/${st.fir.of}</b><small>fairways</small></span>` : ''}${st.gir ? `<span class="stat"><b>${st.gir.hit}/${st.gir.of}</b><small>greens in reg</small></span>` : ''}</div>`;
   if (r.date === today()) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
-  h += scoreStrip(holes, r.id) + `<p class="small muted">Tap a hole to trace shots on it.</p>`;
+  h += scorecard(r, holes) + `<p class="small muted">Tap a hole to trace shots on it.</p>`;
   h += roundFindingsSection(r);
   h += quickScoreSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
@@ -2305,15 +2333,19 @@ function calibrationSection() {
 function holePlays(courseId, n) { return S.sessions.filter(s => s.type === 'round' && s.courseId === courseId).map(r => ({ r, h: holesOf(r).find(x => x.n === n) })).filter(p => p.h && p.h.strokes != null); }
 function dotsFor(courseId, hole) {
   const frame = hole.hm ? 'map' : hole.art ? 'art' : 'outline';
-  return holePlays(courseId, hole.n).flatMap(p => (p.h.shots || []).map((s, i) => ({ ...s, first: i === 0 })).filter(s => frameOf(s) === frame));
+  return holePlays(courseId, hole.n).flatMap(p => (p.h.shots || []).map((s, i) => ({ ...s, first: i === 0, r: p.r, i })).filter(s => frameOf(s) === frame));
 }
 function vCourseHole() {
   const c = course(S.sub.courseId), n = Number(S.sub.hole); const card = c && fullCard(c.holes).find(h => h.n === n), hole = card && withHm(c, card);
   if (!hole || hole.par == null) return back('courses', c ? 'courseId:' + c.id : null, c ? c.name : 'Courses') + `<p>Hole not found.</p>`;
   const plays = holePlays(c.id, n), dots = dotsFor(c.id, hole);
   let h = back('courses', 'courseId:' + c.id, c.name) + `<div class="spread"><h1>Hole ${n} <span class="muted">par ${hole.par}, ${hole.metres || '–'}m</span></h1><div class="row-actions" style="margin:0">${n > 1 ? `<button data-go="courses:courseId=${c.id},hole=${n - 1}">‹</button>` : ''}${n < fullCard(c.holes).length ? `<button data-go="courses:courseId=${c.id},hole=${n + 1}">›</button>` : ''}</div></div>`;
-  h += `<div class="bigmap">${hole.hm ? HoleMap.svg(hole.hm, { big: true, par: hole.par, dots: dots.map(s => ({ p: [s.mx, s.my], first: s.first })) }) : hole.art ? artSVG({ ...hole, shots: [] }, { big: true, dots }) : stencilSVG(hole, { big: true, dots })}</div>${hole.hm ? HoleMap.legend(hole.hm, { big: true, par: hole.par }) + MAP_CREDIT + holeCheck(hole) : ''}`;
-  if (dots.length) h += `<div class="legend" style="justify-content:center"><span><i class="l-teedot"></i>tee shots</span><span><i class="l-dot"></i>other shots</span><span>${plural(plays.filter(p => (p.h.shots || []).length).length, 'round')} traced</span></div>`;
+  holeDots = dots;
+  // On a map, each dot is a tap target (bigger than the dot) for that shot's details.
+  const hits = hole.hm ? dots.map((s, k) => { const [x, y] = HoleMap.mapToView(hole.hm, [s.mx, s.my]); return `<circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11" data-shot="${k}"/>`; }).join('') : '';
+  h += `<div class="bigmap">${hole.hm ? HoleMap.svg(hole.hm, { big: true, par: hole.par, dots: dots.map(s => ({ p: [s.mx, s.my], first: s.first })), attrs: 'id="holeMap"' }).replace(/<\/svg>$/, `<g class="hits">${hits}</g></svg>`) : hole.art ? artSVG({ ...hole, shots: [] }, { big: true, dots }) : stencilSVG(hole, { big: true, dots })}</div>${hole.hm ? HoleMap.legend(hole.hm, { big: true, par: hole.par }) + MAP_CREDIT + holeCheck(hole) : ''}`;
+  if (dots.length) h += `<div class="legend" style="justify-content:center"><span><i class="l-teedot"></i>tee shots</span><span><i class="l-dot"></i>other shots</span><span>${plural(plays.filter(p => (p.h.shots || []).length).length, 'round')} traced</span></div>`
+    + (hole.hm ? `<div class="shotinfo small muted" id="shotInfo">Tap a dot to see that shot.</div>` : '');
   const par3 = hole.par === 3 && adviceFor(hole.metres) ? `<p class="small advice">${adviceFor(hole.metres)}</p>` : '';
   if (!plays.length) {
     h += `<p class="muted">Not played yet.</p>` + par3;
@@ -2461,6 +2493,7 @@ function vGoal() {
       tile(p.after.n ? `${pct(p.after.hit, p.after.n)}%` : '–', `since ${dateLabel(p.practised)}`, p.after.n ? `${p.after.hit} of ${p.after.n} · ${confidence(p.after.n)}` : 'not tested yet')]) +
       `<p class="small muted">Counts from your traced holes either side of the last range session for it. A change here says what happened since, not that the practice caused it.</p>`;
   } else if (p) h += `<p class="small" id="goalPractised">${esc(progressText(it, p))}</p>`;
+  h += goalHistory(it);
   // The range sessions that hit its club and swing, newest first.
   const hits = S.sessions.filter(s => s.type === 'range').flatMap(s => (s.blocks || []).filter(x => blockHit(x) && b && x.club === b.club && (x.swing || 'full') === (b.swing || 'full')).map(x => ({ s, x })))
     .sort((m, n) => (n.s.date || '').localeCompare(m.s.date || '')).slice(0, 6);
@@ -2484,6 +2517,40 @@ function sessionGoals(s, blocks) {
   return `<div class="notice" id="sessionGoals"><b>${done ? 'Plan done' : `${hit} of ${plural(planned.length, 'planned block')} hit`}.</b>${goals.length ? ` Working on: ${goals.map(g => `<button class="quiet" style="padding:0 4px" data-go="range:goal=${esc(g.key)}">${esc(goalName(g))}</button>`).join(' · ')}.` : ''}
     ${done ? ' Your next round shows how it went on the course: each one above has the before and since.' : ' After you hit a block, add its screenshots; a block for the same club fills the plan.'}</div>`;
 }
+// The objective over time: one column per round, how often it happened that
+// round (its own dated chances), and a line for each range day that hit its
+// club and swing, in date order. The last ten rounds. A picture of what
+// happened, labelled as such; the before/since tiles carry the numbers.
+function goalHistory(it) {
+  const w = MISS_WORD[it.kind]; if (!w) return '';
+  const by = new Map();
+  for (const c of (it.chances || []).filter(c => c.date)) { const x = by.get(c.date) || { date: c.date, n: 0, hit: 0 }; x.n++; if (c.hit) x.hit++; by.set(c.date, x); }
+  const rounds = [...by.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-10);
+  if (rounds.length < 2) return '';
+  const first = rounds[0].date, b = it.block;
+  const ranges = b ? [...new Set(S.sessions.filter(s => s.type === 'range' && s.date && s.date >= first && (s.blocks || []).some(x => blockHit(x) && x.club === b.club && (x.swing || 'full') === (b.swing || 'full'))).map(s => s.date))] : [];
+  const ev = rounds.map(x => ({ ...x, k: 'round' })).concat(ranges.map(d => ({ date: d, k: 'range' })))
+    .sort((a, c) => a.date.localeCompare(c.date) || (a.k === 'range' ? -1 : 1));    // a range day before a round on the same day
+  const W = 320, top = 16, base = 92, H = 112, units = sum(ev.map(e => e.k === 'round' ? 1 : 0.5)), slot = W / units;
+  const bw = Math.min(24, slot * 0.6), short = d => new Date(d + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  let x = 0, g = `<line class="gx" x1="0" y1="${base}" x2="${W}" y2="${base}"/>`;
+  const cols = [];
+  ev.forEach(e => {
+    if (e.k === 'range') { const cx = x + slot * 0.25; g += `<line class="rg" x1="${cx.toFixed(1)}" y1="${top - 6}" x2="${cx.toFixed(1)}" y2="${base}"><title>${esc(dateLabel(e.date))}: range session for it</title></line>`; x += slot * 0.5; return; }
+    const cx = x + slot / 2, hgt = Math.max(2, (base - top) * e.hit / e.n), y = base - hgt, l = cx - bw / 2, rr = Math.min(4, hgt / 2);
+    g += `<path class="col" d="M${l.toFixed(1)},${base}V${(y + rr).toFixed(1)}Q${l.toFixed(1)},${y.toFixed(1)} ${(l + rr).toFixed(1)},${y.toFixed(1)}H${(l + bw - rr).toFixed(1)}Q${(l + bw).toFixed(1)},${y.toFixed(1)} ${(l + bw).toFixed(1)},${(y + rr).toFixed(1)}V${base}Z"><title>${esc(dateLabel(e.date))}: ${e.hit} of ${e.n} ${w}</title></path>
+      <rect class="hitbox" x="${(cx - slot / 2).toFixed(1)}" y="0" width="${slot.toFixed(1)}" height="${base}"><title>${esc(dateLabel(e.date))}: ${e.hit} of ${e.n} ${w}</title></rect>`;
+    cols.push({ cx, y, e }); x += slot;
+  });
+  // Labels: the first and last round's date, and the latest round's rate at its column.
+  const lastC = cols[cols.length - 1], firstC = cols[0];
+  g += `<text class="tk" x="${firstC.cx.toFixed(1)}" y="${H - 4}" text-anchor="middle">${short(firstC.e.date)}</text>`;
+  if (lastC !== firstC) g += `<text class="tk" x="${lastC.cx.toFixed(1)}" y="${H - 4}" text-anchor="middle">${short(lastC.e.date)}</text>`;
+  g += `<text class="vl" x="${lastC.cx.toFixed(1)}" y="${(lastC.y - 4).toFixed(1)}" text-anchor="middle">${pct(lastC.e.hit, lastC.e.n)}%</text>`;
+  return `<h2>Round by round</h2><svg class="ghist" id="goalHistory" viewBox="0 0 ${W} ${H}" role="img" aria-label="How often it happened in each of the last ${rounds.length} rounds">${g}</svg>
+    <p class="small muted">Each column is a round: how often it ${w}, out of its chances that round (0 to 100%).${ranges.length ? ' A line marks a range session that worked on it.' : ''} Tap a column for its numbers.</p>` +
+    fold('goalTable', 'As a table', '', `<table class="mini"><thead><tr><th>Round</th><th>Chances</th><th>${esc(w)}</th></tr></thead><tbody>${rounds.slice().reverse().map(x => `<tr><td>${dateLabel(x.date)}</td><td>${x.n}</td><td>${x.hit} (${pct(x.hit, x.n)}%)</td></tr>`).join('')}</tbody></table>`);
+}
 // What one round showed: each current or quiet objective it added evidence to, by hole and club.
 function roundFindings(r) {
   const { now, quiet } = rankedPractice();
@@ -2494,7 +2561,7 @@ function roundFindingsSection(r) {
   return `<h2>What this round showed</h2><div id="roundFindings">` + fs.slice(0, 5).map(({ it, recs }) => {
     const holes = [...new Map(recs.map(x => [x.h.n, x])).values()].sort((a, b) => a.h.n - b.h.n), clubs = [...new Set(recs.map(x => x.club).filter(Boolean))];
     return `<div class="finding k-${it.kind}"><div class="spread"><b>${esc(goalName(it))}</b><span class="small muted">${plural(recs.length, 'time')}${clubs.length ? ' · ' + clubs.map(esc).join(', ') : ''}</span></div>
-      <div class="small">${holes.map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${r.id},hole=${x.h.n}">Hole ${x.h.n}</button>`).join('')}</div>
+      <div class="small">${holes.slice(0, 6).map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${r.id},hole=${x.h.n}">Hole ${x.h.n}</button>`).join('')}${holes.length > 6 ? `<button class="quiet" style="padding:2px 6px" data-go="range:goal=${esc(it.key)}">+${holes.length - 6} more</button>` : ''}</div>
       <div class="row-actions" style="margin-top:4px">${goalButtons(it)}</div></div>`;
   }).join('') + `</div>`;
 }
@@ -3380,6 +3447,26 @@ function clubArmRow(r, h, distLeft) {
 const puttRow = (r, h) => `<div class="armrow"><div class="small muted">Putts${h.putts != null ? `: <b>${h.putts}</b>` : ''}</div>
   <div class="chips">${[0, 1, 2, 3, 4, 5].map(p => `<button class="chip" data-act="setPutts" data-sid="${r.id}" data-n="${h.n}" data-p="${p}" aria-pressed="${h.putts === p}">${p}</button>`).join('')}</div></div>`;
 
+// The round as a scorecard: a nine per table, par, score (coloured as in the
+// strips), putts and penalties when they were logged, and the nine's total.
+// A hole without a score stays empty; the totals count the holes scored, and say so.
+function scorecard(r, holes = holesOf(r)) {
+  const nines = holes.length > 9 ? [holes.slice(0, 9), holes.slice(9)] : [holes];
+  const pens = h => (h.penalties || 0) + (h.shots || []).filter(x => x.penalty).length;
+  const showPutts = holes.some(h => h.putts != null), showPen = holes.some(h => pens(h) > 0), partial = holes.some(h => h.strokes == null);
+  const go = h => `data-go="rounds:sessionId=${r.id},hole=${h.n}"`;
+  const total = (hs, f) => { const xs = hs.map(f).filter(v => v != null); return xs.length ? sum(xs) : ''; };
+  const table = (hs, k) => { const label = nines.length === 1 ? 'Tot' : k ? 'In' : 'Out';
+    return `<table class="card"><tbody>
+      <tr class="ch"><th>Hole</th>${hs.map(h => `<th ${go(h)}>${h.n}</th>`).join('')}<th>${label}</th></tr>
+      <tr class="cp"><th>Par</th>${hs.map(h => `<td>${h.par ?? ''}</td>`).join('')}<td>${total(hs, h => h.par)}</td></tr>
+      <tr class="cs"><th>Score</th>${hs.map(h => `<td ${go(h)}><span class="sc ${scoreClass(h)}">${h.strokes ?? ''}</span></td>`).join('')}<td><b>${total(hs, h => h.strokes)}</b></td></tr>
+      ${showPutts ? `<tr class="cu"><th>Putts</th>${hs.map(h => `<td>${h.putts ?? ''}</td>`).join('')}<td>${total(hs, h => h.putts)}</td></tr>` : ''}
+      ${showPen ? `<tr class="cn"><th>Pen.</th>${hs.map(h => `<td>${pens(h) || ''}</td>`).join('')}<td>${total(hs, h => pens(h) || null)}</td></tr>` : ''}
+    </tbody></table>`; };
+  return `<div class="cards" id="scorecard">${nines.map(table).join('')}</div>` + (partial ? `<p class="small muted" style="margin-top:2px">Totals count the holes with a score.</p>` : '') +
+    `<div class="legend card-key"><span><i class="sc under"></i>under par</span><span><i class="sc par"></i>par</span><span><i class="sc b1"></i>bogey</span><span><i class="sc b2"></i>double</span><span><i class="sc b3"></i>worse</span></div>`;
+}
 // One-tap scores for holes he isn't tracing.
 function quickScoreSection(r) {
   const holes = holesOf(r);
@@ -3691,6 +3778,18 @@ window.addEventListener('carry:outbox', e => {
   const was = /waiting for signal/.test($('#status').textContent);
   if (n) setStatus(`${plural(n, 'change')} saved on this phone, waiting for signal`, true);
   else if (was) { setStatus(''); toast('Everything is saved'); }
+});
+
+// The hole page's dots, as last drawn, and what a tap on one shows.
+let holeDots = [];
+document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('#holeMap [data-shot]'); if (!t) return;
+  const d = holeDots[Number(t.dataset.shot)], box = $('#shotInfo'); if (!d || !box) return;
+  const rec = shotRecords().find(x => x.r.id === d.r.id && x.h.n === Number(S.sub.hole) && x.i === d.i);
+  document.querySelectorAll('#holeMap .hit.on').forEach(x => x.classList.remove('on')); t.classList.add('on');
+  box.classList.remove('muted');
+  box.innerHTML = `<b>${dateLabel(d.r.date)}</b> · shot ${d.i + 1}${d.club ? ` · ${esc(d.club)}` : ''}${rec ? ` from ${fmt(rec.from)}m → ${fmt(rec.len)}m, ${esc(rec.lie)}` : `, ${esc(d.lie || 'lie not set')} · distance not measurable`}${d.penalty ? ' <span class="tag flag">penalty</span>' : ''}
+    <button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${d.r.id},hole=${S.sub.hole}">Open that hole →</button>`;
 });
 
 /* ---------- start ---------- */

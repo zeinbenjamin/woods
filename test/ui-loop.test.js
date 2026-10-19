@@ -41,9 +41,10 @@ test('a round says what it showed: the finding by name, how often, the club, the
   assert.ok(approach, app.text('#roundFindings'));
   assert.match(approach.querySelector('.spread').textContent, /^Approaches clubbed short9 times · 7i$/);
   assert.deepEqual([...approach.querySelectorAll('[data-go]')].filter(b => /Hole/.test(b.textContent)).map(b => b.dataset.go),
-    Array.from({ length: 9 }, (_, i) => `rounds:sessionId=rA,hole=${i + 1}`));
+    Array.from({ length: 6 }, (_, i) => `rounds:sessionId=rA,hole=${i + 1}`), 'the first six holes');
+  assert.equal([...approach.querySelectorAll('[data-go]')].find(b => /more/.test(b.textContent)).textContent, '+3 more', 'the rest on its own page');
   assert.ok(approach.querySelector('[data-act="practiseGoal"][data-key="approach"]'), 'Practise this');
-  assert.equal(approach.querySelector('[data-go="range:goal=approach"]').textContent, 'Details →');
+  assert.ok([...approach.querySelectorAll('[data-go="range:goal=approach"]')].some(b => b.textContent === 'Details →'));
   assert.ok(!f.some(x => /off the tee/.test(x.textContent)), 'every tee shot found the fairway: nothing to say');
 });
 
@@ -112,6 +113,21 @@ test('with a later round: before and since, everywhere the finding appears, with
     assert.ok(h.$$('#view .pcard .progress').some(p => p.textContent === line), 'on the Range list');
     h.go('overview');
     assert.ok(h.$$('#view .progress').some(p => p.textContent === line), 'and on the Overview');
+    // Round by round: rA 9 of 9, a line for the range session s1, then rB 4 of 9, in date order.
+    h.go('range', { goal: 'approach' });
+    const hist = h.$('#goalHistory');
+    const cols = [...hist.querySelectorAll('.col')], rg = [...hist.querySelectorAll('.rg')];
+    assert.equal(cols.length, 2);
+    assert.equal(rg.length, 1, 'the range sessions for it since it first appeared: s1 only');
+    assert.deepEqual(cols.map(c => c.querySelector('title').textContent), [`${h.E(`dateLabel(${JSON.stringify(daysAgo(20))})`)}: 9 of 9 came up short`, `${h.E(`dateLabel(${JSON.stringify(daysAgo(5))})`)}: 4 of 9 came up short`]);
+    const xOf = el => Number((el.getAttribute('d') || '').match(/^M([\d.]+)/)?.[1] ?? el.getAttribute('x1'));
+    assert.ok(xOf(cols[0]) < xOf(rg[0]) && xOf(rg[0]) < xOf(cols[1]), 'the range line sits between the two rounds');
+    // Heights: 100% fills the plot (16 to 92), 44% is 4/9 of it.
+    const topOf = c => Number(c.getAttribute('d').match(/V([\d.]+)/)[1]) - 4;
+    assert.equal(topOf(cols[0]).toFixed(1), '16.0');
+    assert.equal(topOf(cols[1]).toFixed(1), (92 - 76 * 4 / 9).toFixed(1));
+    assert.equal(hist.querySelector('.vl').textContent, '44%', 'only the latest round is labelled');
+    assert.deepEqual(h.$$('#goalTable tbody tr').map(r => r.textContent), [`${h.E(`dateLabel(${JSON.stringify(daysAgo(5))})`)}94 (44%)`, `${h.E(`dateLabel(${JSON.stringify(daysAgo(20))})`)}99 (100%)`], 'and as a table');
     // Where it showed up: both rounds, newest first, by hole and club.
     h.go('range', { goal: 'approach' });
     assert.match(h.text('#goalHoles'), new RegExp(`^${h.E(`dateLabel(${JSON.stringify(daysAgo(5))})`)} · Loop GC: Hole 1 · 7iHole 2 · 7iHole 3 · 7iHole 4 · 7i`));

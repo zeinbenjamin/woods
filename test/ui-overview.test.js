@@ -94,7 +94,8 @@ test('next practice: the top priority as one action with its evidence; the next 
 
 test('gapping keeps the ladder and says how much each club rests on', () => {
   const rungs = app.$$('#view .rung').map(r => [r.querySelector('.club').textContent, r.querySelector('.val b').textContent, r.querySelector('.conf').textContent]);
-  assert.deepEqual(rungs, [['5W', '147', '12 shots · consistent'], ['7i', '130', '6 shots · emerging'], ['9i', '128', '3 shots · early signal'], ['PW', '80', '12 shots · consistent']]);
+  assert.deepEqual(rungs, [['5W', '147', '12 shots · consistent · middle half at 147m'], ['7i', '130', '6 shots · emerging · middle half at 130m'], ['9i', '128', '3 shots · early signal'], ['PW', '80', '12 shots · consistent · middle half at 80m']],
+    'a spread only from 5 shots; every shot the same reads "at", not "147–147"');
   assert.equal(app.$('#strikeProfile').open, false, 'strike profile is folded away, not lost');
 });
 

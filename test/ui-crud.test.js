@@ -325,10 +325,14 @@ test('an unfinished round: unscored holes are their own kind of square, and the 
     holes: holes.map((h, i) => i < 14 ? { ...h, strokes: h.par + 1 } : h) });
   await app.waitFor(() => !!app.E(`session('r_short')`), { what: 'round loaded' });
   app.go('rounds', { sessionId: 'r_short' });
-  const sq = app.$$('#view .scorestrip .sq');
-  assert.equal(sq.length, 18);
-  assert.deepEqual(sq.slice(14).map(b => [...b.classList].sort().join(' ')), Array(4).fill('sq unscored'));
-  assert.equal(app.$$('#view .scorestrip .empty').length, 0, 'no score square takes the empty-state style');
+  // 2.7.0: the round page shows a scorecard (a nine per table); the strip stays in lists.
+  const sc = app.$$('#scorecard .cs td .sc');
+  assert.equal(sc.length, 18);
+  assert.deepEqual(sc.slice(14).map(b => [...b.classList].sort().join(' ')), Array(4).fill('sc unscored'));
+  assert.deepEqual(sc.slice(14).map(b => b.textContent), ['', '', '', ''], 'unscored holes stay empty, never a guess');
+  assert.equal(app.$$('#scorecard .empty').length, 0, 'nothing takes the empty-state style');
+  assert.deepEqual(app.$$('#scorecard .cs td:last-child').map(t => t.textContent), ['45', '25'], 'Out 9 × 5; In counts the 5 holes scored');
+  assert.match(app.text('#view'), /Totals count the holes with a score\./);
   assert.match(app.text('#view'), /14 of 18 holes scored/);
   app.go('rounds');
   const item = app.$$('#view .item').find(b => b.dataset.go === 'rounds:sessionId:r_short');
@@ -336,4 +340,5 @@ test('an unfinished round: unscored holes are their own kind of square, and the 
   const css = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
   assert.match(css, /\.scorestrip \{[^}]*repeat\(9, minmax\(0, 1fr\)\)/, 'columns may shrink below their cells\' minimum');
   assert.match(css, /\.scorestrip\.mini \{[^}]*repeat\(18, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.cards table\.card \{[^}]*table-layout: fixed/, 'the scorecard\'s columns can\'t widen past the screen');
 });

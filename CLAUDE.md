@@ -315,7 +315,11 @@ Each of these cost real debugging time. Don't reintroduce them.
   the identity of `S.sessions`, `S.clubs`, `S.courses`, `S.settings`). A
   season of data used to cost 2.3s a render (8,600 club-stat recomputes).
   So those arrays must always be *replaced*, never mutated in place, or
-  the cache goes stale.
+  the cache goes stale. A **course map arriving** is a change of data state
+  too (`mapEpoch`, bumped by `mapArrived`, the map's `onLoad`): before 2.7.0
+  numbers first worked out while a map file was still loading kept its shots
+  unmeasurable (out of the practice list, breakdown and approaches) until
+  the next save. `ui-visuals` reproduces it.
 - **Stored files stream with byte ranges** (`res.sendFile`), which a
   phone's video player needs, and only photo/video types are served
   inline; anything else is an attachment, all with `nosniff` and a
@@ -726,6 +730,31 @@ from the course to the range and back, without him recreating it.
   with the same club, full swing, 5+ shots each side, classified in one pool
   so "low runner" means the same in both.
 
+## Visuals (2.7.0)
+
+Release 3 of the review ("Make the data tangible"); the hole stencil itself
+is the hole-maps chat's.
+
+- **Where a club's shots land** (`carrySpread`): on each gapping rung, a
+  whisker for 8 in 10 (10th–90th percentile of carry) with a block for the
+  middle half (25th–75th), tops left out as for stock carry, from 5 shots;
+  the rung's line says "middle half 110–130m" ("at 147m" when they're all
+  the same). A plain count, like the strike profile.
+- **The round as a scorecard** (`scorecard`): a table per nine (Hole, Par,
+  Score coloured as the strips, Putts and Pen. only when logged; Out/In, or
+  Tot for a 9-hole card), each hole tappable, a key for the colours.
+  Unscored holes stay empty and the totals say they count the holes scored.
+  The strips stay in lists and course history.
+- **Round by round** (`goalHistory`) on a finding's page: a column per
+  round (its share of that round's chances, last ten), a line for each range
+  day that hit its club and swing since it first appeared, date order,
+  tooltips and *As a table*. Single series, no legend; only the latest
+  column is labelled.
+- **Tap a dot** on a course's hole page (map holes): invisible 11px targets
+  laid over the map's dots (`#holeMap .hit`, from `mapToView`; the map
+  drawing is untouched) show that shot in `#shotInfo`: date, shot number,
+  club, from → length, lie, and a link to that round's hole.
+
 ## Range data from screenshots
 
 Range shots come from screenshots of the bay's shot list, not typing:
@@ -746,7 +775,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 274 tests, about 45s.
+`npm test` — 278 tests, about 45s.
 
 - `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -800,6 +829,8 @@ fixture would let the reading be pinned.
   `ui-loop` (the practice loop on a hand-worked scenario: a round's
   findings, Practise this, screenshots filling the plan, before/since on the
   objective page, Range list and Overview, the block against last time),
+  `ui-visuals` (the spread, the scorecard and the dot details against
+  hand-worked numbers, and the map-arrival cache bug),
   `ui-marks` (Mark tee / Mark flag on an unmapped hole: the raw fix stored,
   ±10 m refused, flag after scoring, edits keep marks, only your own
   removable),
@@ -836,7 +867,8 @@ mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 Overview (one survived at first: a missing heading passed a "comes before"
 check; the test now requires it), 12 for 2.6.0's practice loop (two survived
 at first because the scenario had no tee misses and one earlier 5W session;
-both added); all
+both added), 13 for 2.7.0's visuals (two survived at first: no topped
+shot and no shot-tied penalty in the data; both added); all
 caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
