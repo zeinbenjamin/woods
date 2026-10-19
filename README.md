@@ -125,6 +125,49 @@ screenshots, versioning, and the swing analyzer.
    Open it without the token (or with a wrong one) and the app asks for
    it.
 
+### Off the LAN: Cloudflare Tunnel
+
+Needed for Play mode on the course: a phone only gives a page its GPS
+position over **https**, and `http://truenas:1818` only works at home. A
+tunnel gives Carry an https address without opening a port. Requests pass
+through Cloudflare (TLS ends at their edge): that was a deliberate choice,
+so put Cloudflare Access in front (step 4) and keep `API_TOKEN` set.
+
+1. **A domain on Cloudflare.** The tunnel needs a domain whose DNS
+   Cloudflare runs (bought there, or moved there).
+2. **Create the tunnel.** Cloudflare dashboard → Zero Trust → Networks →
+   Tunnels → *Create a tunnel* → Cloudflared, name it `carry`. Copy the
+   token from the install command it shows (the long string after
+   `--token`).
+3. **Point a hostname at Carry.** In the tunnel's *Public hostname* tab:
+   subdomain `carry`, your domain, service **HTTP**, URL `carry:1818`
+   (the container's name on the app's own network).
+4. **Lock it to you.** Zero Trust → Access → Applications → *Add* →
+   Self-hosted, the same hostname, a policy that allows only your email,
+   login by one-time PIN. Then nobody else reaches even the page; the API
+   token stays as the second lock.
+5. **Run the tunnel beside Carry.** Edit the app in TrueNAS and add this
+   under `services:` in the YAML, next to `carry:`, with your token:
+
+   ```yaml
+     cloudflared:
+       image: cloudflare/cloudflared:latest
+       container_name: carry-tunnel
+       restart: unless-stopped
+       command: tunnel --no-autoupdate run
+       environment:
+         TUNNEL_TOKEN: "PASTE_THE_TUNNEL_TOKEN"   # ← from step 2
+       depends_on:
+         - carry
+   ```
+
+6. **On the phone,** open `https://carry.<your domain>`, sign in to
+   Access, and add it to the home screen again. It's a new address, so it
+   asks for the API token once and keeps its own copy.
+
+The free plan cuts a request off after 100 seconds; swing analysis takes
+about 30. Inside the house the old `http://truenas:1818` keeps working.
+
 ### Behind a reverse proxy
 
 Put it behind Traefik/NPM with TLS if you want it off the LAN. The app is

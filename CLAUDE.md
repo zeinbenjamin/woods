@@ -641,7 +641,19 @@ Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
 
 Deliberately out of scope: multi-user, booking integration, anything that
-sends his data anywhere.
+sends his data anywhere — with one exception he chose on 2026-10-19:
+**Cloudflare Tunnel** for off-LAN https (README, *Off the LAN*), because
+Play mode needs GPS and a phone only gives GPS to an https page. Access
+in front, `API_TOKEN` kept.
+
+**Next: Play mode** (asked for 2026-10-19; he wants it built with GPS from
+the start, not before). A *Start round* mode used during the round, instead
+of logging afterwards from 18Birdies: one hole at a time, his GPS position
+on the hole map, distances to the front, middle and back of the green and
+to hazards, tap or "mark my ball here" for each shot, putts and score,
+running total, and saves kept on the phone until there's signal. Waiting
+on (1) the tunnel being live, (2) `holemap.js` converting lat/long to map
+metres with the build's own projection (hole-maps chat; asked via Zein).
 
 ## Working agreements from the chat
 
