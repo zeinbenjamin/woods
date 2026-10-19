@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.2.0 — 2026-10-19
+- Hurstville has a course map: link it from the course page and every hole is drawn from OpenStreetMap, with the card checked against it.
+- Hurstville's greens aren't mapped yet, so each is an estimate on the flag, drawn dashed and labelled "Estimated green (not mapped)". A tap there doesn't set the lie (you pick it), and Play mode shows the distance to the middle only, not the front and back.
+
 ## 2.1.0 — 2026-10-19
 - Play mode: Rounds → Start round when you're at the course. It picks the course you're standing at, and you choose your tees and whether you start at hole 1 or 10.
 - Each hole shows where you are on the course map, the distance to the front, middle and back of the green, and how far to reach and to carry the hole's bunkers and water ahead of you.

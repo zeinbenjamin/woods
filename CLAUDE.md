@@ -586,9 +586,14 @@ scorecard sets every length.
   `offCourse(map, p)` (metres outside the boundary, 0 inside: ignore a fix
   far off the course), `greenDistances(hm, p)` → `{front, middle, back}`
   along the line from p through the green's middle; front/back `null` where
-  the green isn't a mapped shape, never guessed. Hurstville is
-  tier B: it has
-  lines but no greens; Barnwell Park, Beverley Park and Lane Cove have only
+  the green isn't a mapped shape, never guessed.
+  Hurstville (2.2.0): 18 OSM lines, a tee point per hole and pins, but no
+  green or tee shapes, and no card in the source. Each green is **estimated**:
+  a 12 m circle on the hole's pin (within 30 m of the line's end, else the
+  end), `est: true`, drawn dashed as "Estimated green (not mapped)". It never
+  sets a lie (a tap there is `null`, he picks) and gives no front/back
+  distance, only the middle. A mapped tee *point* (`teept`) counts as a tee
+  box for the card check. Barnwell Park, Beverley Park and Lane Cove have only
   a boundary; Hunter Valley's only nearby course is unnamed and partial, so
   it keeps its artwork (holes 1–9), and converting its old rounds waits for a map.
 
@@ -653,7 +658,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 250 tests, about 35s.
+`npm test` — 251 tests, about 35s.
 
 - `api.test.js` (24) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -704,10 +709,10 @@ fixture would let the reading be pinned.
   `ui-holemap` (linking a map, the card check, taps in metres and lies
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking).
-- `course-maps.test.js` (16) — the committed maps match their sources,
+- `course-maps.test.js` (17) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens, GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (7) — the sign-in sheets (home address, expired
   session by redirect and by Cloudflare's 401, asked once), "Signed in as"
@@ -750,8 +755,8 @@ In rough order of value:
 2. **Pose estimation on swing frames**, server-side. Turns swing analysis
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
-3. **More course maps** (see *Course maps*). Next: Hurstville (needs
-   estimated greens); Hunter Valley
+3. **More course maps** (see *Course maps*). Barnwell Park, Beverley
+   Park and Lane Cove wait for OSM hole lines; Hunter Valley
    waits for OSM, then its art rounds convert to approximate map positions.
 
 Done in 1.5.0: recency weighting of club distances, session filtering

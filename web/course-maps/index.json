@@ -12,6 +12,12 @@
   "holes": 9
  },
  {
+  "id": "hurstville",
+  "name": "Hurstville Golf Club",
+  "osmName": "Hurstville Golf Course",
+  "holes": 18
+ },
+ {
   "id": "long-reef",
   "name": "Long Reef Golf Club",
   "osmName": "Long Reef Golf Course",

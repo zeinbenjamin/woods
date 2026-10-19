@@ -105,7 +105,7 @@
   // where the green isn't mapped as a shape.
   function greenDistances(hm, p) {
     const g = hm.green, f = hm.map.features[hm.hole.green], middle = dist(p, g);
-    if (!f || !f.r || middle < 1e-6) return { front: null, middle, back: null };
+    if (!f || !f.r || f.est || middle < 1e-6) return { front: null, middle, back: null };
     const ux = (g[0] - p[0]) / middle, uy = (g[1] - p[1]) / middle;
     let front = null, back = null, was = inRings(p, f.r);
     for (let s = 0; s <= middle + 80; s += 0.5) {
@@ -141,7 +141,9 @@
   function teeGap(map, hole, p) {
     let best = Infinity;
     for (const i of hole.tees || []) {
-      const f = map.features[i]; if (!f || !f.r) continue;
+      const f = map.features[i]; if (!f) continue;
+      if (f.k === 'teept') { best = Math.min(best, dist(p, f.c)); continue; }
+      if (!f.r) continue;
       if (inRings(p, f.r)) return 0;
       for (const r of f.r) for (let k = 1; k < r.length; k++) best = Math.min(best, segDist(p, r[k - 1], r[k]).d);
     }
@@ -196,7 +198,8 @@
   // Tee boxes read as fairway. Anywhere nothing is mapped (including the
   // estimated strip and the rough) is null: the app asks.
   function lieAt(map, p) {
-    const F = map.features, hit = k => F.some(f => f.k === k && f.r && inRings(p, f.r));
+    // An estimated green is a drawing, not a measurement: it never sets a lie.
+    const F = map.features, hit = k => F.some(f => f.k === k && f.r && !f.est && inRings(p, f.r));
     if (hit('water')) return 'water';
     if (hit('bunker')) return 'bunker';
     if (hit('green')) return 'green';
@@ -306,7 +309,10 @@
     for (const f of F) if (f.k === 'tree') g += `<circle class="hm-tree" cx="${f1(f.c[0])}" cy="${f1(f.c[1])}" r="${f.rad}"/>` + (big ? `<circle class="hm-tree-in" cx="${f1(f.c[0])}" cy="${f1(f.c[1])}" r="${f1(f.rad * 0.45)}"/>` : '');
     for (const f of F) if (f.k === 'path') g += `<polyline class="hm-path${cls(f)}" points="${f.l.map(p => f1(p[0]) + ',' + f1(p[1])).join(' ')}"/>`;
     for (const f of F) if (f.k === 'tee') g += `<path class="hm-tee${cls(f)}" d="${pathOf(f.r)}"/>`;
-    for (const f of F) if (f.k === 'green') g += (map.features.indexOf(f) === hole.green ? `<path class="hm-collar" d="${pathOf(f.r)}"/>` : '') + `<path class="hm-green${map.features.indexOf(f) === hole.green ? '' : ' hm-other'}" d="${pathOf(f.r)}"/>`;
+    for (const f of F) if (f.k === 'teept') { const [x, y] = f.c; g += `<rect class="hm-tee${cls(f)}" x="${f1(x - 3)}" y="${f1(y - 3)}" width="6" height="6"/>`; }
+    for (const f of F) if (f.k === 'green') { const own = map.features.indexOf(f) === hole.green;
+      g += f.est ? `<path class="hm-green-est${own ? '' : ' hm-other'}" d="${pathOf(f.r)}"/>`
+        : (own ? `<path class="hm-collar" d="${pathOf(f.r)}"/>` : '') + `<path class="hm-green${own ? '' : ' hm-other'}" d="${pathOf(f.r)}"/>`; }
     for (const f of F) if (f.k === 'bunker') g += `<g class="${cls(f)}"><path class="hm-bunker" d="${pathOf(f.r)}"/><path class="hm-sandd" d="${pathOf(f.r)}"/></g>`;
     const gc = hm.green;
     if (big) for (const m of [50, 100, 150, 200]) if (m < lineLen(pl) - 25) g += `<circle class="hm-arc" cx="${f1(gc[0])}" cy="${f1(gc[1])}" r="${m}"/>`;
@@ -344,6 +350,7 @@
      light and dark with it. */
   const LEGEND = [
     ['green', 'Green', '<rect class="hm-green" x="3" y="2" width="16" height="10" rx="5"/>'],
+    ['greenEst', 'Estimated green (not mapped)', '<rect class="hm-green-est" x="3" y="2" width="16" height="10" rx="5"/>'],
     ['fairway', 'Fairway', '<rect class="hm-fw" x="1" y="3" width="20" height="8" rx="3"/>'],
     ['strip', 'Estimated fairway', '<rect class="hm-fwe" x="1" y="3" width="20" height="8" rx="3"/>'],
     ['tee', 'Tee box', '<rect class="hm-tee" x="6" y="3" width="10" height="8" rx="1"/>'],
@@ -362,7 +369,10 @@
   function legendKinds(hm, opts = {}) {
     const { map, hole, pl } = hm, n = hole.n, box = viewOf(map, hole, pl).box;
     const F = map.features.filter(f => vis(f, box)), has = k => F.some(f => f.k === k);
-    const out = new Set(['green', 'rough', 'off', 'teemark']);
+    const out = new Set(['rough', 'off', 'teemark']);
+    if (F.some(f => f.k === 'green' && !f.est)) out.add('green');
+    if (F.some(f => f.k === 'green' && f.est)) out.add('greenEst');
+    if (has('teept')) out.add('tee');
     if (has('fairway')) out.add('fairway');
     if (stripFor(map, hole, opts.par, pl)) out.add('strip');
     for (const k of ['tee', 'bunker', 'water', 'path']) if (has(k)) out.add(k);
@@ -399,6 +409,7 @@
 .holemap .hm-path{fill:none;stroke:var(--hm-path);stroke-width:1.8;stroke-dasharray:3 2;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .holemap .hm-collar{fill:none;stroke:var(--hm-collar);stroke-width:6;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .holemap .hm-green{fill:var(--hm-green);stroke:var(--hm-ink);stroke-width:1.1;vector-effect:non-scaling-stroke}
+.holemap .hm-green-est{fill:var(--hm-green);fill-opacity:.55;stroke:var(--hm-ink);stroke-width:1.1;stroke-dasharray:3 2;vector-effect:non-scaling-stroke}
 .holemap .hm-bunker{fill:var(--hm-sand);stroke:var(--hm-ink);stroke-width:1;vector-effect:non-scaling-stroke} .holemap .hm-sandd{fill:url(#hm-sand)} .holemap .hm-sand-d{fill:var(--hm-sanddot)}
 .holemap .hm-other{opacity:.5}
 .holemap .hm-arc{fill:none;stroke:var(--hm-ink);stroke-width:.8;stroke-dasharray:2 3;opacity:.55;vector-effect:non-scaling-stroke}
