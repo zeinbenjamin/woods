@@ -167,7 +167,7 @@ details.sec > summary { cursor: pointer; }
 .shotrow { display: flex; justify-content: space-between; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 8px 0; font: inherit; color: inherit; cursor: pointer; font-size: 13px; }
 .shotrow:hover { background: var(--paper-2); }
 .nextlist { margin: 6px 0 0; padding-left: 20px; } .nextlist li { margin: 6px 0; font-size: 14px; }
-.basis { font-size: 12px; color: var(--ink-2); background: var(--paper-2); border-radius: var(--r); padding: 7px 10px; margin: 8px 0; }
+.basis { font-size: 12px; color: var(--ink-2); background: var(--paper-2); border-radius: var(--r); padding: 7px 10px; margin: 8px 0; } .basis.slim { background: none; padding: 0; color: var(--ink-3); margin: 4px 0 0; }
 details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > summary b { font-family: var(--cond); font-size: 15px; }
 .steps { margin: 6px 0 0; padding-left: 20px; font-size: 14px; } .steps li { margin: 10px 0; }
 .sec { display: block; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--rule); clear: both; }
@@ -214,6 +214,13 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .advice { background: var(--green-soft); color: var(--ink); border-radius: var(--r); padding: 8px 10px; margin: 8px 0; }
 .stencil .hdot { fill: #fff; stroke: #1B2A20; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; } .stencil .hdot.first { fill: #F2C94C; }
 .l-teedot { background: #F2C94C; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; } .l-dot { background: #fff; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; }
+.fold { margin: 0; border-top: 1px solid var(--rule); padding: 10px 0; } .fold > summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; } .fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: '›'; font-size: 18px; color: var(--ink-3); transition: transform .15s; } .fold[open] > summary::after { transform: rotate(90deg); } .fold[open] > summary { margin-bottom: 10px; }
+.folds { border-bottom: 1px solid var(--rule); } .fold .warn { color: var(--flag); }
+.ftile .tp { font-size: .55em; color: var(--ink-3); margin-left: 6px; font-weight: 600; }
+.next { background: var(--paper-2); border-radius: 12px; padding: 14px 16px; border-left: 4px solid var(--green); } .next .nt { font-family: var(--cond); font-weight: 700; font-size: 26px; line-height: 1.15; margin: 2px 0 4px; } .next .nfrom { margin-top: 6px; } .next .row-actions { margin-top: 12px; }
+.wrow { display: grid; grid-template-columns: 22px 1fr 14px; gap: 10px; align-items: start; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 10px 0; } .wrow > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wrow .wn { font-family: var(--cond); font-weight: 700; color: var(--ink-3); font-size: 18px; } .wrow .wt { font-weight: 600; } .wrow .wa { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--green); } .wrow .chev { color: var(--ink-3); align-self: center; }
 .marks { border: 1px dashed var(--rule); border-radius: var(--r); padding: 8px 10px 10px; margin: 8px 0 12px; } .marks .markrow { margin: 8px 0; }
 .markrow { justify-content: center; margin: 12px 0 18px; } .markbtn { padding: 11px 22px; font-size: 15px; }
 #playLive > p { margin: 6px 0 4px; }
@@ -797,10 +804,28 @@ function overviewHandicap() {
 function vOverview() {
   const stats = activeClubs().map(c => ({ c, s: clubStats(c.code) })).filter(x => x.s && x.s.stockCarry);
   const rounds = S.sessions.filter(s => s.type === 'round' && (s.holes || []).some(h => h.strokes != null));   // newest first
-  let h = `<h1>Overview</h1>` + rangeFilter();
-  if (!stats.length && !rounds.length) return h + `<div class="empty"><p>Nothing logged yet. Log a round (Rounds → New round) or a range session with shots, and this fills in.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
-  h += overviewForm(rounds) + overviewWork() + overviewGapping(stats) + overviewScoring(rounds) + overviewBreakdown() + overviewApproaches() + overviewPutting() + overviewEvidence() + overviewRecent();
+  let h = `<h1>Overview</h1>`;
+  if (!stats.length && !rounds.length) return h + rangeFilter() + `<div class="empty"><p>Nothing logged yet. Log a round (Rounds → New round) or a range session with shots, and this fills in.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
+  // 2.5.0: the answer first (how he's playing, the one next practice), the
+  // picture behind it after, and the specialised analysis folded away —
+  // every number is still here, one tap down. Nothing is computed differently.
+  h += overviewForm(rounds) + overviewWork() + overviewGapping(stats) + overviewScoring(rounds) + overviewMore() + overviewRecent();
   return h;
+}
+// A section folded to one line: its title and the single number worth seeing.
+const fold = (id, title, teaser, body) => body ? `<details class="sec fold" id="${id}"><summary><span><b>${title}</b>${teaser ? ` <span class="small muted">${teaser}</span>` : ''}</span></summary>${body}</details>` : '';
+const unhead = html => html.replace(/^<h2>[^<]*<\/h2>/, '');
+function overviewMore() {
+  const brk = gameBreakdown().rows.filter(r => r.key !== 'putting').sort((a, b) => b.missed / b.of - a.missed / a.of)[0];
+  const d = courseDemand(), most = d.bands.slice().sort((a, b) => b.n - a.n || a.from - b.from)[0];
+  const pt = puttingStats(), b = practiceBasis();
+  const parts = [
+    fold('ovBreakdown', 'Where your game is being tested', brk ? `${brk.label}: ${pct(brk.missed, brk.of)}% ${brk.what}` : '', unhead(overviewBreakdown())),
+    fold('ovApproaches', 'Approach distances', most ? `most often ${most.from}–${most.from + 19}m` : '', unhead(overviewApproaches())),
+    fold('ovPutting', 'Putting', pt ? `${pt.perHole.toFixed(2)} a hole · ${plural(pt.threes, 'three-putt')}` : '', unhead(overviewPutting())),
+    fold('ovEvidence', 'Evidence', esc(b.text.replace(/^Built from /, '').replace(/\.$/, '')), unhead(overviewEvidence())),
+  ].join('');
+  return parts ? `<h2>The detail</h2><div class="folds">${parts}</div>` : '';
 }
 const signed = (v, d = 0) => (v > 0 ? '+' : v < 0 ? '−' : '') + fmt(Math.abs(v), d);
 const tile = (value, label, sub) => `<div class="ftile${String(value).replace(/<[^>]+>/g, '').length > 5 ? ' long' : ''}"><b>${value}</b><small>${label}</small>${sub ? `<em>${sub}</em>` : ''}</div>`;
@@ -816,33 +841,46 @@ function overviewForm(rounds) {
   // Penalties are only known on rounds where shots or penalties were logged.
   const lastTraced = holesOf(last).filter(hh => (hh.shots || []).length || hh.penalties != null);
   const pens = lastTraced.length ? sum(lastTraced.map(hh => (hh.penalties || 0) + (hh.shots || []).filter(x => x.penalty).length)) : null;
-  const tiles = [tile(ls.gross, 'last score', `${esc(last.courseName)}, ${dateLabel(last.date)}${ls.holes !== 18 ? ` · ${ls.holes} holes` : ''}${pens != null ? ` · ${plural(pens, 'penalty', 'penalties')}` : ''}`), tile(signed(ls.toPar), 'to par')];
+  const tiles = [tile(`${ls.gross}<span class="tp">${signed(ls.toPar)}</span>`, 'last score', `${esc(last.courseName)}, ${dateLabel(last.date)}${ls.holes !== 18 ? ` · ${ls.holes} holes` : ''}${pens != null ? ` · ${plural(pens, 'penalty', 'penalties')}` : ''}`)];
   if (recent.length >= 2) {
     const holes = sum(recent.map(x => x.st.holes)), over = sum(recent.map(x => x.st.toPar));
     tiles.push(tile(signed(over / holes, 1), 'over par a hole', `last ${recent.length} rounds`));
   }
+  const hc = handicap(), hcp = overviewHandicap();
+  if (hcp) tiles.push(tile(hc.index != null ? fmt(hc.index, 1) : '—', 'handicap', hc.index != null ? 'estimate, not official' : `needs 3 scores, you have ${hc.scores.length}`));
+  const more = [];
   const ph = recent.flatMap(x => (x.r.holes || []).filter(hh => hh.putts != null));
-  if (ph.length) tiles.push(tile((sum(ph.map(hh => hh.putts)) / ph.length).toFixed(2), 'putts a hole', `${plural(ph.length, 'hole')}`));
+  if (ph.length) more.push(tile((sum(ph.map(hh => hh.putts)) / ph.length).toFixed(2), 'putts a hole', `${plural(ph.length, 'hole')}`));
   const fir = { hit: 0, of: 0 }, gir = { hit: 0, of: 0 };
   for (const { st } of recent) { if (st.fir) { fir.hit += st.fir.hit; fir.of += st.fir.of; } if (st.gir) { gir.hit += st.gir.hit; gir.of += st.gir.of; } }
-  if (fir.of >= 5) tiles.push(tile(`${pct(fir.hit, fir.of)}%`, 'fairways', `${fir.hit} of ${fir.of}`));
-  if (gir.of >= 5) tiles.push(tile(`${pct(gir.hit, gir.of)}%`, 'greens in reg', `${gir.hit} of ${gir.of}`));
-  return `<h2>Current form</h2>${tileGrid('formTiles', tiles.slice(0, 6))}` + overviewHandicap();
+  if (fir.of >= 5) more.push(tile(`${pct(fir.hit, fir.of)}%`, 'fairways', `${fir.hit} of ${fir.of}`));
+  if (gir.of >= 5) more.push(tile(`${pct(gir.hit, gir.of)}%`, 'greens in reg', `${gir.hit} of ${gir.of}`));
+  const label = [more.length ? 'putts, fairways, greens' : '', hcp ? 'how the handicap is worked out' : ''].filter(Boolean).join(' · ');
+  return `<h2>Current form</h2>${tileGrid('formTiles', tiles)}` +
+    (more.length || hcp ? fold('formMore', 'More', label, (more.length ? tileGrid('formMoreTiles', more) : '') + hcp) : '');
 }
 
 /* ---------- what to work on ---------- */
 function overviewWork() {
   const items = rankedPractice().now;
-  if (!items.length) return `<h2>What to work on</h2><p class="muted small">Log shots on a few holes and add range sessions, and this fills with what's costing you.</p>`;
-  return `<h2>What to work on</h2><div class="work">` + items.slice(0, 3).map((it, i) => {
-    const b = it.block;
-    const action = b ? `${esc(b.club)}${b.swing !== 'full' ? ' ' + esc(b.swing) : ''}${b.target ? ` at ${b.target}m` : ''} — ${esc(b.intent)}` : it.practice ? esc(it.practice) : '';
-    return `<div class="wcard k-${it.kind}"><span class="wn">${i + 1}</span><div><div class="wt">${esc(it.title)}</div>
-      <div class="small muted">${esc(KIND_LABEL[it.kind] || '')}${it.kind === 'swing' ? ' · read from video' : it.n ? ` · ${confidence(it.n)}, n=${it.n}` : ''}${it.note ? ` · ${esc(it.note)}` : ''}</div>
-      ${(it.support || []).length ? `<div class="small muted"><span class="tag">read from video</span> ${esc(it.support[0].title)}</div>` : ''}
-      ${action ? `<div class="small wa">→ ${action}</div>` : ''}</div></div>`;
-  }).join('') + `</div>` + basisLine() +
-  `<div class="row-actions">${items.some(x => x.block) ? `<button class="primary" data-act="planSession">Plan range session →</button>` : ''}<button class="quiet" data-go="range">Full list and evidence →</button></div>`;
+  if (!items.length) return `<h2>Next practice</h2><div class="empty"><p>Trace the shots on a few holes, or log a range session with shots, and your next practice appears here.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
+  // Headline, the evidence in a number or two, one action. The reasoning is a
+  // tap away on the Range tab, never in front of the answer.
+  const evidence = it => `${esc(KIND_LABEL[it.kind] || '')}${it.kind === 'swing' ? ' · read from video' : it.n ? ` · ${confidence(it.n)}, n=${it.n}` : ''}`;
+  // The block, in a few words: club, swing, target, and the drill's name when it has one ("Accuracy: …").
+  const doThis = it => { const b = it.block; if (!b) return ''; const name = /^([^:]{3,24}):/.exec(b.intent || ''); return `${esc(b.club)}${b.swing !== 'full' ? ' ' + esc(b.swing) : ''}${b.target ? ` at ${b.target}m` : ''}${!b.target && name ? ` · ${esc(name[1])}` : ''}`; };
+  const how = it => esc(it.block ? it.block.intent : it.practice || '');
+  const top = items[0];
+  const hero = `<div class="next k-${top.kind}" id="nextPractice">
+      <div class="nt">${doThis(top) || esc(top.title)}</div>
+      ${how(top) ? `<div class="small">${how(top)}</div>` : ''}
+      <div class="small muted nfrom">${doThis(top) ? `For: ${esc(top.title)} · ` : ''}${evidence(top)}${(top.support || []).length ? ' · the swing video agrees' : ''}</div>
+      ${items.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan range session →</button></div>` : ''}
+    </div>`;
+  const rows = items.slice(1, 3).map((it, i) => `<button class="wrow k-${it.kind}" data-go="range"><span class="wn">${i + 2}</span><span><span class="wt">${esc(it.title)}</span>
+      <span class="small muted">${evidence(it)}</span>${doThis(it) || how(it) ? `<span class="small wa">→ ${doThis(it) || how(it)}</span>` : ''}</span><span class="chev">›</span></button>`).join('');
+  return `<h2>Next practice</h2>${hero}` + (rows ? `<h3>Also costing you</h3><div class="work">${rows}</div>` : '') +
+    `<div class="row-actions"><button class="quiet" data-go="range">Full list and evidence →</button></div>` + basisLine().replace('class="basis"', 'class="basis slim"');
 }
 
 /* ---------- gapping ---------- */
@@ -863,20 +901,22 @@ function gapHealth(stats) {
   return { pairs, median: med };
 }
 function overviewGapping(stats) {
-  if (!stats.length) return `<h2>Gapping</h2><div class="empty"><p>No full-swing shots yet. Gapping appears once a range block has shot-level carry and total.</p><button class="primary" data-go="range">Go to range</button></div>`;
+  if (!stats.length) return `<h2>Gapping</h2>` + rangeFilter() + `<div class="empty"><p>No full-swing shots yet. Gapping appears once a range block has shot-level carry and total.</p><button class="primary" data-go="range">Go to range</button></div>`;
   const ladder = stats.slice().sort((a, b) => b.s.stockCarry - a.s.stockCarry);
   const maxM = Math.max(200, ...ladder.map(x => Math.max(x.s.pureCarry || 0, x.s.stockCarry, x.c.nominalCarry || 0)));
   const w = m => (100 * m / maxM).toFixed(1) + '%';
-  let h = `<h2>Gapping</h2><div class="ladder">` + ladder.map(({ c, s }) => `<div class="rung">
+  let h = `<h2>Gapping</h2>` + rangeFilter() + `<div class="ladder">` + ladder.map(({ c, s }) => `<div class="rung">
       <div class="club">${esc(c.code)}</div>
       <div class="bar">${s.pureCarry ? `<div class="pure" style="left:${w(s.stockCarry)};width:${w(Math.max(0, s.pureCarry - s.stockCarry))}"></div>` : ''}<div class="stock" style="width:${w(s.stockCarry)}"></div>${c.nominalCarry ? `<div class="assumed" style="left:${w(c.nominalCarry)}" title="assumed carry ${c.nominalCarry}m"></div>` : ''}</div>
       <div class="val"><b>${fmt(s.stockCarry)}</b><small>${s.pureCarry ? 'pure ' + fmt(s.pureCarry) : 'carry'}</small></div>
       <div class="conf small ${(s.weighted ? s.nEff : s.n) < 5 ? 'early' : ''}">${s.n} shots${s.weighted ? ` · counts like ${s.nEff} recent` : ''} · ${confidence(s.weighted ? s.nEff : s.n)}</div></div>`).join('') + `</div>
     <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span></div>`;
   const g = gapHealth(stats);
-  if (g.pairs.length) h += `<h3>Distance gaps</h3><div class="gaps" id="gapList">` + g.pairs.map(p => `<div class="gap ${p.flag ? 'flag' : ''}"><span>${esc(p.a.c.code)} → ${esc(p.b.c.code)}</span><b>${fmt(p.gap)}m</b><small>${p.flag ? '⚠ ' + esc(p.flag) : ''}${p.early ? `${p.flag ? ' · ' : ''}early signal` : ''}</small></div>`).join('') + `</div>
-    <p class="small muted">Stock carry between clubs next to each other in the bag${g.median ? `; your typical gap is ${fmt(g.median)}m` : ''}. Flags compare with your own gaps — worth a look, not a verdict.</p>`;
-  h += `<details class="sec" id="strikeProfile"><summary><b>Strike profile</b> <span class="small muted">— pure, low runners, short and topped, per club</span></summary>` +
+  const flagged = g.pairs.filter(p => p.flag).length;
+  if (g.pairs.length) h += fold('gapPanel', 'Distance gaps', flagged ? `<span class="warn">⚠ ${plural(flagged, 'gap')} worth a look</span>` : g.median ? `typical gap ${fmt(g.median)}m` : '',
+    `<div class="gaps" id="gapList">` + g.pairs.map(p => `<div class="gap ${p.flag ? 'flag' : ''}"><span>${esc(p.a.c.code)} → ${esc(p.b.c.code)}</span><b>${fmt(p.gap)}m</b><small>${p.flag ? '⚠ ' + esc(p.flag) : ''}${p.early ? `${p.flag ? ' · ' : ''}early signal` : ''}</small></div>`).join('') + `</div>
+    <p class="small muted">Stock carry between clubs next to each other in the bag${g.median ? `; your typical gap is ${fmt(g.median)}m` : ''}. Flags compare with your own gaps — worth a look, not a verdict.</p>`);
+  h += `<details class="sec fold" id="strikeProfile"><summary><span><b>Strike profile</b> <span class="small muted">pure, low runners, short and topped</span></span></summary>` +
     ladder.map(({ c, s }) => `<div class="prow"><b>${esc(c.code)}</b>${profileBar(s)}<small>${pct(s.pure, s.n)}% pure</small></div>`).join('') +
     `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>low runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>topped</span></div></details>`;
   return h;
@@ -890,14 +930,14 @@ function overviewScoring(rounds) {
   const tp = st.map(x => x.toPar), tmx = Math.max(...tp), tmn = Math.min(...tp);
   let h = `<h2>Scoring trend</h2><div class="trend">` + rs.map((r, i) => { const x = st[i]; const hgt = 30 + 50 * (tmx === tmn ? 0.5 : (tp[i] - tmn) / (tmx - tmn));
     return `<button style="height:${hgt}%" data-go="rounds:sessionId:${r.id}" title="${esc(r.courseName)}, ${dateLabel(r.date)} — ${x.gross} off par ${x.par}${x.holes !== 18 ? `, ${x.holes} holes` : ''}"><span>${signed(x.toPar)}${x.holes !== 18 ? `<sup>${x.holes}h</sup>` : ''}</span></button>`; }).join('') + `</div>
-    <p class="small muted" style="margin-top:6px">Strokes over par, oldest to newest${st.some(x => x.holes !== 18) ? '; a small number marks a round of fewer than 18 holes' : ''}. Tap a bar.</p>`;
+    <p class="small muted" style="margin-top:6px">Over par, oldest to newest${st.some(x => x.holes !== 18) ? '; a small number is a short round' : ''}. Tap a bar.</p>`;
   const holes = sum(st.map(x => x.holes)), over = sum(st.map(x => x.toPar)), blow = sum(st.map(x => x.blowups.length));
   const best = n => { const xs = st.filter(x => x.holes === n); return xs.length ? Math.min(...xs.map(x => x.toPar)) : null; };
   const tiles = [tile(signed(over / holes, 1), 'over par a hole', `≈ ${signed(over / holes * 18)} per 18 · ${plural(rs.length, 'round')}`)];
   if (best(18) != null) tiles.push(tile(signed(best(18)), 'best 18'));
   if (best(9) != null) tiles.push(tile(signed(best(9)), 'best 9'));
   tiles.push(tile(blow, 'blow-ups', `triple bogey or worse · ${blow} of ${holes} holes`));
-  return h + tileGrid('scoreTiles', tiles);
+  return h + fold('scoreMore', 'Best rounds and blow-ups', `${plural(blow, 'blow-up')} in ${plural(rs.length, 'round')}`, tileGrid('scoreTiles', tiles));
 }
 
 /* ---------- where the game is being tested ---------- */
@@ -956,7 +996,7 @@ function overviewEvidence() {
 
 /* ---------- recent ---------- */
 function overviewRecent() {
-  const xs = S.sessions.slice(0, 4); if (!xs.length) return '';
+  const xs = S.sessions.slice(0, 3); if (!xs.length) return '';
   return `<h2>Recent</h2><div class="list" id="recentList">` + xs.map(s => {
     if (s.type === 'round') { const st = roundStats(s); return `<button class="item recent" data-go="rounds:sessionId:${s.id}">${dateLabel(s.date)} · ${esc(s.courseName)} · <b>${st.gross}</b> <span class="muted">(${signed(st.toPar)}${st.holes !== 18 ? `, ${st.holes} holes` : ''})</span></button>`; }
     const shots = (s.blocks || []).reduce((n, b) => n + (b.shots || []).length, 0);
@@ -1105,12 +1145,14 @@ function vCourse() {
     if (gaps.length) h += `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing from this scorecard. <button class="quiet" data-act="editCourse" data-id="${c.id}">Add ${gaps.length > 1 ? 'them' : 'it'}</button></div>`;
     h += stencilGrid(fullCard(c.holes).map(x => { const y = withHm(c, x); return { ...y, _dots: y.par != null ? dotsFor(c.id, y) : [] }; }), { act: 'viewHole', id: c.id }) + `<p class="small muted">Dots show where your shots finished across every round here. Tap a hole for its history and layout.</p>`;
   }
+  if (rounds.length) h += `<h2>Rounds here</h2><div class="list">${rounds.map(sessionItem).join('')}</div>`;
   h += courseMapSection(c);
-  h += `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${c.bookingUrl ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
+  // Booking, fees, ratings and notes: one tap away, not between him and the holes.
+  const info = [c.bookable ? 'public booking' : c.bookable === false ? 'members or guests' : '', c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : '', Object.keys(c.ratings || {}).length ? 'rated' : ''].filter(Boolean).join(' · ');
+  h += fold('courseInfo', 'Course information', esc(info), `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${c.bookingUrl ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
     ${c.feeWeekday || c.feeWeekend ? `<dt>Green fee</dt><dd>${c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : ''}${c.feeWeekday && c.feeWeekend ? ', ' : ''}${c.feeWeekend ? '$' + c.feeWeekend + ' weekend' : ''}</dd>` : ''}
     ${Object.keys(c.ratings || {}).length ? `<dt>Ratings</dt><dd id="courseRatings">${Object.entries(c.ratings).map(([t, r]) => `${esc(t)}: ${fmt(r.cr, 1)} / slope ${r.slope}`).join(' · ')}</dd>` : ''}
-    ${c.walkable != null ? `<dt>Walking</dt><dd>${c.walkable ? 'Walkable' : 'Cart advised'}</dd>` : ''}${c.transport ? `<dt>Getting there</dt><dd>${esc(c.transport)}</dd>` : ''}${c.notes ? `<dt>Notes</dt><dd>${esc(c.notes)}</dd>` : ''}</dl>`;
-  if (rounds.length) h += `<h2>Rounds here</h2><div class="list">${rounds.map(sessionItem).join('')}</div>`;
+    ${c.walkable != null ? `<dt>Walking</dt><dd>${c.walkable ? 'Walkable' : 'Cart advised'}</dd>` : ''}${c.transport ? `<dt>Getting there</dt><dd>${esc(c.transport)}</dd>` : ''}${c.notes ? `<dt>Notes</dt><dd>${esc(c.notes)}</dd>` : ''}</dl>`);
   h += `<div class="row-actions"><button class="danger" data-act="deleteCourse" data-id="${c.id}">Delete course</button></div>`;
   return h;
 }

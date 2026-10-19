@@ -45,32 +45,50 @@ after(() => app && app.stop());
 
 const tiles = sel => app.$$(`${sel} .ftile`).map(t => [t.querySelector('b').textContent, t.querySelector('small').textContent, (t.querySelector('em') || {}).textContent || '']);
 
-test('the page is called Overview, with sections in the agreed order', () => {
+test('the page is called Overview: the answer first, the detail folded behind one tap each', () => {
   assert.equal(app.text('#view h1'), 'Overview');
-  assert.ok(app.$('#view [data-act="setWindow"]'), 'the window filter is still there');
-  assert.deepEqual(app.$$('#view h2').map(x => x.textContent), ['Current form', 'What to work on', 'Gapping', 'Scoring trend',
-    'Where your game is being tested', 'Approach distances', 'Putting', 'Evidence', 'Recent']);
+  assert.deepEqual(app.$$('#view h2').map(x => x.textContent), ['Current form', 'Next practice', 'Gapping', 'Scoring trend', 'The detail', 'Recent']);
+  // 2.5.0: the specialised analysis is still all here, folded, each row showing its one number.
+  const folds = app.$$('#view .folds > details');
+  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovEvidence']);
+  assert.ok(folds.every(d => !d.open), 'closed until tapped');
+  assert.deepEqual(folds.map(d => d.querySelector('summary').textContent.trim()), [
+    'Where your game is being tested Approach: 67% missed the green',
+    'Approach distances most often 140–159m',
+    'Putting 2.06 a hole · 2 three-putts',
+    'Evidence 18 holes of shot data, 33 range shots, 2 scorecard-only rounds (not used)',
+  ]);
+  assert.ok(app.$('#view .ladder [data-act="setWindow"], #view h2 + details [data-act="setWindow"]'), 'the range filter sits with the numbers it filters');
+  assert.ok(app.$$('#view details.fold').every(d => d.id), 'every fold keeps its state across redraws');
 });
 
-test('current form: last score (with penalties), to par, over par a hole, putts, fairways, greens', () => {
+test('current form: three tiles up front (last score with to par, over par a hole, handicap); putts, fairways and greens one tap down', () => {
   assert.deepEqual(tiles('#formTiles'), [
-    ['86', 'last score', `Charlie GC, ${app.E(`dateLabel(${JSON.stringify(daysAgo(2))})`)} · 1 penalty`],
-    ['+14', 'to par', ''],
+    ['86+14', 'last score', `Charlie GC, ${app.E(`dateLabel(${JSON.stringify(daysAgo(2))})`)} · 1 penalty`],
     ['+1.4', 'over par a hole', 'last 3 rounds'],        // (42 + 9 + 14) / 45 holes
+    ['—', 'handicap', 'needs 3 scores, you have 0'],     // no course here has a rating
+  ]);
+  assert.equal(app.$('#formMore').open, false);
+  assert.deepEqual(tiles('#formMoreTiles'), [
     ['2.06', 'putts a hole', '18 holes'],                 // 37 / 18
     ['50%', 'fairways', '9 of 18'],
     ['33%', 'greens in reg', '6 of 18'],
   ]);
+  assert.ok(app.$('#formMore #hcpLeft'), 'why rounds don\'t count is still shown, behind the tap');
 });
 
-test('what to work on: the top three priorities as cards with evidence and an action, and the planner', () => {
-  const cards = app.$$('#view .wcard');
-  assert.equal(cards.length, 3);
-  const top = app.J('rankedPractice().now.slice(0, 3).map(x => x.title)');
-  assert.deepEqual(cards.map(c => c.querySelector('.wt').textContent), top, 'the existing ranking, not a new one');
-  assert.ok(cards.every(c => /n=\d+|early signal|emerging|consistent|No range data/.test(c.textContent)), 'each says what it stands on');
-  assert.ok(cards.some(c => c.querySelector('.wa')), 'actions where the item has one');
-  assert.ok(app.$('#view [data-act="planSession"]'));
+test('next practice: the top priority as one action with its evidence; the next two as short rows; the planner', () => {
+  const top = app.J('rankedPractice().now.slice(0, 3).map(x => ({ title: x.title, b: x.block }))');
+  const hero = app.$('#nextPractice');
+  // The action leads (club and target), the finding it answers and its evidence follow.
+  assert.equal(hero.querySelector('.nt').textContent, `${top[0].b.club} at ${top[0].b.target}m`);
+  assert.match(hero.textContent, new RegExp(`For: ${top[0].title.replace(/[()]/g, '.')} · .*n=\\d+`));
+  assert.ok(hero.querySelector('[data-act="planSession"]'), 'the plan is the call to action');
+  const rows = app.$$('#view .wrow');
+  assert.deepEqual(rows.map(r => r.querySelector('.wt').textContent), top.slice(1).map(x => x.title), 'the existing ranking, not a new one');
+  assert.ok(rows.every(r => /n=\d+|early signal|emerging|consistent/.test(r.textContent)), 'each says what it stands on');
+  assert.ok(rows.every(r => r.dataset.go === 'range'), 'the reasoning is a tap away, on the Range tab');
+  assert.ok(app.$('#view .basis'), 'the line saying it is worked out fresh is still there');
 });
 
 test('gapping keeps the ladder and says how much each club rests on', () => {
@@ -136,8 +154,8 @@ test('evidence: what everything above stands on', () => {
 
 test('recent: a few one-line items that open the session', () => {
   const items = app.$$('#recentList .recent');
-  assert.equal(items.length, 4);
-  assert.deepEqual(items.map(i => i.dataset.go), ['rounds:sessionId:r_c', 'rounds:sessionId:r_b', 'range:sessionId:s1', 'rounds:sessionId:r_a']);
+  assert.equal(items.length, 3);
+  assert.deepEqual(items.map(i => i.dataset.go), ['rounds:sessionId:r_c', 'rounds:sessionId:r_b', 'range:sessionId:s1']);
   assert.match(items[1].textContent, /Bravo GC · 45 \(\+9, 9 holes\)/);
   assert.match(items[2].textContent, /Range · Barton Park · 33 shots/);
   assert.equal(app.$$('#view .scorestrip').length, 0, 'no score strips on the Overview');
@@ -150,11 +168,13 @@ test('nothing is shown that the data does not support', async () => {
   try {
     lean.go('overview');
     const t = lean.$$('#formTiles .ftile small').map(x => x.textContent);
-    assert.deepEqual(t, ['last score', 'to par'], 'one scorecard round: no average, putts, penalties, fairways or greens');
-    assert.match(lean.text('#formTiles'), /9 holes/);
+    assert.deepEqual(t, ['last score', 'handicap'], 'one scorecard round: no average');
+    assert.match(lean.text('#formTiles'), /54\+18.*9 holes/);
+    assert.equal(lean.$('#formMoreTiles'), null, 'no putts, fairways or greens without them');
+    for (const id of ['ovBreakdown', 'ovApproaches', 'ovPutting']) assert.equal(lean.$('#' + id), null, `no ${id} without shot data`);
     const heads = lean.$$('#view h2').map(x => x.textContent);
-    for (const h of ['Where your game is being tested', 'Approach distances', 'Putting']) assert.ok(!heads.includes(h), `no ${h} without shot data`);
     assert.ok(heads.includes('Gapping') && lean.$('#view .empty'), 'gapping explains how to get it');
+    assert.ok(lean.$('#view [data-act="setWindow"]'), 'the range filter is there even with no club numbers, so a filter that hid everything can be undone');
   } finally { lean.stop(); }
 });
 
@@ -165,4 +185,15 @@ test('an empty app points at where to start', async () => {
     assert.equal(empty.text('#view h1'), 'Overview');
     assert.match(empty.text('#view .empty'), /Nothing logged yet/);
   } finally { empty.stop(); }
+});
+
+test('a course page puts its holes and rounds first, with booking, fees and ratings folded into Course information', async () => {
+  app.go('courses', { courseId: 'c' });
+  await app.waitFor(() => !/Loading the map/.test(app.text('#view')), { what: 'map list loaded' });
+  await new Promise(r => setTimeout(r, 300));   // the course page fetches the map index; let it land before the app closes
+  const info = app.$('#courseInfo');
+  assert.ok(info && !info.open, 'folded');
+  assert.match(info.textContent, /Booking/);
+  const order = app.$$('#view h2, #view #courseInfo').map(x => x.id || x.textContent);
+  assert.ok(order.includes('Rounds here') && order.indexOf('Rounds here') < order.indexOf('courseInfo'), `rounds before the course details: ${order}`);
 });
