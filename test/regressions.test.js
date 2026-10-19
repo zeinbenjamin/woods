@@ -114,3 +114,17 @@ test('with a season of data, each club\'s numbers are worked out once per change
   await app.api.put('sessions', 'ss_new', { id: 'ss_new', v: 2, type: 'range', date: daysAgo(0), blocks: [{ id: 'bn', seq: 1, club: '7i', swing: 'full', shots: [{ carry: 120, total: 130 }] }] });
   await app.waitFor(() => app.E(`clubStats('7i').n`) === before + 1, { what: 'new shot counted' });
 });
+
+/* ---------- 10. the bottom of every page clears the tab bar ---------- */
+
+// 2.1.1: the page left 80px for a bar that is 56px plus the iPhone's
+// home-indicator strip (about 34px), so the last 11px of every page sat
+// under it ("End round here" cut off). Measured in Chromium with a 34px
+// strip: -11px before, 31px clear after. Both now use the same variable.
+test('the page reserves the tab bar and the home-indicator strip, from the same variable', () => {
+  const css = app.doc.querySelector('style').textContent;
+  assert.match(css, /--safe-b: env\(safe-area-inset-bottom, 0px\);/);
+  assert.match(css, /nav\.tabs \{[^}]*padding-bottom: var\(--safe-b\);/, 'the bar grows by the strip');
+  assert.match(css, /main \{[^}]*padding: 16px 16px calc\(var\(--nav-h\) \+ var\(--safe-b\) \+ 32px\);/, 'and the page clears both');
+  assert.doesNotMatch(css, /nav\.tabs \{[^}]*env\(safe-area-inset-bottom/, 'never a separate copy that can drift');
+});

@@ -342,6 +342,13 @@ Each of these cost real debugging time. Don't reintroduce them.
   its four unscored squares that padding, and the 9-column `1fr` strip ran
   415px past a phone, zooming the page out (1.13.1). The strips also use
   `minmax(0, 1fr)` so a cell can't widen a column.
+- **The bottom of the page clears the tab bar by `--safe-b`.** The bar is
+  `--nav-h` plus the home-indicator strip (`env(safe-area-inset-bottom)`,
+  ~34px on an iPhone); `main` reserved only `--nav-h + 24px`, so the last
+  11px of every page sat under the bar ("End round here" cut off, 2.1.1).
+  Both now use `--safe-b`, and `regressions.test.js` checks it. The
+  `:root` padding doesn't help: `html` is `height: 100%`, so content
+  overflows past it.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -653,7 +660,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 250 tests, about 35s.
+`npm test` — 251 tests, about 35s.
 
 - `api.test.js` (24) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -668,9 +675,10 @@ fixture would let the reading be pinned.
 - `versioning.test.js` (7) — the changelog format and its agreement with
   `package.json` and the lockfile, the PR gate, the release notes, and
   that publishing runs the tests first.
-- `regressions.test.js` (7) — the 1.3.1 review fixes, each reproduced
+- `regressions.test.js` (8) — the 1.3.1 review fixes, each reproduced
   before it was fixed: local dates, quick taps, render cost with a season
-  of data, panels staying open, an old token link leaving the URL, escaping.
+  of data, panels staying open, an old token link leaving the URL, escaping;
+  and 2.1.1's page clearing the tab bar.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
@@ -767,9 +775,11 @@ one NAS" (accounts, roles, invitations in the app) is not: who gets in is
 the Access policy.
 
 Play mode shipped in 2.1.0 (see *Play mode*). Next for it, once he's used
-it on a course: telling which hole he's on from where he stands, and a
-service worker so the app itself opens without signal (today only saves
-survive no signal; the page needs the network to load).
+it on a course: a service worker so the app itself opens without signal
+(today only saves survive no signal; the page needs the network to load).
+**Not wanted: working out the hole from GPS** (he decided 2026-10-19). On
+public courses the next tee is often beside the last green, so a fix there
+puts him on the wrong hole; he moves holes himself (‹ ›, *Hole n →*).
 
 ## Working agreements from the chat
 
