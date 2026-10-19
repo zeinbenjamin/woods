@@ -178,10 +178,17 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 
 // map frame — tapped on a course map, metres on the map's plane
 { "mx": -24.1, "my": -140.3, "club": "7i", "lie": "bunker" }
+
+// map frame, marked by GPS in Play mode (2.1.0): gps is the fix's accuracy, ± metres
+{ "mx": 12.4, "my": 88.0, "club": "5W", "lie": "fairway", "gps": 6 }
 ```
 
 - On a map, `lie` is set from the shape under the tap, and left out where nothing
   is mapped (he picks it). A map shot on a course without its map is not measurable.
+- `gps` (2.1.0) is present only on a shot marked with "Mark my ball here": the
+  phone's stated accuracy when it was marked. A tapped shot, or one moved by a
+  tap, has none. Nothing else about Play mode is stored: a round played live is
+  an ordinary round.
 
 - `t` runs 0 at the tee to 1 at the green; `u` is lateral, -1..1 across the rough.
 - `verified: true` means a flagged long shot was confirmed real, not a mis-tap.

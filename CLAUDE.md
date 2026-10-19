@@ -592,6 +592,47 @@ scorecard sets every length.
   a boundary; Hunter Valley's only nearby course is unnamed and partial, so
   it keeps its artwork (holes 1–9), and converting its old rounds waits for a map.
 
+## Play mode (2.1.0)
+
+Asked for 2026-10-19 ("built with GPS from the start"): logging during the
+round instead of afterwards from 18Birdies. Rounds → *Start round*
+(`startPlay`), or *Play: hole n* on today's round page. The view is
+`vPlay` under `rounds` with `sub.play`; the hole logger's tap, lie, club,
+putt and penalty handlers run unchanged, because the sub still has `hole`.
+
+- **Where he is:** `watchPosition` (high accuracy) runs only while the Play
+  view is open (`playLifecycle()` after every render) and stops when he
+  leaves; the screen is kept awake where the browser allows. A fix is
+  placed with `HoleMap.fromLatLng` (the build's own projection). Older than
+  30 s (`GPS_STALE`) it isn't used; more than 150 m outside the boundary
+  (`OFF_COURSE`) he's "x km from the course". A new fix redraws only
+  `#playLive` and the dot (`playLive()`), never the page, so a tap in
+  progress isn't lost.
+- **Distances:** front/middle/back from `HoleMap.greenDistances` (straight
+  line, labelled so). Hazards (`hazardsAhead`): the hole's own bunkers and
+  water whose middle isn't behind him, nearest edge = reach, farthest
+  point = carry, side of the straight line to the green; at most 5.
+- **Marking:** *Mark my ball here* adds a map shot at the fix through the
+  same `addMapShot` as a tap (club = the armed one, his usual, never
+  advice; lie from the map), with `gps` = accuracy. Over ±25 m
+  (`GPS_ROUGH`) it asks first.
+- **A hole is done** (`holeDone`) when it has a score and, if shots were
+  marked, its putts: with shots the stored score is a running count, so
+  one marked shot isn't a 1. The running total, *Hole n →* and
+  *Play: hole n* use it.
+- **No signal:** the shim's outbox. A save that can't reach the NAS
+  (TypeError, or Cloudflare's 502/504/52x) is kept in `localStorage`
+  (`carry.outbox`, latest copy per document), shown as saved, overlaid on
+  anything the server returns until sent, and sent on start, on every poll
+  and on the browser's `online` event. A newer save that gets through
+  drops a waiting older one; a set waits for a send in progress. The status
+  line says "n changes saved on this phone, waiting for signal". Limit: no
+  service worker, so a closed app can't reopen without signal.
+- **Not measured on a real course yet.** Distances are checked against
+  hand-worked geometry and the globe (haversine) in `ui-play`, but phone GPS
+  under trees and how a phone browser treats Cloudflare's offline errors
+  are the first round's test.
+
 ## Range data from screenshots
 
 Range shots come from screenshots of the bay's shot list, not typing:
@@ -612,7 +653,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 233 tests, about 30s.
+`npm test` — 250 tests, about 35s.
 
 - `api.test.js` (24) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -653,6 +694,13 @@ fixture would let the reading be pinned.
   WHS estimate against hand-worked scores: caps, the table, exceptional
   scores, pairing nines, soft and hard caps, 54.0, the ratings form),
   `ui-courses-sort` (closest / recently added / A–Z, defaults, dates from ids),
+  `ui-play` (Play mode with a stand-in GPS: picking the course you're at,
+  distances against the globe and a hand-worked straight hole, hazards
+  ahead and on this hole only, marking by GPS, rough and stale fixes, off
+  the course, location blocked, GPS off on leaving, a hole done only with
+  its putts, a course with no map, and the outbox: no signal, Cloudflare's
+  502, a poll not undoing a waiting save, newer beating older, sending on
+  start),
   `ui-holemap` (linking a map, the card check, taps in metres and lies
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking).
@@ -679,7 +727,8 @@ bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
 9 for course maps, 4 for the 1.9.0 tee-box check, 2 for the legend, 5 for the
-stroke index column, 28 for 2.0.0's sign-in and whose-data rules; all caught.
+stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
+mode and the outbox; all caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
@@ -717,14 +766,10 @@ in scope since 2.0.0 (he asked, 2026-10-19); anything beyond "friends on
 one NAS" (accounts, roles, invitations in the app) is not: who gets in is
 the Access policy.
 
-**Next: Play mode** (asked for 2026-10-19; he wants it built with GPS from
-the start, not before). A *Start round* mode used during the round, instead
-of logging afterwards from 18Birdies: one hole at a time, his GPS position
-on the hole map, distances to the front, middle and back of the green and
-to hazards, tap or "mark my ball here" for each shot, putts and score,
-running total, and saves kept on the phone until there's signal. Waiting
-on (1) the tunnel being live, (2) `holemap.js` converting lat/long to map
-metres with the build's own projection (hole-maps chat; asked via Zein).
+Play mode shipped in 2.1.0 (see *Play mode*). Next for it, once he's used
+it on a course: telling which hole he's on from where he stands, and a
+service worker so the app itself opens without signal (today only saves
+survive no signal; the page needs the network to load).
 
 ## Working agreements from the chat
 

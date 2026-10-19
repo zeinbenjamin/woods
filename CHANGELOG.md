@@ -6,6 +6,14 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.1.0 — 2026-10-19
+- Play mode: Rounds → Start round when you're at the course. It picks the course you're standing at, and you choose your tees and whether you start at hole 1 or 10.
+- Each hole shows where you are on the course map, the distance to the front, middle and back of the green, and how far to reach and to carry the hole's bunkers and water ahead of you.
+- Stand at your ball and tap "Mark my ball here" (or tap the map) to log each shot, then add putts and penalties. The running score updates as you go, and "Hole 8 →" takes you on once a hole is finished.
+- If GPS is rough (worse than ±25 m) it asks before marking, and away from the course it says how far away you are instead of guessing.
+- No signal on the course? Saves stay on your phone and are sent when signal comes back; the top of the screen says how many are waiting.
+- Today's round has a "Play" button to pick up where you left off. Courses without a map can still be scored hole by hole.
+
 ## 2.0.0 — 2026-10-19
 - You sign in with Cloudflare Access (the email one-time PIN) instead of pasting an access token. The token is gone.
 - Carry only opens at its Cloudflare address now, at home too: the NAS's own address shows a note saying where to open it instead.
