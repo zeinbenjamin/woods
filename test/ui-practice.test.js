@@ -195,7 +195,7 @@ test('the planned session draws on everything current — course, range and swin
 });
 
 test('the planned blocks say why they are there', () => {
-  assert.match(app.text('#view'), /Planned from what's current in your rounds, range sessions and swings/);
+  assert.match(app.text('#sessionGoals'), /^0 of 5 planned blocks hit\. Working on: .*7i strike/);
   assert.match(app.text('#view'), /Why: 7i strike/);
 });
 

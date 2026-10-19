@@ -6,6 +6,14 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.6.0 — 2026-10-20
+- Each thing on your practice list now has its own page: what it is now, the drill, the range sessions that worked on it, and the holes where it showed up. Tap it from the Overview, the Range tab or a round.
+- "Practise this" adds that one drill to your planned range session, or plans a new one, so you don't have to set it up again.
+- A round now shows what it revealed: each finding with how many times, the club, the holes, and a button to practise it.
+- Screenshots for a planned club fill that planned block, so the session shows "2 of 3 planned blocks hit" and then "Plan done".
+- After your next round, the finding shows before and since: for example "Since the range on 9 Oct: 4 of 9 came up short (44%), against 9 of 9 (100%) before". It tells you what happened, not that the practice did it.
+- A range block compares itself with the last time you hit that club: median carry and how many were low runners or tops.
+
 ## 2.5.0 — 2026-10-20
 - The Overview is shorter and leads with the answer: how you're playing (last score, over par a hole, handicap) and your next practice — the club, the target and the drill, with the one button to plan the range session.
 - The next two things costing you are short rows with their evidence; tap one for the full reasoning on the Range tab.

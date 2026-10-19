@@ -248,6 +248,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
       "drill": "…", "intent": "…", "outcome": "…",
       "plan": true,                  // planned, not yet hit
       "reason": "7i strike: …",      // planned blocks: the practice item(s) behind it
+      "goals": ["strike:7i"],        // 2.6.0: those items' keys, so the block stays linked to the
+                                     // finding after its title's numbers change. Kept when the
+                                     // block is hit (screenshots fill the planned block)
       "summary": { "n": 20, "avgCarry": 46, "avgTotal": 51,
                    "fromPinCarry": 11.5, "fromPinTotal": 9.6, "hitsC": 4 },
       "shots": [ { "carry": 147.5, "total": 178.2, "speed": 82.2,
