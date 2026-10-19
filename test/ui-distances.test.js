@@ -56,7 +56,7 @@ test('the Overview says what each number rests on, and the panel says how shots 
   app.go('overview');
   const rung = app.$$('#view .rung').find(r => /^7i/.test(r.textContent.trim()));
   assert.equal(rung.querySelector('.val b').textContent, '130');
-  assert.equal(rung.querySelector('.conf').textContent, '5 shots · counts like 4 recent · early signal');
+  assert.equal(rung.querySelector('.conf').textContent, '5 shots · counts like 4 recent · early signal · middle half 100–130m');   // 100, 100, 100, 130, 130: 25th and 75th percentiles
   assert.match(app.text('#rangeFilter summary'), /^Range numbers: All time · recent shots count more · all balls$/);
 });
 
@@ -65,7 +65,7 @@ test('"every shot the same" gives the plain median over the whole window', async
   await app.waitFor(() => app.E(`clubStats('7i').stockCarry`) === 100, { what: 'recomputed' });
   assert.equal(stats().weighted, false);
   app.go('overview');
-  assert.equal(app.$$('#view .rung').find(r => /^7i/.test(r.textContent.trim())).querySelector('.conf').textContent, '5 shots · emerging');
+  assert.equal(app.$$('#view .rung').find(r => /^7i/.test(r.textContent.trim())).querySelector('.conf').textContent, '5 shots · emerging · middle half 100–130m');
   await setting('setWeighting', 'recent');
 });
 

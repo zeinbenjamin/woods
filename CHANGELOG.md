@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.7.0 — 2026-10-20
+- Gapping shows where each club's shots actually land: the middle half of them, and 8 in 10, drawn on the bar ("middle half 110–130m").
+- A round's page shows a proper scorecard: par, score (coloured against par), putts and penalties, with the totals for each nine. Tap a hole to open it.
+- Each practice finding has a round-by-round chart: how often it happened in each round, with a line where you practised it at the range.
+- On a course's hole page, tap a dot to see that shot: the date, club, how far it went and where it finished, with a link to that round's hole.
+- Fixed: numbers for rounds traced on a course map could leave those shots out (from the practice list, where your game is being tested and approach distances) if the map was still loading when the numbers were first worked out.
+
 ## 2.6.0 — 2026-10-20
 - Each thing on your practice list now has its own page: what it is now, the drill, the range sessions that worked on it, and the holes where it showed up. Tap it from the Overview, the Range tab or a round.
 - "Practise this" adds that one drill to your planned range session, or plans a new one, so you don't have to set it up again.
