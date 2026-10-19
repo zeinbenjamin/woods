@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 1.14.0 — 2026-10-19
+- Long Reef now has a course map: all 18 holes from OpenStreetMap, checked against your white tees.
+- Holes 4, 11 and 16 are flagged: your white tee lands more than 15 m from any mapped tee box, so it's placed from the card distance alone.
+
 ## 1.13.1 — 2026-10-19
 - A round you didn't finish (out of daylight, or cut short) no longer makes the round page zoom out on a phone: the holes you didn't play show as small dashed squares in the grid, and "Tap a hole…" sits below them again.
 - The Rounds list says when a round is short, e.g. "14 of 18 holes", so its score isn't read as a full round.

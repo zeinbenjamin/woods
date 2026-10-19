@@ -27,7 +27,7 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'massey-park', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'bondi', 'long-reef', 'massey-park', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
@@ -113,6 +113,17 @@ test('Massey Park: every red tee on a mapped box, hole 9 with no red length', ()
   const x = m.holes.map(h => HM.mismatch(h, c[h.n].metres, m));
   assert.deepEqual(x.map((y, i) => y.flagged ? i + 1 : 0).filter(Boolean), []);
   assert.ok(x[6].onTee && x[6].teeGap > 14, 'hole 7 lands right at the 15 m limit');
+});
+
+test('Long Reef: OSM lines from the back tees; three whites off every mapped box', () => {
+  const m = mapOf('long-reef'), c = card('long-reef');
+  assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1));
+  const x = m.holes.map(h => HM.mismatch(h, c[h.n].metres, m));
+  assert.deepEqual(x.map((y, i) => y.flagged ? i + 1 : 0).filter(Boolean), [4, 11, 16]);
+  // 17 runs 61 m past the white card and still lands on a mapped box.
+  assert.ok(x[16].diff > 60 && x[16].onTee);
+  // 15 is the one hole whose card is longer than its line: the tee goes back, onto a box.
+  assert.ok(x[14].diff < -20 && x[14].onTee);
 });
 
 test('the tee rule: the card distance from the middle of the green, along the line', () => {
