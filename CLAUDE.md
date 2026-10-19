@@ -354,10 +354,21 @@ Each of these cost real debugging time. Don't reintroduce them.
 
 ## The Overview
 
-The home screen (`vOverview`), in the order he asked for: Current form →
-What to work on → Gapping (with gap health, strike profile folded) →
-Scoring trend → Where your game is being tested → Approach distances →
-Putting → Evidence → Recent. Each section is built from the existing
+The home screen (`vOverview`). 2.5.0 reorganised it from a review he
+brought (a UI/UX write-up, Release 1 "Reduce the noise": the answer first,
+detail one tap down), from 4.6 phone screens to 2.7 with the same numbers:
+Current form (three tiles: last score with to par, over par a hole,
+handicap; putts/fairways/greens and the handicap's workings in a fold) →
+Next practice (the top ranked item as one action: club and target, the
+drill, the finding it answers and its evidence, *Plan range session*; the
+next two as rows that open the Range list) → Gapping (the range filter
+sits here, with the numbers it filters; distance gaps and strike profile
+folded) → Scoring trend (bars; best rounds and blow-ups folded) → The
+detail (breakdown, approach distances, putting, evidence: each a fold
+showing its one number) → Recent (three). Folds are `fold(id, …)`, always
+with an id so they stay open across redraws. A course page lists its
+holes and rounds first and folds booking/fees/ratings/notes into *Course
+information*. Each section is built from the existing
 derived numbers (`roundStats`, `rankedPractice`, `clubStats`,
 `shotRecords`, `courseDemand`, `puttingStats`, `confidence`) and only
 appears when there's data for it. Rules that keep it honest:
@@ -430,7 +441,7 @@ happened, not what to plan on. `weightedMean` scales weights against the
 largest one so equal weights give exactly the plain mean — without that,
 same-day shots came out as 125.25000000000001.
 
-The filters live in the "Range numbers" panel at the top of the Overview.
+The filters live in the "Range numbers" panel in the Overview's Gapping section (2.5.0; it was at the top).
 
 ## Penalty report
 
@@ -699,7 +710,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 267 tests, about 40s.
+`npm test` — 268 tests, about 40s.
 
 - `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -732,8 +743,9 @@ fixture would let the reading be pinned.
   `ui-swing` (frame extraction, analysis, video below ball data),
   `ui-practice` (recency weighting, freshness, quiet items, the planner),
   `ui-logging` (armed club, putts, penalties, quick score, first putt),
-  `ui-overview` (section order and every number against a hand-worked
-  scenario, nothing shown without data),
+  `ui-overview` (the hierarchy, what is folded and the number each fold
+  shows, and every number against a hand-worked scenario, nothing shown
+  without data, the course page's folded information),
   `ui-range-images` (screenshots → review → blocks, units, warnings,
   export/import/delete of the screenshots), `ui-version` (the stamped
   label, the version sheet, behind-the-server detection),
@@ -781,7 +793,9 @@ bug and watching the test fail (22 mutations for the original suites,
 9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
-`tee` field from the app survives it because the server corrects it); all
+`tee` field from the app survives it because the server corrects it), 9 for 2.5.0's
+Overview (one survived at first: a missing heading passed a "comes before"
+check; the test now requires it); all
 caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 

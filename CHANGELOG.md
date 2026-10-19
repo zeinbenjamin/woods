@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.5.0 — 2026-10-20
+- The Overview is shorter and leads with the answer: how you're playing (last score, over par a hole, handicap) and your next practice — the club, the target and the drill, with the one button to plan the range session.
+- The next two things costing you are short rows with their evidence; tap one for the full reasoning on the Range tab.
+- Everything else is still there, one tap down: putts, fairways and greens, how the handicap is worked out, distance gaps, strike profile, best rounds, where your game is being tested, approach distances, putting and evidence. Each folded row shows its key number.
+- The range filter now sits with the gapping numbers it changes.
+- A course page shows its holes and your rounds there first; booking, fees, ratings and notes are folded into "Course information".
+
 ## 2.4.0 — 2026-10-20
 - Barnwell Park, Beverley Park and Lane Cove have course maps now. OpenStreetMap only has their boundaries, so their holes come from you: on each hole in Play, Mark tee on the tee and Mark flag at the hole, and from then on the course draws that hole for you and anyone who plays there.
 - A hole drawn from your marks runs from your tee mark to the average of your flag marks, with the green estimated (dashed) where the flags are. Distances to the green are to the middle only, and you pick the lie, as on any green that isn't mapped. The legend says what came from your marks.
