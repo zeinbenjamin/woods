@@ -44,13 +44,10 @@ const { dist, lineLen, pointAt, inRings, centroid, lineDist, segDist } = HM.geom
 const r1 = x => Math.round(x * 10) / 10;
 const idOf = f => f.properties && (f.properties['@id'] || f.id);
 
-/* ---------- projection: a local plane in metres ---------- */
-function projector([lat0, lng0]) {
-  const φ = lat0 * Math.PI / 180;
-  const my = 111132.954 - 559.822 * Math.cos(2 * φ) + 1.175 * Math.cos(4 * φ);
-  const mx = 111412.84 * Math.cos(φ) - 93.5 * Math.cos(3 * φ);
-  return ([lng, lat]) => [r1((lng - lng0) * mx), r1((lat - lat0) * my)];
-}
+/* ---------- projection: a local plane in metres ----------
+   The app's own (HoleMap.projection), so a phone's GPS fix lands on the
+   map exactly where the build put the shapes. Rounded to 0.1 m here. */
+const projector = origin => { const f = HM.projection(origin); return ll => f(ll).map(r1); };
 const polysOf = g => g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
 const linesOf = g => g.type === 'LineString' ? [g.coordinates] : g.type === 'MultiLineString' ? g.coordinates : [];
 
