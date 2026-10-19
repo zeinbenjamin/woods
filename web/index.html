@@ -224,6 +224,7 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .marks { border: 1px dashed var(--rule); border-radius: var(--r); padding: 8px 10px 10px; margin: 8px 0 12px; } .marks .markrow { margin: 8px 0; }
 .markrow { justify-content: center; margin: 12px 0 18px; } .markbtn { padding: 11px 22px; font-size: 15px; }
 #playLive > p { margin: 6px 0 4px; }
+.finding { border-top: 1px solid var(--rule); padding: 8px 0; } .progress { color: var(--ink-2); }
 .lastshot { border: 1px solid var(--rule); border-radius: var(--r); padding: 8px; margin: 4px 0 10px; }
 .greendist { display: flex; justify-content: center; gap: 4px; margin: 4px 0 0; } .greendist .stat { text-align: center; margin: 0 10px 4px; } .greendist .stat.mid b { font-size: 40px; }
 .hazards { max-width: 360px; margin: 0 auto 8px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: var(--r); } .hazards .spread { padding: 2px 0; }
@@ -875,10 +876,11 @@ function overviewWork() {
       <div class="nt">${doThis(top) || esc(top.title)}</div>
       ${how(top) ? `<div class="small">${how(top)}</div>` : ''}
       <div class="small muted nfrom">${doThis(top) ? `For: ${esc(top.title)} · ` : ''}${evidence(top)}${(top.support || []).length ? ' · the swing video agrees' : ''}</div>
-      ${items.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan range session →</button></div>` : ''}
+      ${goalProgress(top) ? `<div class="small progress">${esc(progressText(top))}</div>` : ''}
+      <div class="row-actions">${items.some(x => x.block) ? `<button class="primary" data-act="planSession">Plan range session →</button>` : ''}<button class="quiet" data-go="range:goal=${esc(top.key)}">${goalProgress(top) ? 'Review results' : 'Details'} →</button></div>
     </div>`;
-  const rows = items.slice(1, 3).map((it, i) => `<button class="wrow k-${it.kind}" data-go="range"><span class="wn">${i + 2}</span><span><span class="wt">${esc(it.title)}</span>
-      <span class="small muted">${evidence(it)}</span>${doThis(it) || how(it) ? `<span class="small wa">→ ${doThis(it) || how(it)}</span>` : ''}</span><span class="chev">›</span></button>`).join('');
+  const rows = items.slice(1, 3).map((it, i) => `<button class="wrow k-${it.kind}" data-go="range:goal=${esc(it.key)}"><span class="wn">${i + 2}</span><span><span class="wt">${esc(it.title)}</span>
+      <span class="small muted">${evidence(it)}</span>${doThis(it) || how(it) ? `<span class="small wa">→ ${doThis(it) || how(it)}</span>` : ''}${goalProgress(it) ? `<span class="small progress">${esc(progressText(it))}</span>` : ''}</span><span class="chev">›</span></button>`).join('');
   return `<h2>Next practice</h2>${hero}` + (rows ? `<h3>Also costing you</h3><div class="work">${rows}</div>` : '') +
     `<div class="row-actions"><button class="quiet" data-go="range">Full list and evidence →</button></div>` + basisLine().replace('class="basis"', 'class="basis slim"');
 }
@@ -1006,6 +1008,7 @@ function overviewRecent() {
 
 /* ---------- range ---------- */
 function vRange() {
+  if (S.sub && S.sub.goal) return vGoal();
   if (S.sub && S.sub.blockId) return vBlock();
   if (S.sub && S.sub.sessionId) return vRangeSession();
   const list = S.sessions.filter(s => s.type === 'range');
@@ -1018,7 +1021,7 @@ function vRangeSession() {
   let h = back('range', null, 'Range') + `<div class="spread"><h1>${dateLabel(s.date)}</h1><button data-act="editRange" data-id="${s.id}">Edit</button></div>
   <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(s.ballType) + ' balls' : ''}${s.source ? ', ' + esc(s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
   ${s.excluded ? `<div class="notice warn" id="leftOut">Left out of your numbers: this session's shots don't count towards stock carry, gapping, calibration or the practice list. <button class="quiet" data-act="toggleExclude" data-id="${s.id}">Count it again</button></div>` : ''}
-  ${s.planned && blocks.some(b => b.plan) ? `<div class="notice">Planned from what's current in your rounds, range sessions and swings. After you hit each block, add its screenshots (or open it and paste the shots); the list picks them up from there.</div>` : ''}
+  ${sessionGoals(s, blocks)}
   <div class="spread"><h2>Blocks</h2><div class="row-actions" style="margin:0"><button data-act="shotsFromImages" data-id="${s.id}">From screenshots</button><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div></div>`;
   if (!blocks.length) h += swingsOf(s).length
     ? `<p class="small muted">No blocks — a video-only session. That's fine: the swings below still count, and you can add blocks later if the numbers turn up.</p>`
@@ -1028,7 +1031,7 @@ function vRangeSession() {
     const all = shotsWithSession(b.club, s), profs = classify(all); const mine = all.map((x, i) => [x, profs[i]]).filter(([x]) => x.blockId === b.id);
     const mx = Math.max(...all.map(x => x.carry), 0);
     return `<button class="block-row" data-go="range:blockId:${b.id}"><div class="c">${esc(b.club)}<small>${b.target ? b.target + 'm' : ''}${b.swing && b.swing !== 'full' ? ' ' + esc(b.swing) : ''}</small></div>
-      <div>${mine.length ? dotStrip(mine.map(m => m[0]), mine.map(m => m[1]), b.target, mx) : b.plan ? `<span class="small muted">Planned: ${esc(b.intent || '')}${b.reason ? `<br>Why: ${esc(b.reason)}` : ''}</span>` : `<span class="small muted">${sm.n || 0} shots, summary only</span>`}</div>
+      <div>${mine.length ? dotStrip(mine.map(m => m[0]), mine.map(m => m[1]), b.target, mx) + ((b.goals || []).length ? `<span class="small muted">For: ${blockGoals(b).map(g => esc(goalName(g))).join(', ') || esc(b.reason || '')}</span>` : '') : b.plan ? `<span class="small muted">Planned: ${esc(b.intent || '')}${b.reason ? `<br>Why: ${esc(b.reason)}` : ''}</span>` : `<span class="small muted">${sm.n || 0} shots, summary only</span>`}</div>
       <div class="n">${judge ? fmt(judge) : ''}<small>${sm.n || 0} shots</small></div></button>`;
   }).join('') + `</div><div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += swingSection(s);
@@ -1045,7 +1048,11 @@ function vBlock() {
   if (shots.length && full) h += dotStrip(shots, shots.map((_, i) => profOf(i)), b.target, Math.max(...all.map(x => x.carry))) + `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>mph</small></span>` : ''}</div>`;
   if (b.fromImages) { const fi = b.fromImages; h += `<p class="small muted" style="margin-top:10px">Read from ${plural((fi.assets || []).length, 'screenshot')} on ${dateLabel(fi.readOn)}${fi.converted ? ', converted from yards' : ''}${fi.units === 'unknown' ? ', units not shown on the screen' : ''}, then checked before saving.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`; }
+  const cmp = compareBlock(b, s);
+  if (cmp) h += `<p class="small" id="blockCompare">${esc(compareText(b, cmp))}</p>`;
   if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
+  const gs = (b.goals || []).length ? blockGoals(b) : [];
+  if (gs.length) h += `<div id="blockGoals" class="small">For: ${gs.map(g => `<button class="quiet" style="padding:2px 6px" data-go="range:goal=${esc(g.key)}">${esc(goalName(g))} →</button>`).join('')}</div>`;
   if (shots.length) h += `<details id="shotTable"><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Speed</th><th></th></tr></thead><tbody>` +
     shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td><td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
   else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}.${b.reason ? ` Why: ${esc(b.reason)}.` : ''} After you hit it, tap Edit and paste the shots.</div>`;
@@ -1075,6 +1082,7 @@ function vRound() {
   <div><span class="stat"><b>${st.gross}</b><small>gross</small></span><span class="stat"><b>${st.toPar >= 0 ? '+' : ''}${st.toPar}</b><small>to par ${st.par}</small></span>${st.putts != null ? `<span class="stat"><b>${st.putts}</b><small>putts</small></span>` : ''}${st.fir ? `<span class="stat"><b>${st.fir.hit}/${st.fir.of}</b><small>fairways</small></span>` : ''}${st.gir ? `<span class="stat"><b>${st.gir.hit}/${st.gir.of}</b><small>greens in reg</small></span>` : ''}</div>`;
   if (r.date === today()) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
   h += scoreStrip(holes, r.id) + `<p class="small muted">Tap a hole to trace shots on it.</p>`;
+  h += roundFindingsSection(r);
   h += quickScoreSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
   h += `<h2>Strokes lost by par</h2>` + st.byPar.map(p => `<div class="hbar"><span>Par ${p.par} <span class="muted">×${p.n}</span></span><i class="${p.over / p.n >= 2.5 ? 'flag' : p.over / p.n >= 1.5 ? 'sand' : ''}" style="width:${pct(p.over, mxo)}%"></i><small>+${p.over}</small></div>`).join('');
@@ -2267,6 +2275,8 @@ function practiceCard(it, i) {
     ${it.practice ? `<div class="small" style="margin-top:4px"><b>Practice:</b> ${esc(it.practice)}</div>` : ''}
     ${b ? `<div class="pblock"><span class="tag green">${esc(b.club)} · ${b.swing}${b.target ? ' · ' + b.target + 'm' : ''}</span> <span class="small muted">${esc(b.intent)}</span></div>` : ''}
     ${it.recs && it.recs.length && it.recs[0].r ? `<div class="small" style="margin-top:6px">${[...new Map(it.recs.map(x => [x.r.id + '|' + x.h.n, x])).values()].slice(0, 6).map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${x.r.id},hole=${x.h.n}">Hole ${x.h.n}</button>`).join('')}</div>` : ''}
+    ${goalProgress(it) ? `<div class="small progress" style="margin-top:6px">${esc(progressText(it))}</div>` : ''}
+    <div class="row-actions" style="margin-top:6px">${goalButtons(it)}</div>
   </div>`;
 }
 function practiceSection(limit) {
@@ -2337,9 +2347,9 @@ function planBlocks(items) {
   const blocks = [];
   for (const it of items.filter(x => x.block)) {
     const k = it.block.club + '|' + it.block.swing, have = blocks.find(b => b.club + '|' + b.swing === k);
-    if (have) { have.reason += `; ${it.title}`; continue; }
+    if (have) { have.reason += `; ${it.title}`; have.goals.push(it.key); continue; }
     if (blocks.length >= 5) continue;
-    blocks.push({ id: uid('b'), seq: blocks.length + 1, club: it.block.club, swing: it.block.swing, target: it.block.target, intent: it.block.intent, reason: it.title, plan: true, shots: [] });
+    blocks.push({ id: uid('b'), seq: blocks.length + 1, club: it.block.club, swing: it.block.swing, target: it.block.target, intent: it.block.intent, reason: it.title, goals: [it.key], plan: true, shots: [] });
   }
   return blocks;
 }
@@ -2361,6 +2371,133 @@ Object.assign(ACTIONS, {
   },
   viewHole(d) { go('courses', { courseId: d.id, hole: d.n }); },
 });
+
+/* ============================================================
+   The practice loop (2.6.0)
+   One named objective follows a finding from the course to the range and
+   back: the round that showed it, the planned block that works on it, the
+   range sessions that hit it, and how it has gone on the course since.
+   The objective is the practice item's own key, stored on a planned block
+   (`goals`); its name is the finding's title without the numbers. The
+   before/since comparison is worked out from the item's dated chances on
+   every draw, nothing stored, and never claims the practice caused it.
+   ============================================================ */
+const goalName = it => String(it.title || '').split(':')[0];
+const goalOf = key => { const { now, quiet } = rankedPractice(); return now.concat(quiet).find(x => x.key === key) || null; };
+// What "it happened" means for each kind, in words.
+const MISS_WORD = { tee: 'missed the fairway', approach: 'came up short', short: 'missed the green', putting: 'three-putts', penalty: 'had a penalty' };
+// The latest range day its club and swing were hit since it first appeared, and the course chances either side.
+function goalProgress(it) {
+  if (!it || !it.block) return null;
+  const firstSeen = (it.ev || []).map(e => e.date).filter(Boolean).sort()[0] || null;
+  const practised = practisedSince(it.block, firstSeen);
+  if (!practised) return null;
+  const ch = it.chances || [], side = xs => ({ n: xs.length, hit: xs.filter(c => c.hit).length });
+  return { practised, before: side(ch.filter(c => c.date <= practised)), after: side(ch.filter(c => c.date > practised)), counted: !!(it.chances || []).length };
+}
+function progressText(it, p = goalProgress(it)) {
+  if (!p) return '';
+  const w = MISS_WORD[it.kind];
+  if (!p.counted || !w) return `Practised ${dateLabel(p.practised)}.`;
+  if (!p.after.n) return `Practised ${dateLabel(p.practised)}; not tested on the course since.`;
+  return `Since the range on ${dateLabel(p.practised)}: ${p.after.hit} of ${p.after.n} ${w} (${pct(p.after.hit, p.after.n)}%), against ${p.before.hit} of ${p.before.n} (${pct(p.before.hit, p.before.n)}%) before · ${confidence(p.after.n)}.`;
+}
+// Which objectives a range block works on: the ones it was planned for, or (for
+// blocks from before 2.6.0, or hit without a plan) any current one with its club and swing.
+function blockGoals(b) {
+  const { now, quiet } = rankedPractice(), all = now.concat(quiet);
+  if ((b.goals || []).length) return b.goals.map(k => all.find(x => x.key === k)).filter(Boolean);
+  return all.filter(x => x.block && x.block.club === b.club && (x.block.swing || 'full') === (b.swing || 'full'));
+}
+const blockHit = b => !b.plan && (((b.shots || []).length) || !!b.summary);
+// This block against the last time the same club and swing were hit, both with 5+ full swings,
+// classified together so "low runner" means the same thing in both.
+function compareBlock(b, s) {
+  if ((b.swing || 'full') !== 'full' || (b.shots || []).length < 5) return null;
+  const prev = S.sessions.filter(p => p.type === 'range' && p.id !== s.id && p.date && p.date < s.date)
+    .sort((x, y) => y.date.localeCompare(x.date))
+    .map(p => ({ p, b: (p.blocks || []).find(x => x.club === b.club && (x.swing || 'full') === 'full' && (x.shots || []).length >= 5) })).find(x => x.b);
+  if (!prev) return null;
+  const pool = shotsWithSession(b.club, s).concat(countsForNumbers(prev.p) ? [] : sessionFullShots(prev.p, b.club)), prof = classify(pool);
+  const side = blk => { const xs = pool.map((x, i) => [x, prof[i]]).filter(([x]) => x.blockId === blk.id); if (xs.length < 5) return null;
+    return { n: xs.length, carry: median(xs.map(([x]) => x.carry)), bad: pct(xs.filter(([, k]) => k === 'runner' || k === 'top').length, xs.length) }; };
+  const a = side(prev.b), c = side(b); if (!a || !c) return null;
+  return { date: prev.p.date, sid: prev.p.id, bid: prev.b.id, was: a, now: c };
+}
+const compareText = (b, cmp) => `Against ${dateLabel(cmp.date)} (${cmp.was.n} shots): median carry ${fmt(cmp.was.carry)} → ${fmt(cmp.now.carry)}m, low runners or tops ${cmp.was.bad}% → ${cmp.now.bad}%.`;
+
+// "Practise this": its block goes into the planned session that hasn't been hit yet, or a new one.
+async function practiseGoal(key) {
+  const it = goalOf(key);
+  if (!it || !it.block) { toast(it && it.practice ? it.practice : 'Nothing to practise at the range for this'); return; }
+  const pending = S.sessions.find(s => s.type === 'range' && s.planned && (s.blocks || []).length && s.blocks.every(b => b.plan));
+  if (pending) {
+    const k = it.block.club + '|' + it.block.swing, have = pending.blocks.find(b => b.club + '|' + b.swing === k);
+    if (have && (have.goals || []).includes(it.key)) { toast('Already in your planned session'); go('range', { sessionId: pending.id }); return; }
+    const blocks = have ? pending.blocks.map(b => b === have ? { ...b, goals: [...(b.goals || []), it.key], reason: `${b.reason ? b.reason + '; ' : ''}${it.title}` } : b)
+      : pending.blocks.concat({ id: uid('b'), seq: pending.blocks.length + 1, club: it.block.club, swing: it.block.swing, target: it.block.target, intent: it.block.intent, reason: it.title, goals: [it.key], plan: true, shots: [] });
+    if (await save('sessions', pending.id, { ...pending, blocks })) { toast('Added to your planned session'); go('range', { sessionId: pending.id }); }
+    return;
+  }
+  const doc = { id: uid('s'), type: 'range', created: Date.now(), ballType: 'range', source: 'toptracer', v: SCHEMA_VERSION, date: today(), planned: true,
+    focus: `Practising: ${goalName(it)}`, blocks: [{ id: uid('b'), seq: 1, club: it.block.club, swing: it.block.swing, target: it.block.target, intent: it.block.intent, reason: it.title, goals: [it.key], plan: true, shots: [] }] };
+  if (await save('sessions', doc.id, doc)) { toast('Session planned'); go('range', { sessionId: doc.id }); }
+}
+Object.assign(ACTIONS, { practiseGoal(d) { return practiseGoal(d.key); } });
+const goalButtons = (it, { review = true, primary = false } = {}) => `${it.block ? `<button${primary ? ' class="primary"' : ''} data-act="practiseGoal" data-key="${esc(it.key)}">Practise this</button>` : ''}${review ? `<button class="quiet" data-go="range:goal=${esc(it.key)}">${goalProgress(it) ? 'Review results' : 'Details'} →</button>` : ''}`;
+
+// One objective, start to finish.
+function vGoal() {
+  const it = goalOf(S.sub.goal);
+  if (!it) return back('range', null, 'Range') + `<h1>Not on the list</h1><p class="muted">This isn't showing up in your rounds or range sessions any more, so there's nothing to review. It may have been fixed, or the evidence behind it was removed.</p>`;
+  const p = goalProgress(it), b = it.block;
+  let h = back('range', null, 'Range') + `<h1>${esc(goalName(it))}</h1>
+    <p class="small muted">${esc(KIND_LABEL[it.kind] || '')}${it.n ? ` · ${confidence(it.n)}, n=${it.n}` : ''} · ${it.status === 'quiet' ? 'quiet lately' : it.status === 'practised' ? 'practised, waiting on the course' : 'current'}</p>
+    <div class="next k-${it.kind}" id="goalNow"><div class="nt">${esc(it.title.split(':').slice(1).join(':').trim() || it.title)}</div>${MISS_WORD[it.kind] && it.title.includes(':') ? `<div class="small">${MISS_WORD[it.kind]}, across your traced rounds</div>` : ''}${it.note ? `<div class="small muted">${esc(it.note)}</div>` : ''}
+      ${b ? `<div class="small" style="margin-top:8px"><b>Drill:</b> ${esc(b.club)}${b.swing !== 'full' ? ' ' + esc(b.swing) : ''}${b.target ? ` at ${b.target}m` : ''} — ${esc(b.intent)}</div>` : it.practice ? `<div class="small" style="margin-top:8px"><b>Practice:</b> ${esc(it.practice)}</div>` : ''}
+      <div class="row-actions">${goalButtons(it, { review: false, primary: true })}</div></div>`;
+  if (p && p.counted && MISS_WORD[it.kind]) {
+    h += `<h2>On the course since</h2>` + tileGrid('goalTiles', [tile(p.before.n ? `${pct(p.before.hit, p.before.n)}%` : '–', 'before', `${p.before.hit} of ${p.before.n} ${MISS_WORD[it.kind]}`),
+      tile(p.after.n ? `${pct(p.after.hit, p.after.n)}%` : '–', `since ${dateLabel(p.practised)}`, p.after.n ? `${p.after.hit} of ${p.after.n} · ${confidence(p.after.n)}` : 'not tested yet')]) +
+      `<p class="small muted">Counts from your traced holes either side of the last range session for it. A change here says what happened since, not that the practice caused it.</p>`;
+  } else if (p) h += `<p class="small" id="goalPractised">${esc(progressText(it, p))}</p>`;
+  // The range sessions that hit its club and swing, newest first.
+  const hits = S.sessions.filter(s => s.type === 'range').flatMap(s => (s.blocks || []).filter(x => blockHit(x) && b && x.club === b.club && (x.swing || 'full') === (b.swing || 'full')).map(x => ({ s, x })))
+    .sort((m, n) => (n.s.date || '').localeCompare(m.s.date || '')).slice(0, 6);
+  if (hits.length) h += `<h2>At the range</h2><div class="list" id="goalRange">` + hits.map(({ s, x }) => { const sm = blockSummary(x) || {}, cmp = compareBlock(x, s);
+    return `<button class="item" data-go="range:blockId:${x.id}"><div class="t">${dateLabel(s.date)} · ${esc(x.club)}${x.target ? ` to ${x.target}m` : ''}${(x.goals || []).includes(it.key) ? ' <span class="tag green">planned for this</span>' : ''}</div>
+      <div class="s">${sm.n || 0} shots${sm.avgCarry != null ? `, avg carry ${fmt(sm.avgCarry)}m` : ''}${cmp ? ` · ${cmp.was.bad}% → ${cmp.now.bad}% low runners or tops` : ''}</div></button>`; }).join('') + `</div>`;
+  const recs = (it.recs || []).filter(x => x.r && x.h && (it.kind !== 'tee' || x.lie !== 'fairway'));
+  if (recs.length) {
+    const byRound = [...recs.reduce((m, x) => m.set(x.r.id, [...(m.get(x.r.id) || []), x]), new Map()).values()].sort((a, c) => (c[0].r.date || '').localeCompare(a[0].r.date || ''));
+    h += `<h2>Where it showed up</h2><div id="goalHoles">` + byRound.slice(0, 6).map(xs => `<div class="small" style="margin:6px 0"><b>${dateLabel(xs[0].r.date)}</b> · ${esc(xs[0].r.courseName || '')}: ${[...new Map(xs.map(x => [x.h.n, x])).values()].map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${x.r.id},hole=${x.h.n}">Hole ${x.h.n}${x.club ? ' · ' + esc(x.club) : ''}</button>`).join('')}</div>`).join('') + `</div>`;
+  }
+  return h;
+}
+
+// The top of a range session: what it's working on, how much of the plan is hit, and where to review.
+function sessionGoals(s, blocks) {
+  const planned = blocks.filter(b => b.plan || (b.goals || []).length);
+  if (!s.planned || !planned.length) return '';
+  const hit = planned.filter(blockHit).length, goals = [...new Map(planned.flatMap(blockGoals).map(g => [g.key, g])).values()];
+  const done = hit === planned.length;
+  return `<div class="notice" id="sessionGoals"><b>${done ? 'Plan done' : `${hit} of ${plural(planned.length, 'planned block')} hit`}.</b>${goals.length ? ` Working on: ${goals.map(g => `<button class="quiet" style="padding:0 4px" data-go="range:goal=${esc(g.key)}">${esc(goalName(g))}</button>`).join(' · ')}.` : ''}
+    ${done ? ' Your next round shows how it went on the course: each one above has the before and since.' : ' After you hit a block, add its screenshots; a block for the same club fills the plan.'}</div>`;
+}
+// What one round showed: each current or quiet objective it added evidence to, by hole and club.
+function roundFindings(r) {
+  const { now, quiet } = rankedPractice();
+  return now.concat(quiet).map(it => ({ it, recs: (it.recs || []).filter(x => x.r && x.r.id === r.id && (it.kind !== 'tee' || x.lie !== 'fairway')) })).filter(x => x.recs.length);
+}
+function roundFindingsSection(r) {
+  const fs = roundFindings(r); if (!fs.length) return '';
+  return `<h2>What this round showed</h2><div id="roundFindings">` + fs.slice(0, 5).map(({ it, recs }) => {
+    const holes = [...new Map(recs.map(x => [x.h.n, x])).values()].sort((a, b) => a.h.n - b.h.n), clubs = [...new Set(recs.map(x => x.club).filter(Boolean))];
+    return `<div class="finding k-${it.kind}"><div class="spread"><b>${esc(goalName(it))}</b><span class="small muted">${plural(recs.length, 'time')}${clubs.length ? ' · ' + clubs.map(esc).join(', ') : ''}</span></div>
+      <div class="small">${holes.map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${r.id},hole=${x.h.n}">Hole ${x.h.n}</button>`).join('')}</div>
+      <div class="row-actions" style="margin-top:4px">${goalButtons(it)}</div></div>`;
+  }).join('') + `</div>`;
+}
 
 /* ============================================================
    Swing analyzer
@@ -2821,8 +2958,14 @@ function openShotReview(sid, read, images) {
         catch (e) { releaseAssets(assets); toast('Storing the screenshots failed — nothing saved'); return false; }
       }
       const fromImages = { assets, readOn: today(), units: read.units, converted: read.converted };
-      const seq0 = (s.blocks || []).reduce((m, b) => Math.max(m, b.seq || 0), 0);
-      const blocks = (s.blocks || []).concat(nb.map((b, j) => ({ id: uid('b'), seq: seq0 + j + 1, ...b, fromImages })));
+      // A block for the same club and swing as one planned here fills that plan (keeping why it
+      // was planned and what it's for), so the session shows it done; anything else is added.
+      let blocks = (s.blocks || []).slice(), seq = blocks.reduce((m, b) => Math.max(m, b.seq || 0), 0);
+      for (const b of nb) {
+        const i = blocks.findIndex(x => x.plan && x.club === b.club && (x.swing || 'full') === (b.swing || 'full'));
+        if (i >= 0) { const { plan: _, ...pb } = blocks[i]; blocks[i] = { ...pb, ...b, target: b.target ?? pb.target, fromImages }; }
+        else blocks.push({ id: uid('b'), seq: ++seq, ...b, fromImages });
+      }
       const ok = await save('sessions', s.id, { ...s, blocks });
       if (!ok) { releaseAssets(assets); return false; }
       previews.forEach(u => URL.revokeObjectURL(u));

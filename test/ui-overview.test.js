@@ -87,7 +87,8 @@ test('next practice: the top priority as one action with its evidence; the next 
   const rows = app.$$('#view .wrow');
   assert.deepEqual(rows.map(r => r.querySelector('.wt').textContent), top.slice(1).map(x => x.title), 'the existing ranking, not a new one');
   assert.ok(rows.every(r => /n=\d+|early signal|emerging|consistent/.test(r.textContent)), 'each says what it stands on');
-  assert.ok(rows.every(r => r.dataset.go === 'range'), 'the reasoning is a tap away, on the Range tab');
+  const keys = app.J('rankedPractice().now.slice(1, 3).map(x => x.key)');
+  assert.deepEqual(rows.map(r => r.dataset.go), keys.map(k => `range:goal=${k}`), 'the reasoning is a tap away, on that finding\'s own page');
   assert.ok(app.$('#view .basis'), 'the line saying it is worked out fresh is still there');
 });
 

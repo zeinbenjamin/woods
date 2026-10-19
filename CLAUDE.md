@@ -690,6 +690,42 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   under trees and how a phone browser treats Cloudflare's offline errors
   are the first round's test.
 
+## The practice loop (2.6.0)
+
+Release 2 of his UI/UX review ("Connect the journey"): one named objective
+from the course to the range and back, without him recreating it.
+
+- **The objective** is a practice item's `key` (`approach`, `tee:D`,
+  `strike:7i`, …); its name (`goalName`) is the item's title before the colon,
+  so it doesn't change as the counts do. A planned block stores the keys it
+  works on (`goals`); blocks from before 2.6.0, or hit without a plan, match
+  by club and swing (`blockGoals`).
+- **Each objective has a page** (`vGoal`, Range with `sub.goal`): what it is
+  now, the drill, *Practise this*, the before/since tiles, the range blocks
+  that hit its club and swing ("planned for this" where they were), and where
+  it showed up, by round, hole and club. A key no longer on the list says so.
+- **Practise this** (`practiseGoal`) adds the item's block to the unhit
+  planned session (merging into a block for the same club and swing), or
+  plans a new one, focus "Practising: <name>"; never twice. Offered on the
+  round page, the Range list, the objective page; *Plan range session* still
+  plans from everything.
+- **Screenshots fill the plan:** a read block for the same club and swing as
+  a planned block becomes that block (id, reason, goals kept), so the session
+  header (`sessionGoals`) can say "2 of 3 planned blocks hit" / "Plan done".
+- **Before and since** (`goalProgress`): the latest range day its club and
+  swing were hit since it first appeared, and the item's own dated chances
+  either side of it ("Since the range on 9 Oct: 4 of 9 came up short (44%),
+  against 9 of 9 (100%) before · emerging"). Worked out on every draw; the
+  page says it describes what happened since, **not that the practice
+  caused it**. Items without counted chances (strike, measure) only say when
+  they were practised.
+- **The round page** (`roundFindingsSection`) lists what that round added
+  evidence to: name, how many times, the clubs, the holes (links), *Practise
+  this* and *Details*. Tee findings count only the misses.
+- **A block against last time** (`compareBlock`): the latest earlier session
+  with the same club, full swing, 5+ shots each side, classified in one pool
+  so "low runner" means the same in both.
+
 ## Range data from screenshots
 
 Range shots come from screenshots of the bay's shot list, not typing:
@@ -710,7 +746,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 268 tests, about 40s.
+`npm test` — 274 tests, about 45s.
 
 - `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -761,6 +797,9 @@ fixture would let the reading be pinned.
   its putts, a course with no map, and the outbox: no signal, Cloudflare's
   502, a poll not undoing a waiting save, newer beating older, sending on
   start),
+  `ui-loop` (the practice loop on a hand-worked scenario: a round's
+  findings, Practise this, screenshots filling the plan, before/since on the
+  objective page, Range list and Overview, the block against last time),
   `ui-marks` (Mark tee / Mark flag on an unmapped hole: the raw fix stored,
   ±10 m refused, flag after scoring, edits keep marks, only your own
   removable),
@@ -795,7 +834,9 @@ stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 `tee` field from the app survives it because the server corrects it), 9 for 2.5.0's
 Overview (one survived at first: a missing heading passed a "comes before"
-check; the test now requires it); all
+check; the test now requires it), 12 for 2.6.0's practice loop (two survived
+at first because the scenario had no tee misses and one earlier 5W session;
+both added); all
 caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
