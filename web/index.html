@@ -210,6 +210,10 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .advice { background: var(--green-soft); color: var(--ink); border-radius: var(--r); padding: 8px 10px; margin: 8px 0; }
 .stencil .hdot { fill: #fff; stroke: #1B2A20; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; } .stencil .hdot.first { fill: #F2C94C; }
 .l-teedot { background: #F2C94C; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; } .l-dot { background: #fff; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; }
+.lastshot { border: 1px solid var(--rule); border-radius: var(--r); padding: 8px; margin: 4px 0 10px; }
+.greendist { display: flex; justify-content: center; gap: 4px; margin: 4px 0 0; } .greendist .stat { text-align: center; margin: 0 10px 4px; } .greendist .stat.mid b { font-size: 40px; }
+.hazards { max-width: 360px; margin: 0 auto 8px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: var(--r); } .hazards .spread { padding: 2px 0; }
+.holemap .hm-you { fill: #2f80ed; stroke: #fff; stroke-width: 2; } .holemap .hm-you-acc { fill: #2f80ed; fill-opacity: .15; stroke: #2f80ed; stroke-opacity: .5; stroke-width: 1; }
 </style>
 
   <link rel="manifest" href="manifest.webmanifest">
@@ -572,6 +576,7 @@ function render() {
   const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
   $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
   for (const id of open) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
+  playLifecycle();
 }
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-go]'); if (a) { const [tab, sub] = parseGo(a.dataset.go); go(tab, sub); return; }
@@ -1005,11 +1010,12 @@ function vBlock() {
 /* ---------- rounds ---------- */
 function vRounds() {
   if (S.sub && S.sub.view === 'penalties') return vPenalties();
+  if (S.sub && S.sub.play) return vPlay();
   if (S.sub && S.sub.hole) return vHoleLog();
   if (S.sub && S.sub.sessionId) return vRound();
   const list = S.sessions.filter(s => s.type === 'round');
   const pens = penaltyReport();
-  return `<div class="spread"><h1>Rounds</h1><button class="primary" data-act="newRound">New round</button></div>` +
+  return `<div class="spread"><h1>Rounds</h1><div class="row-actions" style="margin:0"><button data-act="newRound">New round</button><button class="primary" data-act="startPlay">Start round</button></div></div>` +
     (pens.total ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" data-go="rounds:view=penalties">Penalty report: ${plural(pens.total, 'penalty stroke')} →</button></div>` : '') +
     (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a round by scorecard, then tap any hole to trace your shots on its stencil.</p><button class="primary" data-act="newRound">New round</button></div>`);
 }
@@ -1020,6 +1026,7 @@ function vRound() {
   let h = back('rounds', null, 'Rounds') + `<div class="spread"><h1>${esc(r.courseName)}</h1><button data-act="editRound" data-id="${r.id}">Edit</button></div>
   <p class="muted small">${dateLabel(r.date)}${r.tee ? ', ' + esc(r.tee) + ' tees' : ''}${st.holes < (r.holes || []).length ? ` · ${st.holes} of ${(r.holes || []).length} holes scored` : ''}${r.notes ? '. ' + esc(r.notes) : ''}</p>
   <div><span class="stat"><b>${st.gross}</b><small>gross</small></span><span class="stat"><b>${st.toPar >= 0 ? '+' : ''}${st.toPar}</b><small>to par ${st.par}</small></span>${st.putts != null ? `<span class="stat"><b>${st.putts}</b><small>putts</small></span>` : ''}${st.fir ? `<span class="stat"><b>${st.fir.hit}/${st.fir.of}</b><small>fairways</small></span>` : ''}${st.gir ? `<span class="stat"><b>${st.gir.hit}/${st.gir.of}</b><small>greens in reg</small></span>` : ''}</div>`;
+  if (r.date === today()) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
   h += scoreStrip(holes, r.id) + `<p class="small muted">Tap a hole to trace shots on it.</p>`;
   h += quickScoreSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
@@ -1642,17 +1649,8 @@ document.addEventListener('click', async e => {
     // A linked map that hasn't arrived yet: don't let the tap land on the outline instead.
     if (h.hm === undefined) { toast('The course map is still loading'); return; }
     if (usesMap(h)) {
-      const q = svgPoint(svg, e), [mx, my] = HoleMap.tapToMap(h.hm, [q.x, q.y]).map(v => +v.toFixed(1));
-      const lie = HoleMap.lieAt(h.hm.map, [mx, my]);   // null where nothing is mapped: he picks
-      await updateHole(r, n, hh => {
-        if (moving != null) { hh.shots = hh.shots.map((s, j) => { if (j !== moving) return s; const { lie: _, ...rest } = s; return { ...rest, mx, my, ...(lie ? { lie } : {}) }; }); return; }
-        const s = { mx, my, club }; if (lie) s.lie = lie; hh.shots = (hh.shots || []).concat(s);
-        if (lie === 'green' && hh.firstPutt == null) {
-          const d = toGreen({ ...h, shots: hh.shots }, s);
-          if (d != null && d <= 40) { hh.firstPutt = +d.toFixed(1); hh.firstPuttEstimated = true; }
-        }
-      });
-      if (moving != null) { S.moving = null; toast('Shot moved'); render(); }
+      const q = svgPoint(svg, e);
+      await addMapShot(r, n, h, HoleMap.tapToMap(h.hm, [q.x, q.y]), {}, moving);
     } else if (usesArt(h)) {
       const p = svgPoint(svg, e), x = Math.max(0, Math.min(h.art.w, p.x)), y = Math.max(0, Math.min(h.art.h, p.y));
       const lie = await lieAt(h.art, x, y);
@@ -3193,6 +3191,254 @@ function quickScoreSection(r) {
       <div class="chips">${(h.par ? [h.par - 1, h.par, h.par + 1, h.par + 2, h.par + 3, h.par + 4] : [3, 4, 5, 6, 7, 8]).filter(v => v > 0).map(v => `<button class="chip" data-act="quickScore" data-sid="${r.id}" data-n="${h.n}" data-s="${v}" aria-pressed="${h.strokes === v}">${v}</button>`).join('')}</div></div>`).join('')}</div>
     <p class="small muted">Par is highlighted for reference — tap the score you made. Holes with traced shots aren't listed; their score comes from the shots.</p></details>`;
 }
+
+/* ============================================================
+   Play mode (2.1.0)
+   Logging during the round instead of after it: one hole at a time,
+   his GPS position on the hole map, distances to the front, middle and
+   back of the green and to the hole's hazards, "Mark my ball here" (or a
+   tap) for each shot, putts, penalties and the running score. It writes
+   exactly what the hole logger writes; nothing new is derived or stored
+   except `gps` on a shot marked by GPS (the fix's accuracy, metres).
+   Saves that can't reach the NAS wait on the phone (platform.js outbox).
+   ============================================================ */
+let gpsWatch = null, wakeLock = null;
+const inPlay = () => S.tab === 'rounds' && !!(S.sub && S.sub.play);
+const GPS_STALE = 30e3;      // a fix older than this isn't where he's standing
+const GPS_ROUGH = 25;        // ± metres beyond which marking asks first
+const OFF_COURSE = 150;      // metres outside the boundary: not on the course
+function startGps() {
+  if (gpsWatch != null) return;
+  const geo = navigator.geolocation;
+  if (!geo) { S.gpsErr = 'This browser has no location, so no GPS distances. Score, putts and penalties still work.'; return; }
+  S.gpsErr = null;
+  gpsWatch = geo.watchPosition(pos => {
+    S.gps = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, t: Date.now() }; S.gpsErr = null;
+    playLive();
+  }, err => {
+    // Blocked: the last fix no longer counts. A timeout keeps it until it goes stale.
+    if (err && err.code === 1) S.gps = null;
+    S.gpsErr = err && err.code === 1
+      ? (window.isSecureContext === false ? 'Location only works at the https address (through Cloudflare).' : 'Location is blocked for Carry. Allow it in the browser’s settings for this site to see distances.')
+      : 'No GPS fix yet. Out in the open it usually takes a few seconds.';
+    playLive();
+  }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 });
+  keepAwake();
+}
+function stopGps() {
+  if (gpsWatch != null && navigator.geolocation) navigator.geolocation.clearWatch(gpsWatch);
+  gpsWatch = null;
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+// The screen stays on while playing, where the browser allows it.
+function keepAwake() {
+  if (wakeLock || !navigator.wakeLock || document.hidden) return;
+  navigator.wakeLock.request('screen').then(l => { wakeLock = l; l.addEventListener('release', () => { wakeLock = null; }); }).catch(() => {});
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && inPlay()) keepAwake(); });
+// Called after every render: GPS runs only while the Play view is open.
+function playLifecycle() { if (inPlay()) startGps(); else if (gpsWatch != null) stopGps(); }
+
+// Where he is on this hole's map, or why there's no answer.
+function gpsOn(h) {
+  if (!h.hm) return { why: h.hm === undefined ? 'Loading the course map…' : 'This course has no course map, so there are no GPS distances. Score, putts and penalties still work.' };
+  if (!S.gps) return { why: S.gpsErr || 'Finding you… (GPS)' };
+  if (Date.now() - S.gps.t > GPS_STALE) return { why: 'Waiting for a fresh GPS fix…', stale: true };
+  const p = HoleMap.fromLatLng(h.hm.map, S.gps.lat, S.gps.lng);
+  const off = HoleMap.offCourse(h.hm.map, p);
+  if (off > OFF_COURSE) return { why: `You're ${off >= 1000 ? (off / 1000).toFixed(1) + ' km' : Math.round(off) + ' m'} from the course. Distances show once you're on it.`, p, off };
+  return { p, acc: S.gps.acc };
+}
+// The hole's own bunkers and water still in play from p: the distance to
+// reach each (nearest edge) and to carry it (farthest edge), straight line.
+function hazardsAhead(hm, p) {
+  const G = HoleMap.geom, toG = G.dist(p, hm.green), out = [];
+  for (const f of hm.map.features) {
+    if (f.h !== hm.hole.n || !(f.k === 'bunker' || f.k === 'water') || !f.r) continue;
+    const c = G.centroid(f.r[0]);
+    if (G.dist(c, hm.green) > toG + 15) continue;           // behind him
+    let reach = Infinity, carry = 0;
+    for (const ring of f.r) for (let i = 0; i < ring.length; i++) {
+      carry = Math.max(carry, G.dist(p, ring[i]));
+      if (i) reach = Math.min(reach, G.segDist(p, ring[i - 1], ring[i]).d);
+    }
+    if (G.inRings(p, f.r)) reach = 0;
+    if (reach > 330) continue;
+    // Which side of the straight line to the green (x east, y north).
+    const vx = hm.green[0] - p[0], vy = hm.green[1] - p[1], cx = c[0] - p[0], cy = c[1] - p[1];
+    const off = (vx * cy - vy * cx) / (Math.hypot(vx, vy) || 1);
+    const side = G.dist(c, hm.green) < 30 ? 'by the green' : Math.abs(off) < 10 ? 'in line' : off > 0 ? 'left' : 'right';
+    out.push({ kind: f.k, side, reach, carry });
+  }
+  return out.sort((a, b) => a.reach - b.reach).slice(0, 5);
+}
+const metres = v => v == null ? '–' : String(Math.round(v));
+function playLiveHtml(h) {
+  const g = gpsOn(h);
+  const mark = `<button class="primary" data-act="markBall" ${g.p && !g.off ? '' : 'disabled'}>Mark my ball here</button>`;
+  if (!g.p || g.off) return `<p class="small muted" id="gpsWhy" style="text-align:center">${esc(g.why)}</p>${h.hm ? `<div class="row-actions" style="justify-content:center">${mark}</div>` : ''}`;
+  const d = HoleMap.greenDistances(h.hm, g.p);
+  const hz = hazardsAhead(h.hm, g.p);
+  return `<div class="greendist" id="greenDist">
+      <span class="stat"><b>${metres(d.front)}</b><small>front</small></span>
+      <span class="stat mid"><b>${metres(d.middle)}</b><small>middle</small></span>
+      <span class="stat"><b>${metres(d.back)}</b><small>back</small></span></div>
+    <p class="small muted" style="text-align:center;margin:-4px 0 6px">metres, straight line · GPS ±${Math.round(g.acc)} m${g.acc > GPS_ROUGH ? ' <span class="tag flag">rough fix</span>' : ''}</p>
+    ${hz.length ? `<div class="hazards" id="hazards">${hz.map(x => `<div class="spread small"><span>${x.kind === 'water' ? 'Water' : 'Bunker'}, ${x.side}</span><span>${x.reach === 0 ? 'you’re in it' : `${metres(x.reach)} to reach · ${metres(x.carry)} to carry`}</span></div>`).join('')}</div>` : ''}
+    <div class="row-actions" style="justify-content:center">${mark}</div>`;
+}
+// The you-are-here dot, in view units, with the fix's accuracy as a ring.
+function youDot(h) {
+  const g = gpsOn(h); if (!g.p || g.off) return '';
+  const [x, y] = HoleMap.mapToView(h.hm, g.p), [ex, ey] = HoleMap.mapToView(h.hm, [g.p[0] + 1, g.p[1]]);
+  if (x < 0 || y < 0 || x > HoleMap.VW || y > HoleMap.VH) return '';
+  const perMetre = Math.hypot(ex - x, ey - y);   // view units in a metre, for the accuracy ring
+  return `<g id="you"><circle class="hm-you-acc" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${Math.max(6, (g.acc || 0) * perMetre).toFixed(1)}"/><circle class="hm-you" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/></g>`;
+}
+// A new fix redraws only the live parts, so a tap in progress isn't lost.
+function playLive() {
+  if (!inPlay()) return;
+  const r = session(S.sub.sessionId); if (!r) return;
+  const h = holesOf(r).find(x => x.n === Number(S.sub.hole)); if (!h) return;
+  const live = $('#playLive'); if (live) live.innerHTML = playLiveHtml(h);
+  const svg = $('#logMap'); if (svg && svg.tagName.toLowerCase() === 'svg') { const old = svg.querySelector('#you'); if (old) old.remove(); const dot = youDot(h); if (dot) svg.insertAdjacentHTML('beforeend', dot); }
+}
+
+// A hole is finished when it has a score and, if shots were marked, its
+// putts: with shots its stored score is a running count (shots + putts +
+// penalties), so one marked shot isn't a score of 1.
+const holeDone = h => h.strokes != null && (!(h.shots || []).length || h.putts != null);
+// Which hole to open: the one in progress, else the next one not finished.
+function playHole(r) {
+  const all = holesOf(r), started = all.filter(h => h.strokes != null || (h.shots || []).length || h.putts != null);
+  if (!started.length) return all[0] ? all[0].n : 1;
+  const i = all.indexOf(started[started.length - 1]), cur = all[i];
+  if (!holeDone(cur)) return cur.n;
+  for (let k = 1; k <= all.length; k++) { const h = all[(i + k) % all.length]; if (!holeDone(h)) return h.n; }
+  return cur.n;
+}
+function runningScore(r) {
+  const done = holesOf(r).filter(h => holeDone(h) && h.par != null);
+  const strokes = sum(done.map(h => h.strokes)), over = strokes - sum(done.map(h => h.par));
+  return { thru: done.length, strokes, over };
+}
+function vPlay() {
+  const r = session(S.sub.sessionId); if (!r) return back('rounds', null, 'Rounds') + `<p>Round not found.</p>`;
+  const all = holesOf(r), n = Number(S.sub.hole) || playHole(r), i = all.findIndex(x => x.n === n), h = all[i];
+  if (!h) return back('rounds', 'sessionId:' + r.id, r.courseName) + `<p>Hole not found.</p>`;
+  const shots = h.shots || [], last = shots[shots.length - 1], map = usesMap(h);
+  const leftRaw = toGreen(h, last), distLeft = leftRaw == null ? null : Math.round(leftRaw);
+  const onGreen = last && lieOf(h, last) === 'green';
+  const run = runningScore(r), prev = all[(i - 1 + all.length) % all.length], next = all[(i + 1) % all.length];
+  const clubs = activeClubs().filter(x => x.category !== 'putter');
+  let html = back('rounds', 'sessionId:' + r.id, r.courseName) + `<div class="spread"><h1>Hole ${n} <span class="muted">par ${h.par ?? '–'}${h.metres ? `, ${h.metres}m` : ''}${h.si ? `, SI ${h.si}` : ''}</span></h1>
+    <div class="row-actions" style="margin:0"><button data-go="rounds:sessionId=${r.id},play=1,hole=${prev.n}" aria-label="Hole ${prev.n}">‹</button><button data-go="rounds:sessionId=${r.id},play=1,hole=${next.n}" aria-label="Hole ${next.n}">›</button></div></div>
+    <p class="small muted" id="playScore">${run.thru ? `${run.strokes} through ${plural(run.thru, 'hole')}, ${run.over === 0 ? 'level' : (run.over > 0 ? '+' : '') + run.over}` : 'No holes scored yet'}</p>`;
+  if (S.moving && S.moving.n === n) html += `<div class="notice">Moving shot ${S.moving.i + 1} — tap where it finished. <button class="quiet" data-act="cancelMove">Cancel</button></div>`;
+  html += `<div id="playLive">${playLiveHtml(h)}</div>`;
+  if (h.hm) {
+    const svg = map ? HoleMap.svg(h.hm, { big: true, par: h.par, shots: mapShots(h), attrs: 'id="logMap"' }) : '';
+    html += map ? `<div class="bigmap">${svg.replace(/<\/svg>$/, youDot(h) + '</svg>')}</div>${MAP_CREDIT}
+      <div class="map-hint">${onGreen ? 'On the green. Add putts below.' : `Or tap the map where the ball is${distLeft != null && shots.length ? ` (${distLeft}m to the green from the last one)` : ''}.`}</div>`
+      : `<p class="small muted">Shots on this hole were logged on another drawing, so they stay there: <button class="quiet" data-go="rounds:sessionId=${r.id},hole=${n}">open the hole</button>.</p>`;
+  }
+  if (last && map) html += `<div class="lastshot" id="lastShot"><p class="small muted" style="text-align:center;margin:0 0 6px">Shot ${shots.length}${last.club ? ': ' + esc(last.club) : ' — pick its club'}${last.gps != null ? `, marked by GPS (±${last.gps} m)` : ''} <button class="quiet" data-act="undoShot">Undo</button><br>Correct its lie or club here.</p>
+    <div class="chips" style="justify-content:center;margin-bottom:6px">${['green', 'fairway', 'rough', 'bunker', 'water', 'trees'].map(l => `<button class="chip lie" data-lie="${l}" aria-pressed="${lieOf(h, last) === l}">${l}</button>`).join('')}</div>
+    <div class="chips" id="clubChips" style="justify-content:center">${clubs.map(x => `<button class="chip" data-club="${esc(x.code)}" aria-pressed="${last.club === x.code}">${esc(x.code)}</button>`).join('')}</div></div>`;
+  if (map && !onGreen) html += clubArmRow(r, h, distLeft);
+  html += puttRow(r, h);
+  html += `<div class="spread" style="margin-top:8px"><div class="stepper"><span class="small muted">Penalties</span><button data-step="penalties" data-d="-1">−</button><b>${h.penalties || 0}</b><button data-step="penalties" data-d="1">+</button></div>
+    <span class="stat" style="margin:0"><b id="holeScore">${shots.length ? holeStrokes(h) : (h.strokes ?? '–')}</b><small>${shots.length ? 'shots + putts + penalties' : 'score'}</small></span></div>`;
+  if (!shots.length) html += `<div class="armrow"><div class="small muted">Not marking shots? Tap the score</div><div class="chips">${(h.par ? [h.par - 1, h.par, h.par + 1, h.par + 2, h.par + 3, h.par + 4] : [3, 4, 5, 6, 7, 8]).filter(v => v > 0).map(v => `<button class="chip" data-act="quickScore" data-sid="${r.id}" data-n="${n}" data-s="${v}" aria-pressed="${h.manualStrokes === v || (h.strokes === v && !shots.length)}">${v}</button>`).join('')}</div></div>`;
+  const left = all.filter(x => !holeDone(x) && x.n !== n).length;
+  html += `<div class="row-actions" style="margin-top:12px">${holeDone(h) && left ? `<button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playNext(all, i)}">Hole ${playNext(all, i)} →</button>` : ''}<button data-act="finishPlay" data-sid="${r.id}">${left ? 'End round here' : 'Finish round'}</button></div>`;
+  return html;
+}
+// The next hole not yet scored, going round from this one.
+function playNext(all, i) { for (let k = 1; k <= all.length; k++) { const h = all[(i + k) % all.length]; if (!holeDone(h)) return h.n; } return all[(i + 1) % all.length].n; }
+
+// A shot finishing at p (map metres), from a tap or a GPS mark. The club is
+// the one armed for it (his usual from there, never advice); the lie comes
+// from the map, or is left for him to pick.
+async function addMapShot(r, n, h, p, extra = {}, moving = null) {
+  const [mx, my] = p.map(v => +v.toFixed(1));
+  const prev = (h.shots || []).slice(-1)[0], club = armedClubFor(h, toGreen(h, prev));
+  const lie = HoleMap.lieAt(h.hm.map, [mx, my]);   // null where nothing is mapped: he picks
+  await updateHole(r, n, hh => {
+    if (moving != null) { hh.shots = hh.shots.map((s, j) => { if (j !== moving) return s; const { lie: _, gps: __, ...rest } = s; return { ...rest, mx, my, ...(lie ? { lie } : {}), ...extra }; }); return; }
+    const s = { mx, my, club, ...extra }; if (lie) s.lie = lie; hh.shots = (hh.shots || []).concat(s);
+    if (lie === 'green' && hh.firstPutt == null) {
+      const d = toGreen({ ...h, shots: hh.shots }, s);
+      if (d != null && d <= 40) { hh.firstPutt = +d.toFixed(1); hh.firstPuttEstimated = true; }
+    }
+  });
+  if (moving != null) { S.moving = null; toast('Shot moved'); render(); }
+}
+
+function startPlayForm() {
+  const c = S.courses[0] || null;
+  return `<h2>Start a round</h2>
+  <p class="small muted">For logging as you play: GPS distances on the hole map, each shot marked where the ball is, putts and the score as you go. Courses with a map get distances; any course can be scored.</p>
+  ${S.courses.length ? coursePicker('') : `<div class="notice">Add a course first.</div>`}
+  <p class="small muted" id="nearCourse"></p>
+  <div id="teeWrap">${teeControl(c)}</div>
+  <div class="seg" id="startSeg" style="margin:4px 0 10px"><button type="button" data-start="1" aria-pressed="true">Start at hole 1</button><button type="button" data-start="10" aria-pressed="false">Start at hole 10</button></div>`;
+}
+async function startPlay(root) {
+  const c = course(val(root, 'courseId'));
+  if (!c) { toast('Pick a course'); return false; }
+  if (!(c.holes || []).length) { toast('This course has no scorecard yet'); return false; }
+  const tee = val(root, 'tee') || primaryTee(c);
+  const start = Number(root.querySelector('[data-start][aria-pressed="true"]')?.dataset.start || 1);
+  const holes = holesForTee(c, tee).map(h => ({ n: h.n, par: h.par, metres: h.metres }));
+  const doc = { id: uid('r'), type: 'round', created: Date.now(), v: SCHEMA_VERSION, date: today(), courseId: c.id, courseName: c.name, tee, detail: 'score_only', holes };
+  const ok = await save('sessions', doc.id, doc);
+  if (ok) go('rounds', { sessionId: doc.id, play: '1', hole: String(holes.some(h => h.n === start) ? start : holes[0].n) });
+  return ok;
+}
+function wireStartPlay(root) {
+  const hid = root.querySelector('[name=courseId]'); if (!hid) return;
+  hid.addEventListener('change', () => {
+    const c = course(hid.value); if (!c) return;
+    $('#teeWrap', root).innerHTML = teeControl(c);
+    const b10 = root.querySelector('[data-start="10"]'); if (b10) b10.disabled = !(c.holes || []).some(h => h.n === 10);
+  });
+  root.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => root.querySelectorAll('[data-start]').forEach(x => x.setAttribute('aria-pressed', x === b))));
+  // Standing at the course: pick it for him (he can change it).
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    if (hid.value) return;
+    const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    const near = S.courses.filter(hasCoords).map(c => ({ c, km: kmBetween(here, c) })).sort((a, b) => a.km - b.km)[0];
+    if (!near || near.km > 3) return;
+    hid.value = near.c.id; const box = $('#courseSearch', root); if (box) box.value = near.c.name;
+    hid.dispatchEvent(new Event('change', { bubbles: true }));
+    const note = $('#nearCourse', root); if (note) note.textContent = `You're ${near.km < 1 ? Math.round(near.km * 1000) + ' m' : near.km.toFixed(1) + ' km'} from ${near.c.name}, so it's picked.`;
+  }, () => {}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
+}
+Object.assign(ACTIONS, {
+  startPlay() { openSheet(startPlayForm(), async root => startPlay(root)); const b = $('#sheetInner [data-save]'); if (b) b.textContent = 'Start'; wireCoursePicker(sheetInner); wireStartPlay(sheetInner); },
+  async markBall() {
+    const r = session(S.sub.sessionId), n = Number(S.sub.hole); if (!r) return;
+    const h = holesOf(r).find(x => x.n === n); if (!h) return;
+    if (!h.hm) { toast('No course map here to mark it on'); return; }
+    if (!usesMap(h)) { toast('This hole’s shots are on another drawing'); return; }
+    const g = gpsOn(h);
+    if (!g.p || g.off) { toast(g.why); return; }
+    if (g.acc > GPS_ROUGH && !await confirmAsk(`GPS is only good to ±${Math.round(g.acc)} m just now. Mark the ball here anyway?`, 'Mark it')) return;
+    const moving = S.moving && S.moving.n === n ? S.moving.i : null;
+    await addMapShot(r, n, h, g.p, { gps: Math.round(g.acc) }, moving);
+    toast('Ball marked');
+  },
+  finishPlay(d) { stopGps(); go('rounds', { sessionId: d.sid }); },
+});
+// Saves waiting on the phone for signal, said in the status line.
+window.addEventListener('carry:outbox', e => {
+  const n = e.detail && e.detail.pending;
+  const was = /waiting for signal/.test($('#status').textContent);
+  if (n) setStatus(`${plural(n, 'change')} saved on this phone, waiting for signal`, true);
+  else if (was) { setStatus(''); toast('Everything is saved'); }
+});
 
 /* ---------- start ---------- */
 connect();

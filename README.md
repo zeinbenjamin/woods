@@ -43,7 +43,7 @@ DATA_DIR=./data DEV_USER=you@example.com node server/index.js
 # with no Cloudflare. Local development only; never set it on the NAS.
 ```
 
-Run the tests with `npm test` — 233 of them, covering the API, the asset
+Run the tests with `npm test` — 250 of them, covering the API, the asset
 store, auth, the import path, and the real app driving the real server:
 CRUD through its forms, shot logging by tapping the hole map, analytics
 invariants, the practice list and planner, tee sets and migrations, range
@@ -242,6 +242,20 @@ input tokens, about 1.5 cents a swing at Sonnet pricing. Put a spend cap
 on the key anyway — a retry loop is how people get surprise bills.
 
 Model is configurable with `CARRY_MODEL`.
+
+## Play mode
+
+Rounds → **Start round** at the course: it picks the course you're standing
+at, you choose the tees and whether you start at 1 or 10. Each hole shows
+where you are on the map, the distance to the front, middle and back of the
+green, and the hole's bunkers and water ahead (to reach, to carry). Stand at
+your ball and tap **Mark my ball here**, or tap the map; add putts and any
+penalty, and the running score updates. Courses without a map can still be
+scored hole by hole.
+
+GPS needs the https (Cloudflare) address and the phone's permission. With no
+signal, saves stay on the phone and go when signal is back (the status line
+says how many are waiting); the app itself needs signal to open.
 
 ## Range shots from screenshots
 

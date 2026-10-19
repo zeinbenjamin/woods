@@ -55,15 +55,59 @@
     return key(a) === key(b);
   };
   async function refresh(name) {
-    try { const docs = (await api('/' + name)).docs; if (same(docs, cache[name])) return; cache[name] = docs; emit(name); }
+    try { const docs = withPending(name, (await api('/' + name)).docs); if (same(docs, cache[name])) return; cache[name] = docs; emit(name); }
     catch (e) { console.warn('refresh failed', name, e); }
   }
+
+  /* ---------- outbox ----------
+     On the course there often isn't signal. A save that can't reach the
+     server is kept on the phone (localStorage), shown as saved, and sent
+     when the connection comes back: on every poll and when the browser says
+     it's online. Only the latest copy of each document is kept; a newer save
+     that does get through replaces a waiting one. Until a waiting copy is
+     sent, it wins over what the server says, so a poll can't undo it. */
+  const OUTBOX = 'carry.outbox';
+  const readBox = () => { try { return JSON.parse(localStorage.getItem(OUTBOX) || '{}') || {}; } catch (e) { return {}; } };
+  const writeBox = box => { try { if (Object.keys(box).length) localStorage.setItem(OUTBOX, JSON.stringify(box)); else localStorage.removeItem(OUTBOX); } catch (e) {} };
+  const announce = () => { try { window.dispatchEvent(new CustomEvent('carry:outbox', { detail: { pending: Object.keys(readBox()).length } })); } catch (e) {} };
+  function withPending(name, docs) {
+    const mine = Object.values(readBox()).filter(e => e.col === name);
+    if (!mine.length) return docs;
+    const ids = new Set(mine.map(e => e.id));
+    return (docs || []).filter(d => !ids.has(d.id)).concat(mine.map(e => e.body));
+  }
+  // No connection at all, or Cloudflare saying the NAS behind it can't be reached.
+  const unreachable = e => (e && e.name === 'TypeError') || (e && e.code === 'request_failed' && [502, 504, 520, 521, 522, 523, 524, 530].includes(e.status));
+  const put = (name, id, body) => api(`/${name}/${encodeURIComponent(id)}`, {
+    method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+  let flushing = null;
+  function flush() {
+    if (flushing) return flushing;
+    flushing = (async () => {
+      for (const [key, e] of Object.entries(readBox())) {
+        try { await put(e.col, e.id, e.body); }
+        catch (err) {
+          if (unreachable(err) || (err && (err.code === 'signed_out' || err.code === 'unauthorised'))) break;   // still offline, or sign in first
+          console.warn('outbox: the server refused a waiting save; keeping it', key, err);
+          continue;
+        }
+        const box = readBox();
+        if (box[key] && box[key].t === e.t) { delete box[key]; writeBox(box); }
+      }
+      announce();
+    })().finally(() => { flushing = null; });
+    return flushing;
+  }
+  window.addEventListener('online', () => flush());
+  window.carryOutbox = () => ({ pending: Object.keys(readBox()).length, flush });
 
   let polling = false;
   async function poll() {
     if (polling || document.hidden) return;
     polling = true;
     try {
+      if (Object.keys(readBox()).length) await flush();
       const s = await api('/stamps');
       for (const name of Object.keys(listeners)) {
         if (s[name] !== lastStamps[name]) { lastStamps[name] = s[name]; await refresh(name); }
@@ -84,15 +128,26 @@
         onSnapshot(cb, onErr) {
           (listeners[name] = listeners[name] || []).push(cb);
           if (onErr) errorHandlers.add(onErr);
-          api('/' + name).then(r => { cache[name] = r.docs; emit(name); }).catch(e => onErr && onErr(e));
+          api('/' + name).then(r => { cache[name] = withPending(name, r.docs); emit(name); }).catch(e => onErr && onErr(e));
           return () => { listeners[name] = (listeners[name] || []).filter(f => f !== cb); };
         },
         doc(id) {
           return {
             async set(body) {
-              const saved = await api(`/${name}/${encodeURIComponent(id)}`, {
-                method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
-              });
+              const key = name + '/' + id;
+              let saved;
+              // A waiting copy being sent right now must land before this newer one.
+              if (flushing) await flushing.catch(() => {});
+              try {
+                saved = await put(name, id, body);
+                // This newer copy got through: an older waiting one must never follow it.
+                const box = readBox(); if (box[key]) { delete box[key]; writeBox(box); announce(); }
+              } catch (e) {
+                if (!unreachable(e)) throw e;
+                // Kept on the phone until there's signal.
+                const box = readBox(); box[key] = { col: name, id, body: { ...body, id }, t: Date.now() }; writeBox(box);
+                saved = box[key].body; announce();
+              }
               const list = cache[name] = (cache[name] || []).filter(d => d.id !== id);
               list.push(saved); emit(name);
               return saved;
@@ -167,6 +222,9 @@
       return { status: 'saved', filename };
     },
   };
+
+  // Anything left waiting from last time goes as soon as the page is up.
+  setTimeout(() => { announce(); if (Object.keys(readBox()).length) flush(); }, 0);
 
   // Who is signed in (the email Cloudflare Access vouched for).
   window.carryMe = () => api('/me');
