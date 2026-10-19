@@ -1126,12 +1126,15 @@ function courseMapSection(c) {
     if (m === undefined) return `<section class="sec" id="courseMap"><h2>Course map</h2><p class="small muted">Loading the map…</p></section>`;
     if (m === null) return `<section class="sec" id="courseMap"><h2>Course map</h2><div class="notice warn">This course uses the map "${esc(c.map.id)}", which isn't on this server. Its holes are drawn from the outline until it's back.</div><div class="row-actions"><button data-act="unlinkMap" data-id="${c.id}">Stop using it</button></div></section>`;
     const tee = primaryTee(c);
-    const rows = c.holes.map(h => ({ n: h.n, x: m.byN[h.n] ? HoleMap.mismatch(m.byN[h.n], teeMetres(h, tee), m) : null }));
+    const rows = c.holes.map(h => { const hm = hmFor(c, h.n, teeMetres(h, tee), tee); return { n: h.n, x: hm ? hm.check : null, mk: hm && hm.fromMarks }; });
     const missing = rows.filter(r => !r.x).map(r => r.n), flagged = rows.filter(r => r.x && r.x.flagged);
+    const byMarks = rows.filter(r => r.mk && r.mk.line).map(r => r.n), movedGreen = rows.filter(r => r.mk && !r.mk.line).map(r => r.n);
     return `<section class="sec" id="courseMap"><h2>Course map</h2>
       <p class="small">Holes are drawn from <b>${esc(m.osm.name)}</b> on OpenStreetMap; hole lines from ${esc(m.holesFrom)}. Distances are real metres, and the ${esc(tee)} tee sits its card distance from the middle of the green, along the hole line. The lie is read from the shape you tap; where nothing is mapped, you pick it.</p>
       ${flagged.length ? `<div class="notice warn" id="mapFlags">${flagged.length === 1 ? 'One hole' : flagged.length + ' holes'} where the card distance doesn't land on a mapped tee box and the card and the mapped line are more than 10% apart, so the tee is placed from the card alone: ${flagged.map(r => `hole ${r.n} (card ${r.x.card}m, map ${Math.round(r.x.line)}m)`).join(', ')}.</div>` : ''}
-      ${missing.length ? `<p class="small muted">Not on the map, so drawn from the outline: hole ${missing.join(', ')}.</p>` : ''}
+      ${byMarks.length ? `<p class="small muted" id="mapMarks">Drawn from your GPS marks, tee to the flags' average, with the green estimated: hole ${byMarks.join(', ')}.</p>` : ''}
+      ${movedGreen.length ? `<p class="small muted" id="mapMarksGreen">Estimated green moved to your flag marks: hole ${movedGreen.join(', ')}.</p>` : ''}
+      ${missing.length ? `<p class="small muted">Not on the map${m.holes.length ? '' : ' yet'}, so drawn from the outline: hole ${missing.join(', ')}.${m.holes.length ? '' : ' In Play, Mark tee and Mark flag on a hole draw it here.'}</p>` : ''}
       <p class="small muted">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL.</p>
       <div class="row-actions"><button data-act="unlinkMap" data-id="${c.id}">Stop using this map</button></div></section>`;
   }
@@ -1761,15 +1764,18 @@ function holesOf(r) {
     // round's own snapshot is the fallback.
     const m = r.tee && src ? teeMetres(src, r.tee) : null;
     const metres = m ?? h.metres;
-    return { ...h, metres, shape: (src && src.shape) || h.shape, art: src && src.art, hm: hmFor(c, h.n, metres) };
+    return { ...h, metres, shape: (src && src.shape) || h.shape, art: src && src.art, hm: hmFor(c, h.n, metres, r.tee) };
   });
 }
 // Use art only when every logged shot on the hole was tapped on art.
 const usesArt = h => !!h.art && (h.shots || []).every(s => s.x != null);
 /* Course maps (web/holemap.js). A course linked to a map draws its holes
    from real shapes: shots tapped on it are {mx, my}, metres on the map's
-   own plane. hm is undefined while the map file loads, null without one. */
-const hmFor = (c, n, metres) => c && c.map && c.map.id && window.HoleMap ? HoleMap.forHole(c.map.id, n, metres) : null;
+   own plane. hm is undefined while the map file loads, null without one.
+   The hole's GPS marks go with it: where the map has no line (or only an
+   estimated green) they draw the hole, for the tee played. */
+const hmFor = (c, n, metres, tee) => c && c.map && c.map.id && window.HoleMap
+  ? HoleMap.forHole(c.map.id, n, metres, { marks: (((c.holes || []).find(x => x.n === n)) || {}).marks, tee: tee || primaryTee(c) }) : null;
 const withHm = (c, h) => ({ ...h, hm: hmFor(c, h.n, h.metres) });
 // The map wins over art and the outline, unless shots were logged on another one.
 const usesMap = h => !!h.hm && (h.shots || []).every(s => s.mx != null);

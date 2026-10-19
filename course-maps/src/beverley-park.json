@@ -1,0 +1,14 @@
+{
+ "id": "beverley-park",
+ "name": "Beverley Park Golf Club",
+ "osm": {
+  "course": "way/173301604",
+  "name": "Beverley Park Golf Club",
+  "exported": "2026-09-27"
+ },
+ "origin": [
+  -33.97955,
+  151.13149
+ ],
+ "holes": "marks"
+}

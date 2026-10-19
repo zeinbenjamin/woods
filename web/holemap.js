@@ -259,11 +259,76 @@
 
   // Everything a hole needs, for a course hole or a round hole: the map,
   // its entry for this hole, and the play line for the tee in use.
-  function forHole(mapId, n, metres) {
-    const map = get(mapId); if (!map) return map;   // undefined while loading, null if not available
-    const hole = map.byN[n]; if (!hole) return null;
+  // opts.marks: the course hole's GPS marks; opts.tee: the tee played.
+  function forHole(mapId, n, metres, opts = {}) {
+    let map = get(mapId); if (!map) return map;   // undefined while loading, null if not available
+    let hole = map.byN[n];
+    if ((!hole || (map.features[hole.green] || {}).est) && opts.marks && opts.marks.length) {
+      const x = withMarks(map, n, opts.marks, opts.tee, metres); if (x) ({ map, hole } = x);
+    }
+    if (!hole) return null;
     const pl = playLine(hole, metres);
-    return { map, hole, pl, tee: pl[0], green: pl[pl.length - 1], check: mismatch(hole, metres, map) };
+    return { map, hole, pl, tee: pl[0], green: pl[pl.length - 1], check: mismatch(hole, metres, map), fromMarks: hole.fromMarks || null };
+  }
+
+  /* ---------- holes from GPS marks ----------
+     Where OSM has no line for a hole, or only an estimated green, the marks
+     made in Play draw it: raw fixes on the course record (holes[i].marks,
+     {k: 'tee' | 'flag', lat, lng, acc, tee?}). Built on every read, never
+     stored. The green is a dashed estimate on the mean of the flag marks (a
+     flag moves day to day, so over rounds they settle near the middle); it
+     never sets a lie and gives no front or back. The tee is the mean of the
+     tee marks for the tee played, and the card still sets every length.
+     A set of marks has to agree: those within MARK_NEAR of the set's median
+     count, and if they aren't a majority the hole isn't drawn, because a
+     flag marked on the wrong hole would move the green. */
+  const MARK_ACC = 10, MARK_NEAR = 20, MARK_OFF = 30, MARK_GREEN_MOVE = 40;
+  function agree(pts) {
+    if (!pts.length) return null;
+    const med = i => { const v = pts.map(p => p[i]).sort((a, b) => a - b), k = v.length >> 1; return v.length % 2 ? v[k] : (v[k - 1] + v[k]) / 2; };
+    const m = [med(0), med(1)], keep = pts.filter(p => dist(p, m) <= MARK_NEAR);
+    if (keep.length * 2 <= pts.length) return null;
+    const mean = i => keep.reduce((s, p) => s + p[i], 0) / keep.length;
+    return { p: [f1(mean(0)), f1(mean(1))], n: keep.length, of: pts.length };
+  }
+  // Marks that can be used on this map: real numbers, fine enough, on the course.
+  function markSets(map, marks) {
+    const ok = (marks || []).filter(m => m && Number.isFinite(m.lat) && Number.isFinite(m.lng) && !(m.acc > MARK_ACC))
+      .map(m => ({ m, p: fromLatLng(map, m.lat, m.lng) })).filter(x => offCourse(map, x.p) <= MARK_OFF);
+    const sets = {};
+    for (const x of ok) if (x.m.k === 'tee') (sets[String(x.m.tee || '').toLowerCase()] = sets[String(x.m.tee || '').toLowerCase()] || []).push(x.p);
+    const tees = Object.keys(sets).sort().map(t => ({ tee: t, a: agree(sets[t]) })).filter(t => t.a);
+    return { flag: agree(ok.filter(x => x.m.k === 'flag').map(x => x.p)), tees };
+  }
+  const circle = (c, r) => { const ring = []; for (let k = 0; k < 24; k++) { const a = 2 * Math.PI * k / 24; ring.push([f1(c[0] + r * Math.cos(a)), f1(c[1] + r * Math.sin(a))]); } return [ring]; };
+  const marksCache = new WeakMap();
+  function withMarks(map, n, marks, tee, metres) {
+    let byKey = marksCache.get(marks); if (!byKey) marksCache.set(marks, byKey = new Map());
+    const key = [map.id, n, String(tee || '').toLowerCase(), metres].join('|');
+    if (!byKey.has(key)) byKey.set(key, buildMarked(map, n, marks, tee, metres));
+    return byKey.get(key);
+  }
+  function buildMarked(map, n, marks, tee, metres) {
+    const { flag, tees } = markSets(map, marks), old = map.byN[n];
+    if (!flag) return null;
+    if (old && dist(flag.p, old.line[old.line.length - 1]) > MARK_GREEN_MOVE) return null;   // the flags are another hole's
+    if (!old && !tees.length) return null;
+    const features = map.features.slice(), add = f => { f.bb = bbox(featPts(f)); features.push(f); return features.length - 1; };
+    const green = { k: 'green', est: true, mk: true, h: n, r: circle(flag.p, 12) }; green.bb = bbox(featPts(green));
+    const teeIx = tees.map(t => add({ k: 'teept', mk: true, h: n, c: t.a.p, tee: t.tee }));
+    let hole;
+    if (old) {
+      // An OSM line with an estimated green: the green moves to the flags.
+      features[old.green] = green;
+      hole = { ...old, line: old.line.slice(0, -1).concat([flag.p]), tees: (old.tees || []).concat(teeIx) };
+    } else {
+      // No line at all: the tee played (else the set nearest the card) to the flags.
+      const want = String(tee || '').toLowerCase();
+      const t = tees.find(x => x.tee === want) || tees.slice().sort((a, b) => metres > 0 ? Math.abs(dist(a.a.p, flag.p) - metres) - Math.abs(dist(b.a.p, flag.p) - metres) : 0)[0];
+      hole = { n, line: [t.a.p, flag.p], green: add(green), tees: teeIx };
+    }
+    hole.fromMarks = { flags: flag.n, flagsOf: flag.of, tees: tees.reduce((s, t) => s + t.a.n, 0), line: !old };
+    return { map: { ...map, features, byN: { ...map.byN, [n]: hole } }, hole };
   }
 
   /* ---------- drawing ---------- */
@@ -351,9 +416,12 @@
   const LEGEND = [
     ['green', 'Green', '<rect class="hm-green" x="3" y="2" width="16" height="10" rx="5"/>'],
     ['greenEst', 'Estimated green (not mapped)', '<rect class="hm-green-est" x="3" y="2" width="16" height="10" rx="5"/>'],
+    ['greenMarks', 'Green estimated from your flag marks', '<rect class="hm-green-est" x="3" y="2" width="16" height="10" rx="5"/>'],
+    ['lineMarks', 'Hole line from your GPS marks', '<line class="hm-line" x1="1" y1="7" x2="21" y2="7"/>'],
     ['fairway', 'Fairway', '<rect class="hm-fw" x="1" y="3" width="20" height="8" rx="3"/>'],
     ['strip', 'Estimated fairway', '<rect class="hm-fwe" x="1" y="3" width="20" height="8" rx="3"/>'],
     ['tee', 'Tee box', '<rect class="hm-tee" x="6" y="3" width="10" height="8" rx="1"/>'],
+    ['teeMarks', 'Your tee marks', '<rect class="hm-tee" x="8" y="4" width="6" height="6"/>'],
     ['bunker', 'Bunker', '<ellipse class="hm-bunker" cx="11" cy="7" rx="8" ry="5"/><ellipse class="hm-sandd" cx="11" cy="7" rx="8" ry="5"/>'],
     ['water', 'Water', '<rect class="hm-water" x="1" y="2" width="20" height="10" rx="4"/><rect class="hm-wave" x="1" y="2" width="20" height="10" rx="4"/>'],
     ['trees', 'Trees', '<g class="hm-can-edge"><circle cx="7" cy="7" r="5"/><circle cx="15" cy="7" r="5"/></g><g class="hm-can"><circle cx="7" cy="7" r="5"/><circle cx="15" cy="7" r="5"/></g><g class="hm-can-h"><circle cx="7" cy="7" r="5"/><circle cx="15" cy="7" r="5"/></g>'],
@@ -371,8 +439,11 @@
     const F = map.features.filter(f => vis(f, box)), has = k => F.some(f => f.k === k);
     const out = new Set(['rough', 'off', 'teemark']);
     if (F.some(f => f.k === 'green' && !f.est)) out.add('green');
-    if (F.some(f => f.k === 'green' && f.est)) out.add('greenEst');
-    if (has('teept')) out.add('tee');
+    if (F.some(f => f.k === 'green' && f.est && !f.mk)) out.add('greenEst');
+    if (F.some(f => f.k === 'green' && f.mk)) out.add('greenMarks');
+    if (hole.fromMarks && hole.fromMarks.line) out.add('lineMarks');
+    if (F.some(f => f.k === 'teept' && !f.mk)) out.add('tee');
+    if (F.some(f => f.k === 'teept' && f.mk)) out.add('teeMarks');
     if (has('fairway')) out.add('fairway');
     if (stripFor(map, hole, opts.par, pl)) out.add('strip');
     for (const k of ['tee', 'bunker', 'water', 'path']) if (has(k)) out.add(k);
@@ -435,7 +506,7 @@
     projection, fromLatLng, toLatLng, offCourse, greenDistances, mapToView, lieAt, toGreen, playLine, mismatch, stripFor,
     set onLoad(f) { onLoad = typeof f === 'function' ? f : () => {}; },
     geom: { dist, lineLen, pointAt, sub, segDist, lineDist, inRings, centroid, bbox },
-    FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH,
+    FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH, MARK_ACC, MARK_NEAR, MARK_OFF, MARK_GREEN_MOVE,
     // Tests put a map in directly; the app always goes through get().
     _put(id, m) { files[id] = m ? prepare(m) : null; },
   };

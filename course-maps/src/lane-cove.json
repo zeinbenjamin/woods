@@ -1,0 +1,14 @@
+{
+ "id": "lane-cove",
+ "name": "Lane Cove Golf Club",
+ "osm": {
+  "course": "way/174143547",
+  "name": "Lane Cove Country Club",
+  "exported": "2026-09-27"
+ },
+ "origin": [
+  -33.82107,
+  151.17568
+ ],
+ "holes": "marks"
+}

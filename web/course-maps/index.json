@@ -6,6 +6,18 @@
   "holes": 18
  },
  {
+  "id": "barnwell-park",
+  "name": "Barnwell Park Golf Club",
+  "osmName": "Barnwell Park Golf Club",
+  "holes": 0
+ },
+ {
+  "id": "beverley-park",
+  "name": "Beverley Park Golf Club",
+  "osmName": "Beverley Park Golf Club",
+  "holes": 0
+ },
+ {
   "id": "bondi",
   "name": "Bondi Golf & Diggers Club",
   "osmName": "Bondi Golf Course",
@@ -16,6 +28,12 @@
   "name": "Hurstville Golf Club",
   "osmName": "Hurstville Golf Course",
   "holes": 18
+ },
+ {
+  "id": "lane-cove",
+  "name": "Lane Cove Golf Club",
+  "osmName": "Lane Cove Country Club",
+  "holes": 0
  },
  {
   "id": "long-reef",
