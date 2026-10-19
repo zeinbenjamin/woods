@@ -13,7 +13,7 @@
 // id and assets are written by id.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { putDoc, recordAsset, listDocs, ASSET_DIR } from '../server/db.js';
+import { putDoc, getDoc, recordAsset, listDocs, mergeCourseMarks, ASSET_DIR } from '../server/db.js';
 
 const EXT = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
   'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov' };
@@ -44,7 +44,8 @@ for (const name of ['clubs', 'courses', 'sessions']) {
   for (const doc of (data[name] || [])) {
     const id = name === 'clubs' ? doc.code : doc.id;
     if (!id) { console.warn(`  skipped a ${name} record with no id`); continue; }
-    putDoc(name, owner, id, doc);
+    // A course keeps the GPS marks already on it as well as the export's.
+    putDoc(name, owner, id, name === 'courses' ? mergeCourseMarks(getDoc(name, owner, id), doc, owner, { trusted: true }).doc : doc);
     counts[name] = (counts[name] || 0) + 1;
   }
 }

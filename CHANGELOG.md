@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.3.0 — 2026-10-19
+- On holes the course map can't draw yet (Barnwell Park, Beverley Park, Lane Cove, and Hurstville's estimated greens), Play mode offers "Mark tee" and "Mark flag". One round of marks lets the map draw those holes, for you and anyone who plays there.
+- Marks need a good GPS fix (±10 m or better); if it's rougher, the app asks you to move into the open and try again.
+- A hole's page shows how many marks it has, and you can remove your own. Other players' marks stay.
+
 ## 2.2.0 — 2026-10-19
 - Hurstville has a course map: link it from the course page and every hole is drawn from OpenStreetMap, with the card checked against it.
 - Hurstville's greens aren't mapped yet, so each is an estimate on the flag, drawn dashed and labelled "Estimated green (not mapped)". A tap there doesn't set the lie (you pick it), and Play mode shows the distance to the middle only, not the front and back.

@@ -214,6 +214,7 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .advice { background: var(--green-soft); color: var(--ink); border-radius: var(--r); padding: 8px 10px; margin: 8px 0; }
 .stencil .hdot { fill: #fff; stroke: #1B2A20; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; } .stencil .hdot.first { fill: #F2C94C; }
 .l-teedot { background: #F2C94C; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; } .l-dot { background: #fff; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; }
+.marks { border: 1px dashed var(--rule); border-radius: var(--r); padding: 8px 10px 10px; margin: 8px 0 12px; } .marks .markrow { margin: 8px 0; }
 .markrow { justify-content: center; margin: 12px 0 18px; } .markbtn { padding: 11px 22px; font-size: 15px; }
 #playLive > p { margin: 6px 0 4px; }
 .lastshot { border: 1px solid var(--rule); border-radius: var(--r); padding: 8px; margin: 4px 0 10px; }
@@ -2276,6 +2277,7 @@ function vCourseHole() {
       if (ap.length) h += `<h2>Approaches</h2><p>${ap.map(x => `${esc(x.club || '?')} from ${fmt(x.from)}m → ${x.lie}`).join('; ')}.</p>`;
     }
   }
+  h += holeMarksSection(c, n);
   h += `<div class="row-actions"><button data-act="editHole" data-id="${c.id}" data-n="${n}">Edit layout</button></div>`;
   return h;
 }
@@ -3279,7 +3281,61 @@ function hazardsAhead(hm, p) {
   return out.sort((a, b) => a.reach - b.reach).slice(0, 5);
 }
 const metres = v => v == null ? '–' : String(Math.round(v));
+/* ---------- GPS marks (2.3.0) ----------
+   Where the map has no line for a hole (no course map, or a green the map
+   only estimates), Play offers "Mark tee" and "Mark flag". Each is a raw fix
+   added to the shared course's hole (holes[i].marks: {k, lat, lng, acc, at,
+   by, tee?}); the course maps build the hole from them at read time. Nothing
+   derived is stored, and the server keeps everyone's marks (mergeCourseMarks). */
+const MARK_ACC = 10;
+// The map marks an estimated green on its shape (f.est), not on hm.green, which is a point.
+const wantsMarks = h => h.hm === null || !!(h.hm && h.hm.map && (h.hm.map.features[h.hm.hole.green] || {}).est);
+const courseHole = (c, n) => ((c && c.holes) || []).find(x => x.n === n);
+const marksLabel = ms => { const f = ms.filter(m => m.k === 'flag').length, t = ms.filter(m => m.k === 'tee').length; return `${plural(f, 'flag mark')}, ${plural(t, 'tee mark')}`; };
+function playMarksHtml(r, h) {
+  const c = course(r.courseId); if (!c || !wantsMarks(h)) return '';
+  const ms = (courseHole(c, h.n) || {}).marks || [];
+  const teeOk = !(h.shots || []).length && h.putts == null && h.strokes == null;
+  const atFlag = h.putts != null || h.strokes != null;
+  const fix = S.gps && Date.now() - S.gps.t <= GPS_STALE ? `GPS ±${Math.round(S.gps.acc)} m${S.gps.acc > MARK_ACC ? ' — too rough to mark' : ''}` : (S.gpsErr || 'Waiting for GPS…');
+  return `<div class="marks" id="playMarks">
+    <p class="small muted">${h.hm ? 'This green is only estimated on the map.' : 'This hole isn’t on a course map yet.'} Mark the tee where you tee off and the flag when you’re at the hole: that draws the hole, for you and anyone who plays here.</p>
+    <div class="row-actions markrow">${teeOk ? `<button class="${atFlag ? '' : 'primary'}" data-act="markHole" data-k="tee">Mark tee</button>` : ''}<button class="${atFlag || !teeOk ? 'primary' : ''}" data-act="markHole" data-k="flag">Mark flag</button></div>
+    <p class="small muted" style="text-align:center;margin:0">${esc(fix)} · this hole has ${marksLabel(ms)}</p></div>`;
+}
+async function markHole(k) {
+  const r = session(S.sub.sessionId), n = Number(S.sub.hole), c = r && course(r.courseId); if (!c || !courseHole(c, n)) return;
+  if (!S.gps || Date.now() - S.gps.t > GPS_STALE) { toast('No fresh GPS fix yet'); return; }
+  const { lat, lng, acc } = S.gps;
+  if (acc > MARK_ACC) { toast(`GPS ±${Math.round(acc)} m: move into the open and try again`, 3500); return; }
+  if (hasCoords(c) && kmBetween({ lat, lng }, c) > 3) { toast(`You're ${kmBetween({ lat, lng }, c).toFixed(1)} km from ${c.name}`); return; }
+  const mark = { k, lat, lng, acc, at: new Date().toISOString(), ...(S.me ? { by: S.me } : {}), ...(k === 'tee' ? { tee: String(r.tee || primaryTee(c)).toLowerCase() } : {}) };
+  // One write per course at a time, each to the latest copy.
+  const ok = await queued('courses/' + c.id, () => { const cur = course(c.id); return save('courses', cur.id, { ...cur, holes: cur.holes.map(x => x.n === n ? { ...x, marks: (x.marks || []).concat(mark) } : x) }); });
+  if (ok) { toast(k === 'tee' ? 'Tee marked' : 'Flag marked'); render(); }
+}
+// On the course's hole page: how many marks, and his own to remove.
+function holeMarksSection(c, n) {
+  const ms = (courseHole(c, n) || {}).marks || []; if (!ms.length) return '';
+  const mine = ms.filter(m => S.me && m.by === S.me);
+  return `<section class="sec" id="holeMarks"><h2>GPS marks</h2><p class="small">${marksLabel(ms)}, from rounds played here${mine.length < ms.length ? ' (some by other players)' : ''}. They draw this hole where the map has no line.</p>
+    ${mine.length ? `<div class="list">${mine.map(m => `<div class="spread small item" style="cursor:default"><span>${m.k === 'tee' ? `Tee${m.tee ? ` (${esc(m.tee)})` : ''}` : 'Flag'}, ${dateLabel(localDay(new Date(m.at)))}, ±${Math.round(m.acc)} m</span><button class="quiet" data-act="removeMark" data-id="${c.id}" data-n="${n}" data-at="${esc(m.at)}" data-k="${m.k}">Remove</button></div>`).join('')}</div>` : ''}</section>`;
+}
+Object.assign(ACTIONS, {
+  markHole(d) { return markHole(d.k); },
+  async removeMark(d) {
+    if (!await confirmAsk(`Remove this ${d.k} mark? Other players' marks stay.`, 'Remove')) return;
+    const n = Number(d.n);
+    const ok = await queued('courses/' + d.id, () => { const cur = course(d.id); return save('courses', cur.id, { ...cur, holes: cur.holes.map(x => x.n === n ? { ...x, marks: (x.marks || []).filter(m => !(m.at === d.at && m.k === d.k && m.by === S.me)) } : x) }); });
+    if (ok) { toast('Mark removed'); render(); }
+  },
+});
+
 function playLiveHtml(h) {
+  const marks = inPlay() ? playMarksHtml(session(S.sub.sessionId) || {}, h) : '';
+  return playLiveCore(h) + marks;
+}
+function playLiveCore(h) {
   const g = gpsOn(h);
   const mark = `<button class="primary markbtn" data-act="markBall" ${g.p && !g.off ? '' : 'disabled'}>Mark my ball here</button>`;
   if (!g.p || g.off) return `<p class="small muted" id="gpsWhy" style="text-align:center">${esc(g.why)}</p>${h.hm ? `<div class="row-actions markrow">${mark}</div>` : ''}`;

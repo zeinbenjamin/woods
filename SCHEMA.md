@@ -80,7 +80,13 @@ values. Measured numbers are derived from shots and never written back.
         "tee": [185, 830], "green": [195, 125],
         "turn": [350, 470],          // optional dogleg point
         "gr": 30                     // green radius, image px
-      }
+      },
+      "marks": [                     // 2.3.0: raw GPS fixes from Play mode, any player
+        { "k": "tee", "lat": -33.8741, "lng": 151.1202, "acc": 4.2,
+          "at": "2026-10-19T00:12:03.000Z", "by": "zein@example.com", "tee": "white" },
+        { "k": "flag", "lat": -33.8766, "lng": 151.1202, "acc": 3,
+          "at": "2026-10-19T00:19:40.000Z", "by": "friend@example.com" }
+      ]
     }
   ]
 }
@@ -93,6 +99,20 @@ values. Measured numbers are derived from shots and never written back.
 - `metres` always equals `tees[tee]` when both exist. Readers should prefer
   `teeMetres(hole, tee)`.
 - `art` coordinates are **image pixels**, meaningless without that image.
+- `marks` (2.3.0) are raw fixes, never adjusted or averaged: `k` tee or flag,
+  `lat`/`lng` degrees, `acc` the phone's stated accuracy in metres (10 or
+  better, or the server refuses it), `at` an ISO time, `by` the email of who
+  marked it (set by the server), `tee` on a tee mark only (the round's tee,
+  lower case like `ratings` keys). Offered in Play only where the map can't
+  draw the hole (no map, or an estimated green). The course maps build a hole
+  line from them at read time; nothing derived is stored. Missing when a hole
+  has none (never an empty list).
+- The server merges `marks` on every course save (`mergeCourseMarks`):
+  someone else's stored marks always stay, your own stay only if your copy
+  still has them (that's how one is removed), and a mark not yet stored is
+  added only as yours. So an old copy on a friend's phone can neither drop a
+  mark nor bring back one its owner removed. Removing a hole from the card
+  removes its marks.
 - Editing a course must preserve every hole field the form doesn't own
   (`art`, `shape`, `tees`), and the course's `map`. The form owns `par`,
   `metres` (for its tee) and, since 1.13.0, `si`: 1..N, each value once.
