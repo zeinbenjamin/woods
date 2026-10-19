@@ -74,6 +74,51 @@
   }
   const featPts = f => f.r ? f.r.flat() : f.l ? f.l : f.c && Array.isArray(f.c[0]) ? f.c.map(c => [c[0], c[1]]) : f.c ? [f.c] : [];
 
+  /* ---------- lat/long <-> map metres ----------
+     The one projection everything uses: the build script places every
+     shape with it, and Play mode places a GPS fix with it, so the two can't
+     disagree. A local plane from the map's fixed origin: x east, y north,
+     metres per degree from the WGS84 series at the origin's latitude.
+     Within a course (≤ 2 km of the origin) its error is well under 1 m. */
+  function projection([lat0, lng0]) {
+    const φ = lat0 * Math.PI / 180;
+    const my = 111132.954 - 559.822 * Math.cos(2 * φ) + 1.175 * Math.cos(4 * φ);
+    const mx = 111412.84 * Math.cos(φ) - 93.5 * Math.cos(3 * φ);
+    const fwd = ([lng, lat]) => [(lng - lng0) * mx, (lat - lat0) * my];
+    fwd.inverse = ([x, y]) => ({ lat: lat0 + y / my, lng: lng0 + x / mx });
+    return fwd;
+  }
+  // A GPS fix (degrees) as a point on this map, in metres.
+  const fromLatLng = (map, lat, lng) => projection(map.origin)([lng, lat]);
+  const toLatLng = (map, p) => projection(map.origin).inverse(p);
+  // How far p is outside the course boundary (0 inside), in metres: a fix
+  // 2 km away is the car park at home, not a ball in the rough.
+  function offCourse(map, p) {
+    if (inRings(p, map.boundary)) return 0;
+    let m = Infinity;
+    for (const r of map.boundary) for (let i = 1; i < r.length; i++) m = Math.min(m, segDist(p, r[i - 1], r[i]).d);
+    return m;
+  }
+  // Front, middle and back of the green from p: where the straight line from p
+  // through the middle of the green enters and leaves the mapped green.
+  // middle is to the green's centre (the card's point); front/back are null
+  // where the green isn't mapped as a shape.
+  function greenDistances(hm, p) {
+    const g = hm.green, f = hm.map.features[hm.hole.green], middle = dist(p, g);
+    if (!f || !f.r || middle < 1e-6) return { front: null, middle, back: null };
+    const ux = (g[0] - p[0]) / middle, uy = (g[1] - p[1]) / middle;
+    let front = null, back = null, was = inRings(p, f.r);
+    for (let s = 0; s <= middle + 80; s += 0.5) {
+      const now = inRings([p[0] + ux * s, p[1] + uy * s], f.r);
+      if (now && !was && front == null) front = s;
+      if (!now && was && s > 0) back = s;
+      if (!now && back != null && s > middle) break;
+      was = now;
+    }
+    if (inRings(p, f.r)) front = 0;
+    return { front, middle, back };
+  }
+
   /* ---------- the tee rule ---------- */
   // The line you play: the mapped hole line re-anchored so its start (the
   // tee you played) is `metres` from its end (the middle of the green).
@@ -375,7 +420,8 @@
   if (root.document) injectStyle(root.document);
 
   root.HoleMap = {
-    get, list, forHole, svg, legend, legendKinds, tapToMap, mapToView, lieAt, toGreen, playLine, mismatch, stripFor,
+    get, list, forHole, svg, legend, legendKinds, tapToMap,
+    projection, fromLatLng, toLatLng, offCourse, greenDistances, mapToView, lieAt, toGreen, playLine, mismatch, stripFor,
     set onLoad(f) { onLoad = typeof f === 'function' ? f : () => {}; },
     geom: { dist, lineLen, pointAt, sub, segDist, lineDist, inRings, centroid, bbox },
     FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH,

@@ -1,0 +1,14 @@
+{
+ "id": "northbridge",
+ "name": "Northbridge Golf Club",
+ "osm": {
+  "course": "way/174146256",
+  "name": "Northbridge Golf Club",
+  "exported": "2026-09-27"
+ },
+ "origin": [
+  -33.81404,
+  151.22238
+ ],
+ "holes": "osm"
+}
