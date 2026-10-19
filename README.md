@@ -133,6 +133,18 @@ tunnel gives Carry an https address without opening a port. Requests pass
 through Cloudflare (TLS ends at their edge): that was a deliberate choice,
 so put Cloudflare Access in front (step 4) and keep `API_TOKEN` set.
 
+**Already have a tunnel and `cloudflared` running** (for other apps)?
+Then it's two steps and no new container:
+
+- In the tunnel's *Public hostname* tab, add `carry.<your domain>` →
+  service **HTTP**, URL `<NAS LAN IP>:1818` (e.g. `192.168.1.20:1818`),
+  the same way your other apps are pointed. Carry publishes 1818 on the
+  NAS, so your existing `cloudflared` reaches it like any other app. (The
+  name `carry:1818` only resolves inside Carry's own compose network.)
+- Do step 4 (Access) and step 6 (the phone) below. Skip 1, 2, 3 and 5.
+
+**Starting from nothing:**
+
 1. **A domain on Cloudflare.** The tunnel needs a domain whose DNS
    Cloudflare runs (bought there, or moved there).
 2. **Create the tunnel.** Cloudflare dashboard → Zero Trust → Networks →
