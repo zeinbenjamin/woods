@@ -97,6 +97,54 @@ export const putDoc = (collection, user, id, body) => {
 export const deleteDoc = (collection, user, id) =>
   db.prepare('DELETE FROM docs WHERE collection = ? AND owner = ? AND id = ?').run(collection, ownerOf(collection, user), id).changes > 0;
 
+/* ---------- GPS marks on a shared course (2.3.0) ----------
+   holes[i].marks: raw tee and flag fixes from Play mode, {k, lat, lng, acc,
+   at, by, tee?}, used by the course maps where OSM has no hole line. The
+   course is one document everyone saves whole, so a phone with an older copy
+   would otherwise drop the marks someone else just added. On every save:
+   - marks by someone else that are already stored always stay;
+   - your own stored marks stay only if your copy still has them (that's how
+     you remove one);
+   - a mark that isn't stored yet is added only as yours (by = you), and must
+     be a real fix: tee or flag, a latitude and longitude, accuracy 10 m or
+     better, a time. Anyone else's unstored mark in your copy is ignored, so a
+     mark its owner removed can't come back from a friend's old copy.
+   trusted (the import script) keeps every mark from both sides. */
+export const MARK_ACC = 10;
+const markKey = m => `${m.by}|${m.at}|${m.k}`;
+function badMark(m) {
+  if (!m || (m.k !== 'tee' && m.k !== 'flag')) return 'a mark is a tee or a flag';
+  if (!Number.isFinite(m.lat) || Math.abs(m.lat) > 90 || !Number.isFinite(m.lng) || Math.abs(m.lng) > 180) return 'a mark needs a latitude and longitude';
+  if (!Number.isFinite(m.acc) || m.acc < 0) return 'a mark needs its GPS accuracy';
+  if (m.acc > MARK_ACC) return `GPS ±${Math.round(m.acc)} m is too rough for a mark (${MARK_ACC} m or better)`;
+  if (typeof m.at !== 'string' || Number.isNaN(Date.parse(m.at))) return 'a mark needs the time it was taken';
+  return null;
+}
+export function mergeCourseMarks(stored, incoming, user, { trusted = false } = {}) {
+  if (!Array.isArray(incoming.holes)) return { doc: incoming };
+  const before = new Map(((stored && stored.holes) || []).map(h => [h.n, h.marks || []]));
+  const holes = [];
+  for (const h of incoming.holes || []) {
+    const old = before.get(h.n) || [], oldKeys = new Set(old.map(markKey));
+    const mine = new Set((h.marks || []).map(m => markKey({ ...m, by: m.by || user })));
+    const kept = old.filter(m => trusted || m.by !== user || mine.has(markKey(m)));
+    const added = [];
+    for (const m of h.marks || []) {
+      const by = trusted ? m.by : (m.by || user);
+      if (oldKeys.has(markKey({ ...m, by }))) continue;
+      if (!trusted && by !== user) continue;                    // someone else's, not stored: never resurrected
+      const why = badMark(m); if (why) return { error: `Hole ${h.n}: ${why}.` };
+      const mark = { k: m.k, lat: m.lat, lng: m.lng, acc: m.acc, at: m.at, by };
+      if (m.k === 'tee' && m.tee) mark.tee = String(m.tee).toLowerCase();
+      added.push(mark);
+    }
+    const marks = kept.concat(added);
+    const { marks: _, ...rest } = h;
+    holes.push(marks.length ? { ...rest, marks } : rest);
+  }
+  return { doc: { ...incoming, holes } };
+}
+
 // Someone else's rounds that were played on this shared course.
 export const courseRoundsOfOthers = (courseId, user) =>
   db.prepare("SELECT COUNT(*) AS n FROM docs WHERE collection = 'sessions' AND owner != ? AND json_extract(body, '$.courseId') = ?").get(user, courseId).n;

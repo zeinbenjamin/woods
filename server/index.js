@@ -7,7 +7,7 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { db, listDocs, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR, COLLECTIONS } from './db.js';
+import { db, listDocs, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, mergeCourseMarks, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR, COLLECTIONS } from './db.js';
 import { requireUser, authMode } from './auth.js';
 import { analyse, parseJson } from './anthropic.js';
 import { VERSION, COMMIT, CHANGELOG } from './version.js';
@@ -103,7 +103,15 @@ app.get('/api/:collection/:id', (req, res) => {
 });
 app.put('/api/:collection/:id', (req, res) => {
   if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'body must be an object' });
-  res.json(putDoc(collectionOf(req), req.user, req.params.id, { ...req.body, id: req.params.id }));
+  const col = collectionOf(req);
+  let doc = { ...req.body, id: req.params.id };
+  // A shared course keeps everyone's GPS marks, whatever copy this phone had.
+  if (col === 'courses') {
+    const m = mergeCourseMarks(getDoc(col, req.user, req.params.id), doc, req.user);
+    if (m.error) return res.status(400).json({ error: 'bad_mark', message: m.error });
+    doc = m.doc;
+  }
+  res.json(putDoc(col, req.user, req.params.id, doc));
 });
 app.delete('/api/:collection/:id', (req, res) => {
   const col = collectionOf(req);

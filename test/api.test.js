@@ -178,6 +178,42 @@ test('deletes a document', async () => {
   assert.equal(list.docs.some(s => s.id === 's_x'), false);
 });
 
+test('GPS marks on a shared course survive any phone\'s copy: others\' always stay, only yours are yours to change', async () => {
+  const put = (who, doc) => fetch(`${base}/api/courses/c_marks`, { method: 'PUT', headers: hdr(who), body: JSON.stringify(doc) });
+  const get = async who => (await fetch(`${base}/api/courses/c_marks`, { headers: hdr(who) })).json();
+  const card = (marks = []) => ({ id: 'c_marks', name: 'Barnwell Park', holes: [{ n: 1, par: 4, metres: 300, ...(marks.length ? { marks } : {}) }, { n: 2, par: 3, metres: 140 }] });
+  const mark = (k, at, extra = {}) => ({ k, lat: -33.874, lng: 151.12, acc: 5, at, ...extra });
+  await put(ME, card());
+  const blank = await get(FRIEND);                                  // a friend's phone loads the course now
+  // Mine, sent without a "by" (or claiming to be someone else): stored as mine, raw, the tee in lower case.
+  assert.equal((await put(ME, card([mark('tee', '2026-10-19T00:00:00.000Z', { by: 'someone@else.com', tee: 'White', extra: 1 })]))).status, 200);
+  let marks = (await get(ME)).holes[0].marks;
+  assert.equal(marks, undefined, 'a new mark claiming someone else is never stored (and no empty list is added)');
+  await put(ME, card([mark('tee', '2026-10-19T00:00:00.000Z', { tee: 'White', extra: 1 })]));
+  marks = (await get(ME)).holes[0].marks;
+  assert.deepEqual(marks, [{ k: 'tee', lat: -33.874, lng: 151.12, acc: 5, at: '2026-10-19T00:00:00.000Z', by: ME, tee: 'white' }], 'only the mark\'s own fields');
+  // The friend saves their old copy (no marks), with a flag of their own: mine stays, theirs is added.
+  await put(FRIEND, { ...blank, holes: [{ ...blank.holes[0], marks: [mark('flag', '2026-10-19T01:00:00.000Z')] }, blank.holes[1]] });
+  marks = (await get(ME)).holes[0].marks;
+  assert.deepEqual(marks.map(m => [m.k, m.by]), [['tee', ME], ['flag', FRIEND]]);
+  // I can't remove the friend's by leaving it out; I can remove mine.
+  await put(ME, card([]));
+  assert.deepEqual((await get(ME)).holes[0].marks.map(m => [m.k, m.by]), [['flag', FRIEND]]);
+  // The friend's copy still has my old tee mark: it isn't brought back.
+  await put(FRIEND, { ...blank, holes: [{ ...blank.holes[0], marks: [{ ...mark('tee', '2026-10-19T00:00:00.000Z', { tee: 'white' }), by: ME }, { ...mark('flag', '2026-10-19T01:00:00.000Z'), by: FRIEND }] }, blank.holes[1]] });
+  assert.deepEqual((await get(ME)).holes[0].marks.map(m => [m.k, m.by]), [['flag', FRIEND]], 'removed stays removed');
+  // A rough or broken fix is refused, and the course is left as it was.
+  for (const [bad, why] of [[{ acc: 18 }, /GPS ±18 m is too rough for a mark \(10 m or better\)/], [{ k: 'pin' }, /a tee or a flag/], [{ lat: null }, /latitude and longitude/], [{ at: 'yesterday' }, /the time it was taken/], [{ acc: undefined }, /GPS accuracy/]]) {
+    const r = await put(ME, card([{ ...mark('flag', '2026-10-19T02:00:00.000Z'), ...bad }]));
+    assert.equal(r.status, 400, JSON.stringify(bad));
+    const body = await r.json();
+    assert.equal(body.error, 'bad_mark');
+    assert.match(body.message, why);
+    assert.match(body.message, /^Hole 1: /);
+  }
+  assert.deepEqual((await get(ME)).holes[0].marks.map(m => m.by), [FRIEND], 'unchanged by the refusals');
+});
+
 /* ---------- assets ---------- */
 
 const upload = (bytes, type, who = ME) =>
@@ -426,6 +462,13 @@ test('imports a Carry export for its owner, assets and all', async () => {
   const courses = await (await fetch(`${base}/api/courses`, { headers: hdr(ME) })).json();
   const imported = courses.docs.find(c => c.id === 'c_imported');
   assert.ok(imported, 'imported course is shared');
+  // Importing an older export again keeps a mark made since (and the export's own).
+  const withMark = { ...imported, holes: imported.holes.map(h => ({ ...h, marks: [{ k: 'flag', lat: -33.9, lng: 151.2, acc: 4, at: '2026-10-19T03:00:00.000Z' }] })) };
+  await fetch(`${base}/api/courses/c_imported`, { method: 'PUT', headers: hdr(ME), body: JSON.stringify(withMark) });
+  writeFileSync(file, JSON.stringify({ ...exp, courses: [{ ...exp.courses[0], holes: exp.courses[0].holes.map(h => ({ ...h, marks: [{ k: 'tee', lat: -33.9, lng: 151.2, acc: 3, at: '2026-09-14T00:00:00.000Z', by: FRIEND }] })) }] }));
+  execFileSync('node', ['scripts/import-export.js', file, '--owner', FRIEND], { env, encoding: 'utf8' });
+  const again = await (await fetch(`${base}/api/courses/c_imported`, { headers: hdr(ME) })).json();
+  assert.deepEqual(again.holes[0].marks.map(m => [m.k, m.by]), [['flag', ME], ['tee', FRIEND]], 'both kept');
   const blob = await fetch(`${base}/_blob/${imported.holes[0].art.asset}`, { headers: header(ME) });
   assert.equal(blob.status, 200, 'artwork reference resolves without rewriting ids');
   assert.deepEqual(Buffer.from(await blob.arrayBuffer()), png);

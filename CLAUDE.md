@@ -640,6 +640,21 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   drops a waiting older one; a set waits for a send in progress. The status
   line says "n changes saved on this phone, waiting for signal". Limit: no
   service worker, so a closed app can't reopen without signal.
+- **GPS marks** (2.3.0, asked by the hole-maps chat and agreed with him):
+  on a hole the map can't draw (`wantsMarks`: `hm === null`, or the
+  hole's green shape has `est`: the note said `hm.green.est`, but `hm.green`
+  is a point and holemap.js flags the shape), the live panel offers *Mark tee* (until the hole has a
+  shot, putts or a score) and *Mark flag* (primary once it's scored;
+  repeats allowed, the map side averages them). Each adds a raw fix to the
+  shared course's `holes[i].marks` (see SCHEMA.md), refused over ±10 m
+  (`MARK_ACC`) with "GPS ±18 m: move into the open and try again", or more
+  than 3 km from the course's location. Saved through `save()` queued per
+  course, so it waits in the outbox without signal like any save. The server
+  merges marks on every course save (`mergeCourseMarks` in `db.js`, also used
+  by the import script, which keeps both sides), so friends' phones with
+  older copies can't drop or resurrect one, and only `by` = you can be
+  removed (the hole page, `holeMarksSection`). The map side builds the hole
+  from them; `hmFor` will take the course for that (hole-maps chat).
 - **Not measured on a real course yet.** Distances are checked against
   hand-worked geometry and the globe (haversine) in `ui-play`, but phone GPS
   under trees and how a phone browser treats Cloudflare's offline errors
@@ -665,13 +680,14 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 251 tests, about 35s.
+`npm test` — 261 tests, about 40s.
 
-- `api.test.js` (24) — the server alone: sign-in (forged key, wrong
+- `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
   cookie, clock skew, keys unreachable, not configured, `DEV_USER`),
   whose documents are whose (isolation, shared courses, per-person stamps,
-  the course-delete guard), assets (uploader-only delete, sign-in for
+  the course-delete guard, GPS marks surviving other phones' copies and
+  refused when rough), assets (uploader-only delete, sign-in for
   files, byte ranges, safe serving), the 1.x migration (refused without an
   owner, converted with a backup, idempotent), import with `--owner`,
   `/api/version`, the stamped page, and `/api/analyse` against a fake
@@ -714,6 +730,9 @@ fixture would let the reading be pinned.
   its putts, a course with no map, and the outbox: no signal, Cloudflare's
   502, a poll not undoing a waiting save, newer beating older, sending on
   start),
+  `ui-marks` (Mark tee / Mark flag on an unmapped hole: the raw fix stored,
+  ±10 m refused, flag after scoring, edits keep marks, only your own
+  removable),
   `ui-holemap` (linking a map, the card check, taps in metres and lies
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking).
@@ -741,7 +760,9 @@ bug and watching the test fail (22 mutations for the original suites,
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
 9 for course maps, 4 for the 1.9.0 tee-box check, 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
-mode and the outbox; all caught.
+mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
+`tee` field from the app survives it because the server corrects it); all
+caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
 Two bugs found while rebuilding the suites are fixed and pinned by
