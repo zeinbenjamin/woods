@@ -176,11 +176,14 @@ test('Hurstville: OSM numbers from the old start, so its 10-18 are the front nin
     const [x, y] = HM.fromLatLng(m, osm[0][1], osm[0][0]);
     assert.ok(Math.hypot(h.line[0][0] - x, h.line[0][1] - y) < 0.2, `hole ${n} starts where OSM hole ${ref} does`);
   }
-  // The front nine against his blue card: every tee on a mapped tee point, nothing flagged.
-  for (let n = 1; n <= 9; n++) {
+  // Against his blue card: every tee but 18's on a mapped tee point, within 12 m.
+  for (let n = 1; n <= 17; n++) {
     const x = HM.mismatch(m.byN[n], c[n].metres, m);
     assert.ok(x.onTee && !x.flagged && Math.abs(x.diff) <= 12, `hole ${n}: card ${c[n].metres}, line ${Math.round(x.line)}`);
   }
+  // 18's blue tee is 38 m ahead of the one OSM maps: flagged, the tee placed from the card.
+  const x18 = HM.mismatch(m.byN[18], c[18].metres, m);
+  assert.ok(x18.flagged && Math.round(x18.diff) === 38 && Math.abs(lineLen(HM.playLine(m.byN[18], 285)) - 285) < 0.5);
   assert.ok(lineLen(m.byN[8].line) > 1.2 * dist(m.byN[8].line[0], m.byN[8].line.at(-1)), 'hole 8 is the dogleg, as on his GPS app');
   // No green is mapped: each is estimated on its pin, never a lie, no front or back.
   const pins = geo.filter(f => f.properties.golf === 'pin').map(f => f.properties['@id']);

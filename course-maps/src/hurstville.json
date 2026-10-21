@@ -31,10 +31,10 @@
   "17": 8,
   "18": 9
  },
- "why": "OSM numbers the holes from the old clubhouse: its 10-18 are the course's 1-9 today (and its 1-9 the 10-18). Found from his GPS app's blue card, 2026-10-21: front nine 260, 134, 132, 342, 288, 538, 112, 382, 148 against OSM 10-18's lines 264, 134, 132, 340, 286, 534, 110, 370, 151, with the same dogleg on 8. In play on 2026-10-21, with OSM's numbers, every hole showed a different hole. The origin never changed.",
+ "why": "OSM numbers the holes from the old clubhouse: its 10-18 are the course's 1-9 today (and its 1-9 the 10-18). Found from his GPS app's blue card, 2026-10-21: front nine 260, 134, 132, 342, 288, 538, 112, 382, 148 against OSM 10-18's lines 264, 134, 132, 340, 286, 534, 110, 370, 151, with the same dogleg on 8; back nine 296, 117, 434, 162, 290, 376, 486, 496, 285 against OSM 1-9's 289, 116, 428, 160, 279, 372, 479, 491, 323. In play on 2026-10-21, with OSM's numbers, every hole showed a different hole. The origin never changed.",
  "card": {
   "tee": "blue",
-  "source": "his GPS app, screenshots of 2026-10-21 (front nine)",
+  "source": "his GPS app, screenshots of 2026-10-21",
   "fields": [
    "n",
    "par",
@@ -95,6 +95,60 @@
     3,
     148,
     8
+   ],
+   [
+    10,
+    4,
+    296,
+    14
+   ],
+   [
+    11,
+    3,
+    117,
+    18
+   ],
+   [
+    12,
+    5,
+    434,
+    11
+   ],
+   [
+    13,
+    3,
+    162,
+    4
+   ],
+   [
+    14,
+    4,
+    290,
+    7
+   ],
+   [
+    15,
+    4,
+    376,
+    2
+   ],
+   [
+    16,
+    5,
+    486,
+    12
+   ],
+   [
+    17,
+    5,
+    496,
+    3
+   ],
+   [
+    18,
+    4,
+    285,
+    9
    ]
   ]
  }

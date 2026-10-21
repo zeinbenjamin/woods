@@ -539,7 +539,7 @@ scorecard sets every length.
   flagged 9 of its 18). A hole's tee boxes (`hole.tees`) are its own mapped
   tees within 20 m of its line in the tee 60% of it, a box the line runs over
   (≤ 3 m, for one box shared by two holes), and any tee a hand mapping names.
-  Flagged now: Bardwell 11 (28 m from any box), The Coast 18 (17 m). Randwick
+  Flagged now: Bardwell 11 (28 m from any box), The Coast 18 (17 m), Hurstville 18 (38 m). Randwick
   3 and 5 aren't: the red tee is on the box (3's is 45 m long).
 - **Lies** come from the shape under the tap: water, bunker, green, tee or
   fairway (→ fairway), trees (woods, merged crowns, lone trees), mapped
@@ -619,11 +619,14 @@ scorecard sets every length.
   (OSM ref → hole). Played on 2026-10-21 with OSM's numbers, every hole showed
   a different hole. Found from his GPS app's blue card: front nine 260, 134,
   132, 342, 288, 538, 112, 382, 148 against OSM 10–18's 264, 134, 132, 340,
-  286, 534, 110, 370, 151, the dogleg on 8 included; every front-nine tee is
-  on a mapped tee point (≤ 12 m). (A first reading took the lines for an old
-  par 70 layout, 2.8.0's first draft went marks only; the card settled it.)
-  The back nine's card is still to come. The origin and every shape are
-  unchanged, so shots logged on the old numbering re-measure on the right hole.
+  286, 534, 110, 370, 151, the dogleg on 8 included; back nine 296, 117,
+  434, 162, 290, 376, 486, 496, 285 against OSM 1–9's 289, 116, 428, 160,
+  279, 372, 479, 491, 323 (par 70, 5,278 m blue). The card is in the source;
+  17 tees are on a mapped tee point (≤ 12 m). Flagged: 18, whose blue tee is
+  38 m ahead of OSM's. (A first reading took the lines for an old par 70
+  layout and 2.8.0's first draft went marks only; the card settled it.) The
+  origin and every shape are unchanged, so shots logged on the old numbering
+  re-measure on the right hole.
   A mapped tee *point* (`teept`) counts as a tee box for the card check.
   Barnwell Park, Beverley Park and Lane Cove (2.4.0) have only a boundary in
   OSM: their sources are `holes: "marks"`, so each map file is a boundary and a

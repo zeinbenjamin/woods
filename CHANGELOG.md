@@ -8,7 +8,7 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 
 ## 2.8.0 — 2026-10-21
 - Hurstville's holes had the wrong numbers: the map numbered them from the old clubhouse, so the front and back nines were swapped and every hole showed a different hole. They're renumbered now, so hole 1 is the hole you tee off first today.
-- Checked against your GPS app's blue card: every front-nine tee lands on a mapped tee, within 12 m of the card.
+- Checked against your GPS app's blue card for all 18: 17 tees land on a mapped tee, within 12 m of the card. Hole 18's blue tee is 38 m ahead of the one on the map, so the course page flags it and the tee is placed from the card.
 - Shots you've already logged at Hurstville stay where you tapped them, and are measured on the right holes now. Flags you marked on 21 October count towards their own hole's estimated green.
 
 ## 2.7.0 — 2026-10-20
