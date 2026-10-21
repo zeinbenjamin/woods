@@ -39,7 +39,7 @@ test('every map credits OpenStreetMap and has a fixed origin', () => {
       const g = m.features[h.green];
       assert.equal(g.k, 'green', `hole ${h.n} ends on a green`);
       assert.ok(dist(h.line[h.line.length - 1], centroid(g.r[0])) < 0.2, `hole ${h.n} is measured to the middle of its green`);
-      if (id !== 'hurstville') assert.ok(!g.est, `hole ${h.n}'s green is mapped, not estimated`);
+      assert.ok(!g.est, `hole ${h.n}'s green is mapped, not estimated`);
     }
   }
 });
@@ -165,26 +165,23 @@ test('front, middle and back of the green along the line from where he stands', 
   assert.deepEqual([unmapped.front, unmapped.back], [null, null], 'no green shape: only the middle, never a guessed edge');
 });
 
-test('Hurstville: lines, tee points and pins only, so its greens are estimated and say so', () => {
-  const m = mapOf('hurstville'), geo = JSON.parse(readFileSync('course-maps/osm/hurstville.geojson', 'utf8')).features;
-  assert.equal(m.holes.length, 18);
-  const pins = geo.filter(f => f.properties.golf === 'pin').map(f => f.properties['@id']);
-  for (const h of m.holes) {
-    const g = m.features[h.green], mid = h.line.at(-1);
-    assert.ok(g.est, `hole ${h.n}: no green is mapped, so it's estimated`);
-    assert.ok(pins.includes(g.osm), `hole ${h.n}'s estimated green sits on its mapped pin`);
-    assert.equal(HM.lieAt(m, mid), null, 'an estimated green never reads as a green lie');
-    const hm = { map: m, hole: h, green: mid }, d = HM.greenDistances(hm, h.line[0]);
-    assert.deepEqual([d.front, d.back], [null, null], 'no front or back edge to an estimated green');
-    // The tee is mapped as a point; a card that puts the tee on it is on a mapped tee.
-    assert.equal(h.tees.length, 1);
-    const x = HM.mismatch(h, lineLen(h.line), m);
-    assert.ok(x.onTee && x.teeGap < 0.2, `hole ${h.n}`);
-  }
-  const hm = HM.forHole('hurstville', 3, 400);
-  assert.match(HM.svg(hm, { big: true, par: 4 }), /hm-green-est/);
-  assert.ok(HM.legendKinds(hm, { big: true, par: 4 }).includes('greenEst'));
-  assert.ok(!HM.legendKinds(hm, { big: true, par: 4 }).includes('green'), 'no mapped green on this hole, so no "Green" key');
+test('Hurstville: marks only; the old layout is gone, the origin and boundary are not', () => {
+  // OSM's lines, tee points and pins match the card from before the redesign
+  // (par 70, 5,447 m); every hole was wrong in play on 2026-10-21.
+  const m = mapOf('hurstville'), src = JSON.parse(readFileSync('course-maps/src/hurstville.json', 'utf8'));
+  assert.equal(src.holes, 'marks'); assert.match(src.why, /5,447 m/);
+  assert.deepEqual(src.origin, [-33.97247, 151.06092], 'shots already logged are stored in this frame: it never moves');
+  assert.equal(m.holesFrom, 'your GPS marks'); assert.deepEqual(m.holes, []);
+  assert.ok(!m.features.some(f => f.k === 'teept' || f.k === 'green'), 'no tee points or pins from the old layout');
+  const geo = JSON.parse(readFileSync('course-maps/osm/hurstville.geojson', 'utf8')).features;
+  assert.ok(['hole', 'pin', 'tee'].every(k => geo.some(f => f.properties.golf === k)), 'the extract still has them; the build leaves them out');
+  // Drawn only from a tee mark and a flag mark: never placed by the card distance.
+  const [t, g] = pairAt(m, 280);
+  assert.equal(HM.forHole('hurstville', 1, 288), null, 'no marks: not measurable');
+  assert.equal(HM.forHole('hurstville', 1, 288, { marks: [mark(m, 'flag', g), mark(m, 'flag', plus(g, 3))], tee: 'white' }), null, 'flags without a tee mark: still not drawn');
+  assert.equal(HM.forHole('hurstville', 1, 288, { marks: [mark(m, 'tee', t)], tee: 'white' }), null, 'nor a tee without a flag');
+  const hm = HM.forHole('hurstville', 1, 280, { marks: [mark(m, 'tee', t), mark(m, 'flag', g)], tee: 'white' });
+  assert.ok(dist(hm.hole.line[0], t) < 0.2 && dist(hm.green, g) < 0.2 && hm.fromMarks.line, 'tee mark to flag mark');
 });
 
 test('the tee rule: the card distance from the middle of the green, along the line', () => {
@@ -264,8 +261,8 @@ const pairAt = (m, d) => {
 const mark = (m, k, p, extra = {}) => { const { lat, lng } = HM.toLatLng(m, p); return { k, lat, lng, acc: 4, at: '2026-10-20T01:00:00.000Z', by: 'zein@test', ...(k === 'tee' ? { tee: 'white' } : {}), ...extra }; };
 const plus = (p, dx, dy = 0) => [p[0] + dx, p[1] + dy];
 
-test('Barnwell Park, Beverley Park and Lane Cove: a boundary and a fixed origin, holes only from marks', () => {
-  for (const id of ['barnwell-park', 'beverley-park', 'lane-cove']) {
+test('Barnwell Park, Beverley Park, Hurstville and Lane Cove: a boundary and a fixed origin, holes only from marks', () => {
+  for (const id of ['barnwell-park', 'beverley-park', 'hurstville', 'lane-cove']) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(src.holes, 'marks'); assert.equal(m.holesFrom, 'your GPS marks');
     assert.deepEqual(m.holes, [], 'OSM has no hole lines here');
@@ -328,16 +325,21 @@ test('with tee marks for two tees, the line starts at the tee played, else the o
   assert.equal(hm.hole.tees.length, 2, 'both are tee boxes for the card check');
 });
 
-test('Hurstville: flag marks move an estimated green; mapped greens ignore marks', () => {
-  const m = mapOf('hurstville'), h = m.byN[3], end = h.line.at(-1), start = h.line[0];
+test('flag marks move an estimated green on a mapped line; mapped greens ignore marks', () => {
+  // No course has this now (Hurstville's lines went with its old layout), but
+  // the rule stays: a line whose green is only estimated, built here on Barnwell's plane.
+  const base = JSON.parse(readFileSync('web/course-maps/barnwell-park.json', 'utf8')), [start, end] = pairAt(mapOf('barnwell-park'), 250), ring = [];
+  for (let k = 0; k < 24; k++) ring.push([end[0] + 12 * Math.cos(k * Math.PI / 12), end[1] + 12 * Math.sin(k * Math.PI / 12)]);
+  HM._put('est-line', { ...base, id: 'est-line', features: base.features.concat([{ k: 'green', est: true, h: 3, r: [ring], osm: 'node/1' }]), holes: [{ n: 3, line: [start, end], green: base.features.length, tees: [] }] });
+  const m = HM.get('est-line'), h = m.byN[3];
   const marks = [mark(m, 'flag', plus(end, 9, 3)), mark(m, 'flag', plus(end, 5, -1))];
-  const hm = HM.forHole('hurstville', 3, 300, { marks });
+  const hm = HM.forHole('est-line', 3, 250, { marks });
   assert.ok(dist(hm.green, plus(end, 7, 1)) < 0.2, 'the green moves to the flags');
-  assert.ok(dist(hm.hole.line[0], start) < 0.2 && hm.hole.line.length === h.line.length, 'the OSM line is kept, only its end moves');
+  assert.ok(dist(hm.hole.line[0], start) < 0.2 && hm.hole.line.length === h.line.length, 'the line is kept, only its end moves');
   assert.deepEqual({ ...hm.fromMarks }, { flags: 2, flagsOf: 2, tees: 0, line: false });
   assert.equal(hm.map.features.filter(f => f.k === 'green' && f.h === 3).length, 1, "one green for the hole, not the pin's and the marks' both");
   assert.ok(HM.legendKinds(hm, { par: 4 }).includes('greenMarks') && !HM.legendKinds(hm, { par: 4 }).includes('lineMarks'));
-  assert.ok(dist(HM.forHole('hurstville', 3, 300, { marks: [mark(m, 'flag', plus(end, 0, 120))] }).green, end) < 0.2, "flags 120 m away are another hole's: the pin stays");
+  assert.ok(dist(HM.forHole('est-line', 3, 250, { marks: [mark(m, 'flag', plus(end, 0, 120))] }).green, end) < 0.2, "flags 120 m away are another hole's: the estimate stays");
   // Randwick's greens are mapped: marks change nothing there.
   const r = mapOf('randwick'), rh = r.byN[7];
   const rm = HM.forHole('randwick', 7, 260, { marks: [mark(r, 'flag', plus(rh.line.at(-1), 8)), mark(r, 'tee', rh.line[0])] });
