@@ -7,9 +7,9 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
 ## 2.8.0 — 2026-10-21
-- Hurstville's map was drawn from the course's old layout, from before the redesign, so every hole was in the wrong place. It now works like Barnwell Park: the course boundary only, and each hole is drawn from your Mark tee and Mark flag.
-- A Hurstville hole appears once it has both a tee mark and a flag mark that agree. Until then it isn't drawn and its shots say "not measurable", never a distance guessed from the card. The flags you marked on 21 October are kept and count as soon as that hole has its tee mark.
-- Shots you've already logged at Hurstville are kept where they were tapped, and are measured again once their hole is drawn from marks.
+- Hurstville's holes had the wrong numbers: the map numbered them from the old clubhouse, so the front and back nines were swapped and every hole showed a different hole. They're renumbered now, so hole 1 is the hole you tee off first today.
+- Checked against your GPS app's blue card: every front-nine tee lands on a mapped tee, within 12 m of the card.
+- Shots you've already logged at Hurstville stay where you tapped them, and are measured on the right holes now. Flags you marked on 21 October count towards their own hole's estimated green.
 
 ## 2.7.0 — 2026-10-20
 - Gapping shows where each club's shots actually land: the middle half of them, and 8 in 10, drawn on the bar ("middle half 110–130m").

@@ -609,26 +609,24 @@ scorecard sets every length.
   far off the course), `greenDistances(hm, p)` → `{front, middle, back}`
   along the line from p through the green's middle; front/back `null` where
   the green isn't a mapped shape, never guessed.
-  Hurstville (2.2.0 → **marks only since 2.8.0**): OSM's 18 lines, tee points
-  and pins are consistent with each other and match an *older* par 70, 5,447 m
-  card hole for hole (288 vs 308 m, 116 vs 115, 427 vs 462 … 151 vs 160);
-  Golf Australia now lists par 69, 5,112 m after the council's staged
-  redesign since 2021 (new green and tee complexes, a new clubhouse in 2023).
-  Played on 2026-10-21, every hole was wrong, hole 1's green included, and the
-  tee shots were measured from a guessed tee. No current routing is published.
-  So the source is `holes: "marks"` (the reason is in its `why`): the build
-  drops the lines, tee points and pins (they stay in the extract), keeps the
-  boundary, the canopy and the **same origin** (shots logged on 2.2.0's lines
-  are positions in that frame and re-measure once their hole is drawn). A hole
-  is drawn only from a tee mark *and* a flag mark that agree; a flag alone, or
-  nothing, is `null`, never placed by the card. If he sends his GPS app's
-  screenshots of the current layout, real lines can be built from them.
-  (2.2.0's estimated greens, 12 m circles on the pins with `est: true`, and
-  flags moving an estimated green within 40 m of a line's end, are still the
-  rule for any OSM line without a green; no course has one now.)
+  Hurstville (2.2.0): 18 OSM lines, a tee point per hole and pins, but no
+  green or tee shapes. Each green is **estimated**: a 12 m circle on the
+  hole's pin (within 30 m of the line's end, else the end), `est: true`, drawn
+  dashed as "Estimated green (not mapped)". It never sets a lie (a tap there is
+  `null`, he picks) and gives no front/back distance, only the middle.
+  **OSM numbers its holes from the old start** (2.8.0): its 10–18 are the
+  course's 1–9 today, and its 1–9 the 10–18, so the source has `renumber`
+  (OSM ref → hole). Played on 2026-10-21 with OSM's numbers, every hole showed
+  a different hole. Found from his GPS app's blue card: front nine 260, 134,
+  132, 342, 288, 538, 112, 382, 148 against OSM 10–18's 264, 134, 132, 340,
+  286, 534, 110, 370, 151, the dogleg on 8 included; every front-nine tee is
+  on a mapped tee point (≤ 12 m). (A first reading took the lines for an old
+  par 70 layout, 2.8.0's first draft went marks only; the card settled it.)
+  The back nine's card is still to come. The origin and every shape are
+  unchanged, so shots logged on the old numbering re-measure on the right hole.
   A mapped tee *point* (`teept`) counts as a tee box for the card check.
-  Barnwell Park, Beverley Park and Lane Cove (2.4.0), and Hurstville since
-  2.8.0, have only a boundary to go on: their sources are `holes: "marks"`, so each map file is a boundary and a
+  Barnwell Park, Beverley Park and Lane Cove (2.4.0) have only a boundary in
+  OSM: their sources are `holes: "marks"`, so each map file is a boundary and a
   fixed origin, and every hole comes from his **GPS marks** (Play's *Mark tee*
   and *Mark flag*, stored raw on the course by the Carry chat's 2.3.0).
   `forHole(id, n, metres, {marks, tee})` builds a hole from them on every read,
@@ -636,12 +634,13 @@ scorecard sets every length.
   (`hmFor` passes the course hole's marks and the round's tee). Line: the mean
   tee mark for the tee played (else the set nearest the card) to the mean flag
   mark; green: a dashed 12 m estimate there (`est`, `mk`), so no lie and no
-  front/back. Tee marks are tee points for the card check.
+  front/back, as at Hurstville. Tee marks are tee points for the card check.
   Marks must **agree**: within 20 m (`MARK_NEAR`) of their set's median, and a
   majority, else the hole isn't drawn (a flag marked on the wrong hole would
   otherwise move the green; he moves holes by hand, so it will happen); rough
-  fixes (> ±10 m) and fixes over 30 m off the course are ignored. A mapped
-  green ignores marks. The
+  fixes (> ±10 m) and fixes over 30 m off the course are ignored. At
+  Hurstville, flags within 40 m of a line's end move its estimated green and
+  the line's end; a mapped green (every other course) ignores marks. The
   course page lists holes drawn from marks and holes still waiting. Limit: on
   a hole's first visit nothing is drawn until the flag is marked, so that
   hole's shots that round are on the outline (frames never mix).
@@ -851,7 +850,7 @@ fixture would let the reading be pinned.
 - `course-maps.test.js` (22) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville marks only (old layout dropped, origin kept), boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (7) — the sign-in sheets (home address, expired
   session by redirect and by Cloudflare's 401, asked once), "Signed in as"
@@ -870,7 +869,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 2 for Hurstville marks only, 2 for the legend, 5 for the
+9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 `tee` field from the app survives it because the server corrects it), 9 for 2.5.0's
@@ -902,8 +901,7 @@ In rough order of value:
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
 3. **More course maps** (see *Course maps*). Barnwell Park, Beverley
-   Park, Hurstville and Lane Cove are drawn from his GPS marks as he plays
-   them (Hurstville could get real lines from his GPS app's screenshots); Hunter Valley
+   Park and Lane Cove are drawn from his GPS marks as he plays them; Hunter Valley
    waits for OSM, then its art rounds convert to approximate map positions.
 
 Done in 1.5.0: recency weighting of club distances, session filtering

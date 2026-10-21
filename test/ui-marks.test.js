@@ -73,12 +73,10 @@ test('once the hole is scored, Mark flag is the one offered; repeats are kept', 
   await app.waitFor(() => /this hole has 2 flag marks, 1 tee mark/.test(app.text('#playMarks')), { what: 'count' });
 });
 
-test('Hurstville offers marks on every hole: its committed map is marks only', async () => {
-  // Since 2.8.0 (hole-maps chat): OSM's layout was out of date, so the map has
-  // no hole lines and every hole's hm is null until it's marked.
+test('Hurstville\'s estimated greens offer marks; its committed map really flags them', async () => {
   const m = JSON.parse((await import('node:fs')).readFileSync('web/course-maps/hurstville.json', 'utf8'));
-  assert.equal(m.holesFrom, 'your GPS marks');
-  assert.deepEqual(m.holes, [], 'no hole is drawn before it has marks');
+  const greens = m.holes.map(h => m.features[h.green]);
+  assert.ok(greens.length >= 18 && greens.every(g => g && g.k === 'green' && g.est === true), 'every hole\'s green is an estimate there');
 });
 
 test('a hole the map draws gets no mark buttons', async () => {

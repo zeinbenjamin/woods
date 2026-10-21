@@ -10,6 +10,92 @@
   -33.97247,
   151.06092
  ],
- "holes": "marks",
- "why": "OSM's 18 hole lines, tee points and pins match an older par 70, 5,447 m card hole for hole; Golf Australia lists par 69, 5,112 m after the council's staged redesign since 2021, and every hole was wrong in play on 2026-10-21. No current routing is published, so holes come from his GPS marks. The origin is unchanged: shots already logged are stored in this frame."
+ "holes": "osm",
+ "renumber": {
+  "1": 10,
+  "2": 11,
+  "3": 12,
+  "4": 13,
+  "5": 14,
+  "6": 15,
+  "7": 16,
+  "8": 17,
+  "9": 18,
+  "10": 1,
+  "11": 2,
+  "12": 3,
+  "13": 4,
+  "14": 5,
+  "15": 6,
+  "16": 7,
+  "17": 8,
+  "18": 9
+ },
+ "why": "OSM numbers the holes from the old clubhouse: its 10-18 are the course's 1-9 today (and its 1-9 the 10-18). Found from his GPS app's blue card, 2026-10-21: front nine 260, 134, 132, 342, 288, 538, 112, 382, 148 against OSM 10-18's lines 264, 134, 132, 340, 286, 534, 110, 370, 151, with the same dogleg on 8. In play on 2026-10-21, with OSM's numbers, every hole showed a different hole. The origin never changed.",
+ "card": {
+  "tee": "blue",
+  "source": "his GPS app, screenshots of 2026-10-21 (front nine)",
+  "fields": [
+   "n",
+   "par",
+   "metres",
+   "si"
+  ],
+  "holes": [
+   [
+    1,
+    4,
+    260,
+    16
+   ],
+   [
+    2,
+    3,
+    134,
+    17
+   ],
+   [
+    3,
+    3,
+    132,
+    13
+   ],
+   [
+    4,
+    4,
+    342,
+    6
+   ],
+   [
+    5,
+    4,
+    288,
+    10
+   ],
+   [
+    6,
+    5,
+    538,
+    5
+   ],
+   [
+    7,
+    3,
+    112,
+    15
+   ],
+   [
+    8,
+    4,
+    382,
+    1
+   ],
+   [
+    9,
+    3,
+    148,
+    8
+   ]
+  ]
+ }
 }

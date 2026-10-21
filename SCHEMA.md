@@ -146,8 +146,7 @@ database document. Metres on a local plane: x east, y north, from `origin`.
 ```
 
 - `holes` is empty on a boundary-only map (`holesFrom: "your GPS marks"`:
-  Barnwell Park, Beverley Park, Lane Cove, and Hurstville since 2.8.0, whose
-  OSM lines were an old layout). OSM tee points and pins are left out too. Its file exists so the course has a
+  Barnwell Park, Beverley Park, Lane Cove). Its file exists so the course has a
   fixed `origin` before anything is logged there.
 - **Holes from marks** (2.4.0) are never in the file: `HoleMap.forHole(id, n,
   metres, {marks, tee})` builds them on every read from the course hole's
