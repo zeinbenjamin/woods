@@ -539,7 +539,7 @@ scorecard sets every length.
   flagged 9 of its 18). A hole's tee boxes (`hole.tees`) are its own mapped
   tees within 20 m of its line in the tee 60% of it, a box the line runs over
   (≤ 3 m, for one box shared by two holes), and any tee a hand mapping names.
-  Flagged now: Bardwell 11 (28 m from any box), The Coast 18 (17 m). Randwick
+  Flagged now: Bardwell 11 (28 m from any box), The Coast 18 (17 m), Hurstville 18 (38 m). Randwick
   3 and 5 aren't: the red tee is on the box (3's is 45 m long).
 - **Lies** come from the shape under the tap: water, bunker, green, tee or
   fairway (→ fairway), trees (woods, merged crowns, lone trees), mapped
@@ -610,12 +610,24 @@ scorecard sets every length.
   along the line from p through the green's middle; front/back `null` where
   the green isn't a mapped shape, never guessed.
   Hurstville (2.2.0): 18 OSM lines, a tee point per hole and pins, but no
-  green or tee shapes, and no card in the source. Each green is **estimated**:
-  a 12 m circle on the hole's pin (within 30 m of the line's end, else the
-  end), `est: true`, drawn dashed as "Estimated green (not mapped)". It never
-  sets a lie (a tap there is `null`, he picks) and gives no front/back
-  distance, only the middle. A mapped tee *point* (`teept`) counts as a tee
-  box for the card check.
+  green or tee shapes. Each green is **estimated**: a 12 m circle on the
+  hole's pin (within 30 m of the line's end, else the end), `est: true`, drawn
+  dashed as "Estimated green (not mapped)". It never sets a lie (a tap there is
+  `null`, he picks) and gives no front/back distance, only the middle.
+  **OSM numbers its holes from the old start** (2.8.0): its 10–18 are the
+  course's 1–9 today, and its 1–9 the 10–18, so the source has `renumber`
+  (OSM ref → hole). Played on 2026-10-21 with OSM's numbers, every hole showed
+  a different hole. Found from his GPS app's blue card: front nine 260, 134,
+  132, 342, 288, 538, 112, 382, 148 against OSM 10–18's 264, 134, 132, 340,
+  286, 534, 110, 370, 151, the dogleg on 8 included; back nine 296, 117,
+  434, 162, 290, 376, 486, 496, 285 against OSM 1–9's 289, 116, 428, 160,
+  279, 372, 479, 491, 323 (par 70, 5,278 m blue). The card is in the source;
+  17 tees are on a mapped tee point (≤ 12 m). Flagged: 18, whose blue tee is
+  38 m ahead of OSM's. (A first reading took the lines for an old par 70
+  layout and 2.8.0's first draft went marks only; the card settled it.) The
+  origin and every shape are unchanged, so shots logged on the old numbering
+  re-measure on the right hole.
+  A mapped tee *point* (`teept`) counts as a tee box for the card check.
   Barnwell Park, Beverley Park and Lane Cove (2.4.0) have only a boundary in
   OSM: their sources are `holes: "marks"`, so each map file is a boundary and a
   fixed origin, and every hole comes from his **GPS marks** (Play's *Mark tee*
@@ -841,7 +853,7 @@ fixture would let the reading be pinned.
 - `course-maps.test.js` (22) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (7) — the sign-in sheets (home address, expired
   session by redirect and by Cloudflare's 401, asked once), "Signed in as"
@@ -860,7 +872,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 2 for the legend, 5 for the
+9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 `tee` field from the app survives it because the server corrects it), 9 for 2.5.0's

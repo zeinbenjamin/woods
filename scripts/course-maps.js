@@ -17,11 +17,15 @@
 // is, where the hole lines come from, and the card the lengths were
 // checked against:
 //   holes: "osm"                 golf=hole ways inside the course, numbered by ref
+//   renumber: { "10": 1, ... }   OSM's ref → the course's hole number, where OSM
+//                                numbers from an old start (Hurstville's nines)
 //   holes: { "1": { tees: [osm id | {id, half: "nearest"}], green: osm id, via?: fairway id } }
 //                                for courses OSM has no hole lines for
 //   holes: "marks"               no hole lines anywhere: only the boundary (and
 //                                any shapes), so the course has a fixed origin;
-//                                its holes are drawn in the app from GPS marks
+//                                its holes are drawn in the app from GPS marks.
+//                                OSM tee points and pins are left out too: they
+//                                belong to hole lines
 //   origin: [lat, lng]           the fixed zero of the course's metre plane.
 //                                Never change it once rounds are logged on the
 //                                map: shots are stored in these metres.
@@ -158,7 +162,7 @@ function build(id) {
     if (fid === src.osm.course) continue;
     // A tee mapped as a point (no box drawn): kept as a point, so the card
     // check can measure to it. It never sets a lie: it has no shape.
-    if (p.golf === 'tee' && g.type === 'Point') { push({ k: 'teept', c: P(g.coordinates) }, fid); continue; }
+    if (p.golf === 'tee' && g.type === 'Point') { if (src.holes !== 'marks') push({ k: 'teept', c: P(g.coordinates) }, fid); continue; }
     if (p.golf === 'pin' && g.type === 'Point') { pins.push({ p: P(g.coordinates), fid }); continue; }
     if (KIND[p.golf]) { for (const poly of polysOf(g)) push({ k: KIND[p.golf], r: ringsOf(poly) }, fid); continue; }
     if (p.golf === 'cartpath' || p.golf === 'path') { for (const l of linesOf(g)) push({ k: 'path', l: l.map(P) }, fid); continue; }
@@ -186,7 +190,9 @@ function build(id) {
     const seen = {};
     for (const f of geo) {
       if (f.properties.golf !== 'hole' || f.geometry.type !== 'LineString') continue;
-      const l = f.geometry.coordinates.map(P), n = parseInt(f.properties.ref, 10);
+      const ref = parseInt(f.properties.ref, 10), n = src.renumber ? src.renumber[ref] : ref;
+      if (src.renumber && !(n > 0)) throw new Error(`${id}: OSM hole ${f.properties.ref} has no number in renumber`);
+      const l = f.geometry.coordinates.map(P);
       if (!(n > 0) || insideShare(l, boundary) < 0.9) continue;   // another course's hole next door
       if (seen[n]) throw new Error(`${id}: two hole lines numbered ${n}`);
       seen[n] = true;
