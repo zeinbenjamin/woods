@@ -283,6 +283,18 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **`window.confirm` is blocked** in the artifact sandbox and returns
   false, silently no-oping every destructive action. There's an in-page
   `confirmAsk()` instead. Don't reach for `confirm`.
+- **A pasted card fills the form, never the record** (2.9.0, *Paste a
+  scorecard* in the course form, `parseCard`/`wireCardPaste`): "n: par /
+  metres / si" lines, as the hole-maps chat writes them, read strictly (each
+  hole once, par 3–6, every hole present, else "Not filled: …" and nothing
+  changes), and "blue tees" in the text sets the form's tee, because the
+  form files its lengths under that tee. Other tee sets are named, never
+  changed. Saving goes through `saveCourse`, so everything else on the record
+  survives. If the save changed a par, rounds there whose own par copy
+  differs are offered the card's pars (`offerRoundPars`, asked; scores
+  untouched). Made for Hurstville, whose record held a card in OSM's old
+  numbering (renumbered after the redesign, hole-maps 2.8.0). An import file
+  can't do this: "Import a backup" replaces the whole course and needs its id.
 - **Editing a course must preserve hole fields the form doesn't own** —
   artwork, outline shape, tee sets. A previous version dropped artwork on
   any course edit. Stroke index is now the form's (1.13.0: the scorecard's
@@ -787,7 +799,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 278 tests, about 45s.
+`npm test` — 282 tests, about 45s.
 
 - `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -843,6 +855,9 @@ fixture would let the reading be pinned.
   objective page, Range list and Overview, the block against last time),
   `ui-visuals` (the spread, the scorecard and the dot details against
   hand-worked numbers, and the map-arrival cache bug),
+  `ui-card` (pasting the hole-maps chat's Hurstville note into the course
+  form: strict reading, the tee it names, everything else kept, round pars
+  offered only when a par changed),
   `ui-marks` (Mark tee / Mark flag on an unmapped hole: the raw fix stored,
   ±10 m refused, flag after scoring, edits keep marks, only your own
   removable),
@@ -880,7 +895,8 @@ Overview (one survived at first: a missing heading passed a "comes before"
 check; the test now requires it), 12 for 2.6.0's practice loop (two survived
 at first because the scenario had no tee misses and one earlier 5W session;
 both added), 13 for 2.7.0's visuals (two survived at first: no topped
-shot and no shot-tied penalty in the data; both added); all
+shot and no shot-tied penalty in the data; both added), 7 for 2.9.0's
+card paste (one survived at first: no round left that differed; added); all
 caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 

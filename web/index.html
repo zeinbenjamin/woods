@@ -226,6 +226,7 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .ghist { width: 100%; height: auto; display: block; margin: 4px 0; } .ghist .col { fill: var(--green); } .ghist .gx { stroke: var(--rule); stroke-width: 1; } .ghist .rg { stroke: var(--ink-2); stroke-width: 1.5; }
 .ghist .tk { font: 10px var(--body); fill: var(--ink-3); } .ghist .vl { font: 600 11px var(--body); fill: var(--ink); } .ghist .hitbox { fill: transparent; }
 table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mini td, table.mini th { text-align: left; padding: 3px 0; border-bottom: 1px solid var(--rule); }
+.warn-text { color: var(--flag); }
 .fold { margin: 0; border-top: 1px solid var(--rule); padding: 10px 0; } .fold > summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; } .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary::after { content: '›'; font-size: 18px; color: var(--ink-3); transition: transform .15s; } .fold[open] > summary::after { transform: rotate(90deg); } .fold[open] > summary { margin-bottom: 10px; }
 .folds { border-bottom: 1px solid var(--rule); } .fold .warn { color: var(--flag); }
@@ -1347,7 +1348,55 @@ function courseForm(c = {}) {
   <label>Notes<textarea name="notes" style="min-height:60px">${esc(c.notes || '')}</textarea></label>
   ${ratingFields(c)}
   <h3>Scorecard</h3>${gaps.length ? `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing. Fill ${gaps.length > 1 ? 'them' : 'it'} in below.</div>` : ''}<div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
-  <div id="holesWrap">${holesEditor(holes, false)}</div>`;
+  <div id="holesWrap">${holesEditor(holes, false)}</div>
+  ${fold('cardPaste', 'Paste a scorecard', 'fill the card from text', `<p class="small muted">One hole per "n: par / metres / stroke index", as in the course-map notes ("1: 4 / 260 / 16"). Naming the tee ("blue tees") sets the tee above. Nothing is saved until you press Save.</p>
+    <textarea name="cardText" style="min-height:90px" placeholder="1: 4 / 260 / 16    10: 4 / 296 / 14"></textarea>
+    <div class="row-actions"><button type="button" id="cardFill">Fill the card from this</button></div><p class="small" id="cardFillNote"></p>`)}`;
+}
+// "n: par / metres / si" lines (the course-map chat's notes, or typed), read
+// strictly: every hole once, par 3–6, a length, an optional stroke index, and
+// the tee if the text names one ("blue tees"). Errors are reported, never guessed around.
+function parseCard(text) {
+  const holes = new Map(), errors = [];
+  for (const m of String(text || '').matchAll(/(?<!\d)(\d{1,2})\s*[:.)]\s*(\d)\s*\/\s*(\d{2,3})(?:\s*\/\s*(\d{1,2}))?/g)) {
+    const n = +m[1], h = { n, par: +m[2], metres: +m[3], ...(m[4] ? { si: +m[4] } : {}) };
+    if (n < 1 || n > 18) { errors.push(`hole ${n} isn't 1–18`); continue; }
+    if (holes.has(n)) { errors.push(`hole ${n} is there twice`); continue; }
+    if (h.par < 3 || h.par > 6) errors.push(`hole ${n}: par ${h.par}?`);
+    holes.set(n, h);
+  }
+  const list = [...holes.values()].sort((a, b) => a.n - b.n), count = list.length ? Math.max(...list.map(h => h.n)) > 9 ? 18 : 9 : 0;
+  const missing = Array.from({ length: count }, (_, i) => i + 1).filter(n => !holes.has(n));
+  if (!list.length) errors.push('no "n: par / metres" lines found');
+  else if (missing.length) errors.push(`no line for hole${missing.length > 1 ? 's' : ''} ${missing.join(', ')}`);
+  const tee = (/\b(blue|white|red|black|yellow|gold|green|silver|orange)\s+tees?\b/i.exec(String(text || '')) || [])[1];
+  return { holes: list, count, tee: tee ? tee.toLowerCase() : null, errors };
+}
+function wireCardPaste(root, c = {}) {
+  const btn = $('#cardFill', root); if (!btn) return;
+  btn.addEventListener('click', () => {
+    const note = $('#cardFillNote', root), card = parseCard(val(root, 'cardText'));
+    if (card.errors.length) { note.textContent = `Not filled: ${card.errors.join('; ')}.`; note.className = 'small warn-text'; return; }
+    const seg = root.querySelector(`[data-holes="${card.count}"]`); if (seg && seg.getAttribute('aria-pressed') !== 'true') seg.click();
+    for (const h of card.holes) for (const [k, v] of [['par_', h.par], ['m_', h.metres], ['si_', h.si]]) { const el = root.querySelector(`[name="${k}${h.n}"]`); if (el) el.value = v ?? ''; }
+    if (card.tee) { const t = root.querySelector('[name=tee]'); if (t) t.value = card.tee; }
+    note.className = 'small';
+    const tee = (card.tee || val(root, 'tee') || '').toLowerCase(), others = teeNames(c).filter(t => t.toLowerCase() !== tee);
+    note.textContent = `Filled ${card.count} holes${card.tee ? ` from the ${card.tee} tees` : ''}: par ${sum(card.holes.map(h => h.par))}, ${sum(card.holes.map(h => h.metres)).toLocaleString('en-AU')} m. Check them, then Save.` +
+      (others.length ? ` The ${others.join(' and ')} lengths on this course aren't changed by this; check them against the same card.` : '');
+  });
+}
+// After a course's pars change: rounds there keep their own copy of each hole's
+// par, so offer to bring them into line (he played the holes as they are; the
+// old card was wrong). Asked, never done quietly: a par can change for real too.
+async function offerRoundPars(c) {
+  const par = new Map((c.holes || []).filter(h => h.par != null).map(h => [h.n, h.par]));
+  const off = S.sessions.filter(r => r.type === 'round' && r.courseId === c.id).map(r => ({ r, holes: (r.holes || []).filter(h => par.has(h.n) && h.par !== par.get(h.n)) })).filter(x => x.holes.length);
+  if (!off.length) return;
+  const holes = [...new Set(off.flatMap(x => x.holes.map(h => h.n)))].sort((a, b) => a - b);
+  if (!await confirmAsk(`${plural(off.length, 'round')} at ${c.name} ${off.length === 1 ? 'has' : 'have'} a different par on hole${holes.length > 1 ? 's' : ''} ${holes.join(', ')} from this card. Use this card's pars for ${off.length === 1 ? 'it' : 'them'}? Scores stay as they are; only par (and so over or under par) changes.`, 'Use the new pars')) return;
+  for (const { r } of off) await save('sessions', r.id, { ...r, holes: r.holes.map(h => par.has(h.n) ? { ...h, par: par.get(h.n) } : h) });
+  toast(`Pars updated on ${plural(off.length, 'round')}`);
 }
 // Course Rating ("scratch rating" on Australian cards) and Slope Rating
 // per tee, for the handicap estimate. Typed from the scorecard, never
@@ -1452,8 +1501,8 @@ const ACTIONS = {
   async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
   newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
-  newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c'), created: Date.now() })); wireHoleCount(sheetInner, false, []); },
-  editCourse(d) { const c = course(d.id); openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); },
+  newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c'), created: Date.now() })); wireHoleCount(sheetInner, false, []); wireCardPaste(sheetInner); },
+  editCourse(d) { const c = course(d.id); openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); wireCardPaste(sheetInner, c); },
   async deleteCourse(d) { if (!await confirmAsk('Delete this course for everyone who uses this Carry? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
   newClub() { openSheet(clubForm(), async root => saveClub(root, {})); },
   editClub(d) { openSheet(clubForm(clubBy(d.id)), async root => saveClub(root, clubBy(d.id))); },
@@ -1557,7 +1606,9 @@ async function saveCourse(root, c) {
   if (twice != null) { toast(`Stroke index ${twice} is on two holes`); return false; }
   const noPar = doc.holes.filter(h => h.par == null).map(h => h.n);
   if (noPar.length) { toast(`Add a par for hole${noPar.length > 1 ? 's' : ''} ${noPar.join(', ')}`); return false; }
-  const ok = await save('courses', doc.id, doc); if (ok) go('courses', { courseId: doc.id }); return ok;
+  // Only when this save changed a par: an edit to the notes shouldn't ask about old rounds.
+  const parChanged = doc.holes.some(h => { const was = (c.holes || []).find(x => x.n === h.n); return was && was.par != null && was.par !== h.par; });
+  const ok = await save('courses', doc.id, doc); if (ok) { go('courses', { courseId: doc.id }); if (parChanged) setTimeout(() => offerRoundPars(course(doc.id) || doc), 0); } return ok;
 }
 async function saveClub(root, c) {
   const code = (val(root, 'code') || '').replace(/[^\w.+-]/g, '').slice(0, 8); if (!code) { toast('Short code is required'); return false; }

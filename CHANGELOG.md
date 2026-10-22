@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.9.0 — 2026-10-22
+- A course's Edit form has "Paste a scorecard": paste lines like "1: 4 / 260 / 16" (par / metres / stroke index), tap Fill, check the card, then Save. If the text names the tee ("blue tees"), that tee is set too.
+- It refuses a card it can't read cleanly (a hole twice, a hole missing, an odd par) and says what's wrong, rather than half-filling it.
+- When a save changes a hole's par, rounds already played there are offered the new pars. Your scores stay as they are; only over or under par changes.
+
 ## 2.8.0 — 2026-10-21
 - Hurstville's holes had the wrong numbers: the map numbered them from the old clubhouse, so the front and back nines were swapped and every hole showed a different hole. They're renumbered now, so hole 1 is the hole you tee off first today.
 - Checked against your GPS app's blue card for all 18: 17 tees land on a mapped tee, within 12 m of the card. Hole 18's blue tee is 38 m ahead of the one on the map, so the course page flags it and the tee is placed from the card.
