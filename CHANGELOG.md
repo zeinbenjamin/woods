@@ -6,6 +6,12 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.11.0 — 2026-10-24
+
+- A swing reading now comes back the way a coach gives it: the one fix, why (with the frame that shows it), a feel to take to the ball, one drill and how to know it's working.
+- Everything behind it (what Claude saw, how it matches your ball data, what the camera angle can't show) is folded under "What Claude saw".
+- Readings you already have keep their words: the fix and drill stay on the card, the rest folds away. Tap "Analyse again" for the new layout.
+
 ## 2.10.0 — 2026-10-24
 - On a hole the course map hasn't drawn yet (Lane Cove, Barnwell Park and Beverley Park on your first visit), "Mark my ball here" now works: it saves where your ball is by GPS, even though there are no distances to show yet.
 - Once your tee and flag marks draw the hole, those shots are measured from your real tee, so a first round there counts in full. Until then they show as not measurable rather than a guess.

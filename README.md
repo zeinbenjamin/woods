@@ -43,7 +43,7 @@ DATA_DIR=./data DEV_USER=you@example.com node server/index.js
 # with no Cloudflare. Local development only; never set it on the NAS.
 ```
 
-Run the tests with `npm test` — 289 of them, covering the API, the asset
+Run the tests with `npm test` — 291 of them, covering the API, the asset
 store, auth, the import path, and the real app driving the real server:
 CRUD through its forms, shot logging by tapping the hole map, analytics
 invariants, the practice list and planner, tee sets and migrations, range

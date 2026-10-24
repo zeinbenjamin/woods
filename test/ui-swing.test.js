@@ -178,6 +178,9 @@ test('Analyse sends the frames with the ball data and view brief, and stores the
   assert.match(analyseSeen.prompt, /hook and shank/);
   assert.match(analyseSeen.prompt, /Do not invent measurements/);
   assert.match(analyseSeen.prompt, /release timing/, 'the session focus goes in');
+  assert.match(analyseSeen.prompt, /One fix, not a list/, 'coached as one fix');
+  assert.match(analyseSeen.prompt, /"feel"[\s\S]*"check"[\s\S]*"ball_data": "agrees" \| "contradicts" \| "unclear"/);
+  assert.match(analyseSeen.prompt, /At most three observations/);
 });
 
 // Regression: in-app analysis used to keep a stale analysedIn: 'chat'.
@@ -187,6 +190,42 @@ test('re-analysing in the app clears the "read in a chat" label', async () => {
   assert.equal(got.analysedIn, undefined);
   app.go('range', { sessionId: 's_sw' });
   assert.doesNotMatch(app.text('#view .swing'), /in a chat/);
+});
+
+/* ---------- the reading as a coach gives it (2.11.0) ---------- */
+
+const COACHED = { one_thing: 'Swing out to the right through the ball', why: 'Frames 5–7: the club exits left of target, which cuts across the ball and thins it.',
+  feel: 'Hands out toward right field', drill: { name: 'Gate stick', how: 'Stick outside the ball; club exits right of it.' }, check: 'Ball starts straight and stops cutting',
+  ball_data: 'agrees', matches_ball_data: 'Explains the low runners.', observations: [{ what: 'Club exits left', evidence: 'frames 5–7', confidence: 'high' }],
+  cannot_tell: ['Face angle at impact'] };
+
+test('a reading shows the one fix, why, feel, drill and how to know; the detail is folded', async () => {
+  const s = await app.api.get('sessions', 's_sw');
+  await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: COACHED, analysedOn: '2026-10-24' }] });
+  await app.waitFor(() => app.E(`session('s_sw').swings[0].analysis.feel`) === COACHED.feel, { what: 'poll' });
+  app.go('range', { sessionId: 's_sw' });
+  const cues = app.$$('#view .analysis > .cue').map(e => e.textContent);
+  assert.deepEqual(cues, ['Why ' + COACHED.why, 'Feel Hands out toward right field', 'Drill Gate stick — Stick outside the ball; club exits right of it.', 'Working when Ball starts straight and stops cutting']);
+  assert.equal(app.text('#view .analysis .one'), COACHED.one_thing);
+  const seen = app.$('#seen_sw_1');
+  assert.ok(seen && seen.tagName === 'DETAILS' && !seen.open, 'what Claude saw is one tap down, with an id so it stays open across redraws');
+  assert.equal(seen.querySelector('summary').textContent, 'What Claude saw (1)');
+  assert.match(seen.textContent, /Club exits left[\s\S]*Against your ball data: Explains the low runners\.[\s\S]*Can't tell from this angle: Face angle at impact/);
+  assert.equal(app.$$('#view .analysis > .obs').length, 0, 'no observations on the card itself');
+});
+
+test('an older, longer reading keeps its text but folds everything but the fix', async () => {
+  const s = await app.api.get('sessions', 's_sw');
+  const old = { one_thing: 'Swing the club head out to the right', observations: [1, 2, 3, 4].map(i => ({ what: 'obs ' + i, evidence: 'frame ' + i, confidence: 'medium' })),
+    matches_ball_data: 'Consistent with the 33% low runners.', drill: { name: 'Alignment stick gate drill', why: 'The out-to-in exit is the cause.' }, cannot_tell: ['Low point'] };
+  await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: old, analysedOn: '2026-09-26' }] });
+  await app.waitFor(() => app.E(`session('s_sw').swings[0].analysedOn`) === '2026-09-26', { what: 'poll' });
+  app.go('range', { sessionId: 's_sw' });
+  assert.deepEqual(app.$$('#view .analysis > .cue').map(e => e.textContent), ['Drill Alignment stick gate drill'], 'no why/feel/check invented for it');
+  const seen = app.$('#seen_sw_1');
+  assert.equal(seen.querySelectorAll('.obs').length, 4);
+  assert.match(seen.textContent, /Why this drill: The out-to-in exit is the cause\./);
+  await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: COACHED, analysedOn: '2026-10-24' }] });
 });
 
 test('each camera view gets its own brief; an unknown view is treated as "other"', () => {
@@ -208,6 +247,13 @@ test('a swing reading gains weight only when it agrees with the ball data', () =
   assert.equal(score('This does not match the numbers.'), 0.9, 'disagrees: half weight');
   assert.equal(score('Consistent? Not really.'), 0.9, 'a hedge is not agreement');
   assert.equal(score(''), 0.9);
+  const said = (bd, mbd) => app.E(`(() => { const saved = S.sessions; S.sessions = [{ id: 'x', type: 'range', date: '2026-09-01', blocks: [],
+    swings: [{ id: 'w', view: 'dtl', club: '7i', frames: [], analysis: { one_thing: 'z', ball_data: ${JSON.stringify(bd)}, matches_ball_data: ${JSON.stringify(mbd)},
+      observations: [{ what: 'a', evidence: 'e', confidence: 'high' }] } }] }];
+    try { return swingItems()[0].agrees; } finally { S.sessions = saved; } })()`);
+  assert.equal(said('agrees', 'Explains the runners, not the fats.'), true, 'a reading that says it agrees does, whatever its sentence says');
+  assert.equal(said('unclear', 'Consistent with the runners.'), false);
+  assert.equal(said('contradicts', 'This lines up.'), false);
 });
 
 test('video items render collapsed and labelled "read from video"', () => {

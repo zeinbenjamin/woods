@@ -181,6 +181,9 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .analysis { border-left: 3px solid var(--green); padding: 8px 10px; margin: 8px 0 0; background: var(--paper-2); border-radius: 0 var(--r) var(--r) 0; }
 .analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
 .analysis .obs { font-size: 13px; margin: 3px 0; }
+.analysis .cue { font-size: 14px; margin: 4px 0; }
+.analysis .seen { margin-top: 8px; }
+.analysis .seen summary { cursor: pointer; color: var(--ink-3); }
 .pcard.k-swing { border-left-color: var(--water); }
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; margin: 4px 0 6px; } .tiles.c2 { grid-template-columns: repeat(2, 1fr); } .ftile { background: var(--paper-2); border-radius: var(--r); padding: 9px 8px; text-align: center; }
 .ftile b { font-family: var(--cond); font-weight: 700; font-size: 24px; line-height: 1.05; display: block; } .ftile small { display: block; color: var(--ink-3); font-size: 12px; } .ftile em { display: block; font-style: normal; color: var(--ink-3); font-size: 11px; line-height: 1.3; margin-top: 1px; }
@@ -2717,7 +2720,6 @@ function ballContextFor(code) {
   ].filter(Boolean).join(' ');
 }
 function swingPrompt(sw, session) {
-  const changes = S.sessions.length ? '' : '';
   const focus = session.focus ? `The player's stated focus for this session was: "${session.focus}".` : '';
   const hist = `Background on the player: a beginner roughly a year in, working on iron consistency and course management. Known history: lateral hip sway on the backswing and early extension through impact were early faults; adding hip rotation gained distance but introduced an alternating hook and shank pattern on irons, thought to be body rotation outrunning hand and arm timing.`;
   return `You are looking at ${FRAME_COUNT} still frames taken in order from a single golf swing, earliest first. They were pulled from a phone video, so they are evenly spaced in time and may not land exactly on the key positions.
@@ -2730,17 +2732,22 @@ ${sw.note ? `The player's own note on this swing: "${sw.note}"` : ''}
 
 ${hist}
 
-Read the frames and answer as JSON with exactly these keys:
+Coach this the way the best tour coaches work with a player between shots: start from what the ball did, find the one thing upstream that caused it, and give one fix he can take to the next ball. One fix, not a list. If two things are wrong, pick the one that, fixed, would clean up the most of the ball data above; often the rest follows from it. No jargon a weekend golfer wouldn't use. Short words, short sentences.
+
+Answer as JSON with exactly these keys, keeping to the word limits:
 {
-  "positions": [ { "frame": 1, "what": "one short line on what this frame shows" } ],
-  "observations": [ { "what": "one specific thing you can see", "evidence": "which frame(s) and what in them shows it", "confidence": "high" | "medium" | "low" } ],
-  "matches_ball_data": "one or two sentences: does what you see line up with the strike mix above, contradict it, or neither? Say which.",
-  "cannot_tell": ["things this camera angle or frame spacing cannot answer"],
-  "drill": { "name": "one drill", "why": "one line tying it to what you saw" },
-  "one_thing": "the single change you would make, in one sentence a golfer can act on"
+  "one_thing": "the fix, as you would say it to him on the range (12 words or fewer)",
+  "why": "what you saw, naming the frame, and how it makes the ball do what it does (30 words or fewer)",
+  "feel": "the swing thought he takes to the ball (8 words or fewer)",
+  "drill": { "name": "one drill (6 words or fewer)", "how": "how to do it (25 words or fewer)" },
+  "check": "how he will know it is working, from ball flight or contact (15 words or fewer)",
+  "ball_data": "agrees" | "contradicts" | "unclear",
+  "matches_ball_data": "one short sentence: does what you see explain the strike mix above?",
+  "observations": [ { "what": "one specific thing you can see", "evidence": "which frame(s) show it", "confidence": "high" | "medium" | "low" } ],
+  "cannot_tell": ["up to three short things this camera angle or frame spacing cannot answer"]
 }
 
-Be specific and restrained. Only claim what the frames support; put anything you are unsure of at low confidence or in cannot_tell. Do not invent measurements or angles. Prefer "I cannot see that from here" over a guess.`;
+At most three observations, the one behind the fix first. "ball_data" is "agrees" only when what you see would produce the strike mix above. Be restrained: only claim what the frames support; put anything you are unsure of at low confidence or in cannot_tell. Do not invent measurements or angles. Prefer "I cannot see that from here" over a guess.`;
 }
 async function analyseSwing(sessionId, swingId, onText) {
   const s = session(sessionId), sw = swingsOf(s).find(x => x.id === swingId);
@@ -2761,6 +2768,27 @@ async function analyseSwing(sessionId, swingId, onText) {
   } catch (e) { return { error: e && e.code ? e.code : 'failed', text: e && e.text }; }
 }
 /* ---------- views ---------- */
+// A reading as a coach gives it: the one fix, why, a feel, a drill, how to
+// know it's working. Everything behind it is one tap down. Readings from
+// before 2.11.0 have no why/feel/check, so they show the fix and the fold.
+function swingReading(sw, s, a) {
+  const line = (label, text) => text ? `<div class="cue"><b>${label}</b> ${esc(text)}</div>` : '';
+  const drill = a.drill && a.drill.name ? a.drill.name + (a.drill.how ? ` — ${a.drill.how}` : '') : '';
+  const obs = a.observations || [], tell = a.cannot_tell || [];
+  const detail = [
+    obs.slice(0, 4).map(o => `<div class="obs"><span class="tag ${o.confidence === 'high' ? 'green' : ''}">${esc(o.confidence || '')}</span> <b>${esc(o.what)}</b> <span class="muted">${esc(o.evidence || '')}</span></div>`).join(''),
+    a.matches_ball_data ? `<div class="small" style="margin-top:6px"><b>Against your ball data:</b> ${esc(a.matches_ball_data)}</div>` : '',
+    a.drill && a.drill.why ? `<div class="small" style="margin-top:6px"><b>Why this drill:</b> ${esc(a.drill.why)}</div>` : '',
+    tell.length ? `<div class="small muted" style="margin-top:6px">Can't tell from this angle: ${esc(tell.join('; '))}</div>` : '',
+    a.notes ? `<div class="small" style="margin-top:6px;white-space:pre-wrap">${esc(a.notes)}</div>` : '',
+  ].join('');
+  return `<div class="analysis">
+      <div class="one">${esc(a.one_thing || '')}</div>
+      ${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}
+      ${detail ? `<details class="seen" id="seen_${sw.id}"><summary class="small">What Claude saw${obs.length ? ` (${obs.length})` : ''}</summary>${detail}</details>` : ''}
+      <div class="small muted" style="margin-top:6px">Read from frames by Claude${sw.analysedIn === 'chat' ? ' in a chat' : ''} on ${dateLabel(sw.analysedOn || s.date)} — a reading, not a measurement.</div>
+    </div>`;
+}
 function swingCard(sw, s, opts = {}) {
   const a = sw.analysis;
   return `<div class="swing">
@@ -2769,15 +2797,7 @@ function swingCard(sw, s, opts = {}) {
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
     <div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
     ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}
-    ${a ? `<div class="analysis">
-      <div class="one">${esc(a.one_thing || '')}</div>
-      ${(a.observations || []).slice(0, 4).map(o => `<div class="obs"><span class="tag ${o.confidence === 'high' ? 'green' : o.confidence === 'low' ? '' : ''}">${esc(o.confidence || '')}</span> <b>${esc(o.what)}</b> <span class="muted">${esc(o.evidence || '')}</span></div>`).join('')}
-      ${a.matches_ball_data ? `<div class="small" style="margin-top:6px"><b>Against your ball data:</b> ${esc(a.matches_ball_data)}</div>` : ''}
-      ${a.drill ? `<div class="small" style="margin-top:6px"><b>Drill:</b> ${esc(a.drill.name)} — ${esc(a.drill.why || '')}</div>` : ''}
-      ${(a.cannot_tell || []).length ? `<div class="small muted" style="margin-top:6px">Can't tell from this angle: ${esc((a.cannot_tell || []).join('; '))}</div>` : ''}
-      ${a.notes ? `<div class="small" style="margin-top:6px;white-space:pre-wrap">${esc(a.notes)}</div>` : ''}
-      <div class="small muted" style="margin-top:6px">Read from frames by Claude${sw.analysedIn === 'chat' ? ' in a chat' : ''} on ${dateLabel(sw.analysedOn || s.date)} — a reading, not a measurement.</div>
-    </div>` : ''}
+    ${a ? swingReading(sw, s, a) : ''}
     ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet — tap Analyse and Claude reads these frames against your ball data for this club.</div>`}
     <div class="row-actions">
       <button class="${a ? '' : 'primary'}" data-act="analyseSwing" data-sid="${s.id}" data-wid="${sw.id}">${a ? 'Analyse again' : 'Analyse'}</button>
@@ -2909,7 +2929,9 @@ function swingItems() {
     const strong = (a.observations || []).filter(o => o.confidence === 'high');
     if (!strong.length && !a.one_thing) continue;
     const cs = sw.club ? clubStats(sw.club) : null;
-    const agrees = /line[s]? up|matches|consistent|agree/i.test(a.matches_ball_data || '') && !/not|doesn't|does not|contradict/i.test(a.matches_ball_data || '');
+    // Since 2.11.0 the reading says so itself; older ones are read from the sentence.
+    const agrees = a.ball_data ? a.ball_data === 'agrees'
+      : /line[s]? up|matches|consistent|agree/i.test(a.matches_ball_data || '') && !/not|doesn't|does not|contradict/i.test(a.matches_ball_data || '');
     const score = (agrees ? 0.9 : 0.45) * (strong.length || 1), date = when(sw) || null;
     items.push({ key: 'swing:' + (sw.club || '') + ':' + sw.view, kind: 'swing', n: strong.length || 1, score, ev: [{ date, cost: score }],
       note: date ? `Read ${dateLabel(date)}.` : '',
@@ -2917,7 +2939,7 @@ function swingItems() {
       detail: strong.slice(0, 2).map(o => `${o.what} (${o.evidence})`).join('; ') || (a.observations || [])[0]?.what || '',
       range: cs ? `Ball data for ${sw.club}: ${pct(cs.pure, cs.n)}% pure, ${pct(cs.runner, cs.n)}% low runners` : null,
       advice: a.matches_ball_data ? `Video vs numbers: ${a.matches_ball_data}` : null,
-      practice: a.drill ? `${a.drill.name} — ${a.drill.why || ''}` : null,
+      practice: a.drill ? `${a.drill.name} — ${a.drill.how || a.drill.why || ''}` : null,
       block: sw.club && a.drill && a.drill.name ? { club: sw.club, swing: 'full', target: cs && cs.stockCarry ? round5(cs.stockCarry) : null, intent: `Drill: ${a.drill.name}` } : null,
       video: true, session: sw.session, club: sw.club || null, agrees, drillName: (a.drill && a.drill.name) || null });
   }
