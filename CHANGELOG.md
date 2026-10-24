@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.10.0 — 2026-10-24
+- On a hole the course map hasn't drawn yet (Lane Cove, Barnwell Park and Beverley Park on your first visit), "Mark my ball here" now works: it saves where your ball is by GPS, even though there are no distances to show yet.
+- Once your tee and flag marks draw the hole, those shots are measured from your real tee, so a first round there counts in full. Until then they show as not measurable rather than a guess.
+- The hole logger won't let a tap on the drawn outline mix with GPS-marked shots on the same hole.
+
 ## 2.9.0 — 2026-10-22
 - A course's Edit form has "Paste a scorecard": paste lines like "1: 4 / 260 / 16" (par / metres / stroke index), tap Fill, check the card, then Save. If the text names the tee ("blue tees"), that tee is set too.
 - It refuses a card it can't read cleanly (a hole twice, a hole missing, an odd par) and says what's wrong, rather than half-filling it.

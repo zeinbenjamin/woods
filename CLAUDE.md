@@ -713,6 +713,17 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   older copies can't drop or resurrect one, and only `by` = you can be
   removed (the hole page, `holeMarksSection`). The map side builds the hole
   from them; `hmFor` will take the course for that (hole-maps chat).
+- **Marking the ball on a hole not drawn yet** (2.10.0, asked before his
+  first Lane Cove round): where the course has a map file but this hole has
+  no line yet (marks-only courses on a first visit, `undrawn(h)`), *Mark my
+  ball here* still saves `{mx, my, club, gps}` from the file's fixed origin
+  (`playMap()`), no distances shown and no lie guessed (he picks). Those
+  shots are not measurable (`spot` needs the hole) until his tee and flag
+  marks draw it, then measured from his real tee, nothing stored. This
+  replaces the Course maps section's "first visit shots go on the outline".
+  The hole logger now refuses an outline or artwork tap on a hole holding
+  map shots it can't place (also the case after unlinking a map), so frames
+  never mix. A course with no map file is unchanged.
 - **Not measured on a real course yet.** Distances are checked against
   hand-worked geometry and the globe (haversine) in `ui-play`, but phone GPS
   under trees and how a phone browser treats Cloudflare's offline errors
@@ -799,7 +810,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 282 tests, about 45s.
+`npm test` — 289 tests, about 45s.
 
 - `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -858,6 +869,9 @@ fixture would let the reading be pinned.
   `ui-card` (pasting the hole-maps chat's Hurstville note into the course
   form: strict reading, the tee it names, everything else kept, round pars
   offered only when a par changed),
+  `ui-undrawn` (GPS shots on a hole not drawn yet: saved raw, not
+  measurable, then measured from the marked tee once drawn; the logger
+  refusing a second frame; no-map courses unchanged),
   `ui-marks` (Mark tee / Mark flag on an unmapped hole: the raw fix stored,
   ±10 m refused, flag after scoring, edits keep marks, only your own
   removable),
@@ -896,7 +910,9 @@ check; the test now requires it), 12 for 2.6.0's practice loop (two survived
 at first because the scenario had no tee misses and one earlier 5W session;
 both added), 13 for 2.7.0's visuals (two survived at first: no topped
 shot and no shot-tied penalty in the data; both added), 7 for 2.9.0's
-card paste (one survived at first: no round left that differed; added); all
+card paste (one survived at first: no round left that differed; added), 6 for
+2.10.0's undrawn holes (one survived at first: the greyed button off the
+course; added); all
 caught.
 The two zip/download ones retired with the chat route in 1.3.0).
 
