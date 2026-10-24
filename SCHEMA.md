@@ -290,9 +290,12 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 }
 ```
 
-`analysis` keys: `positions[]`, `observations[{what, evidence, confidence}]`,
-`matches_ball_data`, `cannot_tell[]`, `drill{name, why}`, `one_thing`, and
-`notes` + `parsed: false` when prose was pasted instead of JSON.
+`analysis` keys: `one_thing` (the fix), and since 2.11.0 `why`, `feel`,
+`check`, `drill{name, how}` and `ball_data` (`agrees` | `contradicts` |
+`unclear`, which decides agreement when present); `observations[{what,
+evidence, confidence}]` (at most three since 2.11.0), `matches_ball_data`,
+`cannot_tell[]`. Older readings may have `positions[]`, `drill{name, why}`,
+and `notes` + `parsed: false` when prose was pasted instead of JSON.
 
 **Frame `t` is never 0.** Seeking a video to exactly zero yields an
 undecoded, blank frame; extraction starts at 0.05s and drops frames that

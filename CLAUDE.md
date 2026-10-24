@@ -432,6 +432,15 @@ stored.
   rather than adding another; off-range practice (putting) goes in the
   session notes.
 
+**Swing readings are coached as one fix** (2.11.0, he found the card too
+long and asked for it the way a top coach would give it): the prompt starts
+from the ball flight, picks the one cause that would clean up most of the
+ball data, and answers in word-limited fields (`one_thing`, `why`, `feel`,
+`drill{name, how}`, `check`, `ball_data`). `swingReading` shows those; the
+observations, ball-data sentence and "can't tell" sit in `#seen_<swing id>`.
+Older readings keep their text: fix and drill on the card, the rest folded.
+`ball_data` decides agreement when present; older readings use the regex.
+
 The chat route for swing analysis (save frames as a zip, copy a prompt,
 paste the reply back) was removed in 1.3.0; analyses already saved with
 `analysedIn: 'chat'` still show with that label.
@@ -810,7 +819,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 289 tests, about 45s.
+`npm test` — 291 tests, about 45s.
 
 - `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -840,7 +849,7 @@ fixture would let the reading be pinned.
   `ui-crud` (clubs, courses, range blocks, rounds), `ui-analytics`
   (strike classes, derived-never-stored, nominal vs measured, recency
   window, calibration, unmeasurable → null), `ui-tees-migrations`,
-  `ui-swing` (frame extraction, analysis, video below ball data),
+  `ui-swing` (frame extraction, analysis, the coached card, video below ball data),
   `ui-practice` (recency weighting, freshness, quiet items, the planner),
   `ui-logging` (armed club, putts, penalties, quick score, first putt),
   `ui-overview` (the hierarchy, what is folded and the number each fold
