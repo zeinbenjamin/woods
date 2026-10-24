@@ -33,8 +33,8 @@ let fetchedAt = 0, triedAt = 0, fetching = null;
 async function loadKeys(force) {
   if (!force && keys.size && Date.now() - fetchedAt < 3600e3) return;
   if (fetching) return fetching;
-  // An unknown kid, or Cloudflare not answering, can't make us hammer it.
-  if ((force || !keys.size) && Date.now() - triedAt < 30e3) return;
+  // An unknown kid, Cloudflare not answering, or stale keys it won't refresh: at most one try every 30s.
+  if (Date.now() - triedAt < 30e3) return;
   triedAt = Date.now();
   fetching = (async () => {
     try {

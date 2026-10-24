@@ -317,6 +317,14 @@ Each of these cost real debugging time. Don't reintroduce them.
   the whole of v1.0.0 every removed frame, swing video and hole image
   stayed on disk.
   Asset routes now come first; `api.test.js` checks the file is gone.
+- **A hole's score on a traced hole is always `holeStrokes()`** (shots +
+  putts + the hole's penalty counter + penalties ticked on shots). The round
+  form once recomputed it without the shot-tied penalties, so editing a note
+  on a round took a stroke off (2.11.1). And **a lie never recorded (`unknown`)
+  is neither a hit nor a miss**: on a marks-only course nothing is mapped, so
+  counting it as a miss made every drive at Lane Cove a missed fairway.
+  **Tee names are matched ignoring case** everywhere (`teeMetres`,
+  `ratingOf`, `roundsOffTee`): the round form's tee is free text.
 - **Days are local, never UTC.** `today()` builds the date from local
   fields; `toISOString().slice(0, 10)` dated everything before 10am
   Sydney as the day before. Use `localDay()` for any calendar date.
@@ -819,7 +827,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 291 tests, about 45s.
+`npm test` — 299 tests, about 45s.
 
 - `api.test.js` (25) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -835,6 +843,13 @@ fixture would let the reading be pinned.
 - `versioning.test.js` (7) — the changelog format and its agreement with
   `package.json` and the lockfile, the PR gate, the release notes, and
   that publishing runs the tests first.
+- `review.test.js` (8) — the 2.11.1 end-to-end review, each bug reproduced
+  before its fix: the round form dropping shot-tied penalties from a traced
+  hole's score, the practice list ignoring them, a round's tee matched to the
+  card's sets by case, an unrecorded lie counted as a miss, a missing hole on a
+  round's grid opening a course edit for the round's id, a course's best
+  mixing nines and eighteens, a script-scheme booking link, an unscored round
+  shown as 0 +0.
 - `regressions.test.js` (8) — the 1.3.1 review fixes, each reproduced
   before it was fixed: local dates, quick taps, render cost with a season
   of data, panels staying open, an old token link leaving the URL, escaping;
