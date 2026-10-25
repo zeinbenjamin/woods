@@ -373,6 +373,9 @@ Each of these cost real debugging time. Don't reintroduce them.
   Both now use `--safe-b`, and `regressions.test.js` checks it. The
   `:root` padding doesn't help: `html` is `height: 100%`, so content
   overflows past it.
+- **No double-tap zoom, and inputs are 16px** (2.11.2): `html { touch-action:
+  manipulation }` stops the double-tap zoom while keeping pinch, and iOS zooms
+  into any input under 16px on focus, so the 15px fields zoomed the page.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 

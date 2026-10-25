@@ -6,6 +6,14 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.11.2 — 2026-10-25
+
+- Double-tapping no longer zooms the page, and tapping into a field no longer zooms in on it. Pinch-to-zoom still works.
+- The hole logger's lie and club chips for the last shot sit in one labelled box ("Shot 3: PW, green. Correct its lie or club here"), so they aren't mistaken for the next-shot chips above them.
+- The Bag table fits a phone: its headings wrap instead of pushing the measured carry off the screen.
+- A finding's page says "fairways hit" under "1 of 2 fairways", not "missed the fairway".
+- A range session's source reads "Toptracer", not "toptracer"; "1 scorecard-only rounds" is now singular; the Courses list puts its tags after the words; the practice list's ranking note is one sentence.
+
 ## 2.11.1 — 2026-10-24
 
 - Editing a round through its form (date, notes, tees) no longer drops penalties ticked on a shot from that hole's score.
