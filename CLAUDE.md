@@ -766,7 +766,16 @@ scorecard sets every length.
   and 15% outside it, so the source sets `minInside: 0.8` (default 0.9, the
   guard against a neighbour's holes; there's none here). No card in the
   source: the course page checks the NAS card. Greens are estimated on the
-  pins, as at Hurstville. An estimated green is now never reused by another
+  pins, as at Hurstville. **Artwork onto the map** (2.16.1):
+  `HoleMap.fromArt(hm, art, [x, y])` → `[mx, my]` or `null`. It reads a tap
+  as distance along the artwork's tee → (turn) → green path and offset to
+  one side (image y flipped, so left is left), scales both by the play
+  line's length over the path's (the card, for the tee played), and lays
+  them along `hm.pl`; behind the tee and past the green it carries on
+  straight. Approximate: the artwork is hand-drawn. For the Carry chat's
+  one-off conversion of the 13 Sep Hunter Valley round, which stores the
+  result as `mx/my` with the original kept and `approx: true`.
+  An estimated green is now never reused by another
   hole: 9 and 18 end 28 m apart, and 18 had taken 9's (only a *mapped* green
   can be shared). Its artwork rounds keep their frame; converting them waits.
   The same export added trees and bush at Barnwell Park, Beverley Park and
@@ -927,7 +936,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 305 tests, about 45s.
+`npm test` — 306 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1010,10 +1019,10 @@ fixture would let the reading be pinned.
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking, a boundary-only map drawing
   only the holes with marks).
-- `course-maps.test.js` (23) — the committed maps match their sources,
+- `course-maps.test.js` (24) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (7) — the sign-in sheets (home address, expired
   session by redirect and by Cloudflare's 401, asked once), "Signed in as"
@@ -1032,7 +1041,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for Hunter Valley, 2 for the legend, 5 for the
+9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for Hunter Valley, 5 for `fromArt` (also run against the Carry chat's ui-artconvert), 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 `tee` field from the app survives it because the server corrects it), 9 for 2.5.0's
