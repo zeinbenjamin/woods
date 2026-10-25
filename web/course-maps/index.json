@@ -24,6 +24,12 @@
   "holes": 9
  },
  {
+  "id": "hunter-valley",
+  "name": "Hunter Valley Golf Club",
+  "osmName": "an unnamed course at Lovedale",
+  "holes": 18
+ },
+ {
   "id": "hurstville",
   "name": "Hurstville Golf Club",
   "osmName": "Hurstville Golf Course",

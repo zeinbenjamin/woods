@@ -27,7 +27,7 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'barnwell-park', 'beverley-park', 'bondi', 'hurstville', 'lane-cove', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'barnwell-park', 'beverley-park', 'bondi', 'hunter-valley', 'hurstville', 'lane-cove', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
@@ -39,7 +39,7 @@ test('every map credits OpenStreetMap and has a fixed origin', () => {
       const g = m.features[h.green];
       assert.equal(g.k, 'green', `hole ${h.n} ends on a green`);
       assert.ok(dist(h.line[h.line.length - 1], centroid(g.r[0])) < 0.2, `hole ${h.n} is measured to the middle of its green`);
-      if (id !== 'hurstville') assert.ok(!g.est, `hole ${h.n}'s green is mapped, not estimated`);
+      if (id !== 'hurstville' && id !== 'hunter-valley') assert.ok(!g.est, `hole ${h.n}'s green is mapped, not estimated`);
     }
   }
 });
@@ -339,6 +339,26 @@ test('with tee marks for two tees, the line starts at the tee played, else the o
   assert.ok(dist(HM.forHole('barnwell-park', 1, 182, { marks, tee: 'blue' }).hole.line[0], red) < 0.2, 'no blue marks: the set nearest the card');
   const hm = HM.forHole('barnwell-park', 1, 220, { marks, tee: 'white' });
   assert.equal(hm.hole.tees.length, 2, 'both are tee boxes for the card check');
+});
+
+test('Hunter Valley: 18 OSM lines on a partial boundary, each green estimated on its own pin', () => {
+  const m = mapOf('hunter-valley'), src = JSON.parse(readFileSync('course-maps/src/hunter-valley.json', 'utf8'));
+  const geo = JSON.parse(readFileSync('course-maps/osm/hunter-valley.geojson', 'utf8')).features;
+  assert.equal(src.osm.course, 'way/675566513'); assert.equal(src.card, undefined, 'no card: the course page checks the NAS card');
+  assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1));
+  // 7 and 9 run partly outside OSM's partial boundary; with no course next door they still count.
+  const inside = n => { const l = m.byN[n].line, L = lineLen(l); let k = 0, t = 0; for (let s = 0; s <= L; s += 5) { t++; if (HM.geom.inRings(HM.geom.pointAt(l, s), m.boundary)) k++; } return k / t; };
+  assert.ok(inside(7) < 0.9 && inside(9) < 0.9 && inside(7) >= src.minInside && inside(9) >= src.minInside);
+  const pins = new Map(geo.filter(f => f.properties.golf === 'pin').map(f => [f.properties['@id'], HM.fromLatLng(m, f.geometry.coordinates[1], f.geometry.coordinates[0])]));
+  for (const h of m.holes) {
+    const g = m.features[h.green];
+    assert.ok(g.est && pins.has(g.osm), `hole ${h.n}: no green is mapped, so it's estimated on a pin`);
+    assert.ok(dist(h.line.at(-1), pins.get(g.osm)) < 0.2, `hole ${h.n} ends on its own pin`);
+    assert.equal(h.tees.length, 1, `hole ${h.n} has its mapped tee point`);
+  }
+  // 9 and 18 end 28 m apart: two greens, not one shared.
+  assert.notEqual(m.byN[9].green, m.byN[18].green);
+  assert.ok(dist(m.byN[9].line.at(-1), m.byN[18].line.at(-1)) > 25);
 });
 
 test('flag marks move an estimated green on a mapped line; mapped greens ignore marks', () => {
