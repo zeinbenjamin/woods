@@ -6,8 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
-## 2.16.1 — 2026-10-25
-- Nothing changes on screen yet. The map can now work out where a tap on a hole's artwork lands on the course map, ready for moving your 13 September Hunter Valley round from the artwork onto the map.
+## 2.17.1 — 2026-10-25
+- Moving a round from the hole pictures onto the map now uses the map's own rule for where a tap lands, so it can't drift from how the map is drawn. Where your shots land is the same as in 2.17.0.
+
+## 2.17.0 — 2026-10-25
+
+- Hunter Valley's old rounds can move onto its new map. On the course page, "Rounds traced on artwork" lists what was traced on the uploaded hole pictures and offers to move those shots onto the map: each shot keeps its place along the hole and its distance to the side, then its distances come from the map like any other map shot.
+- It's approximate (the picture was a drawing, the map line is OpenStreetMap's) and never automatic: you press the button and confirm. The artwork position is kept on each shot.
 
 ## 2.16.0 — 2026-10-25
 - Hunter Valley has a course map. OpenStreetMap now has all 18 holes there, so link it from the course page and every hole is drawn, with the card checked against it. Rounds already traced on the artwork stay on it.
