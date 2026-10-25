@@ -184,6 +184,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "courseId": "c_huntervalley", "courseName": "Hunter Valley Golf Club",
   "tee": "white",                    // which set distances resolve through
   "detail": "score_only|shot_level",
+  "format": "ambrose|bestball|team",   // 2.15.0; absent = solo stroke play. A team
+                                        // round is listed and labelled, and left out of
+                                        // the handicap, averages and evidence
   "notes": "…",
   "holes": [
     {
