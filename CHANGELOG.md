@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.11.3 — 2026-10-25
+
+- Add a swing: the "Video" label no longer runs into the file picker; the picker sits on its own line.
+- A swing reading from before 2.11.0, whose fix is a whole paragraph, is shown in body type rather than as a headline. New readings are unchanged.
+
 ## 2.11.2 — 2026-10-25
 
 - Double-tapping no longer zooms the page, and tapping into a field no longer zooms in on it. Pinch-to-zoom still works.

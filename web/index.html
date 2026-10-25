@@ -65,6 +65,7 @@ button.quiet { background: none; border-color: transparent; color: var(--green);
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; } button:disabled { opacity: .5; cursor: default; }
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 0; } .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 label { display: block; font-size: 13px; color: var(--ink-2); margin: 12px 0 4px; }
+input[type=file] { display: block; width: 100%; margin-top: 4px; font: 400 14px var(--body); color: var(--ink); }
 input[type=text], input[type=number], input[type=date], input[type=url], select, textarea { width: 100%; font: 400 16px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r); padding: 9px 10px; }
 input[type=number] { -moz-appearance: textfield; } input[type=range] { width: 100%; accent-color: var(--green); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
@@ -182,6 +183,7 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .filmstrip img { height: 132px; width: auto; border-radius: 4px; flex: 0 0 auto; background: var(--paper-2); }
 .analysis { border-left: 3px solid var(--green); padding: 8px 10px; margin: 8px 0 0; background: var(--paper-2); border-radius: 0 var(--r) var(--r) 0; }
 .analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
+.analysis .one.long { font: 500 14px/1.35 var(--body); }
 .analysis .obs { font-size: 13px; margin: 3px 0; }
 .analysis .cue { font-size: 14px; margin: 4px 0; }
 .analysis .seen { margin-top: 8px; }
@@ -2792,7 +2794,7 @@ function swingReading(sw, s, a) {
     a.notes ? `<div class="small" style="margin-top:6px;white-space:pre-wrap">${esc(a.notes)}</div>` : '',
   ].join('');
   return `<div class="analysis">
-      <div class="one">${esc(a.one_thing || '')}</div>
+      <div class="one${String(a.one_thing || '').length > 110 ? ' long' : ''}">${esc(a.one_thing || '')}</div>
       ${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}
       ${detail ? `<details class="seen" id="seen_${sw.id}"><summary class="small">What Claude saw${obs.length ? ` (${obs.length})` : ''}</summary>${detail}</details>` : ''}
       <div class="small muted" style="margin-top:6px">Read from frames by Claude${sw.analysedIn === 'chat' ? ' in a chat' : ''} on ${dateLabel(sw.analysedOn || s.date)} — a reading, not a measurement.</div>
