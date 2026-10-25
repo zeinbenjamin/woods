@@ -6,10 +6,16 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
-## 2.15.0 — 2026-10-25
+## 2.16.0 — 2026-10-25
 - Hunter Valley has a course map. OpenStreetMap now has all 18 holes there, so link it from the course page and every hole is drawn, with the card checked against it. Rounds already traced on the artwork stay on it.
 - Hunter Valley's greens aren't mapped yet, so each one is estimated on its flag and drawn dashed, as at Hurstville. You pick the lie there, and Play shows the distance to the middle only.
 - Barnwell Park, Beverley Park and Lane Cove now show the trees and bush mapped there since September, and a tap in them reads as trees.
+
+## 2.15.0 — 2026-10-25
+
+- A round has a format: solo (the default), Ambrose / scramble, best ball, or another team format. Set it on New round, Edit round and Start round.
+- A team round is your card, not your game alone, so it's kept and shown in your rounds and a course's history, labelled, but left out of the handicap (listed with the reason), Current form, the scoring trend, course averages and the practice list's evidence.
+- To mark the Lane Cove Ambrose of 25 Oct: open the round, Edit, Format → Ambrose, Save.
 
 ## 2.14.0 — 2026-10-25
 
