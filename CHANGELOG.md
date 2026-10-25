@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.12.2 — 2026-10-25
+
+- The line above the practice list is just the counts: "18 holes traced · 229 range shots · 15 swings · newest 21 Oct". Scorecard-only rounds are mentioned under "How this is ranked" instead.
+
 ## 2.12.1 — 2026-10-25
 
 - The line above the practice list (and under Next practice on the Overview) is one line: "18 holes traced · 229 range shots · 15 swings · newest 21 Oct". The full sentence, and that it's recalculated on every draw, is under "How this is ranked".

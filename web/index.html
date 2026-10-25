@@ -3245,8 +3245,10 @@ function practiceBasis() {
 // sentence sits in the fold beside it (Range) or the Evidence fold (Overview).
 const shortDay = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
 function basisShort() {
-  const b = practiceBasis(), bits = b.text.replace(/^Built from /, '').replace(/\.$/, '').replace(/ of shot data/, ' traced').replace(/ analysed swings?/, ' swings').replace(/ \(not used\)/, ' not used').split(', ');
-  return `<div class="basis slim">${esc(b.text.startsWith('Built') ? bits.join(' · ') : b.text)}${b.newest ? ` · newest ${esc(shortDay(b.newest))}` : ''}</div>`;
+  const b = practiceBasis();
+  const bits = b.text.startsWith('Built') ? b.text.replace(/^Built from /, '').replace(/\.$/, '').split(', ').filter(x => !/scorecard-only/.test(x))
+    .map(x => x.replace(/ of shot data/, ' traced').replace(/ analysed swings?/, ' swings')) : [];
+  return `<div class="basis slim">${bits.length ? esc(bits.join(' · ')) : esc(b.text)}${b.newest ? ` · newest ${esc(shortDay(b.newest))}` : ''}</div>`;
 }
 const basisLine = () => { const b = practiceBasis(); return `<div class="basis">${esc(b.text)}${b.newest ? ` Newest input ${dateLabel(b.newest)}.` : ''} <span class="muted">Recalculated every time this screen draws — there is no stored copy.</span></div>`; };
 
