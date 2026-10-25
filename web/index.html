@@ -2291,7 +2291,9 @@ function strikeItem(code) {
      day it was last seen, and the course hasn't confirmed it yet. It stays
      on the list at half weight. */
 const PRACTICE_HALF_LIFE = 60, STALE_AFTER = 180;
-const ageDays = d => d ? Math.max(0, (Date.now() - new Date(d + 'T00:00:00').getTime()) / 86400000) : 0;
+// Whole local days, as for club distances: to the millisecond, two draws moments apart
+// weighed the same evidence differently in the tenth decimal (a 2.11.3 publish failed on it).
+const ageDays = d => d ? daysAgo(d) : 0;
 const decay = d => Math.pow(0.5, ageDays(d) / PRACTICE_HALF_LIFE);
 // The latest day a range block for this club and swing was actually hit, on or after `since`.
 function practisedSince(block, since) {

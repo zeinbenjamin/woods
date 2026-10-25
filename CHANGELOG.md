@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.11.4 — 2026-10-25
+
+- The practice list weighs evidence by whole days, so the same finding gets the same weight on every draw. Nothing visible changes; a publish had failed on a test that caught two draws disagreeing in the tenth decimal.
+
 ## 2.11.3 — 2026-10-25
 
 - Add a swing: the "Video" label no longer runs into the file picker; the picker sits on its own line.
