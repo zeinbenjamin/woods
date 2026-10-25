@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.17.1 — 2026-10-25
+- Moving a round from the hole pictures onto the map now uses the map's own rule for where a tap lands, so it can't drift from how the map is drawn. Where your shots land is the same as in 2.17.0.
+
 ## 2.17.0 — 2026-10-25
 
 - Hunter Valley's old rounds can move onto its new map. On the course page, "Rounds traced on artwork" lists what was traced on the uploaded hole pictures and offers to move those shots onto the map: each shot keeps its place along the hole and its distance to the side, then its distances come from the map like any other map shot.

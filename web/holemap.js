@@ -461,6 +461,42 @@
 
   // A tap at view coordinates, as a point on the map.
   function tapToMap(hm, q) { return viewOf(hm.map, hm.hole, hm.pl).toMap(q); }
+
+  /* ---------- artwork taps onto the map ----------
+     For converting rounds traced on hole artwork (image pixels). The
+     artwork's path is tee → (turn) → green; a tap is read as how far along
+     that path it is and how far to one side, both scaled by the hole's
+     length over the path's, and laid along the play line for the tee
+     played. Approximate by nature: the artwork was drawn by hand. Behind
+     the tee or past the green it carries on straight. null when the hole
+     or the artwork can't be placed. */
+  function fromArt(hm, art, p) {
+    if (!hm || !hm.pl || !art || !Array.isArray(art.tee) || !Array.isArray(art.green) || !Array.isArray(p)) return null;
+    // Image y runs down; flip it so left and right mean the same on both.
+    const up = q => [q[0], -q[1]];
+    const path = [art.tee].concat(Array.isArray(art.turn) ? [art.turn] : [], [art.green]).map(up), q = up(p);
+    const La = lineLen(path), Lm = lineLen(hm.pl);
+    if (!(La > 0) || !(Lm > 0) || !q.every(Number.isFinite)) return null;
+    const k = Lm / La;
+    // Along and across on the artwork, the end segments extended.
+    let best = null;
+    for (let i = 1, s = 0; i < path.length; i++) {
+      const a = path[i - 1], b = path[i], len = dist(a, b) || 1, ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len;
+      let t = (q[0] - a[0]) * ux + (q[1] - a[1]) * uy;
+      if (i > 1) t = Math.max(0, t);
+      if (i < path.length - 1) t = Math.min(len, t);
+      const side = (q[1] - a[1]) * ux - (q[0] - a[0]) * uy, off = Math.hypot(q[0] - (a[0] + ux * t), q[1] - (a[1] + uy * t));
+      if (!best || off < best.off) best = { off, along: s + t, side: Math.sign(side) * off };
+      s += len;
+    }
+    // The same along and across on the play line.
+    const s = best.along * k, pl = hm.pl;
+    let i = 1, acc = 0;
+    while (i < pl.length - 1 && acc + dist(pl[i - 1], pl[i]) < s) { acc += dist(pl[i - 1], pl[i]); i++; }
+    const a = pl[i - 1], b = pl[i], len = dist(a, b) || 1, ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len, t = s - acc;
+    const x = a[0] + ux * t - uy * best.side * k, y = a[1] + uy * t + ux * best.side * k;
+    return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+  }
   function mapToView(hm, p) { return viewOf(hm.map, hm.hole, hm.pl).toView(p); }
 
   /* ---------- style A, light and dark ---------- */
@@ -503,7 +539,7 @@
 
   root.HoleMap = {
     get, list, forHole, svg, legend, legendKinds, tapToMap,
-    projection, fromLatLng, toLatLng, offCourse, greenDistances, mapToView, lieAt, toGreen, playLine, mismatch, stripFor,
+    projection, fromLatLng, toLatLng, offCourse, greenDistances, mapToView, lieAt, toGreen, playLine, mismatch, stripFor, fromArt,
     set onLoad(f) { onLoad = typeof f === 'function' ? f : () => {}; },
     geom: { dist, lineLen, pointAt, sub, segDist, lineDist, inRings, centroid, bbox },
     FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH, MARK_ACC, MARK_NEAR, MARK_OFF, MARK_GREEN_MOVE,
