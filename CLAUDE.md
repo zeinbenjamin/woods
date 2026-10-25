@@ -777,7 +777,9 @@ scorecard sets every length.
   result as `mx/my` with the original kept and `approx: true`.
   An estimated green is now never reused by another
   hole: 9 and 18 end 28 m apart, and 18 had taken 9's (only a *mapped* green
-  can be shared). Its artwork rounds keep their frame; converting them waits.
+  can be shared). Its one artwork round (13 Sep) was moved onto the map on
+  2026-10-25 through the Carry chat's 2.17.0 (see *Artwork → map*); he found
+  it good enough, approximate as expected.
   The same export added trees and bush at Barnwell Park, Beverley Park and
   Lane Cove (still no hole lines there); origins and boundaries unchanged.
 
@@ -1104,8 +1106,7 @@ In rough order of value:
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
 3. **More course maps** (see *Course maps*). Barnwell Park, Beverley
-   Park and Lane Cove are drawn from his GPS marks as he plays them; Hunter
-   Valley's art rounds could convert to approximate map positions.
+   Park and Lane Cove are drawn from his GPS marks as he plays them.
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
