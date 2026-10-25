@@ -474,3 +474,85 @@ test('imports a Carry export for its owner, assets and all', async () => {
   assert.deepEqual(Buffer.from(await blob.arrayBuffer()), png);
 });
 
+
+/* ---------- the monitor's read-only view (2.14.0) ---------- */
+// A Cloudflare service token: a valid Access JWT with no email and a common_name.
+const MONITOR_ID = 'abc123monitor.access';
+const service = (id = MONITOR_ID) => ({ 'cf-access-jwt-assertion': sign(undefined, { extra: { common_name: id, type: 'app' } }) });
+
+test('the monitor: its service token reads /api/admin, a person cannot; it reads nothing else; only GET', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'carry-mon-'));
+  const s = await boot({ DATA_DIR: dir, OWNER_EMAIL: ME, CF_ACCESS_MONITOR_ID: MONITOR_ID, ...(await accessEnv()) }, PORT + 70);
+  try {
+    const j = (path, headers = service()) => fetch(`${s.url}${path}`, { headers }).then(async r => ({ status: r.status, body: await r.json().catch(() => null), cache: r.headers.get('cache-control') }));
+    // Seed: Zein's documents, a shared course, and a friend's documents (through the normal, signed-in API).
+    const put = (who, col, id, body) => fetch(`${s.url}/api/${col}/${id}`, { method: 'PUT', headers: { ...header(who), 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    await put(ME, 'clubs', '7i', { code: '7i', name: '7 iron' });
+    await put(ME, 'courses', 'c1', { id: 'c1', name: 'Shared GC', holes: [] });
+    await put(ME, 'sessions', 'r1', { id: 'r1', type: 'round', date: '2026-10-20', courseId: 'c1', holes: [] });
+    await put(FRIEND, 'clubs', 'PW', { code: 'PW', name: 'friend wedge' });
+    await put(FRIEND, 'sessions', 'rf', { id: 'rf', type: 'round', date: '2026-10-21', courseId: 'c1', holes: [] });
+    await fetch(`${s.url}/api/sessions/nope`, { headers: header(FRIEND) });    // a friend's 404: a line in the container log
+    await fetch(`${s.url}/api/sessions/nope?secret=1`, { headers: header(ME) }); // Zein's 404, with a query string
+
+    const h = await j('/api/admin/health');
+    assert.equal(h.status, 200);
+    assert.equal(h.cache, 'no-store');
+    assert.equal(h.body.authMode, 'access');
+    assert.ok(h.body.database.bytes > 0 && h.body.uptimeSeconds >= 0 && typeof h.body.migratedFrom1x === 'boolean');
+    assert.equal(h.body.ownerConfigured, true);
+
+    const a = await j('/api/admin/activity');
+    assert.equal(a.status, 200);
+    assert.equal(a.body.owner, ME);
+    assert.deepEqual(Object.fromEntries(Object.entries(a.body.collections).map(([k, v]) => [k, v.n])), { clubs: 1, courses: 1, sessions: 1 }, 'his documents and the shared course: the friend\'s are not counted');
+    assert.ok(a.body.log.some(l => /GET \/api\/sessions\/nope 404/.test(l)), 'his failed request is in the log');
+    assert.equal(a.body.log.length, a.body.log.filter(l => /PUT \/api\/(clubs\/7i|courses\/c1|sessions\/r1) 200|GET \/api\/sessions\/nope 404/.test(l)).length, 'only his lines');
+    assert.ok(!a.body.log.some(l => /PW|rf|secret|\?/.test(l)), 'no friend\'s line, no query string');
+
+    const d = await j('/api/admin/data');
+    assert.equal(d.status, 200);
+    assert.equal(d.body.format, 'carry-export');
+    assert.deepEqual(d.body.clubs.map(c => c.code), ['7i']);
+    assert.deepEqual(d.body.sessions.map(r => r.id), ['r1']);
+    assert.deepEqual(d.body.courses.map(c => c.id), ['c1'], 'the shared course comes too');
+    assert.deepEqual(d.body.assets, {}, 'no file bytes');
+    assert.ok(!JSON.stringify(d.body).includes(FRIEND) && !JSON.stringify(d.body).includes('friend wedge'), 'nothing of the friend\'s');
+    assert.ok(!JSON.stringify(a.body).includes(FRIEND) && !JSON.stringify(h.body).includes(FRIEND));
+
+    // A person's token is not the monitor's; the monitor's is not a person's.
+    assert.equal((await j('/api/admin/health', header(ME))).status, 401);
+    assert.equal((await j('/api/admin/health', service('someone-elses-token'))).status, 401);
+    assert.equal((await j('/api/admin/health', {})).status, 401);
+    for (const path of ['/api/sessions', '/api/courses', '/api/me', '/api/stamps', '/_blob/abc']) assert.equal((await j(path)).status, 401, `${path} refuses the service token`);
+    for (const [method, path] of [['PUT', '/api/clubs/x'], ['DELETE', '/api/clubs/7i'], ['POST', '/api/analyse'], ['POST', '/api/assets']]) {
+      const r = await fetch(`${s.url}${path}`, { method, headers: { ...service(), 'content-type': 'application/json' }, body: '{}' });
+      assert.equal(r.status, 401, `${method} ${path} refuses the service token`);
+    }
+    for (const method of ['POST', 'PUT', 'DELETE', 'PATCH']) {
+      const r = await fetch(`${s.url}/api/admin/health`, { method, headers: service() });
+      assert.equal(r.status, 405, `${method} on /api/admin is not allowed`);
+    }
+    assert.deepEqual(await fetch(`${s.url}/api/clubs/7i`, { headers: header(ME) }).then(r => r.json()), { code: '7i', name: '7 iron', id: '7i' }, 'nothing was written by the admin calls');
+  } finally { s.p.kill(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the monitor: not configured → 503; no owner → health only', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'carry-mon2-'));
+  const off = await boot({ DATA_DIR: dir, OWNER_EMAIL: ME, CF_ACCESS_MONITOR_ID: '', ...(await accessEnv()) }, PORT + 71);
+  try {
+    assert.equal((await fetch(`${off.url}/api/admin/health`, { headers: service() })).status, 503, 'unset: off');
+    assert.match(off.out(), /Monitor: off/);
+  } finally { off.p.kill(); }
+  const ph = await boot({ DATA_DIR: dir, OWNER_EMAIL: ME, CF_ACCESS_MONITOR_ID: 'REPLACE_WITH_the_client_id', ...(await accessEnv()) }, PORT + 72);
+  try { assert.equal((await fetch(`${ph.url}/api/admin/health`, { headers: service('REPLACE_WITH_the_client_id') })).status, 503, 'the placeholder is unset'); }
+  finally { ph.p.kill(); }
+  const noOwner = await boot({ DATA_DIR: dir, OWNER_EMAIL: '', CF_ACCESS_MONITOR_ID: MONITOR_ID, ...(await accessEnv()) }, PORT + 73);
+  try {
+    const h = await fetch(`${noOwner.url}/api/admin/health`, { headers: service() });
+    assert.equal(h.status, 200); assert.equal((await h.json()).ownerConfigured, false);
+    assert.equal((await fetch(`${noOwner.url}/api/admin/activity`, { headers: service() })).status, 503);
+    assert.equal((await fetch(`${noOwner.url}/api/admin/data`, { headers: service() })).status, 503);
+    assert.match(noOwner.out(), /Monitor: GET \/api\/admin/);
+  } finally { noOwner.p.kill(); rmSync(dir, { recursive: true, force: true }); }
+});

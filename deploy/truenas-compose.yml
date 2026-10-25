@@ -57,6 +57,9 @@ services:
       CF_ACCESS_TEAM: "REPLACE_ME.cloudflareaccess.com"   # ← REPLACE (2)
       CF_ACCESS_AUD: "REPLACE_WITH_the_AUD_tag"           # ← REPLACE (3)
       OWNER_EMAIL: "REPLACE_WITH_you@example.com"         # ← REPLACE (4)
+      # Optional: the Client ID of the Cloudflare service token that may read
+      # /api/admin/* (the monitor). Leave empty and there is no admin endpoint.
+      CF_ACCESS_MONITOR_ID: ""
       CARRY_MODEL: "claude-sonnet-4-6"
       MAX_ASSET_MB: "200"
       TZ: "Australia/Sydney"
