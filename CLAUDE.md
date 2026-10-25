@@ -359,7 +359,15 @@ Each of these cost real debugging time. Don't reintroduce them.
   fourth column, 1..N, each once; a cleared box removes it), because there
   was no other way to add one and Randwick came over without it.
 - **Contact sheets above ~1400px or in portrait have caused rendering
-  failures.** Individual frames at 800–900px are reliable.
+  failures.** Individual frames at 800–900px are reliable. **16 frames a
+  swing** (2.18.0, asked through the monitor chat: the downswing is about
+  0.25–0.3 s and 8 frames gave it one at most, so no reading could say when
+  the wrist angle went): `FRAME_COUNT`, about 0.1 s apart on a 1.5 s trim.
+  The trim hint (`trimNote`) shows the gap and warns over `GAP_WARN` (0.15 s).
+  Not 24: analysis time, phone video blurs through impact anyway, and the
+  image-set limit above. The prompt gets each frame's time, and a
+  down-the-line swing is asked the wrist question (`wrist` in the analysis;
+  shown under *What Claude saw*). Older swings keep their 8.
 - **TrueNAS runs containers as 568:568.** The dataset must be owned by it
   or SQLite can't create `carry.db-wal` — which fails on first *write*,
   not at startup, so it looks like it's working.
@@ -802,9 +810,8 @@ stored, the lie stays as recorded (Hunter Valley's greens are estimated,
 so the map wouldn't give one), and `approx` keeps it out of calibration
 (`shotRecords().full` is false for it and for the shot after it) with
 "approx." on the shot list and the dot details. The geometry is
-`artToMap`, which calls `HoleMap.fromArt(hm, art, [x, y])` when the
-hole-maps chat ships it (same contract) and carries a local copy until
-then; delete the copy when it lands. Frames never mix: a hole moves whole or not at all. `ui-artconvert`
+`HoleMap.fromArt(hm, art, [x, y])` (hole-maps 2.17.1; the app's own copy
+from 2.17.0 went in 2.18.0). Frames never mix: a hole moves whole or not at all. `ui-artconvert`
 checks a straight hole and a dogleg by hand and the real Hunter Valley file
 end to end. The artwork stays on the course record; unused once every
 round there has moved.
@@ -964,7 +971,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 309 tests, about 45s.
+`npm test` — 311 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1005,7 +1012,9 @@ fixture would let the reading be pinned.
   `ui-crud` (clubs, courses, range blocks, rounds), `ui-analytics`
   (strike classes, derived-never-stored, nominal vs measured, recency
   window, calibration, unmeasurable → null), `ui-tees-migrations`,
-  `ui-swing` (frame extraction, analysis, the coached card, video below ball data),
+  `ui-swing` (frame extraction, 16 frames and the trim hint, analysis with
+  each frame's time and the wrist question down the line, the coached card,
+  video below ball data),
   `ui-practice` (recency weighting, freshness, quiet items, the planner),
   `ui-logging` (armed club, putts, penalties, quick score, first putt),
   `ui-overview` (the hierarchy, what is folded and the number each fold

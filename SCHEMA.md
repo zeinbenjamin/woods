@@ -287,7 +287,7 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "view": "dtl|face|other",          // changes how the analysis reads them
   "club": "7i", "note": "…",
   "addedOn": "2026-09-24", "duration": 6.4,
-  "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below
+  "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below; 16 since 2.18.0 (8 before), evenly spaced across the trim
   "video": "<asset id>|null",        // null when over the 20 MB asset cap
   "analysis": { /* free-form; see keys below */ },
   "analysedOn": "2026-09-24",
@@ -300,7 +300,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 `check`, `drill{name, how}` and `ball_data` (`agrees` | `contradicts` |
 `unclear`, which decides agreement when present); `observations[{what,
 evidence, confidence}]` (at most three since 2.11.0), `matches_ball_data`,
-`cannot_tell[]`. Older readings may have `positions[]`, `drill{name, why}`,
+`cannot_tell[]`; since 2.18.0, on down-the-line readings only, `wrist{top:
+cupped|flat|bowed|cannot tell, lead_arm_parallel: held|opening|released|cannot
+tell, frames}`. Older readings may have `positions[]`, `drill{name, why}`,
 and `notes` + `parsed: false` when prose was pasted instead of JSON.
 
 **Frame `t` is never 0.** Seeking a video to exactly zero yields an

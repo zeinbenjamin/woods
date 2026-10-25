@@ -1675,48 +1675,18 @@ Object.assign(ACTIONS, {
    (in metres, by the same scale the artwork's distances always used) are
    laid onto the map's hole line at the same fraction and offset. Approximate
    by construction: the artwork was a drawing, the line is OSM's. The pixel
-   position is kept on the shot (ax, ay) and the shot says where it came from
-   (from: 'art'), so it can be read back or redone. Asked, never automatic. */
-const polyLen = pts => pts.slice(1).reduce((L, q, i) => L + Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]), 0);
-// Where p sits against a polyline: fraction of its length, and offset to the
-// right of travel (right as seen in that frame: perp = (uy, −ux) for y up, (−uy, ux) for y down).
-function alongLine(pts, p, yDown) {
-  let best = null, acc = 0; const total = polyLen(pts) || 1;
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i], vx = b[0] - a[0], vy = b[1] - a[1], L = Math.hypot(vx, vy) || 1;
-    const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / (L * L)));
-    const qx = a[0] + t * vx, qy = a[1] + t * vy, d = Math.hypot(p[0] - qx, p[1] - qy);
-    if (!best || d < best.d) { const ux = vx / L, uy = vy / L, px = yDown ? -uy : uy, py = yDown ? ux : -ux; best = { d, f: (acc + t * L) / total, right: (p[0] - qx) * px + (p[1] - qy) * py }; }
-    acc += L;
-  }
-  return best;
-}
-// The point a fraction f along a polyline, with the right-of-travel unit vector there (y up).
-function atFraction(pts, f) {
-  const total = polyLen(pts), want = Math.max(0, Math.min(1, f)) * total; let acc = 0;
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (acc + L >= want || i === pts.length - 1) { const t = L ? (want - acc) / L : 0, ux = (b[0] - a[0]) / (L || 1), uy = (b[1] - a[1]) / (L || 1); return { p: [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])], right: [uy, -ux] }; }
-    acc += L;
-  }
-  return { p: pts[0], right: [1, 0] };
-}
-// The geometry: an art pixel onto the hole's map line, [mx, my] or null. The
-// hole-maps chat is building HoleMap.fromArt(hm, art, [x, y]) with this
-// contract so the rule lives with the map; it is used when present, and this
-// local copy goes then.
-function artToMap(hm, art, p, metres) {
-  if (window.HoleMap && typeof HoleMap.fromArt === 'function') return HoleMap.fromArt(hm, art, p);
-  const path = [art.tee, art.turn, art.green].filter(Boolean), k = (metres || 0) / (polyLen(path) || 1);
-  const at = alongLine(path, p, true); if (!at) return null;
-  const q = atFraction(hm.pl, at.f), off = at.right * k;
-  return [+(q.p[0] + q.right[0] * off).toFixed(1), +(q.p[1] + q.right[1] * off).toFixed(1)];
-}
+   position is kept on the shot (art: {x, y}) and the shot is marked approx,
+   so it can be read back or redone. Asked, never automatic. */
+// The geometry is the map's own (HoleMap.fromArt: the shot's fraction along
+// the artwork's tee → (turn) → green path and its offset to the side, laid
+// onto the drawn hole line at the same fraction and offset, scaled by the
+// hole's length): [mx, my] or null.
+const artToMap = (hm, art, p) => window.HoleMap && typeof HoleMap.fromArt === 'function' ? HoleMap.fromArt(hm, art, p) : null;
 // One art shot moved: the map position, the pixels kept under art, and approx
 // so nothing treats its distances as measured (calibration leaves it out).
 function artShotToMap(h, s) {
   if (!h.art || !h.hm || s.x == null) return null;
-  const m = artToMap(h.hm, h.art, [s.x, s.y], h.metres); if (!m) return null;
+  const m = artToMap(h.hm, h.art, [s.x, s.y]); if (!m) return null;
   const { x, y, ...rest } = s;
   return { ...rest, mx: m[0], my: m[1], approx: true, art: { x, y } };
 }
@@ -2760,7 +2730,17 @@ function roundFindingsSection(r) {
    two lines of evidence are weighed together rather than separately.
    ============================================================ */
 const VIEWS = { dtl: 'Down the line', face: 'Face on', other: 'Other angle' };
-const FRAME_COUNT = 8;
+// 16 frames (8 before 2.18.0): the downswing, top to ball, takes about
+// 0.25–0.3 s, and 8 frames across even a tight clip put at most one frame in
+// it, so no reading could say when the wrist angle went. 16 on a ~1.5 s trim
+// is about 0.1 s apart: three frames in the downswing. Not more: analysis
+// time, phone video blurring through impact anyway, and the rendering
+// failures large image sets have caused (frames stay individual, never a
+// contact sheet). Older swings keep their 8.
+const FRAME_COUNT = 16;
+const GAP_WARN = 0.15;                                 // seconds between frames: over this, the downswing is skipped
+// Mean spacing of a swing's frames, in seconds, from their stored times.
+const frameGap = frames => frames && frames.length > 1 ? (frames[frames.length - 1].t - frames[0].t) / (frames.length - 1) : null;
 
 // What each view can actually show. Sent to Claude so it reads the
 // frames for what they support, and says so when they don't.
@@ -2847,10 +2827,16 @@ function ballContextFor(code) {
 function swingPrompt(sw, session) {
   const focus = session.focus ? `The player's stated focus for this session was: "${session.focus}".` : '';
   const hist = `Background on the player: a beginner roughly a year in, working on iron consistency and course management. Known history: lateral hip sway on the backswing and early extension through impact were early faults; adding hip rotation gained distance but introduced an alternating hook and shank pattern on irons, thought to be body rotation outrunning hand and arm timing.`;
-  return `You are looking at ${FRAME_COUNT} still frames taken in order from a single golf swing, earliest first. They were pulled from a phone video, so they are evenly spaced in time and may not land exactly on the key positions.
+  const frames = sw.frames || [], gap = frameGap(frames);
+  const timing = frames.length ? ` They are at these times from the start of the clip, in seconds: ${frames.map(f => f.t).join(', ')}${gap != null ? ` (about ${gap.toFixed(2)} s apart)` : ''}.` : '';
+  // The cast-vs-flip question: only a down-the-line view can show it.
+  const wrist = sw.view === 'dtl' ? `
+WRIST ANGLE (this view can show it): first find the frame nearest the top of the backswing and the frame nearest the lead arm parallel to the ground on the way down. From the top frame, say whether the lead wrist is cupped, flat or bowed. From the lead-arm-parallel frame, say whether the angle between the shaft and the lead arm is still held (an L or tighter), opening, or already released (shaft near in line with the arm). Answer from those two frames only; if no frame is close enough to either position, say "cannot tell". Do not infer it from the ball data.
+` : '';
+  return `You are looking at ${frames.length || FRAME_COUNT} still frames taken in order from a single golf swing, earliest first. They were pulled from a phone video at fixed intervals, so they may not land exactly on the key positions.${timing} Say which frame is nearest the top of the backswing and which is nearest impact before reading what happens between them.
 
 CAMERA VIEW: ${VIEW_BRIEF[sw.view] || VIEW_BRIEF.other}
-
+${wrist}
 CLUB AND BALL DATA: ${ballContextFor(sw.club)}
 ${focus}
 ${sw.note ? `The player's own note on this swing: "${sw.note}"` : ''}
@@ -2866,7 +2852,8 @@ Answer as JSON with exactly these keys, keeping to the word limits:
   "feel": "the swing thought he takes to the ball (8 words or fewer)",
   "drill": { "name": "one drill (6 words or fewer)", "how": "how to do it (25 words or fewer)" },
   "check": "how he will know it is working, from ball flight or contact (15 words or fewer)",
-  "ball_data": "agrees" | "contradicts" | "unclear",
+  "ball_data": "agrees" | "contradicts" | "unclear",${sw.view === 'dtl' ? `
+  "wrist": { "top": "cupped" | "flat" | "bowed" | "cannot tell", "lead_arm_parallel": "held" | "opening" | "released" | "cannot tell", "frames": "which frames you read these from" },` : ''}
   "matches_ball_data": "one short sentence: does what you see explain the strike mix above?",
   "observations": [ { "what": "one specific thing you can see", "evidence": "which frame(s) show it", "confidence": "high" | "medium" | "low" } ],
   "cannot_tell": ["up to three short things this camera angle or frame spacing cannot answer"]
@@ -2902,6 +2889,7 @@ function swingReading(sw, s, a) {
   const obs = a.observations || [], tell = a.cannot_tell || [];
   const detail = [
     obs.slice(0, 4).map(o => `<div class="obs"><span class="tag ${o.confidence === 'high' ? 'green' : ''}">${esc(o.confidence || '')}</span> <b>${esc(o.what)}</b> <span class="muted">${esc(o.evidence || '')}</span></div>`).join(''),
+    a.wrist && (a.wrist.top || a.wrist.lead_arm_parallel) ? `<div class="small" style="margin-top:6px"><b>Wrist:</b> ${esc(a.wrist.top || 'cannot tell')} at the top; ${esc(a.wrist.lead_arm_parallel || 'cannot tell')} with the lead arm parallel on the way down${a.wrist.frames ? ` <span class="muted">(${esc(a.wrist.frames)})</span>` : ''}</div>` : '',
     a.matches_ball_data ? `<div class="small" style="margin-top:6px"><b>Against your ball data:</b> ${esc(a.matches_ball_data)}</div>` : '',
     a.drill && a.drill.why ? `<div class="small" style="margin-top:6px"><b>Why this drill:</b> ${esc(a.drill.why)}</div>` : '',
     tell.length ? `<div class="small muted" style="margin-top:6px">Can't tell from this angle: ${esc(tell.join('; '))}</div>` : '',
@@ -2918,7 +2906,7 @@ function swingCard(sw, s, opts = {}) {
   const a = sw.analysis;
   return `<div class="swing">
     <div class="spread"><div><b>${esc(VIEWS[sw.view] || 'Swing')}</b>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}${a ? ' <span class="tag green">analysed</span>' : ''}</div>
-      <span class="small muted">${sw.frames.length} frames</span></div>
+      <span class="small muted">${sw.frames.length} frames${frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
     <div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
     ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}
@@ -2952,6 +2940,13 @@ function addSwingForm() {
     <div id="trim"></div>
     <div class="count" id="frameNote">Pick a video to set the part of the clip to use.</div>`;
 }
+// What the trim gives: the gap between frames, and a warning when it's too
+// wide to see the downswing (about 0.3 s from the top to the ball).
+function trimNote(range) {
+  const len = Math.max(0, range.end - range.start), gap = len / (FRAME_COUNT - 1);
+  return `${FRAME_COUNT} frames, ${gap.toFixed(2)} s apart across ${len.toFixed(1)} s. ` +
+    (gap > GAP_WARN ? `Over ${GAP_WARN.toFixed(2)} s apart the downswing (about 0.3 s, top to ball) is mostly skipped: trim to about 1.5 s, address to a beat after the finish.` : 'Trim tight: address to a beat after the finish.');
+}
 function wireSwingForm(root, sessionId) {
   const fileIn = root.querySelector('[name=vid]'); let picked = null, range = null;
   fileIn.addEventListener('change', async () => {
@@ -2973,7 +2968,7 @@ function wireSwingForm(root, sessionId) {
       s0.value = range.start.toFixed(2);
       $('#ss', root).textContent = range.start.toFixed(1) + 's'; $('#ee', root).textContent = range.end.toFixed(1) + 's';
       v.currentTime = which === 'end' ? range.end : range.start;
-      $('#frameNote', root).textContent = `${FRAME_COUNT} frames across ${(range.end - range.start).toFixed(1)}s. Trim to the swing itself — from address to a beat after the finish.`;
+      $('#frameNote', root).textContent = trimNote(range);
     };
     s0.addEventListener('input', () => upd('start')); s1.addEventListener('input', () => upd('end')); upd('start');
   });

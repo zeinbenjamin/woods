@@ -80,9 +80,9 @@ test('frame extraction never seeks to t=0 and waits for the decoder to paint', a
     const out = app.win.eval(`extractFrames(new Blob(['v'], { type: 'video/mp4' }), { start: 0, end: null })`);
     const ex = await out;
     const seeks = log.videos.at(-1).seeks;
-    assert.ok(seeks.length >= 8);
+    assert.ok(seeks.length >= 16);
     assert.ok(seeks.every(t => t >= 0.05), `every seek at or after 0.05s, got ${seeks.filter(t => t < 0.05)}`);
-    assert.equal(ex.frames.length, 8);
+    assert.equal(ex.frames.length, 16, '16 frames since 2.18.0, so the downswing gets about three');
     assert.equal(ex.dropped, 0);
     assert.equal(ex.frames[0].t, 0.05, 'the first frame is 0.05s, not 0');
     assert.ok(ex.frames.every(f => f.t >= 0.05));
@@ -95,13 +95,13 @@ test('frame extraction never seeks to t=0 and waits for the decoder to paint', a
 });
 
 test('a blank frame is retried a little later; one that stays blank is dropped', async () => {
-  // 0.6–0.65s decodes blank once (recovers on the nudge); 1.4–1.9s is blank throughout.
-  const log = installFakeMedia(app.win, { blank: t => (t >= 0.6 && t < 0.65) || (t >= 1.4 && t <= 1.9) });
+  // 0.55–0.6s decodes blank once (recovers on the nudge); 1.4–1.9s is blank throughout.
+  const log = installFakeMedia(app.win, { blank: t => (t >= 0.55 && t < 0.6) || (t >= 1.4 && t <= 1.9) });
   try {
     const ex = await app.win.eval(`extractFrames(new Blob(['v'], { type: 'video/mp4' }), {})`);
-    assert.equal(ex.dropped, 1, 'the frame at ~1.44s stayed blank through three attempts');
-    assert.equal(ex.frames.length, 7);
-    assert.ok(ex.frames.some(f => f.t === 0.73), 'the ~0.61s frame was nudged to 0.73s');
+    assert.equal(ex.dropped, 2, 'the frames at ~1.48s and ~1.61s stayed blank through three attempts; later ones nudged past 1.9s');
+    assert.equal(ex.frames.length, 14);
+    assert.ok(ex.frames.some(f => f.t === 0.69), 'the ~0.57s frame was nudged to 0.69s');
     for (const f of ex.frames) assert.notEqual(JSON.parse(await f.blob.text()).t, null, 'no kept frame is blank');
   } finally { log.restore(); }
 });
@@ -116,13 +116,20 @@ test('adding a swing end to end: frames and video land as fetchable assets, ever
     Object.defineProperty(input, 'files', { value: [file] });
     input.dispatchEvent(new app.win.Event('change'));
     await app.waitFor(() => app.$('#sheetInner [name=s0]'), { what: 'trim sliders' });
+    // The trim hint says what the frames will be, and warns when they're too far apart to see the downswing.
+    assert.match(app.text('#frameNote'), /^16 frames, 0\.20 s apart across 3\.0 s\. Over 0\.15 s apart the downswing \(about 0\.3 s, top to ball\) is mostly skipped: trim to about 1\.5 s, address to a beat after the finish\.$/);
+    const s1 = app.$('#sheetInner [name=s1]'); s1.value = '1.5'; s1.dispatchEvent(new app.win.Event('input'));
+    assert.equal(app.text('#frameNote'), '16 frames, 0.10 s apart across 1.5 s. Trim tight: address to a beat after the finish.');
     app.fill('view', 'face'); app.fill('club', '7i'); app.fill('note', 'test swing');
     assert.equal(await app.save(), true);
     const s = await app.api.get('sessions', 's_data');
     const added = s.swings[0];
     assert.equal(added.view, 'face');
-    assert.equal(added.frames.length, 8);
-    assert.ok(added.frames.every(f => f.t >= 0.05), JSON.stringify(added.frames.map(f => f.t)));
+    assert.equal(added.frames.length, 16);
+    assert.ok(added.frames.every(f => f.t >= 0.05 && f.t <= 1.5), JSON.stringify(added.frames.map(f => f.t)));
+    assert.ok(Math.abs(added.frames[1].t - added.frames[0].t - 0.1) < 0.011, 'about 0.1 s apart on a 1.5 s trim');
+    app.go('range', { sessionId: 's_data' });
+    assert.match(app.text('#view .swing .spread .small'), /^16 frames, 0\.10 s apart$/);
     for (const f of added.frames) assert.equal(await app.api.blobStatus(f.asset), 200);
     assert.ok(added.video, 'a small video is stored too');
     assert.equal(await app.api.blobStatus(added.video), 200);
@@ -234,6 +241,32 @@ test('each camera view gets its own brief; an unknown view is treated as "other"
   assert.doesNotMatch(p('face'), /DOWN THE LINE \(camera/);
   assert.match(p('sideways'), /NEITHER down the line NOR face on/);
   assert.match(p('dtl'), /No club recorded for this swing/);
+});
+
+test('the prompt gives each frame\'s time, and asks the wrist question down the line only', () => {
+  const fr = [{ t: 0.05 }, { t: 0.16 }, { t: 0.27 }, { t: 0.38 }];
+  const p = view => app.E(`swingPrompt({ view: ${JSON.stringify(view)}, club: null, frames: ${JSON.stringify(fr)} }, { })`);
+  assert.match(p('dtl'), /looking at 4 still frames/);
+  assert.match(p('dtl'), /in seconds: 0\.05, 0\.16, 0\.27, 0\.38 \(about 0\.11 s apart\)/);
+  assert.match(p('dtl'), /which frame is nearest the top of the backswing and which is nearest impact/);
+  assert.match(p('dtl'), /WRIST ANGLE[\s\S]*cupped, flat or bowed[\s\S]*still held \(an L or tighter\), opening, or already released/);
+  assert.match(p('dtl'), /"wrist": \{ "top": "cupped" \| "flat" \| "bowed" \| "cannot tell", "lead_arm_parallel": "held" \| "opening" \| "released" \| "cannot tell"/);
+  assert.match(p('dtl'), /Do not infer it from the ball data/);
+  for (const v of ['face', 'other']) assert.doesNotMatch(p(v), /wrist/i, `${v}: the camera can't show it, so it isn't asked`);
+  assert.equal(app.E(`frameGap(${JSON.stringify(fr)})`), 0.11);
+  assert.equal(app.E(`frameGap([{ t: 0.05 }])`), null);
+});
+
+test('a reading\'s wrist answer shows under what Claude saw', async () => {
+  const s = await app.api.get('sessions', 's_sw');
+  const a = { ...COACHED, wrist: { top: 'flat', lead_arm_parallel: 'released', frames: 'frames 7 and 10' } };
+  await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: a, analysedOn: '2026-10-26' }] });
+  await app.waitFor(() => app.E(`session('s_sw').swings[0].analysedOn`) === '2026-10-26', { what: 'poll' });
+  app.go('range', { sessionId: 's_sw' });
+  assert.match(app.text('#seen_sw_1'), /Wrist: flat at the top; released with the lead arm parallel on the way down \(frames 7 and 10\)/);
+  assert.doesNotMatch(app.text('#view .analysis > .cue'), /Wrist/, 'not on the card itself');
+  await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: COACHED, analysedOn: '2026-10-24' }] });
+  await app.waitFor(() => app.E(`session('s_sw').swings[0].analysedOn`) === '2026-10-24', { what: 'poll' });
 });
 
 /* ---------- video ranks below ball data ---------- */
