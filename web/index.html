@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+/* No double-tap zoom (pinch-to-zoom still works); inputs at 16px, because iOS zooms into anything smaller. */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 :root {
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
@@ -63,7 +65,7 @@ button.quiet { background: none; border-color: transparent; color: var(--green);
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; } button:disabled { opacity: .5; cursor: default; }
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 0; } .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 label { display: block; font-size: 13px; color: var(--ink-2); margin: 12px 0 4px; }
-input[type=text], input[type=number], input[type=date], input[type=url], select, textarea { width: 100%; font: 400 15px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r); padding: 9px 10px; }
+input[type=text], input[type=number], input[type=date], input[type=url], select, textarea { width: 100%; font: 400 16px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r); padding: 9px 10px; }
 input[type=number] { -moz-appearance: textfield; } input[type=range] { width: 100%; accent-color: var(--green); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; } .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
@@ -74,7 +76,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .item { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 12px 0; color: inherit; font: inherit; cursor: pointer; }
 .item:hover { background: var(--paper-2); } .item .t { font-weight: 500; } .item .s { color: var(--ink-3); font-size: 13px; margin-top: 2px; } .item .n { font-family: var(--cond); font-weight: 600; font-size: 20px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text-align: right; padding: 7px 6px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-th { font-weight: 500; color: var(--ink-3); font-size: 12px; } th:first-child, td:first-child { text-align: left; padding-left: 0; } th:last-child, td:last-child { padding-right: 0; }
+th { font-weight: 500; color: var(--ink-3); font-size: 12px; white-space: normal; line-height: 1.2; } th:first-child, td:first-child { text-align: left; padding-left: 0; } th:last-child, td:last-child { padding-right: 0; }
 td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; } tr.flag td { color: var(--flag); }
 .tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--rule); vertical-align: middle; }
 .tag.green { background: var(--green-soft); color: var(--green); border-color: transparent; } .tag.flag { background: var(--flag-soft); color: var(--flag); border-color: transparent; }
@@ -1054,7 +1056,7 @@ function vRangeSession() {
   const s = session(S.sub.sessionId); if (!s) return back('range', null, 'Range') + `<p>Session not found.</p>`;
   const blocks = (s.blocks || []).slice().sort((a, b) => a.seq - b.seq);
   let h = back('range', null, 'Range') + `<div class="spread"><h1>${dateLabel(s.date)}</h1><button data-act="editRange" data-id="${s.id}">Edit</button></div>
-  <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(s.ballType) + ' balls' : ''}${s.source ? ', ' + esc(s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
+  <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(BALL_LABEL[s.ballType] || s.ballType) : ''}${s.source ? ', ' + esc(SOURCE_LABEL[s.source] || s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
   ${s.excluded ? `<div class="notice warn" id="leftOut">Left out of your numbers: this session's shots don't count towards stock carry, gapping, calibration or the practice list. <button class="quiet" data-act="toggleExclude" data-id="${s.id}">Count it again</button></div>` : ''}
   ${sessionGoals(s, blocks)}
   <div class="spread"><h2>Blocks</h2><div class="row-actions" style="margin:0"><button data-act="shotsFromImages" data-id="${s.id}">From screenshots</button><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div></div>`;
@@ -1116,7 +1118,7 @@ function vRound() {
   <p class="muted small">${dateLabel(r.date)}${r.tee ? ', ' + esc(r.tee) + ' tees' : ''}${st.holes < (r.holes || []).length ? ` · ${st.holes} of ${(r.holes || []).length} holes scored` : ''}${r.notes ? '. ' + esc(r.notes) : ''}</p>
   <div><span class="stat"><b>${st.gross}</b><small>gross</small></span><span class="stat"><b>${st.toPar >= 0 ? '+' : ''}${st.toPar}</b><small>to par ${st.par}</small></span>${st.putts != null ? `<span class="stat"><b>${st.putts}</b><small>putts</small></span>` : ''}${st.fir ? `<span class="stat"><b>${st.fir.hit}/${st.fir.of}</b><small>fairways</small></span>` : ''}${st.gir ? `<span class="stat"><b>${st.gir.hit}/${st.gir.of}</b><small>greens in reg</small></span>` : ''}</div>`;
   if (r.date === today()) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
-  h += scorecard(r, holes) + `<p class="small muted">Tap a hole to trace shots on it.</p>`;
+  h += scorecard(r, holes) + `<p class="small muted" style="margin-top:8px">Tap a hole to trace shots on it.</p>`;
   h += roundFindingsSection(r);
   h += quickScoreSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
@@ -1143,7 +1145,7 @@ function vCourses() {
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
     const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
-    return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${esc(c.suburb || '')}${c.bookable ? ' <span class="tag green">public booking</span>' : ''}${c.prereg ? ' <span class="tag">pre-register</span>' : ''}${played.length ? ', played ' + played.length : ''}${distanceLabel(c) ? ` · ${distanceLabel(c)} away` : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
+    return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${[esc(c.suburb || ''), played.length ? 'played ' + played.length : '', distanceLabel(c) ? `${distanceLabel(c)} away` : ''].filter(Boolean).join(' · ')}${c.bookable ? ' <span class="tag green">public booking</span>' : ''}${c.prereg ? ' <span class="tag">pre-register</span>' : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
   }).join('') + `</div>` + (tail ? `<p class="small muted" id="courseSortNote">${sort === 'near' ? `${plural(tail, 'course')} with no location on ${tail === 1 ? 'its' : 'their'} card ${tail === 1 ? 'is' : 'are'} listed last, A–Z. Add a latitude and longitude to place ${tail === 1 ? 'it' : 'them'}.` : `${plural(tail, 'course')} added before the app kept the date ${tail === 1 ? 'is' : 'are'} listed last, A–Z.`}</p>` : '') : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
   return h;
 }
@@ -1242,7 +1244,7 @@ function vBag() {
   <p class="lead small">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
   if (!S.clubs.length) return h + `<div class="empty"><p>No clubs yet.</p></div>` + accountSection();
   const row = c => { const s = clubStats(c.code); return `<tr class="${c.retired ? 'muted' : ''}"><td><b>${esc(c.code)}</b> <span class="muted small">${esc(c.name)}</span>${c.retired ? ' <span class="tag">retired</span>' : ''}</td><td>${c.loft ? c.loft + '°' : ''}</td><td>${fmt(c.nominalCarry)}</td><td>${fmt(c.nominalTotal)}</td><td class="num">${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td><td><button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></td></tr>`; };
-  h += `<div class="scroll"><table><thead><tr><th>Club</th><th>Loft</th><th>Assumed carry</th><th>Assumed total</th><th>Stock carry</th><th></th></tr></thead><tbody>${S.clubs.map(row).join('')}</tbody></table></div>`;
+  h += `<div class="scroll"><table><thead><tr><th>Club</th><th>Loft</th><th>Carry you assume</th><th>Total you assume</th><th>Carry measured</th><th></th></tr></thead><tbody>${S.clubs.map(row).join('')}</tbody></table></div>`;
   h += calibrationSection();
   h += `<section class="sec"><h2>Your data</h2>
     <p class="small muted">Everything lives in this page's storage. Export before anything you can't undo, and to move it somewhere else.</p>
@@ -1300,6 +1302,8 @@ function parseShots(text) {
 const shotsText = shots => (shots || []).map(s => [s.carry, s.total, s.speed ?? '-'].join('  ') + (s.hitC ? ' ✓' : '')).join('\n');
 
 /* ---------- forms ---------- */
+const SOURCE_LABEL = { toptracer: 'Toptracer', inrange: 'Inrange', trackman: 'Trackman', manual: 'typed in' };
+const BALL_LABEL = { range: 'range balls', premium: 'premium range balls', own: 'own balls' };
 function rangeForm(s = {}) {
   return `<h2>${s.id ? 'Edit session' : 'New range session'}</h2>
   <div class="grid2">${field('Date', 'date', 'date', s.date || today())}${field('Venue', 'venue', 'text', s.venue, 'placeholder="e.g. Moore Park"')}</div>
@@ -1751,9 +1755,9 @@ function vHoleLog() {
     <div class="map-hint">${h.hm === undefined ? 'Loading the course map… ' : ''}${onGreen ? 'On the green. Add putts below.' : distLeft == null ? 'Tap where the next shot finished.' : shots.length ? `${distLeft}m to the green. Tap where the next shot finished.` : 'Tap where your tee shot finished.'}${(h.art || h.hm) && !art && !map && shots.length ? ` <span class="muted">(Shots here were logged on ${shots.some(s => s.x != null) ? 'the artwork' : 'the drawn outline'}, so it stays for this round.)</span>` : ''}</div>
     ${!onGreen && adviceFor(distLeft) ? `<p class="small advice" style="text-align:center">${adviceFor(distLeft)}</p>` : ''}`;
   html += clubArmRow(r, h, distLeft);
-  if (last) html += `<div class="chips" style="justify-content:center;margin:-2px 0 10px">${['green', 'fairway', 'rough', 'bunker', 'water', 'trees'].map(l => `<button class="chip lie" data-lie="${l}" aria-pressed="${lieOf(h, last) === l}">${l}</button>`).join('')}</div>`;
-  if (last) html += `<div class="chips" id="clubChips" style="justify-content:center;margin-bottom:12px">${clubs.map(x => `<button class="chip" data-club="${esc(x.code)}" aria-pressed="${last.club === x.code}">${esc(x.code)}</button>`).join('')}</div>
-    <p class="small muted" style="text-align:center;margin-top:-6px">Club for shot ${shots.length}${last.club ? ': ' + esc(last.club) : ' — pick one'}</p>`;
+  if (last) html += `<div class="lastshot" id="lastShot"><p class="small muted" style="text-align:center;margin:0 0 6px">Shot ${shots.length}${last.club ? ': ' + esc(last.club) : ' — pick its club'}, ${lieOf(h, last)}. Correct its lie or club here.</p>
+    <div class="chips" style="justify-content:center;margin-bottom:6px">${['green', 'fairway', 'rough', 'bunker', 'water', 'trees'].map(l => `<button class="chip lie" data-lie="${l}" aria-pressed="${lieOf(h, last) === l}">${l}</button>`).join('')}</div>
+    <div class="chips" id="clubChips" style="justify-content:center">${clubs.map(x => `<button class="chip" data-club="${esc(x.code)}" aria-pressed="${last.club === x.code}">${esc(x.code)}</button>`).join('')}</div></div>`;
   html += puttRow(r, hole);
   html += `<div class="spread" style="margin-top:8px"><div class="stepper"><span class="small muted">Penalties</span><button data-step="penalties" data-d="-1">−</button><b>${hole.penalties || 0}</b><button data-step="penalties" data-d="1">+</button></div></div>
     <div class="row-actions"><button data-act="setPutt" data-sid="${r.id}" data-n="${n}">${hole.firstPutt != null ? `First putt ${hole.firstPuttEstimated ? '≈' : ''}${fmt(hole.firstPutt)}m — ${hole.firstPuttEstimated ? 'estimated from your tap, adjust' : 'change'}` : 'Add first-putt distance'}</button>${(hole.shots || []).some(s => s.penalty) ? `<span class="small muted">${plural((hole.shots || []).filter(s => s.penalty).length, 'penalty', 'penalties')} attached to shots</span>` : ''}</div>
@@ -2374,7 +2378,7 @@ function practiceSection(limit) {
   if (!now.length && !quiet.length) return holes ? `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`
     : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
   const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
-  return basisLine() + `<p class="small muted">Ranked by estimated cost, weighted toward recent evidence: something last seen ${PRACTICE_HALF_LIFE} days ago counts half as much as something seen today. Anything worked on at the range since it was last seen counts half again until the course confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''}</p>` +
+  return basisLine() + `<p class="small muted">Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''}</p>` +
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
@@ -2547,7 +2551,7 @@ function vGoal() {
   const p = goalProgress(it), b = it.block;
   let h = back('range', null, 'Range') + `<h1>${esc(goalName(it))}</h1>
     <p class="small muted">${esc(KIND_LABEL[it.kind] || '')}${it.n ? ` · ${confidence(it.n)}, n=${it.n}` : ''} · ${it.status === 'quiet' ? 'quiet lately' : it.status === 'practised' ? 'practised, waiting on the course' : 'current'}</p>
-    <div class="next k-${it.kind}" id="goalNow"><div class="nt">${esc(it.title.split(':').slice(1).join(':').trim() || it.title)}</div>${MISS_WORD[it.kind] && it.title.includes(':') ? `<div class="small">${MISS_WORD[it.kind]}, across your traced rounds</div>` : ''}${it.note ? `<div class="small muted">${esc(it.note)}</div>` : ''}
+    <div class="next k-${it.kind}" id="goalNow"><div class="nt">${esc(it.title.split(':').slice(1).join(':').trim() || it.title)}</div>${MISS_WORD[it.kind] && it.title.includes(':') ? `<div class="small">${it.kind === 'tee' ? 'fairways hit' : MISS_WORD[it.kind]}, across your traced rounds</div>` : ''}${it.note ? `<div class="small muted">${esc(it.note)}</div>` : ''}
       ${b ? `<div class="small" style="margin-top:8px"><b>Drill:</b> ${esc(b.club)}${b.swing !== 'full' ? ' ' + esc(b.swing) : ''}${b.target ? ` at ${b.target}m` : ''} — ${esc(b.intent)}</div>` : it.practice ? `<div class="small" style="margin-top:8px"><b>Practice:</b> ${esc(it.practice)}</div>` : ''}
       <div class="row-actions">${goalButtons(it, { review: false, primary: true })}</div></div>`;
   if (p && p.counted && MISS_WORD[it.kind]) {
@@ -3223,7 +3227,8 @@ function practiceBasis() {
   if (shotHoles.length) parts.push(`${plural(shotHoles.length, 'hole')} of shot data`);
   if (rangeShots) parts.push(`${rangeShots} range shots`);
   if (swings.length) parts.push(`${plural(swings.length, 'analysed swing')}`);
-  if ((rounds.length - new Set(shotHoles.map(x => x.r.id)).size) > 0) parts.push(`${rounds.length - new Set(shotHoles.map(x => x.r.id)).size} scorecard-only rounds (not used)`);
+  const cardOnly = rounds.length - new Set(shotHoles.map(x => x.r.id)).size;
+  if (cardOnly > 0) parts.push(`${plural(cardOnly, 'scorecard-only round')} (not used)`);
   return { text: parts.length ? `Built from ${parts.join(', ')}.` : 'Nothing to build from yet.', newest, count: shotHoles.length + rangeShots + swings.length };
 }
 const basisLine = () => { const b = practiceBasis(); return `<div class="basis">${esc(b.text)}${b.newest ? ` Newest input ${dateLabel(b.newest)}.` : ''} <span class="muted">Recalculated every time this screen draws — there is no stored copy.</span></div>`; };

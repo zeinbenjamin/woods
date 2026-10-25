@@ -140,7 +140,7 @@ test('the list shows the top five with freshness, the rest folded, and the quiet
   assert.match(app.text('#moreList summary'), new RegExp(`${now.length - 5} more item`));
   assert.match(app.text('#quietList summary'), new RegExp(`Quiet lately — ${quiet.length} items, left out of the plan`));
   assert.match(app.text('#quietList'), /D off the tee: .*Not seen in 8 chances/s);
-  assert.match(app.text('#view'), /something last seen 60 days ago counts half as much/);
+  assert.match(app.text('#view'), /recent evidence first \(60 days old counts half\)/);
   assert.match(app.text('#view'), /worked on/, 'the practised item is tagged');
 });
 
