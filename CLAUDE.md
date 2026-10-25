@@ -598,6 +598,12 @@ shows it under Current form with the scores behind it.
   A hole with no score counts as net par — before there is an index, net par
   for the maximum index, 54.0 (it used to reject the round, which left him
   with no index at all).
+- **Team rounds don't score** (2.15.0, after a Lane Cove Ambrose counted as a
+  nine seven strokes better than his own): `round.format` (`ambrose`,
+  `bestball`, `team`; absent = solo). `isSolo`/`soloRounds()` gate the
+  handicap (listed in `#hcpLeft` with the reason), Current form, the trend,
+  `shotRecords`, putting, penalties, `courseDemand`, `holePlays` and the
+  basis line; the round lists and *Rounds here* keep it, labelled.
 - **Which rounds**: 14+ holes of 18 is an 18-hole score; 7+ holes of a 9-hole
   card, or 7–13 of 18 with 7 in one nine, is a 9-hole score (the nine with more
   holes played). A card missing a par can't be scored and says so.
@@ -909,7 +915,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 301 tests, about 45s.
+`npm test` — 304 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -982,6 +988,9 @@ fixture would let the reading be pinned.
   `ui-undrawn` (GPS shots on a hole not drawn yet: saved raw, not
   measurable, then measured from the marked tee once drawn; the logger
   refusing a second frame; no-map courses unchanged),
+  `ui-format` (a team round: not a handicap score and the reason shown,
+  out of form, trend, course history and evidence, listed and labelled; set
+  and cleared on the round form),
   `ui-marks` (Mark tee / Mark flag on an unmapped hole: the raw fix stored,
   ±10 m refused, flag after scoring, edits keep marks, only your own
   removable),

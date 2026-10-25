@@ -6,6 +6,12 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.15.0 — 2026-10-25
+
+- A round has a format: solo (the default), Ambrose / scramble, best ball, or another team format. Set it on New round, Edit round and Start round.
+- A team round is your card, not your game alone, so it's kept and shown in your rounds and a course's history, labelled, but left out of the handicap (listed with the reason), Current form, the scoring trend, course averages and the practice list's evidence.
+- To mark the Lane Cove Ambrose of 25 Oct: open the round, Edit, Format → Ambrose, Save.
+
 ## 2.14.0 — 2026-10-25
 
 - A read-only window for the monitor: `GET /api/admin/health`, `/activity` and `/data`, open only to one Cloudflare service token (its Client ID in `CF_ACCESS_MONITOR_ID`). Nothing under it can write, a person's sign-in is refused there, and the service token is refused everywhere else.

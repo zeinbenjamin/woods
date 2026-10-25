@@ -383,6 +383,14 @@ const clubBy = code => S.clubs.find(c => c.code === code);
 const activeClubs = () => S.clubs.filter(c => !c.retired);
 const session = id => S.sessions.find(s => s.id === id);
 const course = id => S.courses.find(c => c.id === id);
+// A round's format (2.15.0). Absent means solo stroke play. A team format
+// (Ambrose, best ball, …) is his card but not his game alone: it is listed
+// and labelled, and left out of the handicap, the averages and the evidence.
+const FORMATS = [['solo', 'Solo (stroke play)'], ['ambrose', 'Ambrose / scramble'], ['bestball', 'Best ball (four-ball)'], ['team', 'Other team format']];
+const formatLabel = r => (FORMATS.find(f => f[0] === (r.format || 'solo')) || FORMATS[0])[1].replace(/ \(.*\)| \/.*$/, '');
+const isSolo = r => !r.format || r.format === 'solo';
+// Rounds that count: his own game. Team rounds stay in the lists, labelled.
+const soloRounds = () => S.sessions.filter(s => s.type === 'round' && isSolo(s));
 
 /* ---------- which version is running ----------
    The page's own version and commit are stamped into its <meta> tags by the
@@ -593,7 +601,7 @@ function roundStats(r) {
 }
 // Across every shot-level round: what the course actually asks of you.
 function courseDemand() {
-  const rounds = S.sessions.filter(s => s.type === 'round');
+  const rounds = soloRounds();
   const bands = {}, byClub = {};
   for (const r of rounds) { const st = roundStats(r); for (const a of st.approaches) { const b = Math.floor(a.dist / 20) * 20; bands[b] = (bands[b] || 0) + 1; } for (const [k, v] of Object.entries(st.byClub)) (byClub[k] = byClub[k] || []).push(...v); }
   return { bands: Object.entries(bands).map(([b, n]) => ({ from: Number(b), n })).sort((a, b) => a.from - b.from), byClub: Object.fromEntries(Object.entries(byClub).map(([k, v]) => [k, { n: v.length, median: median(v) }])) };
@@ -646,7 +654,7 @@ function scoreStrip(holes, roundId, mini) {
 }
 function profileBar(s) { return `<div class="profile"><span class="p-pure" style="width:${pct(s.pure, s.n)}%"></span><span class="p-runner" style="width:${pct(s.runner, s.n)}%"></span><span class="p-short" style="width:${pct(s.short, s.n)}%"></span><span class="p-top" style="width:${pct(s.top, s.n)}%"></span></div>`; }
 function sessionItem(s) {
-  if (s.type === 'round') { const st = roundStats(s); return `<button class="item" data-go="rounds:sessionId:${s.id}"><div class="spread"><div><div class="t">${esc(s.courseName)}</div><div class="s">${dateLabel(s.date)}${st.shotLevel ? ', shot-level' : ''}${st.holes < (s.holes || []).length ? ` · ${st.holes} of ${(s.holes || []).length} holes` : ''}</div></div><div class="n">${st.holes ? `${st.gross} <span class="muted small">${st.toPar >= 0 ? '+' : ''}${st.toPar}</span>` : '<span class="muted small">not scored yet</span>'}</div></div>${scoreStrip(s.holes || [], s.id, true)}</button>`; }
+  if (s.type === 'round') { const st = roundStats(s); return `<button class="item" data-go="rounds:sessionId:${s.id}"><div class="spread"><div><div class="t">${esc(s.courseName)}</div><div class="s">${dateLabel(s.date)}${isSolo(s) ? '' : ` · <span class="tag">${esc(formatLabel(s))}</span>`}${st.shotLevel ? ', shot-level' : ''}${st.holes < (s.holes || []).length ? ` · ${st.holes} of ${(s.holes || []).length} holes` : ''}</div></div><div class="n">${st.holes ? `${st.gross} <span class="muted small">${st.toPar >= 0 ? '+' : ''}${st.toPar}</span>` : '<span class="muted small">not scored yet</span>'}</div></div>${scoreStrip(s.holes || [], s.id, true)}</button>`; }
   const blocks = s.blocks || [], shots = blocks.reduce((n, b) => n + (b.shots || []).length, 0);
   const clubs = [...new Set(blocks.map(b => b.club))];
   const planned = s.planned && !shots && !blocks.some(b => b.summary);
@@ -661,7 +669,7 @@ function sessionItem(s) {
    and the report says how many are in that state. */
 const SHOT_KIND = { tee: 'Tee shot', approach: 'Approach', short: 'Short game', recovery: 'Recovery' };
 function penaltyReport() {
-  const traced = S.sessions.filter(s => s.type === 'round').flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
+  const traced = soloRounds().flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
   const recs = shotRecords();
   const attached = traced.flatMap(({ r, h }) => (h.shots || []).map((s, i) => ({ r, h, s, i })).filter(x => x.s.penalty))
     .map(x => { const rec = recs.find(y => y.r.id === x.r.id && y.h.n === x.h.n && y.i === x.i); return { ...x, club: x.s.club || '?', kind: rec ? SHOT_KIND[rec.kind] : 'Not measurable', lie: lieOf(x.h, x.s) }; });
@@ -676,7 +684,7 @@ function penaltyReport() {
     e.strokes += n; e.rounds.push(r.id);
     if (!e.latest || r.date > e.latest.date) e.latest = r;
   }
-  const scorecardOnly = S.sessions.filter(s => s.type === 'round' && !(s.holes || []).some(h => (h.shots || []).length)).length;
+  const scorecardOnly = soloRounds().filter(s => !(s.holes || []).some(h => (h.shots || []).length)).length;
   return { total: attached.length + loose, attached, loose, traced: traced.length, holesWith: Object.keys(holes).length, scorecardOnly,
     byClub: group(attached, x => x.club).map(([club, n]) => ({ club, n, of: used[club] || 0 })),
     byKind: group(attached, x => x.kind), byLie: group(attached, x => x.lie),
@@ -773,7 +781,8 @@ function handicapUncached() {
   let hi = null, waiting = null;
   const scores = [], left = [], history = [];
   for (const r of rounds) {
-    const sc = handicapScore(r, hi);
+    // A team format isn't an acceptable score under WHS: his card, not his game alone.
+    const sc = isSolo(r) ? handicapScore(r, hi) : { why: `a team round (${formatLabel(r)}) isn't a handicap score` };
     if (sc.why) { left.push({ r, why: sc.why, needsRating: sc.needsRating }); continue; }
     let s = sc;
     if (sc.n === 9) {
@@ -834,7 +843,7 @@ function overviewHandicap() {
 // much evidence it stands on.
 function vOverview() {
   const stats = activeClubs().map(c => ({ c, s: clubStats(c.code) })).filter(x => x.s && x.s.stockCarry);
-  const rounds = S.sessions.filter(s => s.type === 'round' && (s.holes || []).some(h => h.strokes != null));   // newest first
+  const rounds = soloRounds().filter(s => (s.holes || []).some(h => h.strokes != null));   // newest first; team rounds are listed, not averaged
   let h = `<h1>Overview</h1>`;
   if (!stats.length && !rounds.length) return h + `<div class="empty"><p>Nothing logged yet. Log a round (Rounds → New round) or a range session with shots, and this fills in.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
   // 2.5.0: the answer first (how he's playing, the one next practice), the
@@ -994,7 +1003,7 @@ function gameBreakdown() {
   add('tee', 'Tee', R.filter(x => x.kind === 'tee'), x => x.lie !== 'fairway', 'missed the fairway');
   add('approach', 'Approach', R.filter(x => x.kind === 'approach'), x => x.lie !== 'green', 'missed the green');
   add('short', 'Short game', R.filter(x => x.kind === 'short'), x => x.lie !== 'green', 'missed the green');
-  const rounds = S.sessions.filter(s => s.type === 'round');
+  const rounds = soloRounds();
   add('putting', 'Putting', rounds.flatMap(r => (r.holes || []).filter(h => h.putts != null)), h => h.putts >= 3, 'took 3+ putts');
   const traced = rounds.flatMap(r => (r.holes || []).filter(h => (h.shots || []).length));
   add('penalty', 'Penalties', traced, h => (h.penalties || 0) + (h.shots || []).filter(x => x.penalty).length > 0, 'had a penalty');
@@ -1030,7 +1039,7 @@ function overviewPutting() {
 
 /* ---------- evidence ---------- */
 function overviewEvidence() {
-  const rounds = S.sessions.filter(s => s.type === 'round');
+  const rounds = soloRounds();
   const shotHoles = rounds.reduce((n, r) => n + (r.holes || []).filter(h => (h.shots || []).length).length, 0);
   const scorecardOnly = rounds.filter(r => !(r.holes || []).some(h => (h.shots || []).length)).length;
   const rangeShots = S.sessions.filter(s => s.type === 'range').reduce((n, s) => n + (s.blocks || []).reduce((m, b) => m + (b.shots || []).length, 0), 0);
@@ -1121,8 +1130,9 @@ function vRound() {
   const st = roundStats(r); const c = course(r.courseId);
   const holes = holesOf(r);
   let h = back('rounds', null, 'Rounds') + `<div class="spread"><h1>${esc(r.courseName)}</h1><button data-act="editRound" data-id="${r.id}">Edit</button></div>
-  <p class="muted small">${dateLabel(r.date)}${r.tee ? ', ' + esc(r.tee) + ' tees' : ''}${st.holes < (r.holes || []).length ? ` · ${st.holes} of ${(r.holes || []).length} holes scored` : ''}${r.notes ? '. ' + esc(r.notes) : ''}</p>
+  <p class="muted small">${dateLabel(r.date)}${r.tee ? ', ' + esc(r.tee) + ' tees' : ''}${isSolo(r) ? '' : `, ${esc(formatLabel(r))}`}${st.holes < (r.holes || []).length ? ` · ${st.holes} of ${(r.holes || []).length} holes scored` : ''}${r.notes ? '. ' + esc(r.notes) : ''}</p>
   <div><span class="stat"><b>${st.gross}</b><small>gross</small></span><span class="stat"><b>${st.toPar >= 0 ? '+' : ''}${st.toPar}</b><small>to par ${st.par}</small></span>${st.putts != null ? `<span class="stat"><b>${st.putts}</b><small>putts</small></span>` : ''}${st.fir ? `<span class="stat"><b>${st.fir.hit}/${st.fir.of}</b><small>fairways</small></span>` : ''}${st.gir ? `<span class="stat"><b>${st.gir.hit}/${st.gir.of}</b><small>greens in reg</small></span>` : ''}</div>`;
+  if (!isSolo(r)) h += `<div class="notice" id="teamNote">A team round (${esc(formatLabel(r))}): kept and shown here, but not counted in your handicap, averages or practice list.</div>`;
   if (r.date === today()) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
   h += scorecard(r, holes) + `<p class="small muted" style="margin-top:8px">Tap a hole to trace shots on it.</p>`;
   h += roundFindingsSection(r);
@@ -1150,7 +1160,7 @@ function vCourses() {
   if (S.courses.length > 1) h += `<div class="seg" id="courseSort" style="margin-bottom:8px">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>`;
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
-    const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
+    const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.filter(isSolo).map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
     return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${[esc(c.suburb || ''), played.length ? 'played ' + played.length : '', distanceLabel(c) ? `${distanceLabel(c)} away` : ''].filter(Boolean).join(' · ')}${c.bookable ? ' <span class="tag green">public booking</span>' : ''}${c.prereg ? ' <span class="tag">pre-register</span>' : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
   }).join('') + `</div>` + (tail ? `<p class="small muted" id="courseSortNote">${sort === 'near' ? `${plural(tail, 'course')} with no location on ${tail === 1 ? 'its' : 'their'} card ${tail === 1 ? 'is' : 'are'} listed last, A–Z. Add a latitude and longitude to place ${tail === 1 ? 'it' : 'them'}.` : `${plural(tail, 'course')} added before the app kept the date ${tail === 1 ? 'is' : 'are'} listed last, A–Z.`}</p>` : '') : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
   return h;
@@ -1495,6 +1505,7 @@ function roundForm(r = {}) {
   return `<h2>${r.id ? 'Edit round' : 'New round'}</h2>
   ${S.courses.length ? coursePicker(r.courseId || (c && c.id)) : `<div class="notice">Add a course first, then log rounds against it.</div>`}
   <div class="grid2">${field('Date', 'date', 'date', r.date || today())}${teeControl(c, r.tee)}</div>
+  ${selectF('Format', 'format', FORMATS, r.format || 'solo')}
   ${field('Notes', 'notes', 'text', r.notes)}
   <h3>Scorecard</h3><p class="small muted">Par and metres prefill from the course; change them here only if you played different tees.</p>
   <div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
@@ -1610,7 +1621,7 @@ async function saveRound(root, r) {
   if (holes.some(h => h.strokes != null && h.par == null)) { toast('Every scored hole needs a par'); return false; }
   const prev = Object.fromEntries((r.holes || []).map(h => [h.n, h]));
   const merged = holes.map(h => { const p = prev[h.n] || {}; const keep = {}; for (const k of ['shots', 'putts', 'penalties', 'manualStrokes']) if (p[k] != null) keep[k] = p[k]; const nh = { ...h, ...keep }; if ((nh.shots || []).length) { nh.manualStrokes = h.strokes ?? nh.manualStrokes; nh.strokes = holeStrokes(nh); } return nh; });
-  const doc = { ...r, v: SCHEMA_VERSION, date: val(root, 'date') || today(), courseId: c.id, courseName: c.name, tee: val(root, 'tee') || primaryTee(c), notes: val(root, 'notes'), detail: merged.some(h => (h.shots || []).length) ? 'shot_level' : 'score_only', holes: merged };
+  const doc = { ...r, v: SCHEMA_VERSION, date: val(root, 'date') || today(), courseId: c.id, courseName: c.name, tee: val(root, 'tee') || primaryTee(c), notes: val(root, 'notes'), format: val(root, 'format') && val(root, 'format') !== 'solo' ? val(root, 'format') : undefined, detail: merged.some(h => (h.shots || []).length) ? 'shot_level' : 'score_only', holes: merged };
   const ok = await save('sessions', doc.id, doc); if (ok) go('rounds', { sessionId: doc.id }); return ok;
 }
 async function saveCourse(root, c) {
@@ -2123,7 +2134,7 @@ const plural = (n, w, p) => `${n} ${n === 1 ? w : (p || w + 's')}`;
 const shotRecords = () => memoised('shotRecords', '', shotRecordsUncached);
 function shotRecordsUncached() {
   const out = [];
-  for (const r of S.sessions) if (r.type === 'round') for (const h of holesOf(r)) {
+  for (const r of soloRounds()) for (const h of holesOf(r)) {
     const shots = h.shots || [];
     shots.forEach((s, i) => {
       const from = i ? toGreen(h, shots[i - 1]) : (h.metres || 0);
@@ -2137,7 +2148,7 @@ function shotRecordsUncached() {
   }
   return out;
 }
-const shotHoleCount = () => S.sessions.filter(r => r.type === 'round').reduce((n, r) => n + (r.holes || []).filter(h => (h.shots || []).length).length, 0);
+const shotHoleCount = () => soloRounds().reduce((n, r) => n + (r.holes || []).filter(h => (h.shots || []).length).length, 0);
 
 /* ---------- reference distances, with where they came from ---------- */
 const rangeBlocksFor = (code, counted = false) => S.sessions.filter(s => s.type === 'range' && (!counted || countsForNumbers(s))).flatMap(s => (s.blocks || []).map(b => ({ ...b, date: s.date }))).filter(b => b.club === code);
@@ -2245,13 +2256,13 @@ function practiceItems() {
       block: { club: main, swing: 'chip', target: round5(median(sg.map(x => x.from))) || 20, intent: 'Land it on the green: count how many finish inside 3m' }, recs: sgMiss });
   }
   // Putting and penalties, from holes where they were logged
-  const ph = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
+  const ph = soloRounds().flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
   const threes = ph.filter(p => p.h.putts >= 3);
   if (threes.length) items.push({ key: 'putting', kind: 'putting', n: ph.length, score: threes.length,
     ev: threes.map(p => ({ date: p.r.date, cost: 1 })), chances: ph.map(p => ({ date: p.r.date, hit: p.h.putts >= 3 })),
     title: `Three-putts: ${threes.length} in ${plural(ph.length, 'hole')}`,
     detail: `${sum(ph.map(p => p.h.putts))} putts over ${plural(ph.length, 'hole')}, ${(sum(ph.map(p => p.h.putts)) / ph.length).toFixed(1)} a hole.`, practice: 'Putting green: 20 lag putts from 8–12m, trying to finish inside a metre.', recs: threes.map(p => ({ r: p.r, h: p.h })) });
-  const traced = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
+  const traced = soloRounds().flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
   // Both kinds: added with the hole's counter, or ticked on the shot that cost it.
   const holePens = h => (h.penalties || 0) + (h.shots || []).filter(s => s.penalty).length;
   const pens = traced.filter(p => holePens(p.h));
@@ -2419,7 +2430,7 @@ function calibrationSection() {
 }
 
 /* ---------- per-hole history on the course page ---------- */
-function holePlays(courseId, n) { return S.sessions.filter(s => s.type === 'round' && s.courseId === courseId).map(r => ({ r, h: holesOf(r).find(x => x.n === n) })).filter(p => p.h && p.h.strokes != null); }
+function holePlays(courseId, n) { return soloRounds().filter(s => s.courseId === courseId).map(r => ({ r, h: holesOf(r).find(x => x.n === n) })).filter(p => p.h && p.h.strokes != null); }
 function dotsFor(courseId, hole) {
   const frame = hole.hm ? 'map' : hole.art ? 'art' : 'outline';
   return holePlays(courseId, hole.n).flatMap(p => (p.h.shots || []).map((s, i) => ({ ...s, first: i === 0, r: p.r, i })).filter(s => frameOf(s) === frame));
@@ -3243,7 +3254,7 @@ ACTIONS.verifyShot = async function (d) {
 
 /* ---------- freshness: what the practice list is standing on ---------- */
 function practiceBasis() {
-  const rounds = S.sessions.filter(s => s.type === 'round');
+  const rounds = soloRounds();
   const shotHoles = rounds.flatMap(r => (r.holes || []).filter(h => (h.shots || []).length).map(h => ({ r, h })));
   const ranges = S.sessions.filter(s => s.type === 'range');
   const rangeShots = ranges.reduce((n, s) => n + (s.blocks || []).reduce((m, b) => m + (b.shots || []).length, 0), 0);
@@ -3492,7 +3503,7 @@ Object.assign(ACTIONS, {
 
 /* ---------- putting stats, now that distance exists ---------- */
 function puttingStats() {
-  const holes = S.sessions.filter(s => s.type === 'round').flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
+  const holes = soloRounds().flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
   const withDist = holes.filter(x => x.h.firstPutt != null);
   if (!holes.length) return null;
   return {
@@ -3863,6 +3874,7 @@ function startPlayForm() {
   ${S.courses.length ? coursePicker('') : `<div class="notice">Add a course first.</div>`}
   <p class="small muted" id="nearCourse"></p>
   <div id="teeWrap">${teeControl(c)}</div>
+  ${selectF('Format', 'format', FORMATS, 'solo')}
   <div class="seg" id="startSeg" style="margin:4px 0 10px"><button type="button" data-start="1" aria-pressed="true">Start at hole 1</button><button type="button" data-start="10" aria-pressed="false">Start at hole 10</button></div>`;
 }
 async function startPlay(root) {
@@ -3872,7 +3884,8 @@ async function startPlay(root) {
   const tee = val(root, 'tee') || primaryTee(c);
   const start = Number(root.querySelector('[data-start][aria-pressed="true"]')?.dataset.start || 1);
   const holes = holesForTee(c, tee).map(h => ({ n: h.n, par: h.par, metres: h.metres }));
-  const doc = { id: uid('r'), type: 'round', created: Date.now(), v: SCHEMA_VERSION, date: today(), courseId: c.id, courseName: c.name, tee, detail: 'score_only', holes };
+  const fmtv = val(root, 'format');
+  const doc = { id: uid('r'), type: 'round', created: Date.now(), v: SCHEMA_VERSION, date: today(), courseId: c.id, courseName: c.name, tee, ...(fmtv && fmtv !== 'solo' ? { format: fmtv } : {}), detail: 'score_only', holes };
   const ok = await save('sessions', doc.id, doc);
   if (ok) go('rounds', { sessionId: doc.id, play: '1', hole: String(holes.some(h => h.n === start) ? start : holes[0].n) });
   return ok;
