@@ -220,13 +220,21 @@ chat.
   own arithmetic, never "what the app shows"; a disagreement comes here as a
   question.
 - **Setting it up** (outside this repo): Cloudflare Zero Trust → Access →
-  Service Auth → a service token `carry-monitor`; on the Carry Access
-  application, a policy for path `/api/admin/*`, action *Service Auth*, that
-  token only; its Client ID into the carry YAML as `CF_ACCESS_MONITOR_ID`
-  (there's a line for it in `deploy/truenas-compose.yml`, empty by default);
-  the monitor session's environment gets `carry.elevengrant.com` allowed and
-  the token's id and secret as network secrets for `/api/admin/`, GET only.
-  The secret never goes into a chat.
+  Service Auth → a service token `carry-monitor`; a *Service Auth* policy
+  attached to the **existing Carry Access application** (Access policies
+  have no path; paths belong to applications, and a second application for
+  `/api/admin` would carry its own AUD tag, which `verifyToken` refuses).
+  So Cloudflare lets the token reach every path, and Carry refuses it
+  outside `/api/admin` because it has no email. The policy is the reusable
+  one Bourdain's monitor token is also on, so **Cloudflare admits either
+  token; the `common_name === CF_ACCESS_MONITOR_ID` check in
+  `monitorFromToken` is what keeps Carry to its own** (`api.test.js`: a
+  valid service token with another `common_name` is 401). Its Client ID
+  goes into the carry YAML as `CF_ACCESS_MONITOR_ID` (a line for it in
+  `deploy/truenas-compose.yml`, empty by default); the monitor session's
+  environment gets `carry.elevengrant.com` allowed and the token's id and
+  secret as network secrets for `/api/admin/`, GET only. The secret never
+  goes into a chat.
 
 ## Sign-in and whose data (2.0.0)
 
