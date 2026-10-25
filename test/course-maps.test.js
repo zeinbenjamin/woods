@@ -381,3 +381,37 @@ test('flag marks move an estimated green on a mapped line; mapped greens ignore 
   const rm = HM.forHole('randwick', 7, 260, { marks: [mark(r, 'flag', plus(rh.line.at(-1), 8)), mark(r, 'tee', rh.line[0])] });
   assert.equal(rm.hole, rh); assert.equal(rm.fromMarks, null);
 });
+
+test('artwork taps onto the map: along the path and to the side, scaled by the hole length', () => {
+  const near = (p, q, msg) => assert.ok(p && Math.hypot(p[0] - q[0], p[1] - q[1]) < 0.11, `${msg}: ${JSON.stringify(p)} vs ${JSON.stringify(q)}`);
+  // Straight: 600 px of artwork, 300 m of play line north, so 0.5 m a pixel.
+  const straight = { pl: [[0, 0], [0, 300]] }, art = { tee: [100, 900], green: [100, 300] };
+  near(HM.fromArt(straight, art, [100, 900]), [0, 0], 'the artwork tee is the tee');
+  near(HM.fromArt(straight, art, [100, 300]), [0, 300], 'its green is the green');
+  near(HM.fromArt(straight, art, [120, 600]), [10, 150], 'halfway, 20 px right of the line: 10 m right');
+  near(HM.fromArt(straight, art, [90, 450]), [-5, 225], '5 m left, three quarters of the way');
+  near(HM.fromArt(straight, art, [100, 960]), [0, -30], 'behind the tee carries on straight');
+  near(HM.fromArt(straight, art, [100, 240]), [0, 330], 'and past the green');
+  // A dogleg right: 400 px up then 200 px right; on the map 200 m north then 100 m east.
+  const dog = { pl: [[0, 0], [0, 200], [100, 200]] }, artD = { tee: [100, 900], turn: [100, 500], green: [300, 500] };
+  near(HM.fromArt(dog, artD, [100, 500]), [0, 200], 'the turn is the bend');
+  near(HM.fromArt(dog, artD, [200, 480]), [50, 210], 'on the second leg, 20 px to its left (up the image): 10 m north of it');
+  near(HM.fromArt(dog, artD, [300, 500]), [100, 200], 'the green');
+  // A shorter tee shortens everything on the same artwork.
+  near(HM.fromArt({ pl: [[0, 100], [0, 300]] }, art, [120, 600]), [6.7, 200], 'a 200 m tee: a third of a metre a pixel');
+  // The Carry chat's own hand-worked cases (test/ui-artconvert.test.js), so its stop-gap and this agree.
+  const s400 = { pl: [[0, 0], [0, 400]] }, a400 = { tee: [50, 900], green: [50, 100] };
+  near(HM.fromArt(s400, a400, [80, 500]), [15, 200], 'Carry: halfway, 30 px right');
+  near(HM.fromArt(s400, a400, [30, 140]), [-10, 380], 'Carry: left, near the green');
+  near(HM.fromArt({ pl: [[0, 0], [0, 200], [200, 200]] }, { tee: [0, 1000], turn: [0, 600], green: [400, 600] }, [200, 620]), [100, 190], 'Carry: dogleg, right of the second leg');
+  // Nothing to place on: null, never a guess.
+  for (const [hm, a, p] of [[null, art, [1, 1]], [straight, null, [1, 1]], [straight, { tee: [1, 1] }, [1, 1]], [straight, { tee: [1, 1], green: [1, 1] }, [1, 1]], [straight, art, null], [straight, art, [NaN, 1]]])
+    assert.equal(HM.fromArt(hm, a, p), null);
+  // On a real map: Hunter Valley's hole 1 for its 297 m white card.
+  mapOf('hunter-valley');
+  const hm = HM.forHole('hunter-valley', 1, 297), a1 = { tee: [185, 830], green: [195, 125] };
+  near(HM.fromArt(hm, a1, a1.tee), hm.tee, 'Hunter Valley 1: tee');
+  near(HM.fromArt(hm, a1, a1.green), hm.green, 'Hunter Valley 1: green');
+  const mid = HM.fromArt(hm, a1, [190, 477.5]);
+  assert.ok(Math.abs(HM.toGreen(hm.pl, mid) - 148.5) < 1, 'halfway along the artwork is halfway to the green');
+});
