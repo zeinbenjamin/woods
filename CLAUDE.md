@@ -761,6 +761,13 @@ from the course to the range and back, without him recreating it.
   so it doesn't change as the counts do. A planned block stores the keys it
   works on (`goals`); blocks from before 2.6.0, or hit without a plan, match
   by club and swing (`blockGoals`).
+- **The card is a coach's note** (2.12.0, he found the list too long): what's
+  wrong (title), freshness, what to hit (`.do`: the block and its intent, or
+  the practice line), one line for a supporting video (`.sup`, clamped to
+  two lines), the before/since line, the buttons. `detail`, `range`,
+  `advice`, the hole links and the full video reading live on the objective
+  page under *The evidence* (`#goalEvidence`). The approach item's `detail`
+  is grouped by club, never one entry per shot.
 - **Each objective has a page** (`vGoal`, Range with `sub.goal`): what it is
   now, the drill, *Practise this*, the before/since tiles, the range blocks
   that hit its club and swing ("planned for this" where they were), and where
