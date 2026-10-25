@@ -119,7 +119,9 @@ test('a swing reading about a club with ball data joins that item rather than be
   const alone = app.E(`assessPractice(practiceItems().find(x => x.key === 'strike:7i')).weight`);
   assert.equal(s.weight, alone + s.support[0].weight / 2, 'an agreeing reading adds half its weight, and weights are stable between draws');
   app.go('range');
-  assert.match(app.text('#view'), /read from video Down the line · 7i: New tip.*Agrees with the ball data/s);
+  assert.match(app.text('#view .pcard.k-strike .sup'), /^video agrees New tip$/, 'one line on the card: the video agrees, and its fix');
+  app.go('range', { goal: 'strike:7i' });
+  assert.match(app.text('#goalEvidence'), /read from video Down the line · 7i: New tip.*Agrees with the ball data/s, 'the full reading on the objective page');
 });
 
 test('clubs with no range data are listed to measure, with or without a course asking for them', () => {

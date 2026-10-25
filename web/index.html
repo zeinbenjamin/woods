@@ -218,6 +218,8 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .pcard.k-tee, .pcard.k-penalty { border-left-color: var(--flag); } .pcard.k-short { border-left-color: var(--sand-2); } .pcard.k-putting { border-left-color: var(--ink-2); } .pcard.k-measure { border-left-color: var(--ink-3); }
 .pcard .pt { font-family: var(--cond); font-weight: 700; font-size: 17px; line-height: 1.25; margin: 2px 0 3px; }
 .pcard .pblock { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--rule); }
+.pcard .do { margin-top: 6px; font-size: 14px; } .pcard .do .tag { vertical-align: 1px; }
+.pcard .sup { margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .advice { background: var(--green-soft); color: var(--ink); border-radius: var(--r); padding: 8px 10px; margin: 8px 0; }
 .stencil .hdot { fill: #fff; stroke: #1B2A20; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .9; } .stencil .hdot.first { fill: #F2C94C; }
 .l-teedot { background: #F2C94C; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; } .l-dot { background: #fff; border-radius: 50% !important; width: 9px !important; height: 9px !important; border: 1px solid #1B2A20; }
@@ -2195,8 +2197,9 @@ function practiceItems() {
     items.push({ key: 'approach', kind: 'approach', n: appr.length, score: .5 * short.length,
       ev: short.map(x => ({ date: at(x), cost: .5 })), chances: measuredAppr.map(x => ({ date: at(x), hit: isShort(x) })),
       title: `Approaches clubbed short: ${short.length} of ${appr.length}`,
-      detail: short.map(x => `${x.club} (stock ${fmt(carryRef(x.club).v)}m) from ${fmt(x.from)}m`).join('; ') + '.',
-      advice: f.best ? `From ${fmt(Math.min(...short.map(x => x.from)))}–${fmt(Math.max(...short.map(x => x.from)))}m, your measured club is ${f.best.c.code} (${fmt(f.best.ref.v)}m).` : null,
+      detail: Object.entries(short.reduce((a, x) => ((a[x.club] = a[x.club] || []).push(x.from), a), {})).sort((a, b) => b[1].length - a[1].length)
+        .map(([club, ds]) => `${club} ×${ds.length} from ${ds.length > 1 ? `${fmt(Math.min(...ds))}–${fmt(Math.max(...ds))}` : fmt(ds[0])}m (stock ${fmt(carryRef(club).v)}m)`).join('; ') + '.',
+      advice: f.best ? `Most of these were from about ${fmt(med)}m, where your measured club is ${f.best.c.code} (${fmt(f.best.ref.v)}m).` : null,
       block: f.best ? { club: f.best.c.code, swing: 'full', target: round5(med), intent: `Commit to the ${f.best.c.code} at the distance your approaches came up short from` } : null, recs: short });
   }
   const bestUnmeasured = {};
@@ -2364,17 +2367,16 @@ function practiceCard(it, i) {
     ${it.practice ? `<div class="small" style="margin-top:4px"><b>Drill:</b> ${esc(it.practice)}</div>` : ''}
     ${it.range ? `<div class="small muted" style="margin-top:4px">${esc(it.range)}</div>` : ''}
   </details>`;
+  // What's wrong, what to hit, whether it's getting better. The evidence
+  // behind it (every shot, the ball data, the holes) is on the objective page.
+  const sup = (it.support || [])[0];
   return `<div class="pcard k-${it.kind}">
     <div class="spread"><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span><span class="tag ${it.n >= 12 ? 'green' : ''}">${it.video ? 'read from video' : confidence(it.n) + ', n=' + it.n}</span></div>
-    <div class="pt">${esc(it.title)}</div>${freshLine(it)}<div class="small">${esc(it.detail)}</div>
-    ${it.range ? `<div class="small muted" style="margin-top:4px">${esc(it.range)}</div>` : ''}
-    ${(it.support || []).map(v => `<div class="small" style="margin-top:4px"><span class="tag">read from video</span> ${esc(v.title)}${v.note ? ` <span class="muted">${esc(v.note)}</span>` : ''}${v.agrees ? ' <span class="muted">Agrees with the ball data.</span>' : ''}</div>`).join('')}
-    ${it.advice ? `<div class="small" style="margin-top:4px"><b>On course:</b> ${esc(it.advice)}</div>` : ''}
-    ${it.practice ? `<div class="small" style="margin-top:4px"><b>Practice:</b> ${esc(it.practice)}</div>` : ''}
-    ${b ? `<div class="pblock"><span class="tag green">${esc(b.club)} · ${b.swing}${b.target ? ' · ' + b.target + 'm' : ''}</span> <span class="small muted">${esc(b.intent)}</span></div>` : ''}
-    ${it.recs && it.recs.length && it.recs[0].r ? `<div class="small" style="margin-top:6px">${[...new Map(it.recs.map(x => [x.r.id + '|' + x.h.n, x])).values()].slice(0, 6).map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${x.r.id},hole=${x.h.n}">Hole ${x.h.n}</button>`).join('')}</div>` : ''}
+    <div class="pt">${esc(it.title)}</div>${freshLine(it)}
+    ${b ? `<div class="do"><span class="tag green">${esc(b.club)} · ${b.swing}${b.target ? ' · ' + b.target + 'm' : ''}</span> ${esc(b.intent)}</div>` : it.practice ? `<div class="do">${esc(it.practice)}</div>` : ''}
+    ${sup ? `<div class="small muted sup"><span class="tag">video${sup.agrees ? ' agrees' : ''}</span> ${esc(String(sup.title).split(': ').slice(1).join(': ') || sup.title)}</div>` : ''}
     ${goalProgress(it) ? `<div class="small progress" style="margin-top:6px">${esc(progressText(it))}</div>` : ''}
-    <div class="row-actions" style="margin-top:6px">${goalButtons(it)}</div>
+    <div class="row-actions" style="margin-top:8px">${goalButtons(it)}</div>
   </div>`;
 }
 function practiceSection(limit) {
@@ -2382,7 +2384,7 @@ function practiceSection(limit) {
   if (!now.length && !quiet.length) return holes ? `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`
     : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
   const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
-  return basisLine() + `<p class="small muted">Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''}</p>` +
+  return basisLine().replace('class="basis"', 'class="basis slim"') + fold('rankHow', 'How this is ranked', '', `<p class="small muted">Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>`) +
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
@@ -2562,8 +2564,12 @@ function vGoal() {
     h += `<h2>On the course since</h2>` + tileGrid('goalTiles', [tile(p.before.n ? `${pct(p.before.hit, p.before.n)}%` : '–', 'before', `${p.before.hit} of ${p.before.n} ${MISS_WORD[it.kind]}`),
       tile(p.after.n ? `${pct(p.after.hit, p.after.n)}%` : '–', `since ${dateLabel(p.practised)}`, p.after.n ? `${p.after.hit} of ${p.after.n} · ${confidence(p.after.n)}` : 'not tested yet')]) +
       `<p class="small muted">Counts from your traced holes either side of the last range session for it. A change here says what happened since, not that the practice caused it.</p>`;
-  } else if (p) h += `<p class="small" id="goalPractised">${esc(progressText(it, p))}</p>`;
+  } else if (p) h += `<p class="small muted" id="goalPractised" style="margin-top:10px">${esc(progressText(it, p))}</p>`;
   h += goalHistory(it);
+  const sup = it.support || [];
+  const ev = [it.detail ? `<p class="small">${esc(it.detail)}</p>` : '', it.range ? `<p class="small muted">${esc(it.range)}</p>` : '', it.advice ? `<p class="small"><b>On course:</b> ${esc(it.advice)}</p>` : '',
+    ...sup.map(v => `<p class="small"><span class="tag">read from video</span> ${esc(v.title)}${v.agrees ? ' <span class="muted">Agrees with the ball data.</span>' : ''}${v.practice ? `<br><span class="muted">Drill: ${esc(v.practice)}</span>` : ''}</p>`)].join('');
+  if (ev) h += `<h2>The evidence</h2><div id="goalEvidence">${ev}</div>`;
   // The range sessions that hit its club and swing, newest first.
   const hits = S.sessions.filter(s => s.type === 'range').flatMap(s => (s.blocks || []).filter(x => blockHit(x) && b && x.club === b.club && (x.swing || 'full') === (b.swing || 'full')).map(x => ({ s, x })))
     .sort((m, n) => (n.s.date || '').localeCompare(m.s.date || '')).slice(0, 6);

@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.12.0 — 2026-10-25
+
+- The practice list reads like a coach's note: each item is what's wrong, what to hit (club, target and the drill), whether it's getting better, and Practise this. The list of every shot behind it, the ball-data sentence and the hole links have moved to the item's own page under "The evidence".
+- "Approaches clubbed short" sums up by club ("7i ×6 from 137–177m, stock 112m") instead of listing every shot, and its on-course note says where most of them were from.
+- A swing video that backs an item is one line on the card ("video agrees …"), the full reading on its page.
+- "How this is ranked" is folded under the list's summary line.
+
 ## 2.11.4 — 2026-10-25
 
 - The practice list weighs evidence by whole days, so the same finding gets the same weight on every draw. Nothing visible changes; a publish had failed on a test that caught two draws disagreeing in the tenth decimal.
