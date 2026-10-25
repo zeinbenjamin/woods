@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.12.1 — 2026-10-25
+
+- The line above the practice list (and under Next practice on the Overview) is one line: "18 holes traced · 229 range shots · 15 swings · newest 21 Oct". The full sentence, and that it's recalculated on every draw, is under "How this is ranked".
+
 ## 2.12.0 — 2026-10-25
 
 - The practice list reads like a coach's note: each item is what's wrong, what to hit (club, target and the drill), whether it's getting better, and Practise this. The list of every shot behind it, the ball-data sentence and the hole links have moved to the item's own page under "The evidence".

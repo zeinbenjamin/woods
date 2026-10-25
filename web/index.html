@@ -911,7 +911,7 @@ function overviewWork() {
   const rows = items.slice(1, 3).map((it, i) => `<button class="wrow k-${it.kind}" data-go="range:goal=${esc(it.key)}"><span class="wn">${i + 2}</span><span><span class="wt">${esc(it.title)}</span>
       <span class="small muted">${evidence(it)}</span>${doThis(it) || how(it) ? `<span class="small wa">→ ${doThis(it) || how(it)}</span>` : ''}${goalProgress(it) ? `<span class="small progress">${esc(progressText(it))}</span>` : ''}</span><span class="chev">›</span></button>`).join('');
   return `<h2>Next practice</h2>${hero}` + (rows ? `<h3>Also costing you</h3><div class="work">${rows}</div>` : '') +
-    `<div class="row-actions"><button class="quiet" data-go="range">Full list and evidence →</button></div>` + basisLine().replace('class="basis"', 'class="basis slim"');
+    `<div class="row-actions"><button class="quiet" data-go="range">Full list and evidence →</button></div>` + basisShort();
 }
 
 /* ---------- gapping ---------- */
@@ -2384,7 +2384,7 @@ function practiceSection(limit) {
   if (!now.length && !quiet.length) return holes ? `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`
     : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
   const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
-  return basisLine().replace('class="basis"', 'class="basis slim"') + fold('rankHow', 'How this is ranked', '', `<p class="small muted">Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>`) +
+  return basisShort() + fold('rankHow', 'How this is ranked', '', `<p class="small muted">${esc(practiceBasis().text)} Recalculated every time this screen draws — there is no stored copy. Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>`) +
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
@@ -3240,6 +3240,13 @@ function practiceBasis() {
   const cardOnly = rounds.length - new Set(shotHoles.map(x => x.r.id)).size;
   if (cardOnly > 0) parts.push(`${plural(cardOnly, 'scorecard-only round')} (not used)`);
   return { text: parts.length ? `Built from ${parts.join(', ')}.` : 'Nothing to build from yet.', newest, count: shotHoles.length + rangeShots + swings.length };
+}
+// One line above a list: the counts and the newest input; the "recalculated, never stored"
+// sentence sits in the fold beside it (Range) or the Evidence fold (Overview).
+const shortDay = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
+function basisShort() {
+  const b = practiceBasis(), bits = b.text.replace(/^Built from /, '').replace(/\.$/, '').replace(/ of shot data/, ' traced').replace(/ analysed swings?/, ' swings').replace(/ \(not used\)/, ' not used').split(', ');
+  return `<div class="basis slim">${esc(b.text.startsWith('Built') ? bits.join(' · ') : b.text)}${b.newest ? ` · newest ${esc(shortDay(b.newest))}` : ''}</div>`;
 }
 const basisLine = () => { const b = practiceBasis(); return `<div class="basis">${esc(b.text)}${b.newest ? ` Newest input ${dateLabel(b.newest)}.` : ''} <span class="muted">Recalculated every time this screen draws — there is no stored copy.</span></div>`; };
 
