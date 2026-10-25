@@ -53,7 +53,7 @@ test('when the Access session runs out, the app asks to sign in again', async ()
 test('Bag says who is signed in, offers to sign out, and that courses are shared', async () => {
   const app = await startApp({ user: 'Friend@Example.com' });
   try {
-    app.go('bag');
+    app.go('settings');
     await app.waitFor(() => /friend@example\.com/.test(app.text('#account')), { what: 'signed-in email' });
     assert.equal(app.$('#account a').getAttribute('href'), '/cdn-cgi/access/logout');
     assert.match(app.text('#account'), /Courses are shared/);

@@ -84,7 +84,7 @@ test('an old ?token= link is removed from the URL, keeping anything else, and a 
 /* ---------- 9. club codes are escaped in the calibration warning ---------- */
 
 test('a club code is shown as text in the "check this tap" warning, never as markup', async () => {
-  app.go('bag');
+  app.go('overview');
   const warn = app.$('#view .notice.warn');
   assert.ok(warn, 'the tap is flagged');
   assert.match(warn.textContent, /<i>x<\/i> on hole 1/);
@@ -103,7 +103,7 @@ test('with a season of data, each club\'s numbers are worked out once per change
   for (const s of sessions) await app.api.put('sessions', s.id, s);
   await app.waitFor(() => app.E('S.sessions.length') >= 72, { what: 'poll', timeout: 8000 });
   const calls = app.E(`(() => { let n = 0; const real = fullShotsUncached; fullShotsUncached = c => (n++, real(c));
-    try { go('range'); go('overview'); go('bag'); return n; } finally { fullShotsUncached = real; } })()`);
+    try { go('range'); go('overview'); go('settings'); return n; } finally { fullShotsUncached = real; } })()`);
   assert.ok(calls <= app.E('S.clubs.length'), `range scans: ${calls}, at most one per club`);
   const t0 = performance.now();
   for (const tab of ['overview', 'range', 'overview', 'range']) app.go(tab);

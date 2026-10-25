@@ -28,7 +28,7 @@ after(() => app && app.stop());
 
 const stats = () => app.J(`clubStats('7i')`);
 const setting = async (act, v) => {
-  app.go('overview');
+  app.go('settings');
   app.click(`#view [data-act="${act}"][data-v="${v}"]`);
   const key = act === 'setWeighting' ? 'weighting' : 'balls';
   await app.waitFor(async () => (await app.api.get('settings', 'app'))[key] === v, { what: `${key} saved` });
@@ -57,6 +57,8 @@ test('the Overview says what each number rests on, and the panel says how shots 
   const rung = app.$$('#view .rung').find(r => /^7i/.test(r.textContent.trim()));
   assert.equal(rung.querySelector('.val b').textContent, '130');
   assert.equal(rung.querySelector('.conf').textContent, '5 shots · counts like 4 recent · early signal · middle half 100–130m');   // 100, 100, 100, 130, 130: 25th and 75th percentiles
+  assert.match(app.text('#rangeFilterLine'), /^All time · recent shots count more · all balls · change$/, 'one line on the Overview, the controls in Settings');
+  app.go('settings');
   assert.match(app.text('#rangeFilter summary'), /^Range numbers: All time · recent shots count more · all balls$/);
 });
 
@@ -74,7 +76,7 @@ test('the ball filter counts only matching sessions; an unrecorded ball type cou
   await app.waitFor(() => app.E(`clubStats('7i').n`) === 3, { what: 'range balls only' });
   assert.equal(stats().stockCarry, 100);
   assert.equal(app.E(`clubStats('9i')`), null, 'the session with no ball type is out');
-  app.go('overview');
+  app.go('settings');
   assert.match(app.text('#rangeFilter'), /1 session didn't record the ball type/);
   await setting('setBalls', 'better');
   await app.waitFor(() => app.E(`clubStats('7i').n`) === 2, { what: 'premium and own only' });
@@ -94,7 +96,7 @@ test('a session left out by hand stops counting, but its own page still shows it
   assert.equal(app.$$('#view .block-row svg circle').length, 2, 'its two shots still plotted');
   app.go('range');
   assert.match(app.text('#view'), /left out/);
-  app.go('overview');
+  app.go('settings');
   assert.match(app.text('#rangeFilter summary'), /· 1 left out$/);
   app.go('range', { sessionId: 's_new' });
   app.click('#leftOut [data-act="toggleExclude"]');

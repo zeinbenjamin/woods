@@ -40,13 +40,14 @@ body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(
 
 .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); display: flex; align-items: baseline; justify-content: space-between; padding: 12px 16px 10px; }
 .brand { font-family: var(--cond); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+.topr { display: flex; align-items: center; gap: 10px; } .gear { background: none; border: 0; padding: 4px 6px; font-size: 20px; line-height: 1; color: var(--ink-3); cursor: pointer; border-radius: var(--r); } .gear[aria-current="page"] { color: var(--ink); background: var(--paper-2); }
 button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: pointer; border-radius: 4px; }
 .brand small { font: 500 11px var(--body); color: var(--ink-3); margin-left: 5px; letter-spacing: 0; }
 .vlist { list-style: none; margin: 8px 0 0; padding: 0; } .vlist li { border-top: 1px solid var(--rule); padding: 10px 0; } .vlist ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; } .vlist ul li { border: 0; padding: 2px 0; }
 .status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + var(--safe-b) + 32px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: var(--safe-b); }
-nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
+nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(4, 1fr); height: var(--nav-h); }
 nav.tabs button { width: 100%; height: 100%; border: 0; border-radius: 0; background: none; color: var(--ink-3); font: 500 13px var(--body); cursor: pointer; border-top: 2px solid transparent; margin-top: -1px; -webkit-tap-highlight-color: transparent; }
 nav.tabs button:focus:not(:focus-visible) { outline: none; }
 nav.tabs button[aria-current="page"] { color: var(--ink); border-top-color: var(--green); }
@@ -262,7 +263,7 @@ table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mi
 <body>
 <header class="top">
   <button class="brand" id="brand" aria-label="Version and update history">Carry<small id="sub"></small></button>
-  <div class="status" id="status">Connecting</div>
+  <div class="topr"><div class="status" id="status">Connecting</div><button class="gear" id="settingsBtn" data-go="settings" aria-label="Settings" title="Settings">⚙</button></div>
 </header>
 <main id="view" aria-live="polite"></main>
 <nav class="tabs" aria-label="Sections">
@@ -271,7 +272,6 @@ table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mi
     <li><button data-tab="range">Range</button></li>
     <li><button data-tab="rounds">Rounds</button></li>
     <li><button data-tab="courses">Courses</button></li>
-    <li><button data-tab="bag">Bag</button></li>
   </ul>
 </nav>
 <dialog class="sheet" id="sheet"><div class="inner" id="sheetInner"></div></dialog>
@@ -297,7 +297,7 @@ const S = {
   clubs: [], courses: [], sessions: [], settings: null, sampleOk: false,
   tab: 'overview', sub: null,                 // sub: {sessionId, blockId, courseId}
 };
-try { const t = localStorage.getItem('carry.tab'); if (['overview','range','rounds','courses','bag'].includes(t)) S.tab = t; } catch (e) {}
+try { const t = localStorage.getItem('carry.tab'); if (['overview','range','rounds','courses','settings'].includes(t)) S.tab = t; else if (t === 'bag') S.tab = 'settings'; } catch (e) {}
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -615,7 +615,8 @@ function parseGo(str) {
 function render() {
   if (window.HoleMap) HoleMap.onLoad = mapArrived;
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
-  const views = { overview: vOverview, range: vRange, rounds: vRounds, courses: vCourses, bag: vBag };
+  const views = { overview: vOverview, range: vRange, rounds: vRounds, courses: vCourses, settings: vSettings };
+  const gear = document.getElementById('settingsBtn'); if (gear) gear.setAttribute('aria-current', S.tab === 'settings' ? 'page' : 'false');
   // Every save redraws the view; panels he opened stay open (matched by id).
   const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
   $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
@@ -835,7 +836,7 @@ function vOverview() {
   const stats = activeClubs().map(c => ({ c, s: clubStats(c.code) })).filter(x => x.s && x.s.stockCarry);
   const rounds = S.sessions.filter(s => s.type === 'round' && (s.holes || []).some(h => h.strokes != null));   // newest first
   let h = `<h1>Overview</h1>`;
-  if (!stats.length && !rounds.length) return h + rangeFilter() + `<div class="empty"><p>Nothing logged yet. Log a round (Rounds → New round) or a range session with shots, and this fills in.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
+  if (!stats.length && !rounds.length) return h + `<div class="empty"><p>Nothing logged yet. Log a round (Rounds → New round) or a range session with shots, and this fills in.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
   // 2.5.0: the answer first (how he's playing, the one next practice), the
   // picture behind it after, and the specialised analysis folded away —
   // every number is still here, one tap down. Nothing is computed differently.
@@ -853,6 +854,7 @@ function overviewMore() {
     fold('ovBreakdown', 'Where your game is being tested', brk ? `${brk.label}: ${pct(brk.missed, brk.of)}% ${brk.what}` : '', unhead(overviewBreakdown())),
     fold('ovApproaches', 'Approach distances', most ? `most often ${most.from}–${most.from + 19}m` : '', unhead(overviewApproaches())),
     fold('ovPutting', 'Putting', pt ? `${pt.perHole.toFixed(2)} a hole · ${plural(pt.threes, 'three-putt')}` : '', unhead(overviewPutting())),
+    fold('ovCalibration', 'Range vs course', calibrationTeaser(), unhead(calibrationSection())),
     fold('ovEvidence', 'Evidence', esc(b.text.replace(/^Built from /, '').replace(/\.$/, '')), unhead(overviewEvidence())),
   ].join('');
   return parts ? `<h2>The detail</h2><div class="folds">${parts}</div>` : '';
@@ -932,11 +934,11 @@ function gapHealth(stats) {
   return { pairs, median: med };
 }
 function overviewGapping(stats) {
-  if (!stats.length) return `<h2>Gapping</h2>` + rangeFilter() + `<div class="empty"><p>No full-swing shots yet. Gapping appears once a range block has shot-level carry and total.</p><button class="primary" data-go="range">Go to range</button></div>`;
+  if (!stats.length) return `<h2>Gapping</h2>` + rangeFilterLine() + `<div class="empty"><p>No full-swing shots yet. Gapping appears once a range block has shot-level carry and total.</p><button class="primary" data-go="range">Go to range</button></div>`;
   const ladder = stats.slice().sort((a, b) => b.s.stockCarry - a.s.stockCarry);
   const maxM = Math.max(200, ...ladder.map(x => Math.max(x.s.pureCarry || 0, x.s.stockCarry, x.c.nominalCarry || 0)));
   const w = m => (100 * m / maxM).toFixed(1) + '%';
-  let h = `<h2>Gapping</h2>` + rangeFilter() + `<div class="ladder">` + ladder.map(({ c, s }) => { const sp = carrySpread(c.code); return `<div class="rung">
+  let h = `<h2>Gapping</h2>` + rangeFilterLine() + `<div class="ladder">` + ladder.map(({ c, s }) => { const sp = carrySpread(c.code); return `<div class="rung">
       <div class="club">${esc(c.code)}</div>
       <div class="bar">${s.pureCarry ? `<div class="pure" style="left:${w(s.stockCarry)};width:${w(Math.max(0, s.pureCarry - s.stockCarry))}"></div>` : ''}<div class="stock" style="width:${w(s.stockCarry)}"></div>${c.nominalCarry ? `<div class="assumed" style="left:${w(c.nominalCarry)}" title="assumed carry ${c.nominalCarry}m"></div>` : ''}${sp ? `<div class="spread" style="left:${w(sp.p10)};width:${w(sp.p90 - sp.p10)}" title="${esc(c.code)}: middle half ${fmt(sp.p25)}–${fmt(sp.p75)}m, most ${fmt(sp.p10)}–${fmt(sp.p90)}m (${sp.n} shots)"><i style="left:${(100 * (sp.p25 - sp.p10) / ((sp.p90 - sp.p10) || 1)).toFixed(1)}%;width:${(100 * (sp.p75 - sp.p25) / ((sp.p90 - sp.p10) || 1)).toFixed(1)}%"></i></div>` : ''}</div>
       <div class="val"><b>${fmt(s.stockCarry)}</b><small>${s.pureCarry ? 'pure ' + fmt(s.pureCarry) : 'carry'}</small></div>
@@ -1243,15 +1245,23 @@ function holeCheck(h) {
 }
 
 /* ---------- bag ---------- */
-function vBag() {
-  let h = `<div class="spread"><h1>Bag</h1><button class="primary" data-act="newClub">Add club</button></div>
-  <p class="lead small">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
-  if (!S.clubs.length) return h + `<div class="empty"><p>No clubs yet.</p></div>` + accountSection();
-  const row = c => { const s = clubStats(c.code); return `<tr class="${c.retired ? 'muted' : ''}"><td><b>${esc(c.code)}</b> <span class="muted small">${esc(c.name)}</span>${c.retired ? ' <span class="tag">retired</span>' : ''}</td><td>${c.loft ? c.loft + '°' : ''}</td><td>${fmt(c.nominalCarry)}</td><td>${fmt(c.nominalTotal)}</td><td class="num">${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td><td><button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></td></tr>`; };
-  h += `<div class="scroll"><table><thead><tr><th>Club</th><th>Loft</th><th>Carry you assume</th><th>Total you assume</th><th>Carry measured</th><th></th></tr></thead><tbody>${S.clubs.map(row).join('')}</tbody></table></div>`;
-  h += calibrationSection();
-  h += `<section class="sec"><h2>Your data</h2>
-    <p class="small muted">Everything lives in this page's storage. Export before anything you can't undo, and to move it somewhere else.</p>
+/* ---------- settings (2.13.0) ----------
+   Everything set once and read rarely, off the tab bar: the bag, which
+   range shots count, his location, the data, who's signed in. Analysis
+   that used to live on the Bag tab (range vs course) is on the Overview. */
+function vSettings() {
+  let h = `<h1>Settings</h1>`;
+  h += `<section class="sec" id="bag" style="margin-top:0;padding-top:0;border-top:0"><div class="spread"><h2>Bag</h2><button class="primary" data-act="newClub">Add club</button></div>
+  <p class="small muted">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
+  if (!S.clubs.length) h += `<div class="empty"><p>No clubs yet.</p></div>`;
+  else {
+    const row = c => { const s = clubStats(c.code); return `<tr class="${c.retired ? 'muted' : ''}"><td><b>${esc(c.code)}</b> <span class="muted small">${esc(c.name)}</span>${c.retired ? ' <span class="tag">retired</span>' : ''}</td><td>${c.loft ? c.loft + '°' : ''}</td><td>${fmt(c.nominalCarry)}</td><td>${fmt(c.nominalTotal)}</td><td class="num">${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td><td><button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></td></tr>`; };
+    h += `<div class="scroll"><table><thead><tr><th>Club</th><th>Loft</th><th>Carry you assume</th><th>Total you assume</th><th>Carry measured</th><th></th></tr></thead><tbody>${S.clubs.map(row).join('')}</tbody></table></div>`;
+  }
+  h += `</section><section class="sec" id="rangeNumbers"><h2>Range numbers</h2><p class="small muted">Which range shots count towards stock carry, gapping and the practice list.</p>${rangeFilter()}</section>`;
+  h += `<section class="sec" id="location"><h2>Your location</h2><p class="small muted">${home() ? `Distances to courses are from ${esc(home().label || 'your location')}, as the crow flies.` : 'Set it to see how far each course is.'}</p><div class="row-actions"><button data-act="setHome">${home() ? 'Change' : 'Set your location'}</button></div></section>`;
+  h += `<section class="sec" id="yourData"><h2>Your data</h2>
+    <p class="small muted">Everything lives on your server. Export before anything you can't undo, and to move it somewhere else.</p>
     <div class="row-actions"><button class="primary" data-act="exportData">Export everything</button><button data-act="importData">Import a backup</button></div>
     <p class="small muted" style="margin-top:8px">${S.clubs.length} clubs, ${S.courses.length} courses, ${S.sessions.length} sessions, ${allSwings().length} swings.</p>
     <p class="small muted" id="about">Carry ${esc(APP.version)}, build ${esc(APP.commit)}. Tap the title for what's changed.</p></section>`;
@@ -2390,6 +2400,13 @@ function practiceSection(limit) {
     (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
     (now.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
 }
+// One line for the fold: the biggest difference that counts, or how many taps to check.
+function calibrationTeaser() {
+  const rows = calibration(), sus = rows.reduce((n, r) => n + r.suspect.length, 0);
+  if (sus) return `<span class="warn">⚠ ${plural(sus, 'tap')} to check</span>`;
+  const cal = rows.filter(r => r.status !== 'too few' && r.delta != null).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0];
+  return cal ? `${esc(cal.club)} ${signed(cal.delta)}m on the course` : rows.length ? `${plural(rows.length, 'club')}, too few shots yet` : '';
+}
 function calibrationSection() {
   const rows = calibration(); if (!rows.length) return '';
   const suspects = rows.flatMap(r => r.suspect.map(x => ({ ...x, ref: r.ref })));
@@ -3405,12 +3422,15 @@ ACTIONS.toggleExclude = async function (d) {
   if (await save('sessions', s.id, { ...s, excluded: !s.excluded })) { toast(s.excluded ? 'Counting this session again' : 'Left out of your numbers'); render(); }
 };
 // One compact panel for everything that decides which range shots count.
+const rangeFilterSummary = () => { const ranges = S.sessions.filter(s => s.type === 'range'), left = ranges.filter(s => s.excluded).length;
+  return [(WINDOWS.find(w => w[0] === (settings().window || 'all')) || WINDOWS[0])[1], weighting() === 'recent' ? 'recent shots count more' : 'every shot the same',
+    (BALLS.find(b => b[0] === ballFilter()) || BALLS[0])[1].toLowerCase()].concat(left ? [`${left} left out`] : []).join(' · '); };
+const rangeFilterLine = () => `<p class="small muted" id="rangeFilterLine" style="margin:0 0 6px">${esc(rangeFilterSummary())} · <button class="quiet" style="padding:0 2px" data-go="settings">change</button></p>`;
 function rangeFilter() {
   const ranges = S.sessions.filter(s => s.type === 'range'), left = ranges.filter(s => s.excluded).length;
   const noBall = ranges.filter(s => !s.ballType).length;
   const chips = (act, key, opts, cur) => `<div class="chips" style="margin:6px 0">${opts.map(([v, l]) => `<button class="chip" data-act="${act}" data-${key}="${v}" aria-pressed="${cur === v}">${l}</button>`).join('')}</div>`;
-  const summary = [(WINDOWS.find(w => w[0] === (settings().window || 'all')) || WINDOWS[0])[1], weighting() === 'recent' ? 'recent shots count more' : 'every shot the same',
-    (BALLS.find(b => b[0] === ballFilter()) || BALLS[0])[1].toLowerCase()].concat(left ? [`${left} left out`] : []).join(' · ');
+  const summary = rangeFilterSummary();
   return `<details class="sec filters" id="rangeFilter"><summary><b>Range numbers:</b> <span class="small">${esc(summary)}</span></summary>
     <label>When</label>${windowPicker()}
     <label>Weighting</label>${chips('setWeighting', 'v', WEIGHTINGS, weighting())}
