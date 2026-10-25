@@ -772,6 +772,32 @@ scorecard sets every length.
   The same export added trees and bush at Barnwell Park, Beverley Park and
   Lane Cove (still no hole lines there); origins and boundaries unchanged.
 
+## Artwork → map (2.17.0)
+
+Hunter Valley's rounds were traced on uploaded artwork (holes 1–9) before
+OSM had its holes; the hole-maps chat's 2.15.0 map gave it lines. The
+conversion is the Carry chat's (it rewrites round documents; the map is
+only read through `HoleMap.forHole`). On the course page, `artConvertSection`
+lists rounds with holes still on art that the map can draw
+(`artRoundsToConvert`: `h.art && h.hm`, every shot `x != null`); *Move them
+onto the map* asks, then `artShotToMap` moves each shot: its fraction along
+the artwork's tee→(turn)→green line and its offset to the right of travel
+(`alongLine`, y down in pixels) become the same fraction along the drawn
+hole line `hm.pl` (after the tee rule, so the card's length) and the same
+offset in metres (`atFraction`, y up), scaled by `metresPerPx` as artwork
+distances always were. The shot becomes `{mx, my, approx: true, art: {x, y}}`
+(the hole-maps chat's shape): the pixels are kept, nothing derived is
+stored, the lie stays as recorded (Hunter Valley's greens are estimated,
+so the map wouldn't give one), and `approx` keeps it out of calibration
+(`shotRecords().full` is false for it and for the shot after it) with
+"approx." on the shot list and the dot details. The geometry is
+`artToMap`, which calls `HoleMap.fromArt(hm, art, [x, y])` when the
+hole-maps chat ships it (same contract) and carries a local copy until
+then; delete the copy when it lands. Frames never mix: a hole moves whole or not at all. `ui-artconvert`
+checks a straight hole and a dogleg by hand and the real Hunter Valley file
+end to end. The artwork stays on the course record; unused once every
+round there has moved.
+
 ## Play mode (2.1.0)
 
 Asked for 2026-10-19 ("built with GPS from the start"): logging during the
@@ -1000,6 +1026,8 @@ fixture would let the reading be pinned.
   `ui-undrawn` (GPS shots on a hole not drawn yet: saved raw, not
   measurable, then measured from the marked tee once drawn; the logger
   refusing a second frame; no-map courses unchanged),
+  `ui-artconvert` (artwork → map: a straight hole and a dogleg by hand, the
+  real Hunter Valley file end to end, distances from the map after),
   `ui-format` (a team round: not a handicap score and the reason shown,
   out of form, trend, course history and evidence, listed and labelled; set
   and cleared on the round form),

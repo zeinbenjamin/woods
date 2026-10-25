@@ -1208,6 +1208,7 @@ function vCourse() {
   }
   if (rounds.length) h += `<h2>Rounds here</h2><div class="list">${rounds.map(sessionItem).join('')}</div>`;
   h += courseMapSection(c);
+  h += artConvertSection(c);
   // Booking, fees, ratings and notes: one tap away, not between him and the holes.
   const info = [c.bookable ? 'public booking' : c.bookable === false ? 'members or guests' : '', c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : '', Object.keys(c.ratings || {}).length ? 'rated' : ''].filter(Boolean).join(' · ');
   h += fold('courseInfo', 'Course information', esc(info), `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${/^https?:\/\//i.test(c.bookingUrl || '') ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
@@ -1667,6 +1668,82 @@ Object.assign(ACTIONS, {
   },
 });
 
+/* ---------- artwork → map (2.16.x) ----------
+   Hunter Valley's rounds were traced on uploaded artwork before OSM had its
+   holes. With a map linked, those shots can be moved onto it: each shot's
+   place along the artwork's tee→(turn)→green line and its sideways offset
+   (in metres, by the same scale the artwork's distances always used) are
+   laid onto the map's hole line at the same fraction and offset. Approximate
+   by construction: the artwork was a drawing, the line is OSM's. The pixel
+   position is kept on the shot (ax, ay) and the shot says where it came from
+   (from: 'art'), so it can be read back or redone. Asked, never automatic. */
+const polyLen = pts => pts.slice(1).reduce((L, q, i) => L + Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]), 0);
+// Where p sits against a polyline: fraction of its length, and offset to the
+// right of travel (right as seen in that frame: perp = (uy, −ux) for y up, (−uy, ux) for y down).
+function alongLine(pts, p, yDown) {
+  let best = null, acc = 0; const total = polyLen(pts) || 1;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], vx = b[0] - a[0], vy = b[1] - a[1], L = Math.hypot(vx, vy) || 1;
+    const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / (L * L)));
+    const qx = a[0] + t * vx, qy = a[1] + t * vy, d = Math.hypot(p[0] - qx, p[1] - qy);
+    if (!best || d < best.d) { const ux = vx / L, uy = vy / L, px = yDown ? -uy : uy, py = yDown ? ux : -ux; best = { d, f: (acc + t * L) / total, right: (p[0] - qx) * px + (p[1] - qy) * py }; }
+    acc += L;
+  }
+  return best;
+}
+// The point a fraction f along a polyline, with the right-of-travel unit vector there (y up).
+function atFraction(pts, f) {
+  const total = polyLen(pts), want = Math.max(0, Math.min(1, f)) * total; let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (acc + L >= want || i === pts.length - 1) { const t = L ? (want - acc) / L : 0, ux = (b[0] - a[0]) / (L || 1), uy = (b[1] - a[1]) / (L || 1); return { p: [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])], right: [uy, -ux] }; }
+    acc += L;
+  }
+  return { p: pts[0], right: [1, 0] };
+}
+// The geometry: an art pixel onto the hole's map line, [mx, my] or null. The
+// hole-maps chat is building HoleMap.fromArt(hm, art, [x, y]) with this
+// contract so the rule lives with the map; it is used when present, and this
+// local copy goes then.
+function artToMap(hm, art, p, metres) {
+  if (window.HoleMap && typeof HoleMap.fromArt === 'function') return HoleMap.fromArt(hm, art, p);
+  const path = [art.tee, art.turn, art.green].filter(Boolean), k = (metres || 0) / (polyLen(path) || 1);
+  const at = alongLine(path, p, true); if (!at) return null;
+  const q = atFraction(hm.pl, at.f), off = at.right * k;
+  return [+(q.p[0] + q.right[0] * off).toFixed(1), +(q.p[1] + q.right[1] * off).toFixed(1)];
+}
+// One art shot moved: the map position, the pixels kept under art, and approx
+// so nothing treats its distances as measured (calibration leaves it out).
+function artShotToMap(h, s) {
+  if (!h.art || !h.hm || s.x == null) return null;
+  const m = artToMap(h.hm, h.art, [s.x, s.y], h.metres); if (!m) return null;
+  const { x, y, ...rest } = s;
+  return { ...rest, mx: m[0], my: m[1], approx: true, art: { x, y } };
+}
+// Rounds at this course with holes still traced on artwork that the map can now draw.
+function artRoundsToConvert(c) {
+  if (!c || !c.map || !c.map.id) return [];
+  return S.sessions.filter(r => r.type === 'round' && r.courseId === c.id).map(r => ({ r, holes: holesOf(r).filter(h => h.art && h.hm && (h.shots || []).length && h.shots.every(s => s.x != null)) })).filter(x => x.holes.length);
+}
+function artConvertSection(c) {
+  const todo = artRoundsToConvert(c); if (!todo.length) return '';
+  const holes = todo.reduce((n, x) => n + x.holes.length, 0), shots = todo.reduce((n, x) => n + x.holes.reduce((m, h) => m + h.shots.length, 0), 0);
+  return `<section class="sec" id="artConvert"><h2>Rounds traced on artwork</h2>
+    <p class="small">${plural(todo.length, 'round')} here (${plural(holes, 'hole')}, ${plural(shots, 'shot')}) were traced on the uploaded hole pictures before this course had a map. They can be moved onto the map: each shot keeps its place along the hole and its distance to the side, scaled as the artwork always was. Approximate, because the picture was a drawing and the map line is OpenStreetMap's: the shots are marked so, shown on the map and measured along it, but left out of range-vs-course calibration.</p>
+    <div class="row-actions"><button class="primary" data-act="convertArt" data-id="${c.id}">Move them onto the map</button></div></section>`;
+}
+ACTIONS.convertArt = async function (d) {
+  const c = course(d.id), todo = artRoundsToConvert(c); if (!todo.length) return;
+  if (!await confirmAsk(`Move ${plural(todo.reduce((n, x) => n + x.holes.length, 0), 'hole')} of shots from the artwork onto the map? Positions are approximate; the artwork position is kept on each shot.`, 'Move them')) return;
+  let holesDone = 0;
+  for (const { r, holes } of todo) {
+    const ns = new Set(holes.map(h => h.n)), byN = Object.fromEntries(holes.map(h => [h.n, h]));
+    const next = r.holes.map(h => { if (!ns.has(h.n)) return h; const hh = byN[h.n], shots = h.shots.map(s => artShotToMap(hh, s)); if (shots.some(x => !x)) return h; holesDone++; return { ...h, shots }; });
+    if (!await save('sessions', r.id, { ...r, holes: next })) { toast('Saving stopped: not every round was moved'); render(); return; }
+  }
+  toast(`${plural(holesDone, 'hole')} moved onto the map`); render();
+};
+
 /* ============================================================
    Hole stencils
    Each hole is a schematic: a fairway ribbon along a quadratic
@@ -1789,7 +1866,7 @@ function vHoleLog() {
     <div class="spread" style="margin-top:14px"><span class="stat" style="margin:0"><b>${shots.length ? strokes : (hole.strokes ?? '–')}</b><small>${shots.length ? 'strokes (shots + putts + penalties)' : 'strokes, from scorecard'}</small></span>
     <div class="row-actions" style="margin:0"><button data-act="undoShot">Undo shot</button><button class="danger" data-act="clearHole">Clear hole</button></div></div>`;
   if (onGreen && hole.putts != null && n < all.length) html += `<div class="row-actions" style="margin-top:12px"><button class="primary" data-go="rounds:sessionId=${r.id},hole=${n + 1}">Hole ${n + 1} →</button><span class="small muted">${holeStrokes(hole)} on this hole</span></div>`;
-  if (shots.length) html += `<h2>Shots</h2><div class="shotlist">` + shots.map((s, i) => { const from = i ? toGreen(h, shots[i - 1]) : hole.metres, len = shotLen(h, i); return `<button class="shotrow" data-act="editShot" data-sid="${r.id}" data-n="${n}" data-i="${i}"><span>${i + 1}. ${esc(s.club || '?')}${from == null ? '' : ` from ${Math.round(from)}m`}${s.penalty ? ' <span class="tag flag">penalty</span>' : ''}${s.verified ? ' <span class="tag green">real</span>' : ''}</span><span class="muted">${len == null ? 'not measurable' : Math.round(len) + 'm'}, ${lieOf(h, s)} ›</span></button>`; }).join('') + `</div><p class="small muted">Tap a shot to change its club or lie, move it, or delete it.</p>`;
+  if (shots.length) html += `<h2>Shots</h2><div class="shotlist">` + shots.map((s, i) => { const from = i ? toGreen(h, shots[i - 1]) : hole.metres, len = shotLen(h, i); return `<button class="shotrow" data-act="editShot" data-sid="${r.id}" data-n="${n}" data-i="${i}"><span>${i + 1}. ${esc(s.club || '?')}${from == null ? '' : ` from ${Math.round(from)}m`}${s.approx ? ' <span class="tag">approx.</span>' : ''}${s.penalty ? ' <span class="tag flag">penalty</span>' : ''}${s.verified ? ' <span class="tag green">real</span>' : ''}</span><span class="muted">${len == null ? 'not measurable' : Math.round(len) + 'm'}, ${lieOf(h, s)} ›</span></button>`; }).join('') + `</div><p class="small muted">Tap a shot to change its club or lie, move it, or delete it.</p>`;
   return html;
 }
 // One write per round at a time, each applied to the latest copy: two quick
@@ -2143,7 +2220,8 @@ function shotRecordsUncached() {
       const fromLie = i ? lieOf(h, shots[i - 1]) : 'tee';
       const recovery = ['trees', 'bunker', 'water'].includes(fromLie);
       const kind = i === 0 && h.par >= 4 ? 'tee' : recovery ? 'recovery' : from < 60 ? 'short' : 'approach';
-      out.push({ r, h, i, s, club: s.club, from, fromLie, lie, len, kind, full: !recovery && len >= 30 && from >= 40 });
+      // full: a swing whose length can be trusted as a measurement (calibration): not from an approximate position.
+      out.push({ r, h, i, s, club: s.club, from, fromLie, lie, len, kind, full: !recovery && len >= 30 && from >= 40 && !s.approx && !(i && shots[i - 1].approx) });
     });
   }
   return out;
@@ -3942,7 +4020,7 @@ document.addEventListener('click', e => {
   const rec = shotRecords().find(x => x.r.id === d.r.id && x.h.n === Number(S.sub.hole) && x.i === d.i);
   document.querySelectorAll('#holeMap .hit.on').forEach(x => x.classList.remove('on')); t.classList.add('on');
   box.classList.remove('muted');
-  box.innerHTML = `<b>${dateLabel(d.r.date)}</b> · shot ${d.i + 1}${d.club ? ` · ${esc(d.club)}` : ''}${rec ? ` from ${fmt(rec.from)}m → ${fmt(rec.len)}m, ${esc(rec.lie)}` : `, ${esc(d.lie || 'lie not set')} · distance not measurable`}${d.penalty ? ' <span class="tag flag">penalty</span>' : ''}
+  box.innerHTML = `<b>${dateLabel(d.r.date)}</b> · shot ${d.i + 1}${d.club ? ` · ${esc(d.club)}` : ''}${rec ? ` from ${fmt(rec.from)}m → ${fmt(rec.len)}m, ${esc(rec.lie)}` : `, ${esc(d.lie || 'lie not set')} · distance not measurable`}${d.approx ? ' <span class="tag">moved from artwork, approximate</span>' : ''}${d.penalty ? ' <span class="tag flag">penalty</span>' : ''}
     <button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${d.r.id},hole=${S.sub.hole}">Open that hole →</button>`;
 });
 
