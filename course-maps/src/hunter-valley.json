@@ -1,0 +1,16 @@
+{
+ "id": "hunter-valley",
+ "name": "Hunter Valley Golf Club",
+ "osm": {
+  "course": "way/675566513",
+  "name": "an unnamed course at Lovedale",
+  "exported": "2026-10-25"
+ },
+ "origin": [
+  -32.77918,
+  151.34965
+ ],
+ "holes": "osm",
+ "minInside": 0.8,
+ "why": "OSM has the course at Lovedale only as an unnamed, partial boundary (39 ha). Its 18 hole lines were remapped after 2026-09-27 (way/1544913558-75); holes 7 and 9 run 11% and 15% outside the boundary, and no other course is near, so lines 80% inside count. No card in the source: the course page checks the NAS card live."
+}

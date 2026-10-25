@@ -751,8 +751,20 @@ scorecard sets every length.
   course page lists holes drawn from marks and holes still waiting. Limit: on
   a hole's first visit nothing is drawn until the flag is marked, so that
   hole's shots that round are on the outline (frames never mix).
-  Hunter Valley's only nearby course is unnamed and partial, so
-  it keeps its artwork (holes 1–9), and converting its old rounds waits for a map.
+  Hunter Valley (2.15.0): an export of 2026-10-25 (`aa81a27f`, the first
+  since 2026-09-27; overpass-api.de resets from this container and the
+  mirrors serve May/July data, so he ran it in overpass turbo) has all 18
+  hole lines, remapped since September (way/1544913558–75), with a tee
+  point and a pin each but no greens. The course is still OSM's unnamed,
+  partial boundary at Lovedale (way/675566513, 39 ha), and 7 and 9 run 11%
+  and 15% outside it, so the source sets `minInside: 0.8` (default 0.9, the
+  guard against a neighbour's holes; there's none here). No card in the
+  source: the course page checks the NAS card. Greens are estimated on the
+  pins, as at Hurstville. An estimated green is now never reused by another
+  hole: 9 and 18 end 28 m apart, and 18 had taken 9's (only a *mapped* green
+  can be shared). Its artwork rounds keep their frame; converting them waits.
+  The same export added trees and bush at Barnwell Park, Beverley Park and
+  Lane Cove (still no hole lines there); origins and boundaries unchanged.
 
 ## Play mode (2.1.0)
 
@@ -909,7 +921,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 301 tests, about 45s.
+`npm test` — 302 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -989,10 +1001,10 @@ fixture would let the reading be pinned.
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking, a boundary-only map drawing
   only the holes with marks).
-- `course-maps.test.js` (22) — the committed maps match their sources,
+- `course-maps.test.js` (23) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `housekeeping.test.js` (7) — the sign-in sheets (home address, expired
   session by redirect and by Cloudflare's 401, asked once), "Signed in as"
@@ -1011,7 +1023,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for the legend, 5 for the
+9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for Hunter Valley, 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 `tee` field from the app survives it because the server corrects it), 9 for 2.5.0's
@@ -1046,8 +1058,8 @@ In rough order of value:
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
 3. **More course maps** (see *Course maps*). Barnwell Park, Beverley
-   Park and Lane Cove are drawn from his GPS marks as he plays them; Hunter Valley
-   waits for OSM, then its art rounds convert to approximate map positions.
+   Park and Lane Cove are drawn from his GPS marks as he plays them; Hunter
+   Valley's art rounds could convert to approximate map positions.
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.

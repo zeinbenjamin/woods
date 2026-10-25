@@ -17,6 +17,9 @@
 // is, where the hole lines come from, and the card the lengths were
 // checked against:
 //   holes: "osm"                 golf=hole ways inside the course, numbered by ref
+//   minInside: 0.8               share of a hole line that must be inside the
+//                                boundary (0.9 by default), lowered where OSM's
+//                                boundary is partial and no course is next door
 //   renumber: { "10": 1, ... }   OSM's ref → the course's hole number, where OSM
 //                                numbers from an old start (Hurstville's nines)
 //   holes: { "1": { tees: [osm id | {id, half: "nearest"}], green: osm id, via?: fairway id } }
@@ -193,12 +196,17 @@ function build(id) {
       const ref = parseInt(f.properties.ref, 10), n = src.renumber ? src.renumber[ref] : ref;
       if (src.renumber && !(n > 0)) throw new Error(`${id}: OSM hole ${f.properties.ref} has no number in renumber`);
       const l = f.geometry.coordinates.map(P);
-      if (!(n > 0) || insideShare(l, boundary) < 0.9) continue;   // another course's hole next door
+      // A line mostly outside is another course's hole next door. minInside lowers
+      // the bar where OSM's boundary is partial and there's no neighbour (Hunter Valley).
+      if (!(n > 0) || insideShare(l, boundary) < (src.minInside ?? 0.9)) continue;
       if (seen[n]) throw new Error(`${id}: two hole lines numbered ${n}`);
       seen[n] = true;
       const end = l[l.length - 1];
-      let gi = features.findIndex(x => x.k === 'green' && inRings(end, x.r)) >= 0 ? features.findIndex(x => x.k === 'green' && inRings(end, x.r))
-        : features.reduce((b, x, i) => x.k === 'green' && (b < 0 || dist(centroid(x.r[0]), end) < dist(centroid(features[b].r[0]), end)) ? i : b, -1);
+      // Only a mapped green can be another hole's too: an estimated one belongs
+      // to the pin it was drawn on (Hunter Valley's 9 and 18 end 28 m apart).
+      const mapped = x => x.k === 'green' && !x.est;
+      let gi = features.findIndex(x => mapped(x) && inRings(end, x.r)) >= 0 ? features.findIndex(x => mapped(x) && inRings(end, x.r))
+        : features.reduce((b, x, i) => mapped(x) && (b < 0 || dist(centroid(x.r[0]), end) < dist(centroid(features[b].r[0]), end)) ? i : b, -1);
       // No mapped green near the end of the line: an estimated one, a 12 m
       // circle on the mapped pin (or the line's end). Drawn dashed, labelled
       // estimated, and never read as a green lie.
