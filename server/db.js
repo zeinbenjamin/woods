@@ -20,7 +20,10 @@ export const SHARED = new Set(['courses']);
 export const COLLECTIONS = new Set(['clubs', 'courses', 'sessions', 'settings']);
 export const BACKUP_BEFORE_2 = join(DATA_DIR, 'carry-before-2.0.0.db');
 
-export const db = new Database(join(DATA_DIR, 'carry.db'));
+export const DB_FILE = join(DATA_DIR, 'carry.db');
+export const db = new Database(DB_FILE);
+// The one person whose data the monitor may read: OWNER_EMAIL, or nobody. The YAML's placeholder is nobody.
+export const ownerEmail = () => { const o = (process.env.OWNER_EMAIL || '').trim().toLowerCase(); return /replace/.test(o) || !/^[^@\s]+@[^@\s]+$/.test(o) ? '' : o; };
 db.pragma('journal_mode = WAL');
 
 const columns = table => db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
@@ -162,3 +165,11 @@ export const deleteAsset = id => db.prepare('DELETE FROM assets WHERE id = ?').r
 export const stamps = user => Object.fromEntries(
   db.prepare("SELECT collection, MAX(updated_at) AS t, COUNT(*) AS n FROM docs WHERE owner = ? OR owner = '' GROUP BY collection").all(user)
     .map(r => [r.collection, `${r.t}:${r.n}`]));
+
+/* ---------- for the monitor (2.14.0): one person's documents and the shared ones, never anyone else's ---------- */
+export const ownerCounts = owner => Object.fromEntries(
+  db.prepare("SELECT collection, COUNT(*) AS n, MAX(updated_at) AS last FROM docs WHERE owner = ? OR owner = '' GROUP BY collection").all(owner)
+    .map(r => [r.collection, { n: r.n, lastWrite: r.last }]));
+export const ownerLastWrite = owner => db.prepare("SELECT MAX(updated_at) AS t FROM docs WHERE owner = ? OR owner = ''").get(owner).t || null;
+export const ownerAssets = owner => db.prepare('SELECT id, content_type AS contentType, bytes, created_at AS createdAt FROM assets WHERE owner = ? ORDER BY created_at').all(owner);
+export const assetTotals = () => db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(bytes), 0) AS bytes FROM assets').get();

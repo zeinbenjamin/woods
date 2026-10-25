@@ -151,10 +151,10 @@ Two Claude chats work on this repo at once, each on its own branch, each
 merging to `main` through its own PRs. Ownership is by file, so their
 changes don't collide and each knows what it may change.
 
-| | **Hole-maps chat** (`claude/relaxed-einstein-tj8m13`) | **Carry chat** (`claude/gifted-carson-g3y6hd`) |
-|---|---|---|
-| **Owns** | `web/holemap.js`, `web/course-maps/`, `course-maps/`, `scripts/course-maps.js`, `test/course-maps.test.js`, `test/ui-holemap.test.js`, and the *Course maps* section below | Everything else: the app (`web/index.html`, `web/platform.js`), the server, `imports/` and every course record (pars, lengths, stroke index, tee sets, primary tee, ratings), the course form, handicap, releases tooling, all other tests and docs |
-| **Reads, doesn't change** | The course records: the card is what a map is checked against | The map files |
+| | **Hole-maps chat** (`claude/relaxed-einstein-tj8m13`) | **Carry chat** (`claude/gifted-carson-g3y6hd`) | **Monitor chat** |
+|---|---|---|---|
+| **Owns** | `web/holemap.js`, `web/course-maps/`, `course-maps/`, `scripts/course-maps.js`, `test/course-maps.test.js`, `test/ui-holemap.test.js`, and the *Course maps* section below | Everything else: the app (`web/index.html`, `web/platform.js`), the server (the monitor's endpoint included), `imports/` and every course record (pars, lengths, stroke index, tee sets, primary tee, ratings), the course form, handicap, releases tooling, all other tests and docs | Nothing in the repo: no commits, branches, PRs or deploys |
+| **Reads, doesn't change** | The course records: the card is what a map is checked against | The map files | The running app, through `GET /api/admin/*` only (see *Monitoring*) |
 
 - **Course data belongs to the Carry chat.** When the hole-maps chat finds
   a scorecard problem while checking a map (Bondi's lengths in yards, a
@@ -177,6 +177,64 @@ changes don't collide and each knows what it may change.
   edits only its own entry and section. Whichever PR merges second takes
   the next version number; the CI gate enforces it. Before opening a PR,
   merge the latest `main`.
+
+## Monitoring (2.14.0)
+
+A third chat watches the deployed Carry: is it up, which build, is data
+arriving, what the data says. Its charter (drafted 2026-10-25 in that chat):
+it writes nothing, anywhere: no commits, no app data, no deploys, no
+Cloudflare or TrueNAS changes. Findings come to this chat (a bug with
+evidence) or the hole-maps chat (a map problem seen in real data) as notes
+through Zein. It can't see production any other way, and neither can this
+chat.
+
+- **The door:** `GET /api/admin/*`, registered before the person check in
+  `server/index.js`, guarded by `requireMonitor()` in `server/auth.js`: the
+  same JWT verification as a person's token (`verifyToken`: signature, `aud`,
+  `iss`, `exp`/`nbf`) but it must be a **service token**: no `email`, and
+  `common_name` equal to `CF_ACCESS_MONITOR_ID`. A person's token is 401
+  there; the service token is 401 everywhere else (`emailFromToken` still
+  refuses "token has no email"). Anything but GET → 405. `CF_ACCESS_MONITOR_ID`
+  unset or REPLACE → 503 `monitor_not_configured`; keys unreachable → 503.
+  `DEV_USER` reaches it locally, for the tests. Every answer is
+  `Cache-Control: no-store`.
+- **`/health`:** version, commit, uptime, auth mode, whether an owner is
+  configured, database and WAL sizes, free space on `/data` (`statfsSync`),
+  stored files count and bytes, the owner's last write, whether the 1.x
+  backup exists (`migratedFrom1x`).
+- **`/activity`:** for `OWNER_EMAIL` and the shared courses only: counts and
+  last write per collection, and the last 200 lines of the owner's own
+  logged requests (the lines the container log gets: writes and errors,
+  never successful GETs, never the query string) plus 5xx lines with no one
+  signed in. A ring buffer in memory (`recent`), wiped on restart.
+- **`/data`:** the owner's documents and the shared courses in the
+  `carry-export` shape (`scripts/import-export.js` reads it), `assets: {}`
+  (no file bytes) and `files` (the owner's asset metadata).
+- **Zein's decision (2026-10-25): his data and the shared courses only.**
+  Nothing under `/api/admin` reveals a friend's documents, counts, emails or
+  request lines; `api.test.js` seeds a friend and checks. `OWNER_EMAIL`
+  unset or REPLACE → `activity` and `data` are 503 `owner_not_configured`;
+  `ownerEmail()` in `db.js` is the one reading of it.
+- **The numbers the app shows are worked out in the browser.** The server
+  holds raw documents, so anything the monitor computes from `/data` is its
+  own arithmetic, never "what the app shows"; a disagreement comes here as a
+  question.
+- **Setting it up** (outside this repo): Cloudflare Zero Trust → Access →
+  Service Auth → a service token `carry-monitor`; a *Service Auth* policy
+  attached to the **existing Carry Access application** (Access policies
+  have no path; paths belong to applications, and a second application for
+  `/api/admin` would carry its own AUD tag, which `verifyToken` refuses).
+  So Cloudflare lets the token reach every path, and Carry refuses it
+  outside `/api/admin` because it has no email. The policy is the reusable
+  one Bourdain's monitor token is also on, so **Cloudflare admits either
+  token; the `common_name === CF_ACCESS_MONITOR_ID` check in
+  `monitorFromToken` is what keeps Carry to its own** (`api.test.js`: a
+  valid service token with another `common_name` is 401). Its Client ID
+  goes into the carry YAML as `CF_ACCESS_MONITOR_ID` (a line for it in
+  `deploy/truenas-compose.yml`, empty by default); the monitor session's
+  environment gets `carry.elevengrant.com` allowed and the token's id and
+  secret as network secrets for `/api/admin/`, GET only. The secret never
+  goes into a chat.
 
 ## Sign-in and whose data (2.0.0)
 
@@ -851,11 +909,15 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 299 tests, about 45s.
+`npm test` — 301 tests, about 45s.
 
-- `api.test.js` (25) — the server alone: sign-in (forged key, wrong
+- `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
   cookie, clock skew, keys unreachable, not configured, `DEV_USER`),
+  the monitor's door (a service token reads `/api/admin`, a person can't,
+  the service token reads nothing else, GET only, unset or REPLACE → 503,
+  no owner → health only, a seeded friend invisible in every answer and
+  absent from the ring buffer, no query strings),
   whose documents are whose (isolation, shared courses, per-person stamps,
   the course-delete guard, GPS marks surviving other phones' copies and
   refused when rough), assets (uploader-only delete, sign-in for

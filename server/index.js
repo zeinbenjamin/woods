@@ -4,11 +4,12 @@
 // the database and the uploaded files all stay server-side.
 import express from 'express';
 import { randomBytes } from 'node:crypto';
-import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, unlinkSync, existsSync, statSync, statfsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { db, listDocs, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, mergeCourseMarks, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR, COLLECTIONS } from './db.js';
-import { requireUser, authMode } from './auth.js';
+import { db, listDocs, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, mergeCourseMarks, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR, COLLECTIONS,
+  DATA_DIR, DB_FILE, BACKUP_BEFORE_2, ownerEmail, ownerCounts, ownerLastWrite, ownerAssets, assetTotals } from './db.js';
+import { requireUser, requireMonitor, authMode, monitorConfigured } from './auth.js';
 import { analyse, parseJson } from './anthropic.js';
 import { VERSION, COMMIT, CHANGELOG } from './version.js';
 
@@ -20,11 +21,18 @@ const MAX_ASSET = Number(process.env.MAX_ASSET_MB || 200) * 1024 * 1024;
 // One line per request that changes something or fails, so the NAS's
 // container log says what happened. Quiet for successful reads (the page
 // polls every few seconds), and the path only: no query string reaches the log.
+// The monitor (2.14.0) can read the last of those lines, but only the owner's
+// own requests and server errors with no one signed in: a friend's lines are
+// logged to the container as before and never kept here.
+const STARTED = Date.now(), LOG_KEEP = 200, recent = [];
 app.use((req, res, next) => {
   const t0 = Date.now();
   res.on('finish', () => {
     if (req.method === 'GET' && res.statusCode < 400) return;
-    console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl.split('?')[0]} ${res.statusCode} ${Date.now() - t0}ms`);
+    const line = `${new Date().toISOString()} ${req.method} ${req.originalUrl.split('?')[0]} ${res.statusCode} ${Date.now() - t0}ms`;
+    console.log(line);
+    const owner = ownerEmail();
+    if ((owner && req.user === owner) || (!req.user && res.statusCode >= 500)) { recent.push(line); if (recent.length > LOG_KEEP) recent.shift(); }
   });
   next();
 });
@@ -35,6 +43,37 @@ app.use(express.raw({ type: ['image/*', 'video/*', 'application/octet-stream'], 
 // /healthz — it says nothing about the data — and registered before the
 // sign-in check so the app can compare builds before anyone is signed in.
 app.get('/api/version', (_req, res) => res.set('Cache-Control', 'no-store').json({ version: VERSION, commit: COMMIT, changelog: CHANGELOG }));
+
+/* ---------- the monitor's read-only view (2.14.0) ----------
+   GET /api/admin/*, for the one service token in CF_ACCESS_MONITOR_ID, before
+   the person check below (a service token has no email and is refused
+   there). Health says about the server; activity and data say about the
+   owner's documents and the shared courses only: nothing about anyone
+   else's, not even a count. */
+const admin = express.Router();
+admin.use(requireMonitor());
+const noStore = (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); };
+admin.use(noStore);
+const sizeOf = f => { try { return statSync(f).size; } catch { return 0; } };
+admin.get('/health', (_req, res) => {
+  let free = null; try { const st = statfsSync(DATA_DIR); free = st.bavail * st.bsize; } catch {}
+  const files = assetTotals(), owner = ownerEmail();
+  res.json({ version: VERSION, commit: COMMIT, uptimeSeconds: Math.round((Date.now() - STARTED) / 1000), authMode: authMode(),
+    ownerConfigured: !!owner, database: { bytes: sizeOf(DB_FILE), walBytes: sizeOf(DB_FILE + '-wal'), freeBytes: free },
+    files: { count: files.n, bytes: files.bytes }, lastWrite: owner ? ownerLastWrite(owner) : null, migratedFrom1x: existsSync(BACKUP_BEFORE_2) });
+});
+const needOwner = (_req, res, next) => (ownerEmail() ? next() : res.status(503).json({ error: 'owner_not_configured', message: 'OWNER_EMAIL is not set, so there is no one whose data to show.' }));
+admin.get('/activity', needOwner, (_req, res) => {
+  const owner = ownerEmail();
+  res.json({ owner, collections: ownerCounts(owner), lastWrite: ownerLastWrite(owner), log: recent.slice() });
+});
+admin.get('/data', needOwner, (_req, res) => {
+  const owner = ownerEmail();
+  res.json({ format: 'carry-export', version: 1, exportedAt: new Date().toISOString(), appVersion: VERSION,
+    clubs: listDocs('clubs', owner), courses: listDocs('courses', owner), sessions: listDocs('sessions', owner),
+    settings: listDocs('settings', owner)[0] || {}, assets: {}, files: ownerAssets(owner) });
+});
+app.use('/api/admin', admin);
 
 // Everyone is signed in through Cloudflare Access (server/auth.js); req.user
 // is their email. Everything below, files included, needs it.
@@ -173,6 +212,7 @@ const server = app.listen(PORT, () => {
   const mode = authMode();
   if (mode === 'none') console.warn('WARNING: sign-in is not configured (CF_ACCESS_TEAM and CF_ACCESS_AUD), so every request for data is refused. Set them; see the README.');
   if (mode === 'dev') console.warn(`WARNING: DEV_USER is set, so every request is ${process.env.DEV_USER} with no sign-in. For local development only, never on the NAS.`);
+  if (mode === 'access') console.log(monitorConfigured() ? 'Monitor: GET /api/admin/* open to the service token in CF_ACCESS_MONITOR_ID.' : 'Monitor: off (CF_ACCESS_MONITOR_ID not set).');
 });
 
 // docker stop sends SIGTERM. Node doesn't exit on it by default when it's

@@ -43,7 +43,7 @@ DATA_DIR=./data DEV_USER=you@example.com node server/index.js
 # with no Cloudflare. Local development only; never set it on the NAS.
 ```
 
-Run the tests with `npm test` — 299 of them, covering the API, the asset
+Run the tests with `npm test` — 301 of them, covering the API, the asset
 store, auth, the import path, and the real app driving the real server:
 CRUD through its forms, shot logging by tapping the hole map, analytics
 invariants, the practice list and planner, tee sets and migrations, range
@@ -110,6 +110,7 @@ screenshots, versioning, and the swing analyzer.
    | `CF_ACCESS_TEAM` | your team domain, `<team>.cloudflareaccess.com` |
    | `CF_ACCESS_AUD` | the Carry Access application's AUD tag |
    | `OWNER_EMAIL` | the email you sign in with (see *Sign-in*) |
+   | `CF_ACCESS_MONITOR_ID` | optional: the Client ID of a Cloudflare service token allowed to read `/api/admin/*` (health, your own data's activity, an export without file bytes). Empty: no such endpoint. |
    | `TZ` | `Australia/Sydney` |
 
 4. **Bring your data over.** Open the artifact, *Bag → Export

@@ -6,6 +6,12 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.14.0 — 2026-10-25
+
+- A read-only window for the monitor: `GET /api/admin/health`, `/activity` and `/data`, open only to one Cloudflare service token (its Client ID in `CF_ACCESS_MONITOR_ID`). Nothing under it can write, a person's sign-in is refused there, and the service token is refused everywhere else.
+- It shows your own documents and the shared courses only, never a friend's: not their records, not counts, not their request lines. Without `OWNER_EMAIL` it shows the server's health and nothing else.
+- Nothing changes in the app itself. Leave `CF_ACCESS_MONITOR_ID` empty and the endpoint doesn't exist.
+
 ## 2.13.0 — 2026-10-25
 
 - Four tabs instead of five: Overview, Range, Rounds, Courses. The Bag has moved into a Settings page behind the gear at the top right, with everything you set once: your clubs, which range shots count (the window, weighting and ball filters, which used to sit inside the Overview's Gapping section), your location, export and import, and who's signed in.
