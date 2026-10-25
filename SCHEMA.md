@@ -211,6 +211,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 { "x": 313.2, "y": 455.8, "club": "5W", "lie": "rough",
   "penalty": false, "verified": false }
 
+// map frame, moved there from the art frame (2.17.0): approx keeps it out of calibration; art keeps the pixels
+{ "mx": -24.1, "my": -140.3, "club": "5W", "lie": "rough", "approx": true, "art": { "x": 313.2, "y": 455.8 } }
+
 // outline frame — tapped on the drawn stencil
 { "t": 0.55, "u": 0.2, "club": "5W", "lie": "rough" }
 
