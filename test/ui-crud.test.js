@@ -63,14 +63,14 @@ test('editing a club keeps its code fixed; retiring hides it from new blocks onl
 
   // History still resolves: the 7i's old range shots still produce numbers.
   assert.equal(app.E(`clubStats('7i').n`), 5);
-  app.go('bag');
+  app.go('settings');
   assert.match(app.text('#view'), /7i.*retired/s);
 });
 
 test('clubs are never deleted: there is no action or button that deletes one', () => {
   const acts = app.J('Object.keys(ACTIONS)');
   assert.deepEqual(acts.filter(k => /delete|remove/i.test(k) && /club/i.test(k)), []);
-  app.go('bag');
+  app.go('settings');
   assert.equal(app.$$('#view [data-act]').filter(b => /delete/i.test(b.dataset.act)).length, 0);
 });
 

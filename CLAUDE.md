@@ -381,6 +381,18 @@ Each of these cost real debugging time. Don't reintroduce them.
 
 ## The Overview
 
+**Four tabs and a gear** (2.13.0, he asked whether Courses and Bag
+needed to be tabs): Overview · Range · Rounds · Courses on the bar, and
+*Settings* (`vSettings`, tab `settings`, the gear `#settingsBtn` in the
+header) holding everything set once: the bag (clubs), *Range numbers* (the
+window / weighting / ball filters, `rangeFilter()`), location, export and
+import, signed in. Courses stays a tab because a course page is history
+(holes, shots, rounds, marks), not configuration. *Range vs course*
+(`calibrationSection`) is a fold under *The detail* on the Overview with
+`calibrationTeaser()` as its one number; the Overview's Gapping shows the
+filter as one line (`rangeFilterLine`, `#rangeFilterLine`) that opens
+Settings. A saved tab of `bag` opens Settings.
+
 The home screen (`vOverview`). 2.5.0 reorganised it from a review he
 brought (a UI/UX write-up, Release 1 "Reduce the noise": the answer first,
 detail one tap down), from 4.6 phone screens to 2.7 with the same numbers:
@@ -389,10 +401,10 @@ handicap; putts/fairways/greens and the handicap's workings in a fold) →
 Next practice (the top ranked item as one action: club and target, the
 drill, the finding it answers and its evidence, *Plan range session*; the
 next two as rows that open the Range list) → Gapping (the range filter
-sits here, with the numbers it filters; distance gaps and strike profile
+as one line, with the numbers it filters; distance gaps and strike profile
 folded) → Scoring trend (bars; best rounds and blow-ups folded) → The
-detail (breakdown, approach distances, putting, evidence: each a fold
-showing its one number) → Recent (three). Folds are `fold(id, …)`, always
+detail (breakdown, approach distances, putting, range vs course, evidence:
+each a fold showing its one number) → Recent (three). Folds are `fold(id, …)`, always
 with an id so they stay open across redraws. A course page lists its
 holes and rounds first and folds booking/fees/ratings/notes into *Course
 information*. Each section is built from the existing
@@ -479,7 +491,7 @@ happened, not what to plan on. `weightedMean` scales weights against the
 largest one so equal weights give exactly the plain mean — without that,
 same-day shots came out as 125.25000000000001.
 
-The filters live in the "Range numbers" panel in the Overview's Gapping section (2.5.0; it was at the top).
+The filters live in the "Range numbers" panel in Settings (2.13.0; 2.5.0 put it in the Overview's Gapping section, which now shows it as one line).
 
 ## Penalty report
 

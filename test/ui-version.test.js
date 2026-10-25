@@ -103,7 +103,7 @@ test('offline, the sheet says it could not check rather than guessing', async ()
 });
 
 test('the Bag screen names the build; exports record the version that made them', async () => {
-  app.go('bag');
+  app.go('settings');
   assert.equal(app.text('#about'), `Carry ${pkg.version}, build dev. Tap the title for what's changed.`);
   const data = await app.win.eval(`buildExport({ withImages: false })`);
   assert.equal(data.appVersion, pkg.version);

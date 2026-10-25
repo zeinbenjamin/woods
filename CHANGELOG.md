@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.13.0 — 2026-10-25
+
+- Four tabs instead of five: Overview, Range, Rounds, Courses. The Bag has moved into a Settings page behind the gear at the top right, with everything you set once: your clubs, which range shots count (the window, weighting and ball filters, which used to sit inside the Overview's Gapping section), your location, export and import, and who's signed in.
+- "Range vs course" (how your on-course distances compare with the range) is now a fold under The detail on the Overview, next to Putting and Evidence, with its one number on the fold.
+- The Overview's Gapping section shows the range filter as one line ("All time · recent shots count more · all balls · change") instead of the whole panel.
+- A phone that last had the Bag tab open opens Settings.
+
 ## 2.12.2 — 2026-10-25
 
 - The line above the practice list is just the counts: "18 holes traced · 229 range shots · 15 swings · newest 21 Oct". Scorecard-only rounds are mentioned under "How this is ranked" instead.

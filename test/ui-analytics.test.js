@@ -62,7 +62,7 @@ test('stock carry is the median of non-topped shots; pure carry the mean of pure
 });
 
 test('the recency window drops old range sessions, and the chip stores only the setting', async () => {
-  app.go('overview');
+  app.go('settings');
   app.click('#view [data-act="setWindow"][data-w="all"]');
   await app.waitFor(async () => (await app.api.get('settings', 'app')).window === 'all', { what: 'window saved' });
   assert.equal(app.E(`clubStats('7i').n`), 11, 'all time: both sessions');
@@ -76,7 +76,7 @@ test('rendering every view writes nothing: derived data is never stored', async 
   const before = await (await fetch(`${app.base}/api/stamps`)).json();
   const views = [['overview'], ['range'], ['range', { sessionId: 's_new' }], ['range', { blockId: 'b_new' }], ['rounds'],
     ['rounds', { sessionId: 'r_cal' }], ['rounds', { sessionId: 'r_cal', hole: '1' }], ['courses'], ['courses', { courseId: 'c_long' }],
-    ['courses', { courseId: 'c_long', hole: '1' }], ['bag']];
+    ['courses', { courseId: 'c_long', hole: '1' }], ['settings']];
   for (const [tab, sub] of views) { app.go(tab, sub); assert.ok(app.text('#view').length > 20, `${tab} rendered`); }
   await new Promise(r => setTimeout(r, 300));
   assert.deepEqual(await (await fetch(`${app.base}/api/stamps`)).json(), before);
@@ -93,7 +93,7 @@ test('nominal carry stays what he believes; measured numbers are never written o
   const c = await app.api.get('clubs', '7i');
   assert.equal(c.nominalCarry, 115);
   assert.equal(c.nominalTotal, 130);
-  app.go('bag');
+  app.go('settings');
   const row = app.$$('#view tbody tr').find(tr => /^7i/.test(tr.textContent.trim()));
   const cells = [...row.querySelectorAll('td')].map(td => td.textContent.trim());
   assert.equal(cells[2], '115', 'assumed carry column');
@@ -114,12 +114,12 @@ test('calibration flags an on-course shot longer than the range allows, above ce
   assert.equal(cal.suspect.length, 1);
   assert.equal(cal.suspect[0].r.id, 'r_cal');
   assert.ok(cal.suspect[0].len > 280 && cal.suspect[0].len < 320, `tap-to-tap length ~300m, got ${cal.suspect[0].len}`);
-  app.go('bag');
-  assert.match(app.text('#view'), /Check this tap/);
+  app.go('overview');
+  assert.match(app.text('#ovCalibration'), /Check this tap/, 'range vs course lives in the Overview\'s detail folds');
 });
 
 test('"It\'s real" marks the shot verified: it stays in the numbers and stops being flagged', async () => {
-  app.go('bag');
+  app.go('overview');
   app.click('#view [data-act="verifyShot"]');
   await app.waitFor(async () => (await app.api.get('sessions', 'r_cal')).holes[0].shots[0].verified === true, { what: 'verified saved' });
   await app.waitFor(() => app.E(`calibration().find(c => c.club === '7i').suspect.length === 0`), { what: 'unflagged' });

@@ -50,15 +50,18 @@ test('the page is called Overview: the answer first, the detail folded behind on
   assert.deepEqual(app.$$('#view h2').map(x => x.textContent), ['Current form', 'Next practice', 'Gapping', 'Scoring trend', 'The detail', 'Recent']);
   // 2.5.0: the specialised analysis is still all here, folded, each row showing its one number.
   const folds = app.$$('#view .folds > details');
-  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovEvidence']);
+  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovCalibration', 'ovEvidence']);
   assert.ok(folds.every(d => !d.open), 'closed until tapped');
   assert.deepEqual(folds.map(d => d.querySelector('summary').textContent.trim()), [
     'Where your game is being tested Approach: 67% missed the green',
     'Approach distances most often 140–159m',
     'Putting 2.06 a hole · 2 three-putts',
+    'Range vs course PW −50m on the course',
     'Evidence 18 holes of shot data, 33 range shots, 2 scorecard-only rounds (not used)',
   ]);
-  assert.ok(app.$('#view .ladder [data-act="setWindow"], #view h2 + details [data-act="setWindow"]'), 'the range filter sits with the numbers it filters');
+  assert.ok(app.$('#rangeFilterLine [data-go="settings"]'), 'the range filter is one line by the numbers it filters, with the controls in Settings');
+  assert.deepEqual(app.$$('nav.tabs button').map(b => b.textContent), ['Overview', 'Range', 'Rounds', 'Courses']);
+  assert.ok(app.$('#settingsBtn'), 'Settings is behind the gear');
   assert.ok(app.$$('#view details.fold').every(d => d.id), 'every fold keeps its state across redraws');
 });
 
@@ -176,7 +179,7 @@ test('nothing is shown that the data does not support', async () => {
     for (const id of ['ovBreakdown', 'ovApproaches', 'ovPutting']) assert.equal(lean.$('#' + id), null, `no ${id} without shot data`);
     const heads = lean.$$('#view h2').map(x => x.textContent);
     assert.ok(heads.includes('Gapping') && lean.$('#view .empty'), 'gapping explains how to get it');
-    assert.ok(lean.$('#view [data-act="setWindow"]'), 'the range filter is there even with no club numbers, so a filter that hid everything can be undone');
+    assert.ok(lean.$('#rangeFilterLine [data-go="settings"]'), 'the range filter line is there even with no club numbers, so a filter that hid everything can be undone');
   } finally { lean.stop(); }
 });
 
