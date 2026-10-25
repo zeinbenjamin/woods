@@ -953,7 +953,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 305 tests, about 45s.
+`npm test` — 308 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1095,8 +1095,9 @@ In rough order of value:
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.
 3. **More course maps** (see *Course maps*). Barnwell Park, Beverley
-   Park and Lane Cove are drawn from his GPS marks as he plays them; Hunter
-   Valley's art rounds could convert to approximate map positions.
+   Park and Lane Cove are drawn from his GPS marks as he plays them. Hunter
+   Valley has its map (hole-maps 2.16.0) and its art rounds move onto it
+   from the course page (2.17.0, *Artwork → map*).
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
