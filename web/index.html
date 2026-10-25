@@ -570,8 +570,10 @@ function roundStats(r) {
   const shotHoles = holesOf(r).filter(h => (h.shots || []).length);
   let fir = null, gir = null, approaches = [], byClub = {};
   if (shotHoles.length) {
-    const drives = shotHoles.filter(h => h.par > 3); fir = { hit: drives.filter(h => lieOf(h, h.shots[0]) === 'fairway').length, of: drives.length };
-    gir = { hit: shotHoles.filter(h => { const k = h.par - 2; const s = h.shots[k - 1]; return s && lieOf(h, s) === 'green'; }).length, of: shotHoles.length };
+    // A shot whose lie was never recorded ('unknown': unmapped ground, no chip picked) is neither hit nor miss.
+    const drives = shotHoles.filter(h => h.par > 3 && lieOf(h, h.shots[0]) !== 'unknown'); fir = { hit: drives.filter(h => lieOf(h, h.shots[0]) === 'fairway').length, of: drives.length };
+    const regs = shotHoles.filter(h => { const s = h.shots[h.par - 3]; return !s || lieOf(h, s) !== 'unknown'; });
+    gir = { hit: regs.filter(h => { const k = h.par - 2; const s = h.shots[k - 1]; return s && lieOf(h, s) === 'green'; }).length, of: regs.length };
     for (const h of shotHoles) h.shots.forEach((s, i) => {
       const from = i ? toGreen(h, h.shots[i - 1]) : (h.metres || 0), len = shotLen(h, i);
       if (from == null || len == null) return;            // unplaceable shot: leave it out of the numbers
@@ -637,7 +639,7 @@ function scoreStrip(holes, roundId, mini) {
 }
 function profileBar(s) { return `<div class="profile"><span class="p-pure" style="width:${pct(s.pure, s.n)}%"></span><span class="p-runner" style="width:${pct(s.runner, s.n)}%"></span><span class="p-short" style="width:${pct(s.short, s.n)}%"></span><span class="p-top" style="width:${pct(s.top, s.n)}%"></span></div>`; }
 function sessionItem(s) {
-  if (s.type === 'round') { const st = roundStats(s); return `<button class="item" data-go="rounds:sessionId:${s.id}"><div class="spread"><div><div class="t">${esc(s.courseName)}</div><div class="s">${dateLabel(s.date)}${st.shotLevel ? ', shot-level' : ''}${st.holes < (s.holes || []).length ? ` · ${st.holes} of ${(s.holes || []).length} holes` : ''}</div></div><div class="n">${st.gross} <span class="muted small">${st.toPar >= 0 ? '+' : ''}${st.toPar}</span></div></div>${scoreStrip(s.holes || [], s.id, true)}</button>`; }
+  if (s.type === 'round') { const st = roundStats(s); return `<button class="item" data-go="rounds:sessionId:${s.id}"><div class="spread"><div><div class="t">${esc(s.courseName)}</div><div class="s">${dateLabel(s.date)}${st.shotLevel ? ', shot-level' : ''}${st.holes < (s.holes || []).length ? ` · ${st.holes} of ${(s.holes || []).length} holes` : ''}</div></div><div class="n">${st.holes ? `${st.gross} <span class="muted small">${st.toPar >= 0 ? '+' : ''}${st.toPar}</span>` : '<span class="muted small">not scored yet</span>'}</div></div>${scoreStrip(s.holes || [], s.id, true)}</button>`; }
   const blocks = s.blocks || [], shots = blocks.reduce((n, b) => n + (b.shots || []).length, 0);
   const clubs = [...new Set(blocks.map(b => b.club))];
   const planned = s.planned && !shots && !blocks.some(b => b.summary);
@@ -978,7 +980,8 @@ function overviewScoring(rounds) {
 // How often each part of the game missed its target, from shot-level holes.
 // Counts, not a model: not strokes gained.
 function gameBreakdown() {
-  const R = shotRecords(), rows = [];
+  // A shot whose lie was never recorded is left out: not a hit, not a miss.
+  const R = shotRecords().filter(x => x.lie !== 'unknown'), rows = [];
   const add = (key, label, xs, missed, what) => { if (xs.length) rows.push({ key, label, of: xs.length, missed: xs.filter(missed).length, what }); };
   add('tee', 'Tee', R.filter(x => x.kind === 'tee'), x => x.lie !== 'fairway', 'missed the fairway');
   add('approach', 'Approach', R.filter(x => x.kind === 'approach'), x => x.lie !== 'green', 'missed the green');
@@ -1118,7 +1121,7 @@ function vRound() {
   h += quickScoreSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
   h += `<h2>Strokes lost by par</h2>` + st.byPar.map(p => `<div class="hbar"><span>Par ${p.par} <span class="muted">×${p.n}</span></span><i class="${p.over / p.n >= 2.5 ? 'flag' : p.over / p.n >= 1.5 ? 'sand' : ''}" style="width:${pct(p.over, mxo)}%"></i><small>+${p.over}</small></div>`).join('');
-  h += `<h2>Holes</h2>` + stencilGrid(holes, { act: 'logHole', id: r.id, scores: true });
+  h += `<h2>Holes</h2>` + stencilGrid(holes, { act: 'logHole', id: r.id, courseId: r.courseId, scores: true });
   if (st.shotLevel) {
     const ent = Object.entries(st.byClub).map(([k, v]) => ({ k, n: v.length, med: median(v) })).filter(x => x.med).sort((a, b) => b.med - a.med);
     if (ent.length) h += `<h2>Clubs on the course</h2><p class="small muted">Full swings only, measured tap to tap, so treat as ±15m. Compare with range stock carry on the Overview.</p><div class="scroll"><table><thead><tr><th>Club</th><th>Shots</th><th>Median m</th><th>Range stock</th></tr></thead><tbody>` + ent.map(x => { const s = clubStats(x.k); return `<tr><td><b>${esc(x.k)}</b></td><td>${x.n}</td><td class="num">${fmt(x.med)}</td><td>${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td></tr>`; }).join('') + `</tbody></table></div>`;
@@ -1139,7 +1142,7 @@ function vCourses() {
   if (S.courses.length > 1) h += `<div class="seg" id="courseSort" style="margin-bottom:8px">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>`;
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
-    const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const best = played.length ? Math.min(...played.map(r => roundStats(r).gross)) : null;
+    const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
     return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${esc(c.suburb || '')}${c.bookable ? ' <span class="tag green">public booking</span>' : ''}${c.prereg ? ' <span class="tag">pre-register</span>' : ''}${played.length ? ', played ' + played.length : ''}${distanceLabel(c) ? ` · ${distanceLabel(c)} away` : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
   }).join('') + `</div>` + (tail ? `<p class="small muted" id="courseSortNote">${sort === 'near' ? `${plural(tail, 'course')} with no location on ${tail === 1 ? 'its' : 'their'} card ${tail === 1 ? 'is' : 'are'} listed last, A–Z. Add a latitude and longitude to place ${tail === 1 ? 'it' : 'them'}.` : `${plural(tail, 'course')} added before the app kept the date ${tail === 1 ? 'is' : 'are'} listed last, A–Z.`}</p>` : '') : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
   return h;
@@ -1189,7 +1192,7 @@ function vCourse() {
   h += courseMapSection(c);
   // Booking, fees, ratings and notes: one tap away, not between him and the holes.
   const info = [c.bookable ? 'public booking' : c.bookable === false ? 'members or guests' : '', c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : '', Object.keys(c.ratings || {}).length ? 'rated' : ''].filter(Boolean).join(' · ');
-  h += fold('courseInfo', 'Course information', esc(info), `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${c.bookingUrl ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
+  h += fold('courseInfo', 'Course information', esc(info), `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${/^https?:\/\//i.test(c.bookingUrl || '') ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
     ${c.feeWeekday || c.feeWeekend ? `<dt>Green fee</dt><dd>${c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : ''}${c.feeWeekday && c.feeWeekend ? ', ' : ''}${c.feeWeekend ? '$' + c.feeWeekend + ' weekend' : ''}</dd>` : ''}
     ${Object.keys(c.ratings || {}).length ? `<dt>Ratings</dt><dd id="courseRatings">${Object.entries(c.ratings).map(([t, r]) => `${esc(t)}: ${fmt(r.cr, 1)} / slope ${r.slope}`).join(' · ')}</dd>` : ''}
     ${c.walkable != null ? `<dt>Walking</dt><dd>${c.walkable ? 'Walkable' : 'Cart advised'}</dd>` : ''}${c.transport ? `<dt>Getting there</dt><dd>${esc(c.transport)}</dd>` : ''}${c.notes ? `<dt>Notes</dt><dd>${esc(c.notes)}</dd>` : ''}</dl>`);
@@ -1505,7 +1508,7 @@ const ACTIONS = {
   newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c'), created: Date.now() })); wireHoleCount(sheetInner, false, []); wireCardPaste(sheetInner); },
-  editCourse(d) { const c = course(d.id); openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); wireCardPaste(sheetInner, c); },
+  editCourse(d) { const c = course(d.id); if (!c) return; openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); wireCardPaste(sheetInner, c); },
   async deleteCourse(d) { if (!await confirmAsk('Delete this course for everyone who uses this Carry? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
   newClub() { openSheet(clubForm(), async root => saveClub(root, {})); },
   editClub(d) { openSheet(clubForm(clubBy(d.id)), async root => saveClub(root, clubBy(d.id))); },
@@ -1588,7 +1591,7 @@ async function saveRound(root, r) {
   if (!holes.some(h => h.strokes != null)) { toast('Enter at least one score'); return false; }
   if (holes.some(h => h.strokes != null && h.par == null)) { toast('Every scored hole needs a par'); return false; }
   const prev = Object.fromEntries((r.holes || []).map(h => [h.n, h]));
-  const merged = holes.map(h => { const p = prev[h.n] || {}; const keep = {}; for (const k of ['shots', 'putts', 'penalties', 'manualStrokes']) if (p[k] != null) keep[k] = p[k]; const nh = { ...h, ...keep }; if ((nh.shots || []).length) { nh.manualStrokes = h.strokes ?? nh.manualStrokes; nh.strokes = nh.shots.length + (nh.putts || 0) + (nh.penalties || 0); } return nh; });
+  const merged = holes.map(h => { const p = prev[h.n] || {}; const keep = {}; for (const k of ['shots', 'putts', 'penalties', 'manualStrokes']) if (p[k] != null) keep[k] = p[k]; const nh = { ...h, ...keep }; if ((nh.shots || []).length) { nh.manualStrokes = h.strokes ?? nh.manualStrokes; nh.strokes = holeStrokes(nh); } return nh; });
   const doc = { ...r, v: SCHEMA_VERSION, date: val(root, 'date') || today(), courseId: c.id, courseName: c.name, tee: val(root, 'tee') || primaryTee(c), notes: val(root, 'notes'), detail: merged.some(h => (h.shots || []).length) ? 'shot_level' : 'score_only', holes: merged };
   const ok = await save('sessions', doc.id, doc); if (ok) go('rounds', { sessionId: doc.id }); return ok;
 }
@@ -2166,7 +2169,7 @@ function practiceItems() {
   const R = shotRecords(), items = [], at = x => x.r.date;
   // Tee accuracy, by club
   const tee = {};
-  for (const x of R.filter(x => x.kind === 'tee' && x.club)) { const t = tee[x.club] = tee[x.club] || { n: 0, fw: 0, lies: {}, recs: [] }; t.n++; if (x.lie === 'fairway') t.fw++; else t.lies[x.lie] = (t.lies[x.lie] || 0) + 1; t.recs.push(x); }
+  for (const x of R.filter(x => x.kind === 'tee' && x.club && x.lie !== 'unknown')) { const t = tee[x.club] = tee[x.club] || { n: 0, fw: 0, lies: {}, recs: [] }; t.n++; if (x.lie === 'fairway') t.fw++; else t.lies[x.lie] = (t.lies[x.lie] || 0) + 1; t.recs.push(x); }
   const W = { trees: .8, water: 1, bunker: .5, rough: .3 };
   for (const [club, t] of Object.entries(tee)) {
     if (t.fw === t.n) continue; const cs = clubStats(club), ref = carryRef(club);
@@ -2210,7 +2213,7 @@ function practiceItems() {
   // Strike, from the range: a club that too often comes off as a low runner or a top
   for (const c of activeClubs().filter(c => c.category !== 'putter')) { const it = strikeItem(c.code); if (it) items.push(it); }
   // Short game
-  const sg = R.filter(x => x.kind === 'short' && x.club), sgMiss = sg.filter(x => x.lie !== 'green');
+  const sg = R.filter(x => x.kind === 'short' && x.club && x.lie !== 'unknown'), sgMiss = sg.filter(x => x.lie !== 'green');
   if (sgMiss.length) {
     const main = Object.entries(sg.reduce((a, x) => (a[x.club] = (a[x.club] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1])[0][0];
     const chip = rangeBlocksFor(main).filter(b => b.swing === 'chip').sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
@@ -2230,10 +2233,12 @@ function practiceItems() {
     title: `Three-putts: ${threes.length} in ${plural(ph.length, 'hole')}`,
     detail: `${sum(ph.map(p => p.h.putts))} putts over ${plural(ph.length, 'hole')}, ${(sum(ph.map(p => p.h.putts)) / ph.length).toFixed(1)} a hole.`, practice: 'Putting green: 20 lag putts from 8–12m, trying to finish inside a metre.', recs: threes.map(p => ({ r: p.r, h: p.h })) });
   const traced = S.sessions.filter(r => r.type === 'round').flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
-  const pens = traced.filter(p => p.h.penalties);
-  if (pens.length) items.push({ key: 'penalty', kind: 'penalty', n: shotHoleCount(), score: .6 * sum(pens.map(p => p.h.penalties)),
-    ev: pens.map(p => ({ date: p.r.date, cost: .6 * p.h.penalties })), chances: traced.map(p => ({ date: p.r.date, hit: !!p.h.penalties })),
-    title: `Penalty strokes: ${sum(pens.map(p => p.h.penalties))} in ${plural(shotHoleCount(), 'hole')}`,
+  // Both kinds: added with the hole's counter, or ticked on the shot that cost it.
+  const holePens = h => (h.penalties || 0) + (h.shots || []).filter(s => s.penalty).length;
+  const pens = traced.filter(p => holePens(p.h));
+  if (pens.length) items.push({ key: 'penalty', kind: 'penalty', n: shotHoleCount(), score: .6 * sum(pens.map(p => holePens(p.h))),
+    ev: pens.map(p => ({ date: p.r.date, cost: .6 * holePens(p.h) })), chances: traced.map(p => ({ date: p.r.date, hit: !!holePens(p.h) })),
+    title: `Penalty strokes: ${sum(pens.map(p => holePens(p.h)))} in ${plural(shotHoleCount(), 'hole')}`,
     detail: `On ${pens.map(p => 'hole ' + p.h.n).join(', ')}. Worth checking the trace to see what caused it.`, recs: pens });
   items.push(...swingItems());
   return items.sort((a, b) => b.score - a.score);
@@ -3323,7 +3328,8 @@ const teeNames = c => { const s = new Set(); for (const h of (c && c.holes) || [
 const primaryTee = c => (c && c.tee) || teeNames(c)[0] || 'default';
 function teeMetres(hole, tee) {
   if (!hole) return null;
-  if (tee && hole.tees && hole.tees[tee] != null) return hole.tees[tee];
+  // The round's tee is free text when the card has one set ("Blue"), the card's keys are lower case.
+  if (tee && hole.tees) { const k = Object.keys(hole.tees).find(t => t.toLowerCase() === String(tee).toLowerCase()); if (k && hole.tees[k] != null) return hole.tees[k]; }
   return hole.metres ?? null;
 }
 // Course holes resolved for one tee, so the rest of the app keeps reading `metres`.

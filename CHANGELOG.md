@@ -6,6 +6,17 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.11.1 — 2026-10-24
+
+- Editing a round through its form (date, notes, tees) no longer drops penalties ticked on a shot from that hole's score.
+- A penalty ticked on the shot that cost it now counts towards "Penalty strokes" on the practice list, as one added with the hole's counter always did.
+- A round logged off "Blue" tees now uses the card's blue lengths: the tee name is matched ignoring case instead of falling back to the main tee's distances.
+- A shot whose lie was never picked (unmapped ground on a course map) is no longer counted as a missed fairway or green; it's left out of those counts.
+- Tapping a missing hole on a round's hole grid opens the course to add it, instead of failing.
+- A course's best score is the best full round there, not a 9-hole total beside an 18.
+- A round that hasn't been scored yet is listed as "not scored yet" rather than 0 +0.
+- A booking link on a course is only shown when it's a web address.
+
 ## 2.11.0 — 2026-10-24
 
 - A swing reading now comes back the way a coach gives it: the one fix, why (with the frame that shows it), a feel to take to the ball, one drill and how to know it's working.
