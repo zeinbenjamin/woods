@@ -419,7 +419,9 @@ to happen (`chances: {date, hit}`). `assessPractice()` and
 stored.
 
 - **Weight** = sum of evidence cost, halved every `PRACTICE_HALF_LIFE`
-  (60) days. The costs per kind (tree 0.8, water 1, three-putt 1, …) and
+  (60) days, age in whole local days (`ageDays` = `daysAgo`; to the
+  millisecond, two draws disagreed in the tenth decimal and the 2.11.3
+  publish failed on it). The costs per kind (tree 0.8, water 1, three-putt 1, …) and
   the half-life are judgements, not measurements; tune them deliberately.
 - **Quiet** when the clean chances since it was last seen reach
   `ceil(ln 0.2 / ln(1 − rate))` (at least 3) — the point where, at its

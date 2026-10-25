@@ -117,7 +117,7 @@ test('a swing reading about a club with ball data joins that item rather than be
   assert.match(s.support[0].title, /New tip/);
   assert.match(s.block.intent, /Drill from the video: Pump drill$/);
   const alone = app.E(`assessPractice(practiceItems().find(x => x.key === 'strike:7i')).weight`);
-  assert.ok(Math.abs(s.weight - (alone + s.support[0].weight / 2)) < 1e-9, 'an agreeing reading adds half its weight');
+  assert.equal(s.weight, alone + s.support[0].weight / 2, 'an agreeing reading adds half its weight, and weights are stable between draws');
   app.go('range');
   assert.match(app.text('#view'), /read from video Down the line · 7i: New tip.*Agrees with the ball data/s);
 });
