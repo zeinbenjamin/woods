@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.18.0 — 2026-10-26
+
+- A swing now gives Claude 16 frames instead of 8. The downswing takes about a quarter of a second, and 8 frames across a clip left at most one in it, so no reading could say when the wrist angle went. On a tight trim of about 1.5 s the frames are about 0.1 s apart: three in the downswing. Swings already saved keep their 8.
+- The trim hint under the video says what you'll get ("16 frames, 0.10 s apart across 1.5 s") and warns when the frames are too far apart to see the downswing. Each swing's card shows its spacing too.
+- Down-the-line readings are asked the cast-or-flip question outright: the lead wrist at the top (cupped, flat or bowed) and whether the shaft-to-arm angle is still held when the lead arm is parallel on the way down, answered from those frames only or "cannot tell". The answer is under "What Claude saw". Claude is also told each frame's time, and to name the frames nearest the top and impact before reading between them.
+- Moving a round from the hole pictures onto the map now goes through the map's own rule only (the app's copy from 2.17.0 is gone).
+
 ## 2.17.1 — 2026-10-25
 - Moving a round from the hole pictures onto the map now uses the map's own rule for where a tap lands, so it can't drift from how the map is drawn. Where your shots land is the same as in 2.17.0.
 

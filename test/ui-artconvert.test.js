@@ -6,6 +6,18 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startApp, club, card } from './harness.js';
 
+// Length of a polyline, and the point a fraction of the way along it.
+const polyLen = pts => pts.slice(1).reduce((L, q, i) => L + Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]), 0);
+function atFraction(pts, f) {
+  const want = f * polyLen(pts); let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (acc + L >= want || i === pts.length - 1) { const t = L ? (want - acc) / L : 0; return [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]; }
+    acc += L;
+  }
+  return pts[0];
+}
+
 let app;
 before(async () => { app = await startApp({ seed: { clubs: [club('7i', 'iron'), club('D', 'driver')] } }); });
 after(() => app && app.stop());
@@ -56,9 +68,9 @@ test('on the course page, rounds on artwork can be moved onto the real Hunter Va
   assert.ok(got.every(s => s.x === undefined && s.y === undefined), 'no longer art shots');
   // The drive sits halfway along the hole as the app draws it: OSM's line with the tee
   // placed the card's 300 m from the green (the tee rule), not OSM's raw line.
-  const pl = app.J(`holesOf(session('r_hv'))[0].hm.pl`), total = app.J(`polyLen(${JSON.stringify(pl)})`);
+  const pl = app.J(`holesOf(session('r_hv'))[0].hm.pl`), total = polyLen(pl);
   assert.ok(Math.abs(total - 300) < 0.5, `the drawn line is the card's 300 m (${total}); OSM's ${line.length}-point line is longer, so the tee rule moves the tee forward`);
-  const half = app.J(`atFraction(${JSON.stringify(pl)}, 0.5).p`);
+  const half = atFraction(pl, 0.5);
   assert.ok(Math.abs(got[0].mx - half[0]) < 0.11 && Math.abs(got[0].my - half[1]) < 0.11, 'at the line\'s midpoint');
   await app.waitFor(() => app.E(`usesMap(holesOf(session('r_hv'))[0])`), { what: 'drawn on the map now' });
   const after = app.J(`roundStats(session('r_hv')).byClub`);
