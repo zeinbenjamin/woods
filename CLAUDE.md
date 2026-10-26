@@ -536,6 +536,46 @@ The chat route for swing analysis (save frames as a zip, copy a prompt,
 paste the reply back) was removed in 1.3.0; analyses already saved with
 `analysedIn: 'chat'` still show with that label.
 
+## The loop around the loop (2.19.0)
+
+A double-loop review (asked 2026-10-26: "do a review of the app based on
+double loop learning", then "let's make the improvements needed"): the
+practice loop is single-loop (evidence in, practice out) and nothing in the
+app tested its own governing numbers; the second loop lived in the chats.
+What moved into the app, all derived on every draw, nothing stored:
+
+- **Is this list right?** (`listReview()`, fold `#listReview` on the Range
+  list after *Quiet lately*): for every finding with dated evidence (not
+  measure items or video readings), its outcome: `quiet after range work`
+  (its club and swing hit at the range after it first appeared,
+  `practisedSince(block, firstSeen)`), `quiet without range work`, `faded`
+  (unseen over `STALE_AFTER`), `worked on, still showing` (chances hit after
+  the range day), `worked on, waiting on the course`, `current, not worked
+  on`; strike findings are range evidence themselves, so they are `improving
+  at the range` or `still showing at the range` and don't count either way.
+  With 4+ findings quiet either way it gives a verdict: as often without as
+  with → "what this list ranks may not be what range time fixes… the costs
+  are the thing to doubt"; otherwise "consistent with the list pointing at
+  the right things; not proof the practice did it". Under 4 it says too few.
+- **The rules shown** (`#rankRules` in *How this is ranked*): the costs
+  (`COST`, now one constant the items and the text both read: tee into
+  water 1, trees 0.8, bunker 0.5, rough 0.3; approach/short 0.5; three-putt
+  1; penalty 0.6; strike 0.05), the quiet rule, `STALE_AFTER`, `STRIKE_FLAG`
+  and `STRIKE_MIN`. Shown, not editable: editing would move the problem.
+- **What the readings couldn't see** (`readingBlindSpots()`, fold
+  `#blindSpots`): per camera view, readings with a `cannot_tell` and the
+  distinct lines (merged ignoring case and punctuation, newest wording
+  kept). Counting those by hand is how the 16-frame change was found.
+- **Assumed against measured** (`beliefGap()`, `#beliefGap` under the
+  Overview's Gapping ladder): mean of `nominalCarry − stockCarry` over clubs
+  with both, "about right" under 2.5 m, and the club furthest off.
+
+Not done from the review: tagging a finding's likely cause (technique vs
+decision) so a tee finding can be answered by a club choice rather than a
+range block, which changes the planner's shape and wants his call; and
+strokes gained (roadmap 1), the baseline that would let the app doubt a
+finding against what a player at his level normally does.
+
 ## How club distances are counted
 
 Every range-derived number (`clubStats`, `carryRef`, `totalRef`, the
@@ -971,7 +1011,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 311 tests, about 45s.
+`npm test` — 317 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1048,6 +1088,9 @@ fixture would let the reading be pinned.
   refusing a second frame; no-map courses unchanged),
   `ui-artconvert` (artwork → map: a straight hole and a dogleg by hand, the
   real Hunter Valley file end to end, distances from the map after),
+  `ui-doubleloop` (the app checking its own list: each finding's outcome,
+  the fold and its verdict thresholds, the readings' blind spots by view,
+  the rules from the same constants, assumed against measured),
   `ui-format` (a team round: not a handicap score and the reason shown,
   out of form, trend, course history and evidence, listed and labelled; set
   and cleared on the round form),

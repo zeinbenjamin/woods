@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.19.0 — 2026-10-26
+
+- The app now checks its own practice list. Under "What to practise", "Is this list right?" says how each finding resolved: quiet after range work on its club, quiet without any, faded with time, or worked on and still showing. Once enough have resolved it says whether findings go quiet more often after range work than without it, which is the test of whether the list points at the right things. It never claims the practice caused the change.
+- "How this is ranked" now shows the rules behind the list: what each kind of miss costs, when a finding goes quiet, when a club is flagged for strike. They are judgements, and shown so you can disagree with them.
+- "What the readings couldn't see" counts, by camera view, what the swing readings said their angle or frames couldn't answer. A thing that keeps coming up is a question for the camera or the trim, not the swing.
+- The Overview's Gapping says how far the carries you've put in the bag sit from what the range measures, and which club is furthest off.
+
 ## 2.18.0 — 2026-10-26
 
 - A swing now gives Claude 16 frames instead of 8. The downswing takes about a quarter of a second, and 8 frames across a clip left at most one in it, so no reading could say when the wrist angle went. On a tight trim of about 1.5 s the frames are about 0.1 s apart: three in the downswing. Swings already saved keep their 8.
