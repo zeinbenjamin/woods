@@ -1136,7 +1136,8 @@ function vRound() {
   <p class="muted small">${dateLabel(r.date)}${r.tee ? ', ' + esc(r.tee) + ' tees' : ''}${isSolo(r) ? '' : `, ${esc(formatLabel(r))}`}${st.holes < (r.holes || []).length ? ` · ${st.holes} of ${(r.holes || []).length} holes scored` : ''}${r.notes ? '. ' + esc(r.notes) : ''}</p>
   <div><span class="stat"><b>${st.gross}</b><small>gross</small></span><span class="stat"><b>${st.toPar >= 0 ? '+' : ''}${st.toPar}</b><small>to par ${st.par}</small></span>${st.putts != null ? `<span class="stat"><b>${st.putts}</b><small>putts</small></span>` : ''}${st.fir ? `<span class="stat"><b>${st.fir.hit}/${st.fir.of}</b><small>fairways</small></span>` : ''}${st.gir ? `<span class="stat"><b>${st.gir.hit}/${st.gir.of}</b><small>greens in reg</small></span>` : ''}</div>`;
   if (!isSolo(r)) h += `<div class="notice" id="teamNote">A team round (${esc(formatLabel(r))}): kept and shown here, but not counted in your handicap, averages or practice list.</div>`;
-  if (r.date === today()) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
+  // Today's round offers Play while a hole is still unfinished; once every hole is done there is nothing to play on to.
+  if (r.date === today() && holesOf(r).some(x => !holeDone(x))) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
   h += scorecard(r, holes) + `<p class="small muted" style="margin-top:8px">Tap a hole to trace shots on it.</p>`;
   h += roundFindingsSection(r);
   h += quickScoreSection(r);
@@ -3764,7 +3765,10 @@ const puttRow = (r, h) => `<div class="armrow"><div class="small muted">Putts${h
 // strips), putts and penalties when they were logged, and the nine's total.
 // A hole without a score stays empty; the totals count the holes scored, and say so.
 function scorecard(r, holes = holesOf(r)) {
-  const nines = holes.length > 9 ? [holes.slice(0, 9), holes.slice(9)] : [holes];
+  // 18 holes as two nines; a 12-hole card as two sixes; 9 or 10 holes in one table
+  // (2.20.2: a 10-hole card was shown as a nine plus one hole labelled "In").
+  const half = holes.length === 18 ? 9 : holes.length === 12 ? 6 : holes.length;
+  const nines = holes.length > half ? [holes.slice(0, half), holes.slice(half)] : [holes];
   const pens = h => (h.penalties || 0) + (h.shots || []).filter(x => x.penalty).length;
   const showPutts = holes.some(h => h.putts != null), showPen = holes.some(h => pens(h) > 0), partial = holes.some(h => h.strokes == null);
   const go = h => `data-go="rounds:sessionId=${r.id},hole=${h.n}"`;

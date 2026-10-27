@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.20.2 — 2026-10-27
+
+- A 10-hole round's scorecard is one table of ten with its total, not a nine plus a lonely tenth hole labelled "In". A 12-hole card shows as two sixes.
+- Today's round no longer offers "Play: hole n" once every hole is scored.
+
 ## 2.20.1 — 2026-10-27
 
 - "Import a backup" lets you pick any file. The picker only offered files the phone had typed as JSON, and a file saved from GitHub or Mail on an iPhone is usually typed as plain text, so the export file was greyed out. The file is still checked before anything is imported.

@@ -448,7 +448,9 @@ Each of these cost real debugging time. Don't reintroduce them.
   or 12 is one whose holes are exactly 1..n; any other count over 9 is an
   18-hole card with gaps, and an empty new course starts at 18. Before this,
   `fullCard` padded a 10-hole course to 18 (eight "missing" holes on the
-  course page, 18 rows in every form). The handicap refuses a 10- or 12-hole
+  course page, 18 rows in every form). The scorecard table (2.20.2) is one table for 9 or 10 holes, two sixes
+  for 12, two nines for 18; and today's round offers *Play* only while a
+  hole is unfinished. The handicap refuses a 10- or 12-hole
   card with the reason, checked **before** the rating so it never asks for a
   rating it couldn't use (`ui-tenhole`, which loads the real import file).
   The import (`imports/moore-park.json`): the club's course page is the card
