@@ -1,0 +1,144 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-27T07:22:01+11:00",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_moorepark",
+      "v": 2,
+      "created": 1793085721634,
+      "name": "Moore Park Golf",
+      "suburb": "Moore Park",
+      "state": "NSW",
+      "address": "Cnr Anzac Parade and Cleveland Street, Moore Park NSW 2021",
+      "phone": "02 9663 1064",
+      "website": "https://mooreparkgolf.com.au/",
+      "bookingUrl": "https://moorepark.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3050007",
+      "lat": -33.9026,
+      "lng": 151.2184,
+      "bookable": true,
+      "walkable": true,
+      "feeWeekday": 42,
+      "feeWeekend": 50,
+      "tee": "blue",
+      "notes": "10 holes, par 38, while the course is rebuilt: since 1 July 2026 it plays holes 1–10 of the old 18-hole layout, from the old first tee, inside new fences (20 ha of the old course is becoming Moore Park South park). The club says an interim 12-hole layout opens Monday 2 November 2026, adding two temporary holes, and that the number of holes will change through construction (never under 9) until the final 12-hole course by architect design opens, expected 2027–2028. When the two temporary holes are published, add them to this card (holes 11 and 12) from the club's card; this app's card can be 9, 10, 12 or 18 holes. Lengths in metres from the club's own course page (Hole 1–10 stats: blue, white, then the women's red tee), which agree with GolfNSW's blue 156 m / white 144 m / red 123 m for the 10th. Stroke index: the club's 18-hole men's index for holes 1–10 (2, 18, 7, 3, 14, 12, 16, 5, 10, 8) re-ranked 1–10, so hole 1 is the hardest of the ten and hole 2 the easiest; Offcourse lists a different 18-hole order (3, 18, 10, 2, 12, 16, 6, 7, 14, 4). No handicap rating stored: the only published ratings are for the old 18 holes (blue 70 / 116, white 69 / 114, red women's 71.5 / 116, from Offcourse) and a 10-hole card can't be scored for the handicap estimate here; rounds will be listed as not counting. Green fees are for 12 holes (the club's price table, Oct 2026): Mon–Thu $42, Fri–Sun $50, twilight from 5pm $27 / $33; cart $43, pull buggy $6, club hire $38 / $50 premium. Book online (MiClub public calendar) or call the pro shop, 02 9663 1064. Driving range (Trackman, up to 90 bays planned) and clubhouse stay open throughout.",
+      "source": "Card: mooreparkgolf.com.au/play/the-course (hole stats, Oct 2026; metres, blue/white men's and red women's), checked against GolfNSW for hole 10; which holes are open and dates: mooreparkgolf.com.au/changes-coming-to-moore-park-golf (updates of 5 June, 30 June and 22 October 2026) and greatersydneyparklands.nsw.gov.au Moore Park Golf page (first 10 holes from 1 July 2026, holes map PDF of June 2026); fees and contact: mooreparkgolf.com.au/play and /contact-us (Oct 2026); ratings seen: Offcourse (18 holes, not stored); location: OpenStreetMap relation 2253129 (ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 398,
+          "tees": {
+            "blue": 398,
+            "white": 378,
+            "red": 330
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 137,
+          "tees": {
+            "blue": 137,
+            "white": 131,
+            "red": 125
+          },
+          "si": 10
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 382,
+          "tees": {
+            "blue": 382,
+            "white": 333,
+            "red": 305
+          },
+          "si": 4
+        },
+        {
+          "n": 4,
+          "par": 5,
+          "metres": 550,
+          "tees": {
+            "blue": 550,
+            "white": 535,
+            "red": 451
+          },
+          "si": 2
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 158,
+          "tees": {
+            "blue": 158,
+            "white": 155,
+            "red": 140
+          },
+          "si": 8
+        },
+        {
+          "n": 6,
+          "par": 5,
+          "metres": 480,
+          "tees": {
+            "blue": 480,
+            "white": 463,
+            "red": 407
+          },
+          "si": 7
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 190,
+          "tees": {
+            "blue": 190,
+            "white": 171,
+            "red": 140
+          },
+          "si": 9
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 363,
+          "tees": {
+            "blue": 363,
+            "white": 358,
+            "red": 323
+          },
+          "si": 3
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 286,
+          "tees": {
+            "blue": 286,
+            "white": 280,
+            "red": 257
+          },
+          "si": 6
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 156,
+          "tees": {
+            "blue": 156,
+            "white": 144,
+            "red": 123
+          },
+          "si": 5
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

@@ -742,11 +742,13 @@ function handicapScore(r, hi) {
   const c = course(r.courseId), tee = r.tee || primaryTee(c);
   if (!c) return { why: 'course not in your list' };
   const rating = ratingOf(c, tee);
+  // A 10- or 12-hole card (Moore Park while it is rebuilt) is checked before the
+  // rating: asking for a rating it could never use would be the wrong prompt.
+  const card = c.holes || [], played = (r.holes || []).filter(h => h.strokes != null);
+  if (card.length !== 9 && card.length !== 18) return { why: `the scorecard has ${card.length} holes, and only 9- and 18-hole cards are rated` };
   if (!rating) return { why: `no course rating for the ${tee} tees`, needsRating: { id: c.id, name: c.name, tee } };
   const noPar = (c.holes || []).filter(h => h.par == null).map(h => h.n);
   if (noPar.length) return { why: `the scorecard has no par for hole ${noPar.join(', ')}` };
-  const card = c.holes || [], played = (r.holes || []).filter(h => h.strokes != null);
-  if (card.length !== 9 && card.length !== 18) return { why: `the scorecard has ${card.length} holes` };
   const byN = Object.fromEntries(played.map(h => [h.n, h]));
   let holes, cr = rating.cr, estimated = false;
   if (card.length === 18 && played.length >= 14) holes = card;
@@ -953,6 +955,7 @@ function overviewGapping(stats) {
       <div class="val"><b>${fmt(s.stockCarry)}</b><small>${s.pureCarry ? 'pure ' + fmt(s.pureCarry) : 'carry'}</small></div>
       <div class="conf small ${(s.weighted ? s.nEff : s.n) < 5 ? 'early' : ''}">${s.n} shots${s.weighted ? ` · counts like ${s.nEff} recent` : ''} · ${confidence(s.weighted ? s.nEff : s.n)}${sp ? ` · <span class="mid">${fmt(sp.p25) === fmt(sp.p75) ? `middle half at ${fmt(sp.p25)}m` : `middle half ${fmt(sp.p25)}–${fmt(sp.p75)}m`}</span>` : ''}</div></div>`; }).join('') + `</div>
     <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span>${ladder.some(x => carrySpread(x.c.code)) ? '<span><i class="l-spread"></i>where they land: middle half, and 8 in 10</span>' : ''}</div>`;
+  h += beliefGapLine();
   const g = gapHealth(stats);
   const flagged = g.pairs.filter(p => p.flag).length;
   if (g.pairs.length) h += fold('gapPanel', 'Distance gaps', flagged ? `<span class="warn">⚠ ${plural(flagged, 'gap')} worth a look</span>` : g.median ? `typical gap ${fmt(g.median)}m` : '',
@@ -1382,7 +1385,7 @@ function courseForm(c = {}) {
   ${field('Getting there', 'transport', 'text', c.transport)}
   <label>Notes<textarea name="notes" style="min-height:60px">${esc(c.notes || '')}</textarea></label>
   ${ratingFields(c)}
-  <h3>Scorecard</h3>${gaps.length ? `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing. Fill ${gaps.length > 1 ? 'them' : 'it'} in below.</div>` : ''}<div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
+  <h3>Scorecard</h3>${gaps.length ? `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing. Fill ${gaps.length > 1 ? 'them' : 'it'} in below.</div>` : ''}${holeCountSeg(holes)}
   <div id="holesWrap">${holesEditor(holes, false)}</div>
   ${fold('cardPaste', 'Paste a scorecard', 'fill the card from text', `<p class="small muted">One hole per "n: par / metres / stroke index", as in the course-map notes ("1: 4 / 260 / 16"). Naming the tee ("blue tees") sets the tee above. Nothing is saved until you press Save.</p>
     <textarea name="cardText" style="min-height:90px" placeholder="1: 4 / 260 / 16    10: 4 / 296 / 14"></textarea>
@@ -1455,7 +1458,7 @@ function ratingFields(c) {
   const rows = ratingTees(c).map((t, i) => { const r = ratingOf(c, t) || {}, n = t ? roundsOffTee(c, t) : 0;
     return `<div class="rating-row" data-tee="${esc(t)}"><div class="small"><b>${teeLabel(t)}</b>${n ? ` <span class="muted">· ${plural(n, 'round')} here</span>` : ''}</div>
       <input type="hidden" name="rtee_${i}" value="${esc(t)}"><div class="grid2">${field('Course rating', `cr_${i}`, 'number', r.cr, 'step="0.1" inputmode="decimal"')}${field('Slope', `slope_${i}`, 'number', r.slope, 'step="1" inputmode="numeric"')}</div></div>`; });
-  return `<h3>Handicap ratings</h3><p class="small muted">From the scorecard or Golf Australia: the course (scratch) rating and slope for each tee${(c.holes || []).length === 9 ? ', for 9 holes' : ''}. Leave blank if you don't have them.</p>` + rows.join('') +
+  return `<h3>Handicap ratings</h3><p class="small muted">From the scorecard or Golf Australia: the course (scratch) rating and slope for each tee${(c.holes || []).length !== 18 ? `, for ${(c.holes || []).length} holes` : ''}. Leave blank if you don't have them.</p>` + rows.join('') +
     `<div class="rating-row"><div class="small"><b>Another tee</b></div><div class="grid3">${field('Tee', 'rtee_new', 'text', '', 'placeholder="e.g. blue" autocapitalize="off"')}${field('Course rating', 'cr_new', 'number', '', 'step="0.1" inputmode="decimal"')}${field('Slope', 'slope_new', 'number', '', 'step="1" inputmode="numeric"')}</div></div>`;
 }
 function readRatings(root, c, tee) {
@@ -1479,14 +1482,27 @@ function readRatings(root, c, tee) {
 }
 // A scorecard is always holes 1..N (9 or 18). Gaps become blank rows so a
 // missing hole is visible and fixable instead of silently absent.
-function fullCard(holes) {
+// CARD_SIZES: the hole counts a card can have. 9 and 18, and since 2.20.0 10
+// and 12 (Moore Park plays holes 1–10 while its 12-hole course is built). A
+// card of 10 or 12 holes is one whose holes are exactly 1..n; anything else
+// over 9 is an 18-hole card with gaps.
+const CARD_SIZES = [9, 10, 12, 18];
+function cardSize(holes) {
   holes = holes || [];
   const maxN = Math.max(0, ...holes.map(h => h.n || 0));
-  const N = holes.length && maxN <= 9 ? 9 : 18;
+  if (!holes.length) return 18;
+  if (maxN <= 9) return 9;
+  if (CARD_SIZES.includes(holes.length) && maxN === holes.length) return holes.length;
+  return 18;
+}
+function fullCard(holes) {
+  holes = holes || [];
+  const N = cardSize(holes);
   const byN = Object.fromEntries(holes.map(h => [h.n, h]));
   return Array.from({ length: N }, (_, i) => byN[i + 1] || { n: i + 1 });
 }
 const missingHoles = holes => fullCard(holes).filter(h => h.par == null).map(h => h.n);
+const holeCountSeg = holes => `<div class="seg" style="margin-bottom:10px">${CARD_SIZES.map(n => `<button type="button" data-holes="${n}" aria-pressed="${holes.length === n}">${n} holes</button>`).join('')}</div>`;
 // Toggle 9/18 without losing data: keep every hole ever shown in a cache,
 // fold the visible inputs into it on each switch, redraw from the cache.
 function wireHoleCount(root, withScores, initial) {
@@ -1509,7 +1525,7 @@ function roundForm(r = {}) {
   ${selectF('Format', 'format', FORMATS, r.format || 'solo')}
   ${field('Notes', 'notes', 'text', r.notes)}
   <h3>Scorecard</h3><p class="small muted">Par and metres prefill from the course; change them here only if you played different tees.</p>
-  <div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
+  ${holeCountSeg(holes)}
   <div id="holesWrap">${holesEditor(holes, true)}</div>`;
 }
 // The tee picker for a round on course c: a select when the card has more
@@ -2247,11 +2263,11 @@ function practiceItems() {
   // Tee accuracy, by club
   const tee = {};
   for (const x of R.filter(x => x.kind === 'tee' && x.club && x.lie !== 'unknown')) { const t = tee[x.club] = tee[x.club] || { n: 0, fw: 0, lies: {}, recs: [] }; t.n++; if (x.lie === 'fairway') t.fw++; else t.lies[x.lie] = (t.lies[x.lie] || 0) + 1; t.recs.push(x); }
-  const W = { trees: .8, water: 1, bunker: .5, rough: .3 };
+  const W = COST.tee;
   for (const [club, t] of Object.entries(tee)) {
     if (t.fw === t.n) continue; const cs = clubStats(club), ref = carryRef(club);
-    items.push({ key: 'tee:' + club, kind: 'tee', n: t.n, score: Object.entries(t.lies).reduce((a, [l, c]) => a + (W[l] ?? .3) * c, 0),
-      ev: t.recs.filter(x => x.lie !== 'fairway').map(x => ({ date: at(x), cost: W[x.lie] ?? .3 })), chances: t.recs.map(x => ({ date: at(x), hit: x.lie !== 'fairway' })),
+    items.push({ key: 'tee:' + club, kind: 'tee', n: t.n, score: Object.entries(t.lies).reduce((a, [l, c]) => a + (W[l] ?? COST.teeOther) * c, 0),
+      ev: t.recs.filter(x => x.lie !== 'fairway').map(x => ({ date: at(x), cost: W[x.lie] ?? COST.teeOther })), chances: t.recs.map(x => ({ date: at(x), hit: x.lie !== 'fairway' })),
       title: `${club} off the tee: ${t.fw} of ${t.n} fairways`, detail: `Misses: ${Object.entries(t.lies).map(([l, c]) => `${c} ${l}`).join(', ')}. Distance isn't the issue${ref && ref.measured ? ` (stock carry ${fmt(ref.v)}m)` : ''}; direction is.`,
       range: cs ? `On the range: ${pct(cs.pure, cs.n)}% pure, ${pct(cs.top, cs.n)}% topped` : null,
       block: { club, swing: 'full', target: ref ? round5(ref.v) : null, intent: 'Accuracy: pick two markers about 30m apart and count how many finish between them' }, recs: t.recs });
@@ -2263,8 +2279,8 @@ function practiceItems() {
   const short = measuredAppr.filter(isShort);
   if (short.length) {
     const med = median(short.map(x => x.from)), f = clubFit(med);
-    items.push({ key: 'approach', kind: 'approach', n: appr.length, score: .5 * short.length,
-      ev: short.map(x => ({ date: at(x), cost: .5 })), chances: measuredAppr.map(x => ({ date: at(x), hit: isShort(x) })),
+    items.push({ key: 'approach', kind: 'approach', n: appr.length, score: COST.approach * short.length,
+      ev: short.map(x => ({ date: at(x), cost: COST.approach })), chances: measuredAppr.map(x => ({ date: at(x), hit: isShort(x) })),
       title: `Approaches clubbed short: ${short.length} of ${appr.length}`,
       detail: Object.entries(short.reduce((a, x) => ((a[x.club] = a[x.club] || []).push(x.from), a), {})).sort((a, b) => b[1].length - a[1].length)
         .map(([club, ds]) => `${club} ×${ds.length} from ${ds.length > 1 ? `${fmt(Math.min(...ds))}–${fmt(Math.max(...ds))}` : fmt(ds[0])}m (stock ${fmt(carryRef(club).v)}m)`).join('; ') + '.',
@@ -2275,7 +2291,7 @@ function practiceItems() {
   for (const x of appr) { const u = clubFit(x.from).unmeasured; if (u) (bestUnmeasured[u.c.code] = bestUnmeasured[u.c.code] || { ref: u.ref, xs: [] }).xs.push(x); }
   for (const [code, u] of Object.entries(bestUnmeasured)) {
     const ds = u.xs.map(x => x.from);
-    items.push({ key: 'measure:' + code, kind: 'measure', n: u.xs.length, score: .4 * u.xs.length, ev: u.xs.map(x => ({ date: at(x), cost: .4 })),
+    items.push({ key: 'measure:' + code, kind: 'measure', n: u.xs.length, score: COST.measure * u.xs.length, ev: u.xs.map(x => ({ date: at(x), cost: COST.measure })),
       title: `Measure your ${code}`,
       detail: `${plural(u.xs.length, 'approach', 'approaches')} of ${fmt(Math.min(...ds))}${ds.length > 1 ? '–' + fmt(Math.max(...ds)) : ''}m, where it should sit (about ${fmt(u.ref.v)}m, ${u.ref.src}). It has no range data, so the app can't recommend it.`,
       block: { club: code, swing: 'full', target: round5(median(ds)), intent: 'Establish a stock carry: 20 balls, then add the screenshots' }, recs: u.xs });
@@ -2296,8 +2312,8 @@ function practiceItems() {
     const main = Object.entries(sg.reduce((a, x) => (a[x.club] = (a[x.club] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1])[0][0];
     const chip = rangeBlocksFor(main).filter(b => b.swing === 'chip').sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
     const cs = chip && blockSummary(chip);
-    items.push({ key: 'short', kind: 'short', n: sg.length, score: .5 * sgMiss.length,
-      ev: sgMiss.map(x => ({ date: at(x), cost: .5 })), chances: sg.map(x => ({ date: at(x), hit: x.lie !== 'green' })),
+    items.push({ key: 'short', kind: 'short', n: sg.length, score: COST.short * sgMiss.length,
+      ev: sgMiss.map(x => ({ date: at(x), cost: COST.short })), chances: sg.map(x => ({ date: at(x), hit: x.lie !== 'green' })),
       title: `Short game: ${sgMiss.length} of ${sg.length} missed the green`,
       detail: sgMiss.map(x => `${x.club} from ${fmt(x.from)}m, finished in the ${x.lie}`).join('; ') + '.',
       range: cs && cs.fromPinTotal != null ? `On the range: your ${chip.target}m chip block finished ${fmt(cs.fromPinTotal, 1)}m from the pin on average` : null,
@@ -2306,16 +2322,16 @@ function practiceItems() {
   // Putting and penalties, from holes where they were logged
   const ph = soloRounds().flatMap(r => holesOf(r).filter(h => h.putts != null).map(h => ({ r, h })));
   const threes = ph.filter(p => p.h.putts >= 3);
-  if (threes.length) items.push({ key: 'putting', kind: 'putting', n: ph.length, score: threes.length,
-    ev: threes.map(p => ({ date: p.r.date, cost: 1 })), chances: ph.map(p => ({ date: p.r.date, hit: p.h.putts >= 3 })),
+  if (threes.length) items.push({ key: 'putting', kind: 'putting', n: ph.length, score: COST.threePutt * threes.length,
+    ev: threes.map(p => ({ date: p.r.date, cost: COST.threePutt })), chances: ph.map(p => ({ date: p.r.date, hit: p.h.putts >= 3 })),
     title: `Three-putts: ${threes.length} in ${plural(ph.length, 'hole')}`,
     detail: `${sum(ph.map(p => p.h.putts))} putts over ${plural(ph.length, 'hole')}, ${(sum(ph.map(p => p.h.putts)) / ph.length).toFixed(1)} a hole.`, practice: 'Putting green: 20 lag putts from 8–12m, trying to finish inside a metre.', recs: threes.map(p => ({ r: p.r, h: p.h })) });
   const traced = soloRounds().flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
   // Both kinds: added with the hole's counter, or ticked on the shot that cost it.
   const holePens = h => (h.penalties || 0) + (h.shots || []).filter(s => s.penalty).length;
   const pens = traced.filter(p => holePens(p.h));
-  if (pens.length) items.push({ key: 'penalty', kind: 'penalty', n: shotHoleCount(), score: .6 * sum(pens.map(p => holePens(p.h))),
-    ev: pens.map(p => ({ date: p.r.date, cost: .6 * holePens(p.h) })), chances: traced.map(p => ({ date: p.r.date, hit: !!holePens(p.h) })),
+  if (pens.length) items.push({ key: 'penalty', kind: 'penalty', n: shotHoleCount(), score: COST.penalty * sum(pens.map(p => holePens(p.h))),
+    ev: pens.map(p => ({ date: p.r.date, cost: COST.penalty * holePens(p.h) })), chances: traced.map(p => ({ date: p.r.date, hit: !!holePens(p.h) })),
     title: `Penalty strokes: ${sum(pens.map(p => holePens(p.h)))} in ${plural(shotHoleCount(), 'hole')}`,
     detail: `On ${pens.map(p => 'hole ' + p.h.n).join(', ')}. Worth checking the trace to see what caused it.`, recs: pens });
   items.push(...swingItems());
@@ -2341,8 +2357,8 @@ function strikeItem(code) {
     if (now < STRIKE_FLAG && now <= was * 0.6) { status = 'quiet'; note = `Improving: ${Math.round(now * 100)}% in the latest session (${dateLabel(latest)}) against ${Math.round(was * 100)}% before.`; }
     else note = `Still showing up in the latest range session (${dateLabel(latest)}): ${inLatest.filter(([, i]) => bad(null, i)).length} of ${inLatest.length}, against ${Math.round(was * 100)}% before.`;
   } else note = `Last seen in the range session of ${dateLabel(latest)}.`;
-  return { key: 'strike:' + code, kind: 'strike', n: shots.length, score: .05 * nBad, status, note,
-    ev: shots.filter(bad).map(x => ({ date: x.date, cost: .05 })),
+  return { key: 'strike:' + code, kind: 'strike', n: shots.length, score: COST.strike * nBad, status, note,
+    ev: shots.filter(bad).map(x => ({ date: x.date, cost: COST.strike })),
     title: `${code} strike: ${pct(nBad, shots.length)}% low runners or topped`,
     detail: `${s.runner} low runners and ${s.top} tops in ${shots.length} full swings.${s.pureCarry ? ` Stock carry ${fmt(s.stockCarry)}m against ${fmt(s.pureCarry)}m when you catch it pure.` : ''}`,
     block: { club: code, swing: 'full', target: round5(s.pureCarry || s.stockCarry), intent: 'Strike: count pure strikes against low runners — ball first, then turf' } };
@@ -2363,6 +2379,11 @@ function strikeItem(code) {
      day it was last seen, and the course hasn't confirmed it yet. It stays
      on the list at half weight. */
 const PRACTICE_HALF_LIFE = 60, STALE_AFTER = 180;
+// What each piece of evidence costs, the numbers the ranking is built on.
+// Judgements, not measurements: shown to him under "How this is ranked" so he
+// can disagree with them, and the place to look when "Is this list right?"
+// says findings go quiet as often without range work as with it.
+const COST = { tee: { trees: .8, water: 1, bunker: .5, rough: .3 }, teeOther: .3, approach: .5, measure: .4, short: .5, threePutt: 1, penalty: .6, strike: .05 };
 // Whole local days, as for club distances: to the millisecond, two draws moments apart
 // weighed the same evidence differently in the tenth decimal (a 2.11.3 publish failed on it).
 const ageDays = d => d ? daysAgo(d) : 0;
@@ -2410,6 +2431,85 @@ function rankedPractice() {
   return { now: now.sort(byWeight), quiet: all.filter(x => x.status === 'quiet').sort(byWeight) };
 }
 
+/* ---------- is the list right? ----------
+   The ranking above is a single loop: evidence in, practice out. This is
+   the loop around it: for every finding that has gone quiet, whether range
+   work on its club came first or it faded on its own, and for every current
+   one worked on, whether it is still showing up since. If findings go quiet
+   as often without range work as with it, the list is describing noise (or
+   his game moving on its own), and the costs and half-life above are what
+   to doubt. Worked out on every draw from the same items; nothing stored,
+   and nothing here claims the practice caused the change. */
+const daysBetween = (a, b) => Math.abs(daysAgo(a) - daysAgo(b));
+function listReview() {
+  const { now, quiet } = rankedPractice(), rows = [];
+  for (const it of now.concat(quiet)) {
+    const dates = (it.ev || []).map(e => e.date).filter(Boolean).sort();
+    if (!dates.length || it.kind === 'measure') continue;
+    const first = dates[0], last = dates[dates.length - 1], practised = practisedSince(it.block, first);
+    const stillSince = practised ? (it.chances || []).filter(c => c.date > practised && c.hit).length : 0;
+    let outcome;
+    // A strike finding is range evidence itself, so "range work" means nothing for it: it improves there or it doesn't.
+    if (it.kind === 'strike' || it.kind === 'swing') outcome = it.kind === 'swing' ? null : it.status === 'quiet' ? 'improving at the range' : 'still showing at the range';
+    else if (it.status === 'quiet') outcome = ageDays(last) > STALE_AFTER ? 'faded' : practised ? 'quiet after range work' : 'quiet without range work';
+    else if (practised) outcome = stillSince ? 'worked on, still showing' : 'worked on, waiting on the course';
+    else outcome = 'current, not worked on';
+    if (!outcome) continue;
+    rows.push({ key: it.key, title: goalName(it), kind: it.kind, days: it.status === 'quiet' ? daysBetween(first, last) : daysAgo(first), practised, outcome });
+  }
+  const n = o => rows.filter(r => r.outcome === o).length;
+  return { rows, quietAfter: n('quiet after range work'), quietWithout: n('quiet without range work'), faded: n('faded'), still: n('worked on, still showing'), waiting: n('worked on, waiting on the course') };
+}
+function listReviewSection() {
+  const v = listReview(); if (!v.rows.length) return '';
+  const teaser = [v.quietAfter ? `${v.quietAfter} quiet after range work` : '', v.quietWithout ? `${v.quietWithout} quiet without` : '', v.still ? `${v.still} worked on, still showing` : ''].filter(Boolean).join(' · ') || 'nothing resolved yet';
+  const settled = v.quietAfter + v.quietWithout;
+  const verdict = settled >= 4 && v.quietWithout >= v.quietAfter ? 'Findings have gone quiet as often without range work as with it: what this list ranks may not be what range time fixes, or it is picking up noise. The costs below are the thing to doubt.'
+    : settled >= 4 ? 'Findings have gone quiet more often after range work than without it. That is consistent with the list pointing at the right things; it is not proof the practice did it.'
+    : 'Too few findings have resolved either way to say whether this list is pointing at the right things. It will say so here when there are enough.';
+  return fold('listReview', 'Is this list right?', teaser, `<p class="small">${esc(verdict)}</p><div id="listReviewRows">` +
+    v.rows.map(r => `<div class="qitem"><b>${esc(r.title)}</b> <span class="small muted">${esc(KIND_LABEL[r.kind] || '')}</span><div class="small muted">${esc(r.outcome)} · ${r.days ? `on the list ${plural(r.days, 'day')}` : 'seen on one day'}${r.practised ? ` · range work ${dateLabel(r.practised)}` : ''}</div></div>`).join('') +
+    `</div><p class="small muted">"Quiet after range work" means its club and swing were hit at the range after it first showed up, and it has gone quiet since; it says what happened, not that the practice caused it. Faded: unseen for over ${STALE_AFTER} days.</p>`);
+}
+// What the swing readings keep saying they can't see. Each reading lists what
+// its angle or frames couldn't answer (cannot_tell); a thing that keeps coming
+// up is a question for the camera or the frames, not the swing. Counting them
+// is how the 16-frame change (2.18.0) was found; now the app counts them.
+function readingBlindSpots() {
+  const by = {};
+  for (const sw of allSwings().filter(sw => sw.analysis)) {
+    const v = by[sw.view] = by[sw.view] || { view: sw.view, n: 0, blind: 0, said: [] };
+    const tell = (sw.analysis.cannot_tell || []).map(String).filter(Boolean);
+    v.n++; if (tell.length) v.blind++;
+    v.said.push(...tell.map(t => ({ t, when: sw.analysedOn || sw.session.date || '' })));
+  }
+  return Object.values(by).map(v => {
+    const seen = new Map();
+    for (const { t, when } of v.said.sort((a, b) => b.when.localeCompare(a.when))) { const k = t.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); if (!seen.has(k)) seen.set(k, t); }
+    return { ...v, said: [...seen.values()] };
+  }).sort((a, b) => b.n - a.n);
+}
+function blindSpotsSection() {
+  const views = readingBlindSpots(); if (!views.length) return '';
+  const total = views.reduce((n, v) => n + v.n, 0), blind = views.reduce((n, v) => n + v.blind, 0);
+  return fold('blindSpots', "What the readings couldn't see", `${blind} of ${plural(total, 'reading')}`, `<div id="blindSpotRows">` + views.map(v => `<div class="qitem"><b>${esc(VIEWS[v.view] || 'Other angle')}</b>: ${v.blind} of ${plural(v.n, 'reading')} said what the angle or frames couldn't answer.${v.said.length ? `<ul class="small">${v.said.slice(0, 6).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>`).join('') +
+    `</div><p class="small muted">A thing that keeps coming up is a question for the camera angle or the frames (a tighter trim, the other view), not the swing. Readings are interpretations; what they couldn't see is the honest part.</p>`);
+}
+// His assumed carries against what the range measures: the clearest
+// single-loop signal he has, one line.
+function beliefGap() {
+  const rows = activeClubs().filter(c => c.nominalCarry).map(c => ({ c, s: clubStats(c.code) })).filter(x => x.s && x.s.stockCarry)
+    .map(({ c, s }) => ({ code: c.code, assumed: c.nominalCarry, measured: s.stockCarry, delta: c.nominalCarry - s.stockCarry }));
+  if (!rows.length) return null;
+  const mean = sum(rows.map(r => r.delta)) / rows.length, worst = rows.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0];
+  return { rows, mean, worst };
+}
+function beliefGapLine() {
+  const g = beliefGap(); if (!g) return '';
+  const word = Math.abs(g.mean) < 2.5 ? 'about right' : g.mean > 0 ? `${fmt(Math.abs(g.mean))}m long` : `${fmt(Math.abs(g.mean))}m short`;
+  return `<p class="small" id="beliefGap" style="margin-top:10px"><b>Assumed against measured:</b> what you've put in the bag runs ${word} of what the range measures (${plural(g.rows.length, 'club')}${g.worst && Math.abs(g.worst.delta) >= 2.5 ? `; biggest ${esc(g.worst.code)}, assumed ${fmt(g.worst.assumed)}m against ${fmt(g.worst.measured)}m measured` : ''}). The measured number is what the app plans with.</p>`;
+}
+
 /* ---------- 3. calibration: course distance vs range ---------- */
 function calibration() {
   const by = {};
@@ -2453,10 +2553,12 @@ function practiceSection(limit) {
   if (!now.length && !quiet.length) return holes ? `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`
     : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
   const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
-  return basisShort() + fold('rankHow', 'How this is ranked', '', `<p class="small muted">${esc(practiceBasis().text)} Recalculated every time this screen draws — there is no stored copy. Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>`) +
+  return basisShort() + fold('rankHow', 'How this is ranked', '', `<p class="small muted">${esc(practiceBasis().text)} Recalculated every time this screen draws — there is no stored copy. Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>
+    <p class="small muted" id="rankRules">The rules, so you can disagree with them: a tee shot into water costs ${COST.tee.water}, trees ${COST.tee.trees}, a bunker ${COST.tee.bunker}, rough ${COST.tee.rough}; an approach clubbed short or a chip that misses the green ${COST.approach}; a three-putt ${COST.threePutt}; a penalty stroke ${COST.penalty}; a low runner or top on the range ${COST.strike} each. A finding goes quiet after enough clean chances that, at its old rate, it would have shown up 4 times in 5 (3 at least), or once unseen for ${STALE_AFTER} days. A club is flagged for strike at ${Math.round(STRIKE_FLAG * 100)}% low runners or tops over ${STRIKE_MIN} or more full swings. These are judgements, not measurements; "Is this list right?" below is where to check them.</p>`) +
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
+    listReviewSection() + blindSpotsSection() +
     (now.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
 }
 // One line for the fold: the biggest difference that counts, or how many taps to check.
