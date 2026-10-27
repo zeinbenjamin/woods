@@ -455,6 +455,10 @@ Each of these cost real debugging time. Don't reintroduce them.
   (metres, blue/white men's and red women's), stroke index re-ranked 1–10 from
   the club's 18-hole order, no rating stored (only the old 18 were rated),
   location OSM relation 2253129.
+- **The import picker takes any file** (2.20.1): `accept="application/json,.json"`
+  greyed out `imports/moore-park.json` on his iPhone, because a file saved
+  from GitHub or Mail there is typed as plain text. The app checks the
+  contents itself, so there is no `accept` at all.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 

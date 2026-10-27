@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.20.1 — 2026-10-27
+
+- "Import a backup" lets you pick any file. The picker only offered files the phone had typed as JSON, and a file saved from GitHub or Mail on an iPhone is usually typed as plain text, so the export file was greyed out. The file is still checked before anything is imported.
+
 ## 2.20.0 — 2026-10-27
 
 - Moore Park Golf is ready to import (`imports/moore-park.json`): the 10 holes it plays while its 12-hole course is built (holes 1–10 of the old layout, par 38; blue, white and red tees in metres from the club's own course page, stroke index re-ranked for ten holes, fees, booking link). The club says an interim 12-hole layout opens on 2 November; add its two temporary holes to the card when the club publishes them.

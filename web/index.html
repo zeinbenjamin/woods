@@ -3521,7 +3521,8 @@ Object.assign(ACTIONS, {
   importData() {
     openSheet(`<h2>Import a backup</h2>
       <p class="small muted">Restores from a Carry export. Anything with the same id is overwritten; everything else is left alone. Images are re-uploaded and their references rewritten.</p>
-      <label>Export file<input type="file" accept="application/json,.json" name="file"></label>
+      <label>Export file<input type="file" name="file"></label>
+      <p class="small muted">Any file can be picked; it's checked when you import. (A file saved from GitHub or Mail on an iPhone is often typed as plain text, which a JSON-only picker greys out.)</p>
       <div class="count" id="imProg"></div>`,
       async root => {
         const f = root.querySelector('[name=file]').files[0];
