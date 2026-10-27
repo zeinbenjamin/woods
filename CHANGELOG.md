@@ -6,6 +6,12 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.20.0 — 2026-10-27
+
+- Moore Park Golf is ready to import (`imports/moore-park.json`): the 10 holes it plays while its 12-hole course is built (holes 1–10 of the old layout, par 38; blue, white and red tees in metres from the club's own course page, stroke index re-ranked for ten holes, fees, booking link). The club says an interim 12-hole layout opens on 2 November; add its two temporary holes to the card when the club publishes them.
+- A scorecard can now be 10 or 12 holes as well as 9 or 18. The course and round forms offer all four, a 10-hole course is no longer shown as an 18-hole card with eight holes missing, and a round there prefills ten holes and is scored as ten.
+- A round on a 10- or 12-hole card is listed under the handicap as not counting, with the reason: only 9- and 18-hole cards are rated. It no longer asks for a rating it could never use.
+
 ## 2.19.0 — 2026-10-26
 
 - The app now checks its own practice list. Under "What to practise", "Is this list right?" says how each finding resolved: quiet after range work on its club, quiet without any, faded with time, or worked on and still showing. Once enough have resolved it says whether findings go quiet more often after range work than without it, which is the test of whether the list points at the right things. It never claims the practice caused the change.

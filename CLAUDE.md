@@ -442,6 +442,19 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **No double-tap zoom, and inputs are 16px** (2.11.2): `html { touch-action:
   manipulation }` stops the double-tap zoom while keeping pinch, and iOS zooms
   into any input under 16px on focus, so the 15px fields zoomed the page.
+- **A card is 9, 10, 12 or 18 holes** (`CARD_SIZES`, `cardSize()`, 2.20.0,
+  for Moore Park: holes 1–10 of its old layout from 1 July 2026 while a
+  12-hole course is built, an interim 12 from 2 November 2026). A card of 10
+  or 12 is one whose holes are exactly 1..n; any other count over 9 is an
+  18-hole card with gaps, and an empty new course starts at 18. Before this,
+  `fullCard` padded a 10-hole course to 18 (eight "missing" holes on the
+  course page, 18 rows in every form). The handicap refuses a 10- or 12-hole
+  card with the reason, checked **before** the rating so it never asks for a
+  rating it couldn't use (`ui-tenhole`, which loads the real import file).
+  The import (`imports/moore-park.json`): the club's course page is the card
+  (metres, blue/white men's and red women's), stroke index re-ranked 1–10 from
+  the club's 18-hole order, no rating stored (only the old 18 were rated),
+  location OSM relation 2253129.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -1011,7 +1024,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 317 tests, about 45s.
+`npm test` — 321 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1091,6 +1104,8 @@ fixture would let the reading be pinned.
   `ui-doubleloop` (the app checking its own list: each finding's outcome,
   the fold and its verdict thresholds, the readings' blind spots by view,
   the rules from the same constants, assumed against measured),
+  `ui-tenhole` (a 10-hole card: the Moore Park import against the club's
+  card, card sizes, the forms, a round scored as ten, the handicap's reason),
   `ui-format` (a team round: not a handicap score and the reason shown,
   out of form, trend, course history and evidence, listed and labelled; set
   and cleared on the round form),

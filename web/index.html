@@ -742,11 +742,13 @@ function handicapScore(r, hi) {
   const c = course(r.courseId), tee = r.tee || primaryTee(c);
   if (!c) return { why: 'course not in your list' };
   const rating = ratingOf(c, tee);
+  // A 10- or 12-hole card (Moore Park while it is rebuilt) is checked before the
+  // rating: asking for a rating it could never use would be the wrong prompt.
+  const card = c.holes || [], played = (r.holes || []).filter(h => h.strokes != null);
+  if (card.length !== 9 && card.length !== 18) return { why: `the scorecard has ${card.length} holes, and only 9- and 18-hole cards are rated` };
   if (!rating) return { why: `no course rating for the ${tee} tees`, needsRating: { id: c.id, name: c.name, tee } };
   const noPar = (c.holes || []).filter(h => h.par == null).map(h => h.n);
   if (noPar.length) return { why: `the scorecard has no par for hole ${noPar.join(', ')}` };
-  const card = c.holes || [], played = (r.holes || []).filter(h => h.strokes != null);
-  if (card.length !== 9 && card.length !== 18) return { why: `the scorecard has ${card.length} holes` };
   const byN = Object.fromEntries(played.map(h => [h.n, h]));
   let holes, cr = rating.cr, estimated = false;
   if (card.length === 18 && played.length >= 14) holes = card;
@@ -1383,7 +1385,7 @@ function courseForm(c = {}) {
   ${field('Getting there', 'transport', 'text', c.transport)}
   <label>Notes<textarea name="notes" style="min-height:60px">${esc(c.notes || '')}</textarea></label>
   ${ratingFields(c)}
-  <h3>Scorecard</h3>${gaps.length ? `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing. Fill ${gaps.length > 1 ? 'them' : 'it'} in below.</div>` : ''}<div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
+  <h3>Scorecard</h3>${gaps.length ? `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing. Fill ${gaps.length > 1 ? 'them' : 'it'} in below.</div>` : ''}${holeCountSeg(holes)}
   <div id="holesWrap">${holesEditor(holes, false)}</div>
   ${fold('cardPaste', 'Paste a scorecard', 'fill the card from text', `<p class="small muted">One hole per "n: par / metres / stroke index", as in the course-map notes ("1: 4 / 260 / 16"). Naming the tee ("blue tees") sets the tee above. Nothing is saved until you press Save.</p>
     <textarea name="cardText" style="min-height:90px" placeholder="1: 4 / 260 / 16    10: 4 / 296 / 14"></textarea>
@@ -1456,7 +1458,7 @@ function ratingFields(c) {
   const rows = ratingTees(c).map((t, i) => { const r = ratingOf(c, t) || {}, n = t ? roundsOffTee(c, t) : 0;
     return `<div class="rating-row" data-tee="${esc(t)}"><div class="small"><b>${teeLabel(t)}</b>${n ? ` <span class="muted">· ${plural(n, 'round')} here</span>` : ''}</div>
       <input type="hidden" name="rtee_${i}" value="${esc(t)}"><div class="grid2">${field('Course rating', `cr_${i}`, 'number', r.cr, 'step="0.1" inputmode="decimal"')}${field('Slope', `slope_${i}`, 'number', r.slope, 'step="1" inputmode="numeric"')}</div></div>`; });
-  return `<h3>Handicap ratings</h3><p class="small muted">From the scorecard or Golf Australia: the course (scratch) rating and slope for each tee${(c.holes || []).length === 9 ? ', for 9 holes' : ''}. Leave blank if you don't have them.</p>` + rows.join('') +
+  return `<h3>Handicap ratings</h3><p class="small muted">From the scorecard or Golf Australia: the course (scratch) rating and slope for each tee${(c.holes || []).length !== 18 ? `, for ${(c.holes || []).length} holes` : ''}. Leave blank if you don't have them.</p>` + rows.join('') +
     `<div class="rating-row"><div class="small"><b>Another tee</b></div><div class="grid3">${field('Tee', 'rtee_new', 'text', '', 'placeholder="e.g. blue" autocapitalize="off"')}${field('Course rating', 'cr_new', 'number', '', 'step="0.1" inputmode="decimal"')}${field('Slope', 'slope_new', 'number', '', 'step="1" inputmode="numeric"')}</div></div>`;
 }
 function readRatings(root, c, tee) {
@@ -1480,14 +1482,27 @@ function readRatings(root, c, tee) {
 }
 // A scorecard is always holes 1..N (9 or 18). Gaps become blank rows so a
 // missing hole is visible and fixable instead of silently absent.
-function fullCard(holes) {
+// CARD_SIZES: the hole counts a card can have. 9 and 18, and since 2.20.0 10
+// and 12 (Moore Park plays holes 1–10 while its 12-hole course is built). A
+// card of 10 or 12 holes is one whose holes are exactly 1..n; anything else
+// over 9 is an 18-hole card with gaps.
+const CARD_SIZES = [9, 10, 12, 18];
+function cardSize(holes) {
   holes = holes || [];
   const maxN = Math.max(0, ...holes.map(h => h.n || 0));
-  const N = holes.length && maxN <= 9 ? 9 : 18;
+  if (!holes.length) return 18;
+  if (maxN <= 9) return 9;
+  if (CARD_SIZES.includes(holes.length) && maxN === holes.length) return holes.length;
+  return 18;
+}
+function fullCard(holes) {
+  holes = holes || [];
+  const N = cardSize(holes);
   const byN = Object.fromEntries(holes.map(h => [h.n, h]));
   return Array.from({ length: N }, (_, i) => byN[i + 1] || { n: i + 1 });
 }
 const missingHoles = holes => fullCard(holes).filter(h => h.par == null).map(h => h.n);
+const holeCountSeg = holes => `<div class="seg" style="margin-bottom:10px">${CARD_SIZES.map(n => `<button type="button" data-holes="${n}" aria-pressed="${holes.length === n}">${n} holes</button>`).join('')}</div>`;
 // Toggle 9/18 without losing data: keep every hole ever shown in a cache,
 // fold the visible inputs into it on each switch, redraw from the cache.
 function wireHoleCount(root, withScores, initial) {
@@ -1510,7 +1525,7 @@ function roundForm(r = {}) {
   ${selectF('Format', 'format', FORMATS, r.format || 'solo')}
   ${field('Notes', 'notes', 'text', r.notes)}
   <h3>Scorecard</h3><p class="small muted">Par and metres prefill from the course; change them here only if you played different tees.</p>
-  <div class="seg" style="margin-bottom:10px"><button type="button" data-holes="18" aria-pressed="${holes.length !== 9}">18 holes</button><button type="button" data-holes="9" aria-pressed="${holes.length === 9}">9 holes</button></div>
+  ${holeCountSeg(holes)}
   <div id="holesWrap">${holesEditor(holes, true)}</div>`;
 }
 // The tee picker for a round on course c: a select when the card has more
