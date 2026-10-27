@@ -71,8 +71,16 @@ test('a round there prefills 10 holes, scores as 10, and is honest about the han
   const st = app.J(`roundStats(S.sessions.find(s => s.courseId === 'c_moorepark'))`);
   assert.deepEqual([st.holes, st.gross, st.toPar], [10, 48, 10]);
   app.go('rounds', { sessionId: r.id });
-  assert.equal(app.$$('#scorecard table').length, 2, 'a nine and the tenth');
-  assert.match(app.text('#scorecard'), /Out[\s\S]*In/);
+  assert.equal(app.$$('#view [data-go*="play=1"]').length, 0, 'every hole is scored, so today\'s round offers nothing to play on to');
+  assert.equal(app.$$('#scorecard table').length, 1, 'one table of ten, not a nine and a lonely tenth');
+  assert.equal(app.$$('#scorecard table tr.ch th').length, 12, 'Hole, 1–10, Tot');
+  assert.match(app.text('#scorecard'), /Tot/); assert.doesNotMatch(app.text('#scorecard'), /\bIn\b/);
+  assert.match(app.text('#scorecard tr.cs'), /48$/, 'the total is the ten');
+  // A 12-hole card is two sixes.
+  const twelve = app.E(`scorecard({ id: 'x' }, Array.from({ length: 12 }, (_, i) => ({ n: i + 1, par: 4, strokes: 5 })))`);
+  assert.equal((twelve.match(/<table/g) || []).length, 2);
+  assert.match(twelve, /<th>Out<\/th>[\s\S]*<th>In<\/th>/);
+  assert.equal((twelve.match(/<th data-go/g) || []).length, 12);
   app.go('overview');
   assert.match(app.text('#view'), /10 holes/, 'a 10-hole score is labelled, never read as 18');
   const left = app.J(`handicap().left`).find(x => x.r.id === r.id);
