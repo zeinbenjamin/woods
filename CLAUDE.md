@@ -961,6 +961,29 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   under trees and how a phone browser treats Cloudflare's offline errors
   are the first round's test.
 
+## Swing history (2.23.0)
+
+Asked for 2026-10-28 ("a tab specifically for swings showcasing a timeline
+/ history… flagging if it was course/range and the date… a synthesised
+summary output from the analysis"). Not a fifth tab (2.13.0's four tabs
+and a gear stand): a page under Range, `vSwings` (`S.sub.view ===
+'swings'`), linked from the Range list above the sessions ("Swing history:
+n swings →", only when there are any), the way the penalty report sits
+under Rounds. `swingHistory()` is `allSwings()` newest first (session
+date, then `addedOn`); `swingWhere` flags `course` (the round's
+`courseName`) or `range` (the session's `venue`); `swingFrame` is the
+middle stored frame as the thumbnail; each row opens the session or round.
+`swingClubSummary(club, swings)`: count, views, first and last date, the
+readings' `one_thing` in date order with `ball_data` agreement, the latest
+reading's `wrist`, how many agreed and contradicted, and the distinct
+`cannot_tell` lines (merged as in `readingBlindSpots`). One line of
+judgement per club: the same fix every time "has not been cleared yet"; a
+changed fix is "either the swing moved on, or the readings disagree; the
+ball data decides". No new reading is made; the page says so. Folds per
+club are `swc_<code>`, in bag order (`clubOrder`). `ui-swings` works a
+hand-made set: two 7i readings months apart with different fixes, an
+unread 5W swing on a round, and the empty state.
+
 ## Getting to the green (2.22.0)
 
 Asked for 2026-10-28, from the Moore Park scorecard ("a drop down tab
@@ -1071,7 +1094,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 329 tests, about 45s.
+`npm test` — 332 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1154,6 +1177,8 @@ fixture would let the reading be pinned.
   `ui-tenhole` (a 10-hole card: the Moore Park import against the club's
   card, card sizes, the forms, a round scored as ten, the handicap's reason,
   the round form filling the picked tee's lengths),
+  `ui-swings` (Swing history: the timeline newest first flagged range or
+  course, the per-club summary from the readings, the empty state),
   `ui-togreen` (Getting to the green: a traced hole from its shots,
   scores-only holes tapped in, the table, teaser and story, the over-count
   and a traced hole refused),

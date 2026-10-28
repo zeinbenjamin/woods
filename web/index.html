@@ -167,6 +167,8 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .quick { margin-top: 8px; } .qrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .qrow .qn { font-family: var(--cond); font-weight: 700; font-size: 17px; min-width: 44px; } .qrow .qn small { display: block; font: 400 10px var(--body); color: var(--ink-3); }
 .qrow .chips { flex-wrap: nowrap; overflow-x: auto; }
+.swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }
+ol.fixes { margin: 4px 0 0; padding-left: 18px; } ol.fixes li { margin: 2px 0; }
 .tgrow { align-items: flex-start; } .tgfields { display: grid; grid-template-columns: 44px 1fr; gap: 4px 8px; align-items: center; flex: 1; min-width: 0; } .tgfields .chips { overflow-x: auto; }
 table.tg td, table.tg th { text-align: center; } table.tg tr.tot td { border-top: 1px solid var(--ink-3); font-weight: 600; }
 details.sec > summary { cursor: pointer; }
@@ -1065,11 +1067,14 @@ function overviewRecent() {
 
 /* ---------- range ---------- */
 function vRange() {
+  if (S.sub && S.sub.view === 'swings') return vSwings();
   if (S.sub && S.sub.goal) return vGoal();
   if (S.sub && S.sub.blockId) return vBlock();
   if (S.sub && S.sub.sessionId) return vRangeSession();
   const list = S.sessions.filter(s => s.type === 'range');
+  const nsw = allSwings().length;
   return `<div class="spread"><h1>Range</h1><button class="primary" data-act="newRange">New session</button></div><h2>What to practise</h2>` + practiceSection() + `<h2>Sessions</h2>` +
+    (nsw ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" data-go="range:view=swings">Swing history: ${plural(nsw, 'swing')} →</button></div>` : '') +
     (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a range session, then add a block per club and target. Paste shots straight from a tracked bay: one line per shot, carry then total, then club speed if shown.</p><button class="primary" data-act="newRange">New session</button></div>`);
 }
 function vRangeSession() {
@@ -3048,6 +3053,60 @@ function swingSection(s) {
   return `<section class="sec"><div class="spread"><h2>Swings</h2>${S.assets ? `<button data-act="addSwing" data-id="${s.id}">Add swing</button>` : ''}</div>` +
     (sws.length ? sws.map(sw => swingCard(sw, s)).join('')
       : `<p class="small muted">${S.assets ? 'Add a video and the app pulls frames out of it — a couple per session is plenty.' : 'Adding swings needs write access to this page.'}</p>`) + `</section>`;
+}
+
+/* ---------- swing history (2.23.0) ----------
+   Every swing on file, newest first, wherever it was filmed (a range
+   session or a round), with the one fix its reading gave; and per club, a
+   summary put together from the readings: how many, over what span, the
+   fixes in date order, whether the latest agreed with the ball data, the
+   latest wrist answer, and what the readings kept saying they couldn't see.
+   Asked for 2026-10-28 ("a timeline / history… flagging if it was
+   course/range and the date… a synthesised summary from the analysis").
+   Put together from what is stored, on every draw; no new reading is made. */
+const clubOrder = code => { const c = S.clubs.find(x => x.code === code); return c && c.order != null ? Number(c.order) : 99; };
+const swingWhere = sw => sw.session.type === 'round' ? { kind: 'course', label: sw.session.courseName || 'a course' } : { kind: 'range', label: sw.session.venue || 'range' };
+const swingDate = sw => sw.session.date || sw.addedOn || '';
+const swingFrame = sw => (sw.frames || [])[Math.floor(((sw.frames || []).length - 1) / 2)] || null;
+function swingHistory() {
+  return allSwings().slice().sort((a, b) => swingDate(b).localeCompare(swingDate(a)) || String(b.addedOn || '').localeCompare(String(a.addedOn || '')));
+}
+function swingClubSummary(club, swings) {
+  const sws = swings.filter(sw => (sw.club || '') === club).slice().sort((a, b) => swingDate(a).localeCompare(swingDate(b)));
+  const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing);
+  const dates = sws.map(swingDate).filter(Boolean);
+  const fixes = read.map(sw => ({ date: swingDate(sw), view: sw.view, fix: sw.analysis.one_thing, agrees: sw.analysis.ball_data === 'agrees' ? true : sw.analysis.ball_data === 'contradicts' ? false : null, wrist: sw.analysis.wrist || null }));
+  const latest = fixes[fixes.length - 1] || null;
+  const cantTell = [...new Set(read.flatMap(sw => sw.analysis.cannot_tell || []).map(t => String(t).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()))].length;
+  const views = [...new Set(sws.map(sw => sw.view))];
+  return { club, n: sws.length, read: read.length, first: dates[0] || null, last: dates[dates.length - 1] || null, views, fixes, latest, agrees: fixes.filter(f => f.agrees === true).length, contradicts: fixes.filter(f => f.agrees === false).length, cantTell };
+}
+function vSwings() {
+  const sws = swingHistory();
+  let h = back('range', null, 'Range') + `<h1>Swing history</h1>`;
+  if (!sws.length) return h + `<div class="empty"><p>No swings on file yet. Add a video to a range session or a round and it appears here.</p></div>`;
+  const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
+  const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length, places = [...new Set(sws.map(sw => sw.session.id))].length;
+  h += `<p class="small muted" id="swingBasis">${plural(sws.length, 'swing')} from ${plural(places, 'session')}, ${swingDate(sws[sws.length - 1]) ? `${dateLabel(swingDate(sws[sws.length - 1]))} to ${dateLabel(swingDate(sws[0]))}` : ''}; ${read} read. Readings are interpretations, not measurements; the summaries below are put together from them, nothing new is read.</p>`;
+  h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
+    const c = swingClubSummary(club, sws), name = club || 'No club';
+    const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
+    const body = `<p class="small">${plural(c.n, 'swing')} (${c.views.map(v => VIEWS[v] || 'other').join(', ')})${c.first ? `, ${c.first === c.last ? dateLabel(c.first) : `${dateLabel(c.first)} to ${dateLabel(c.last)}`}` : ''}; ${plural(c.read, 'reading')}${c.read ? `, ${c.agrees} agreeing with the ball data${c.contradicts ? `, ${c.contradicts} contradicting it` : ''}` : ''}.</p>` +
+      (c.fixes.length ? `<div class="small" style="margin-top:6px"><b>The fix, reading by reading:</b></div><ol class="small fixes">${c.fixes.map(f => `<li><span class="muted">${dateLabel(f.date)}, ${esc(VIEWS[f.view] || 'other')}:</span> ${esc(f.fix)}${f.agrees === true ? ' <span class="tag green">ball data agrees</span>' : f.agrees === false ? ' <span class="tag">contradicts ball data</span>' : ''}</li>`).join('')}</ol>` : '') +
+      (c.latest && c.latest.wrist && (c.latest.wrist.top || c.latest.wrist.lead_arm_parallel) ? `<div class="small" style="margin-top:6px"><b>Wrist, latest reading:</b> ${esc(c.latest.wrist.top || 'cannot tell')} at the top; ${esc(c.latest.wrist.lead_arm_parallel || 'cannot tell')} with the lead arm parallel.</div>` : '') +
+      (c.fixes.length >= 2 ? `<p class="small muted" style="margin-top:6px">${c.fixes.every(f => f.fix === c.fixes[0].fix) ? 'The same fix every time: it has not been cleared yet.' : 'The fix has changed between readings: either the swing moved on, or the readings disagree. The ball data decides which.'}</p>` : '') +
+      (c.cantTell ? `<p class="small muted" style="margin-top:6px">${plural(c.cantTell, 'thing')} the readings said they couldn't see; the Range list's "What the readings couldn't see" lists them.</p>` : '');
+    return fold('swc_' + club.replace(/[^A-Za-z0-9]/g, '_'), esc(name), teaser, body);
+  }).join('') + `</div>`;
+  h += `<h2>Timeline</h2><div class="list" id="swingTimeline">` + sws.map(sw => {
+    const w = swingWhere(sw), fr = swingFrame(sw), a = sw.analysis;
+    const go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
+    return `<button class="item swrow" data-go="${go}">${fr ? `<img class="thumb" src="/_blob/${fr.asset}" alt="" loading="lazy">` : '<span class="thumb none"></span>'}<div class="swbody">
+      <div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="muted small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
+      <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>
+      <div class="s">${a && a.one_thing ? `<b>${esc(a.one_thing)}</b>${a.ball_data === 'agrees' ? ' · ball data agrees' : a.ball_data === 'contradicts' ? ' · contradicts ball data' : ''}` : a ? esc((a.observations || [])[0]?.what || 'read') : 'not read yet'}</div></div></button>`;
+  }).join('') + `</div>`;
+  return h;
 }
 
 /* ---------- add a swing ---------- */
