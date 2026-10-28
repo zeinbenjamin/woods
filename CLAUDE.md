@@ -1120,7 +1120,10 @@ clip at a time as before. The backdrop is scaled 1.2 to hide its soft edges, so
 unclipped, it widened the feed and his phone scrolled it sideways. **The
 status-bar style is read when the app is added to the home screen**: an
 installed Carry keeps its opaque bar until it is removed and added again;
-the served page has the tag.
+the served page has the tag. The caption's gradient must stop at the bar
+(2.30.2): `.reelBottom` carries the `--nav-h + --safe-b` padding and
+`.reelInfo` only its own, or the bar sits on near-black and reads as a
+solid band; the bar is 55% paper in the feed.
 
 ## Getting to the green (2.22.0)
 

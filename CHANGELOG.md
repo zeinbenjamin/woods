@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.30.2 — 2026-10-28
+- In the swing feed the clip now shows through the tab bar instead of a black band: the caption's dark shading stops at the bar, and the bar is a touch more see-through.
+
 ## 2.30.1 — 2026-10-28
 - The swing feed no longer slides sideways: the blurred backdrop behind a clip is clipped to the screen, so a clip can't be pushed off to one side.
 
