@@ -984,6 +984,23 @@ club are `swc_<code>`, in bag order (`clubOrder`). `ui-swings` works a
 hand-made set: two 7i readings months apart with different fixes, an
 unread 5W swing on a round, and the empty state.
 
+**A reading across the readings** (2.24.0, he asked for the cross-reading
+button): `crossSection(club)` on the club's fold, `crossRead(club)` →
+`crossPrompt` (the club's readings as text, oldest first: fix, why, feel,
+drill, check, ball-data verdict, wrist, observations, can't-tell, his note,
+where filmed; plus `ballContextFor(club)` and the swing-history
+background) → `sample.json` with **no images** → word-limited JSON
+(`thread`, `moved_on`, `still_there`, `carry_forward`, `confidence`,
+`caveat`), clamped on the way in, stored on the club as `crossReading`
+with `on` and the `swings` it was read from (SCHEMA.md). Needs `CROSS_MIN`
+(2) readings; never made on its own; the card says "a reading of readings,
+not a measurement" and counts newer readings since, which makes the
+button primary again. `saveClub` now spreads the existing club so the bag
+form keeps it (it used to rebuild the document from the fields alone).
+`ui-swings` stubs `/api/analyse`: the prompt's contents, no frames sent,
+stored and shown, stale after a third reading, a bad reply stores nothing,
+the bag form keeps it.
+
 ## Getting to the green (2.22.0)
 
 Asked for 2026-10-28, from the Moore Park scorecard ("a drop down tab
@@ -1094,7 +1111,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 332 tests, about 45s.
+`npm test` — 335 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1178,7 +1195,8 @@ fixture would let the reading be pinned.
   card, card sizes, the forms, a round scored as ten, the handicap's reason,
   the round form filling the picked tee's lengths),
   `ui-swings` (Swing history: the timeline newest first flagged range or
-  course, the per-club summary from the readings, the empty state),
+  course, the per-club summary from the readings, the empty state, the
+  cross-reading button end to end against a stubbed analysis call),
   `ui-togreen` (Getting to the green: a traced hole from its shots,
   scores-only holes tapped in, the table, teaser and story, the over-count
   and a traced hole refused),

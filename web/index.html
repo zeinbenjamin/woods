@@ -1692,7 +1692,8 @@ async function saveCourse(root, c) {
 async function saveClub(root, c) {
   const code = (val(root, 'code') || '').replace(/[^\w.+-]/g, '').slice(0, 8); if (!code) { toast('Short code is required'); return false; }
   if (!c.code && clubBy(code)) { toast('That code is already in the bag'); return false; }
-  const doc = { code, name: val(root, 'name') || code, category: val(root, 'category'), loft: val(root, 'loft'), order: val(root, 'order') ?? 99, nominalCarry: val(root, 'nominalCarry'), nominalTotal: val(root, 'nominalTotal'), retired: !!val(root, 'retired'), notes: val(root, 'notes') };
+  // Keep what the form doesn't edit (the cross-reading of its swings, 2.24.0).
+  const doc = { ...c, code, name: val(root, 'name') || code, category: val(root, 'category'), loft: val(root, 'loft'), order: val(root, 'order') ?? 99, nominalCarry: val(root, 'nominalCarry'), nominalTotal: val(root, 'nominalTotal'), retired: !!val(root, 'retired'), notes: val(root, 'notes') };
   return save('clubs', code, doc);
 }
 
@@ -3081,6 +3082,76 @@ function swingClubSummary(club, swings) {
   const views = [...new Set(sws.map(sw => sw.view))];
   return { club, n: sws.length, read: read.length, first: dates[0] || null, last: dates[dates.length - 1] || null, views, fixes, latest, agrees: fixes.filter(f => f.agrees === true).length, contradicts: fixes.filter(f => f.agrees === false).length, cantTell };
 }
+/* ---------- a reading across the readings (2.24.0) ----------
+   On the club's fold, a button sends that club's readings (text only, no
+   frames) and its ball data to Claude for one reading across them: the
+   thread, what moved on, what is still there, the one thing to carry
+   forward. Stored on the club (per person, like the readings on swings),
+   with the swings it was read from, so the fold can say how many readings
+   have come since; never made on its own. A reading of readings, not a
+   measurement, and labelled so. */
+const CROSS_MIN = 2;                                     // readings needed before it is offered
+const clubReadings = club => swingHistory().filter(sw => (sw.club || '') === club && sw.analysis && sw.analysis.one_thing).slice().sort((a, b) => swingDate(a).localeCompare(swingDate(b)));
+function crossPrompt(club, readings) {
+  const one = sw => { const a = sw.analysis; return [`${dateLabel(swingDate(sw))}, ${VIEWS[sw.view] || 'other angle'}${swingWhere(sw).kind === 'course' ? ' (on the course)' : ''}${sw.note ? `, his note: "${sw.note}"` : ''}:`,
+    `  fix: ${a.one_thing}`, a.why ? `  why: ${a.why}` : '', a.feel ? `  feel: ${a.feel}` : '', a.drill && a.drill.name ? `  drill: ${a.drill.name}${a.drill.how ? ` — ${a.drill.how}` : ''}` : '', a.check ? `  check: ${a.check}` : '',
+    a.ball_data ? `  against the ball data: ${a.ball_data}${a.matches_ball_data ? ` (${a.matches_ball_data})` : ''}` : '',
+    a.wrist ? `  wrist: ${a.wrist.top || 'cannot tell'} at the top; ${a.wrist.lead_arm_parallel || 'cannot tell'} with the lead arm parallel` : '',
+    (a.observations || []).length ? `  seen: ${a.observations.map(o => `${o.what} (${o.confidence || '?'})`).join('; ')}` : '',
+    (a.cannot_tell || []).length ? `  could not tell: ${a.cannot_tell.join('; ')}` : ''].filter(Boolean).join('\n'); };
+  return `Below are ${readings.length} readings of a golfer's ${club} swing, each made from a few video frames on the day, oldest first. You have no frames now: only the readings and the club's ball data. Read across them the way a coach reads a player's file before a lesson.
+
+CLUB AND BALL DATA: ${ballContextFor(club)}
+
+Background on the player: a beginner roughly a year in. Known history: lateral hip sway on the backswing and early extension through impact were early faults; adding hip rotation gained distance but introduced an alternating hook and shank pattern on irons, thought to be body rotation outrunning hand and arm timing.
+
+THE READINGS
+${readings.map(one).join('\n\n')}
+
+Each reading was one day's interpretation of a handful of frames, so weigh what repeats over what appears once, and weigh a reading that the ball data agreed with over one it contradicted. Do not invent anything the readings do not say. Answer as JSON with exactly these keys, keeping to the word limits:
+{
+  "thread": "what the readings keep coming back to (40 words or fewer)",
+  "moved_on": "what the later readings no longer see, if anything (30 words or fewer, or an empty string)",
+  "still_there": "what is in the latest readings as it was in the earliest (30 words or fewer, or an empty string)",
+  "carry_forward": "the one thing to take to the next session, as a coach would say it (15 words or fewer)",
+  "confidence": "high" | "medium" | "low",
+  "caveat": "the main reason this could be wrong: few readings, one angle, readings the ball data contradicted (25 words or fewer)"
+}`;
+}
+async function crossRead(club) {
+  const readings = clubReadings(club);
+  if (readings.length < CROSS_MIN) return { error: 'too_few' };
+  const sample = await claude.use('sample'); if (!sample) return { error: 'unavailable' };
+  try { return { data: await sample.json(crossPrompt(club, readings), { modelTier: 'complex', maxTokens: 800 }), swings: readings.map(sw => sw.id) }; }
+  catch (e) { return { error: e && e.code ? e.code : 'failed', text: e && e.text }; }
+}
+function crossSection(club, c) {
+  const readings = clubReadings(club), cr = S.clubs.find(x => x.code === club)?.crossReading || null;
+  const newer = cr ? readings.filter(sw => !(cr.swings || []).includes(sw.id)).length : 0;
+  let h = '';
+  if (cr) h += `<div class="analysis cross" id="cross_${esc(club)}"><div class="one${String(cr.carry_forward || '').length > 110 ? ' long' : ''}">${esc(cr.carry_forward || '')}</div>
+    ${cr.thread ? `<div class="cue"><b>The thread</b> ${esc(cr.thread)}</div>` : ''}${cr.moved_on ? `<div class="cue"><b>Moved on</b> ${esc(cr.moved_on)}</div>` : ''}${cr.still_there ? `<div class="cue"><b>Still there</b> ${esc(cr.still_there)}</div>` : ''}
+    ${cr.caveat ? `<div class="small muted" style="margin-top:4px"><b>Could be wrong because</b> ${esc(cr.caveat)}</div>` : ''}
+    <div class="small muted" style="margin-top:6px">Read across ${plural((cr.swings || []).length, 'reading')} on ${dateLabel(cr.on)}${cr.confidence ? `, ${esc(cr.confidence)} confidence` : ''} — a reading of readings, not a measurement.${newer ? ` <b>${plural(newer, 'newer reading')}</b> since.` : ''}</div></div>`;
+  if (readings.length >= CROSS_MIN) h += `<div class="row-actions" style="margin-top:8px"><button class="${cr && !newer ? '' : 'primary'}" data-act="crossRead" data-club="${esc(club)}">${cr ? 'Read across them again' : `Read across these ${readings.length} readings`}</button></div><div id="crossProg_${esc(club)}"></div>`;
+  else if (readings.length) h += `<p class="small muted" style="margin-top:6px">A reading across the readings needs ${CROSS_MIN}; there is ${readings.length}.</p>`;
+  return h;
+}
+Object.assign(ACTIONS, {
+  async crossRead(d) {
+    const club = d.club, prog = document.getElementById('crossProg_' + club);
+    if (prog) prog.innerHTML = '<div class="small muted">Reading across them…</div>';
+    const res = await crossRead(club);
+    if (res.error) {
+      const msg = { unavailable: "Needs Claude, and this server can't reach it — check ANTHROPIC_API_KEY on the server.", rate_limited: 'Too many requests just now — wait a moment and try again.', invalid_json: 'Claude replied but not in the expected format. Try again.', too_few: `Needs ${CROSS_MIN} readings.` }[res.error] || 'Reading failed.';
+      if (prog) prog.innerHTML = `<div class="notice warn">${esc(msg)} <span class="muted small">(${esc(res.error)})</span></div>`; return;
+    }
+    const c = S.clubs.find(x => x.code === club); if (!c) return;
+    const keep = (v, n) => typeof v === 'string' ? v.trim().split(/\s+/).slice(0, n * 2).join(' ') : '';
+    const cr = { on: today(), swings: res.swings, thread: keep(res.data.thread, 40), moved_on: keep(res.data.moved_on, 30), still_there: keep(res.data.still_there, 30), carry_forward: keep(res.data.carry_forward, 15), caveat: keep(res.data.caveat, 25), confidence: ['high', 'medium', 'low'].includes(res.data.confidence) ? res.data.confidence : null };
+    if (await save('clubs', club, { ...c, crossReading: cr })) { toast('Read across the readings'); render(); }
+  },
+});
 function vSwings() {
   const sws = swingHistory();
   let h = back('range', null, 'Range') + `<h1>Swing history</h1>`;
@@ -3095,7 +3166,8 @@ function vSwings() {
       (c.fixes.length ? `<div class="small" style="margin-top:6px"><b>The fix, reading by reading:</b></div><ol class="small fixes">${c.fixes.map(f => `<li><span class="muted">${dateLabel(f.date)}, ${esc(VIEWS[f.view] || 'other')}:</span> ${esc(f.fix)}${f.agrees === true ? ' <span class="tag green">ball data agrees</span>' : f.agrees === false ? ' <span class="tag">contradicts ball data</span>' : ''}</li>`).join('')}</ol>` : '') +
       (c.latest && c.latest.wrist && (c.latest.wrist.top || c.latest.wrist.lead_arm_parallel) ? `<div class="small" style="margin-top:6px"><b>Wrist, latest reading:</b> ${esc(c.latest.wrist.top || 'cannot tell')} at the top; ${esc(c.latest.wrist.lead_arm_parallel || 'cannot tell')} with the lead arm parallel.</div>` : '') +
       (c.fixes.length >= 2 ? `<p class="small muted" style="margin-top:6px">${c.fixes.every(f => f.fix === c.fixes[0].fix) ? 'The same fix every time: it has not been cleared yet.' : 'The fix has changed between readings: either the swing moved on, or the readings disagree. The ball data decides which.'}</p>` : '') +
-      (c.cantTell ? `<p class="small muted" style="margin-top:6px">${plural(c.cantTell, 'thing')} the readings said they couldn't see; the Range list's "What the readings couldn't see" lists them.</p>` : '');
+      (c.cantTell ? `<p class="small muted" style="margin-top:6px">${plural(c.cantTell, 'thing')} the readings said they couldn't see; the Range list's "What the readings couldn't see" lists them.</p>` : '') +
+      crossSection(club, c);
     return fold('swc_' + club.replace(/[^A-Za-z0-9]/g, '_'), esc(name), teaser, body);
   }).join('') + `</div>`;
   h += `<h2>Timeline</h2><div class="list" id="swingTimeline">` + sws.map(sw => {
