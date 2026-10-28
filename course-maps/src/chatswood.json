@@ -1,0 +1,15 @@
+{
+ "id": "chatswood",
+ "name": "Chatswood Golf Club",
+ "osm": {
+  "course": "way/181570673",
+  "name": "Chatswood Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.79918,
+  151.16213
+ ],
+ "holes": "osm",
+ "why": "Tier B on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ff675c61). No card in the source: the course page checks the NAS card once the course is imported."
+}

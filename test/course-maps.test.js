@@ -37,14 +37,16 @@ test('every map credits OpenStreetMap and has a fixed origin', () => {
     // (Manly's two alternative 14ths); with a card, a line for every hole on it.
     const geo = JSON.parse(readFileSync(`course-maps/osm/${id}.geojson`, 'utf8')).features;
     const leftOut = new Set(geo.filter(f => f.properties.golf === 'hole' && (src.ignore || {})[f.properties['@id']]).map(f => parseInt(String(f.properties.ref).match(/\d+/)[0], 10)));
-    const top = Math.max(0, ...m.holes.map(h => h.n));
-    assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: top }, (_, i) => i + 1).filter(n => !leftOut.has(n) || m.byN[n]));
+    // Tier B courses have only some of their lines on OSM (their own test lists which);
+    // the rest are drawn from his marks.
+    const partial = /^Tier B on/.test(src.why || ''), top = Math.max(0, ...m.holes.map(h => h.n));
+    if (!partial) assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: top }, (_, i) => i + 1).filter(n => !leftOut.has(n) || m.byN[n]));
     if (src.card) for (const [n] of src.card.holes) assert.ok(m.byN[n], `a line for hole ${n} on the card`);
     for (const h of m.holes) {
       const g = m.features[h.green];
       assert.equal(g.k, 'green', `hole ${h.n} ends on a green`);
       assert.ok(dist(h.line[h.line.length - 1], centroid(g.r[0])) < 0.2, `hole ${h.n} is measured to the middle of its green`);
-      if (id !== 'hurstville' && id !== 'hunter-valley') assert.ok(!g.est, `hole ${h.n}'s green is mapped, not estimated`);
+      if (id !== 'hurstville' && id !== 'hunter-valley' && !partial) assert.ok(!g.est, `hole ${h.n}'s green is mapped, not estimated`);
     }
   }
 });
@@ -406,6 +408,24 @@ test('the A- batch of 2026-10-28: 18 holes each on mapped greens; partial bounda
     assert.deepEqual(HM.legendKinds(a, { par: 4 }), HM.legendKinds(b, { par: 4 }));
   }
   assert.ok(k.features.every(f => f.h !== 16), 'the file keeps the shapes on hole 1');
+});
+
+test('the B batch of 2026-10-28: the lines OSM has, estimated greens on pins, the rest from marks', () => {
+  const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /^Tier B on OSM data of 2026-10-28/.test(s.why || ''));
+  const r = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  const expect = { everglades: r(1, 18), monash: r(1, 18), chatswood: [1, 2, 4, 5, 6, 7, 8, 11, 12], 'macarthur-grange': r(1, 9), cammeray: [1, 2, 3, 4, 5, 7, 8], eastlake: [1], 'ryde-parramatta': [1] };
+  assert.deepEqual(batch.map(s => s.id).sort(), Object.keys(expect).sort());
+  for (const src of batch) assert.deepEqual(mapOf(src.id).holes.map(h => h.n), expect[src.id], `${src.id}: the holes OSM has lines for`);
+  // Everglades and Macarthur Grange have no green shapes: each is estimated on its pin.
+  for (const id of ['everglades', 'macarthur-grange']) assert.ok(mapOf(id).holes.every(h => mapOf(id).features[h.green].est), id);
+  // Monash: the 2026 remap of 2-18 and the older 1; the older 2 and 8 are left out.
+  // (Without the ignore list the build stops: two lines numbered 2.)
+  assert.deepEqual(Object.keys(JSON.parse(readFileSync('course-maps/src/monash.json', 'utf8')).ignore).sort(), ['way/954874234', 'way/985372037']);
+  // A hole OSM has no line for is drawn from his marks, as on a boundary-only map.
+  const m = mapOf('eastlake'), [t, g] = pairAt(m, 300);
+  const hm = HM.forHole('eastlake', 5, 300, { marks: [mark(m, 'tee', t), mark(m, 'flag', g)] });
+  assert.ok(hm && hm.fromMarks && hm.fromMarks.line, 'eastlake 5 from marks');
+  assert.equal(HM.forHole('eastlake', 5, 300), null, 'and nothing without them');
 });
 
 test('Hunter Valley: 18 OSM lines on a partial boundary, each green estimated on its own pin', () => {

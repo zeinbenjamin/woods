@@ -1,0 +1,19 @@
+{
+ "id": "monash",
+ "name": "Monash Country Club",
+ "osm": {
+  "course": "way/258452466",
+  "name": "Monash Country Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.6898,
+  151.26456
+ ],
+ "holes": "osm",
+ "ignore": {
+  "way/985372037": "an older line for hole 2; the 2026 remap's way/1459187896 replaces it",
+  "way/954874234": "an older line numbered 8, away from the remap's routing (7 ends where the remap's 8 starts)"
+ },
+ "why": "Tier B on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ff675c61). No card in the source: the course page checks the NAS card once the course is imported. OSM has a remap of holes 2-18 (way/1459187880-96) and three older lines (1, 2, 8): the older 1 joins the remap (it ends where 2 starts), the older 2 and 8 are ignored."
+}

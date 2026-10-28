@@ -1,0 +1,15 @@
+{
+ "id": "ryde-parramatta",
+ "name": "Ryde Parramatta Golf Club",
+ "osm": {
+  "course": "way/230626372",
+  "name": "Ryde Parramatta Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.81115,
+  151.07582
+ ],
+ "holes": "osm",
+ "why": "Tier B on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ff675c61). No card in the source: the course page checks the NAS card once the course is imported."
+}

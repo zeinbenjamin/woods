@@ -72,6 +72,18 @@
   "holes": 18
  },
  {
+  "id": "cammeray",
+  "name": "Cammeray Golf Course",
+  "osmName": "Cammeray Golf Course",
+  "holes": 7
+ },
+ {
+  "id": "chatswood",
+  "name": "Chatswood Golf Club",
+  "osmName": "Chatswood Golf Club",
+  "holes": 9
+ },
+ {
   "id": "colonial",
   "name": "Colonial Golf Course",
   "osmName": "Colonial Golf Course",
@@ -84,9 +96,21 @@
   "holes": 18
  },
  {
+  "id": "eastlake",
+  "name": "Eastlake Golf Course",
+  "osmName": "Eastlake Golf Course",
+  "holes": 1
+ },
+ {
   "id": "elanora",
   "name": "Elanora Country Club",
   "osmName": "Elanora Country Club",
+  "holes": 18
+ },
+ {
+  "id": "everglades",
+  "name": "Everglades Golf Club",
+  "osmName": "Everglades Golf Club",
   "holes": 18
  },
  {
@@ -144,6 +168,12 @@
   "holes": 18
  },
  {
+  "id": "macarthur-grange",
+  "name": "Macarthur Grange Country Club",
+  "osmName": "Macarthur Grange Country Club",
+  "holes": 9
+ },
+ {
   "id": "manly",
   "name": "Manly Golf Club",
   "osmName": "Manly Golf Club",
@@ -159,6 +189,12 @@
   "id": "mona-vale",
   "name": "Mona Vale Golf Course",
   "osmName": "Mona Vale Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "monash",
+  "name": "Monash Country Club",
+  "osmName": "Monash Country Club",
   "holes": 18
  },
  {
@@ -214,6 +250,12 @@
   "name": "Royal Sydney Golf Club",
   "osmName": "Royal Sydney Golf Club",
   "holes": 18
+ },
+ {
+  "id": "ryde-parramatta",
+  "name": "Ryde Parramatta Golf Club",
+  "osmName": "Ryde Parramatta Golf Club",
+  "holes": 1
  },
  {
   "id": "shortees",

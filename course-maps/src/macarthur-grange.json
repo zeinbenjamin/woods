@@ -1,0 +1,15 @@
+{
+ "id": "macarthur-grange",
+ "name": "Macarthur Grange Country Club",
+ "osm": {
+  "course": "relation/5519706",
+  "name": "Macarthur Grange Country Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -34.01518,
+  150.7949
+ ],
+ "holes": "osm",
+ "why": "Tier B on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ff675c61). No card in the source: the course page checks the NAS card once the course is imported."
+}
