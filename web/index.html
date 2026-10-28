@@ -3250,7 +3250,7 @@ function vReels() {
     <div class="reelsTop"><button class="reelsClose" data-go="range:view=swings" aria-label="Close">✕</button><div class="chips">${chip('', 'All')}${clubs.map(c => chip(c, c || 'No club')).join('')}</div>${sws.length ? `<button class="reelsSound" data-act="reelsSound" aria-pressed="${reelsSound}" aria-label="${reelsSound ? 'Mute' : 'Sound on'}">${reelsSound ? '🔊' : '🔇'}</button>` : ''}</div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
       return `<section class="reel" data-i="${i}"><video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
-        <button class="reelInfo" data-go="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
+        <button class="reelInfo" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
           <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>${a && a.one_thing ? `<div class="fix">${esc(a.one_thing)}</div>` : '<div class="s">not read yet</div>'}
           <div class="small count">${i + 1} of ${sws.length}${i + 1 < sws.length ? ' · swipe up' : ''}</div></button></section>`; }).join('')
       : `<section class="reel"><div class="reelInfo static"><div class="t">No videos${club ? ` for the ${esc(club)}` : ''}</div><div class="s">Swings keep their video when it is under ${Math.round(VIDEO_MAX / 1048576)} MB; frames-only swings can't play here.</div></div></section>`}
@@ -3346,7 +3346,23 @@ function wireSwingForm(root, sessionId) {
   });
   return () => ({ file: picked, range });
 }
+// The caption opens the swing's own card over the feed (2.26.0, he asked:
+// the session page was too much): the reading, or "not read yet", and one
+// link to the session it was filmed in.
+function reelCardHtml(sw, s) {
+  const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
+  return `<h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>
+    <p class="muted small">${[esc(w.label), esc(VIEWS[sw.view] || 'Other angle'), sw.note ? esc(sw.note) : ''].filter(Boolean).join(' · ')}</p>
+    <div class="swing" id="reelCard">${a ? swingReading(sw, s, a) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
+    <div class="row-actions"><button data-act="reelOpen" data-go-session="${go}">Open the ${s.type === 'round' ? 'round' : 'session'} →</button></div>`;
+}
 Object.assign(ACTIONS, {
+  reelCard(d) {
+    const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid);
+    if (!sw) return;
+    openSheet(reelCardHtml({ ...sw, session: s }, s));
+  },
+  reelOpen(d) { sheet.close(); const [tab, sub] = parseGo(d.goSession); go(tab, sub); },
   reelsSound() {
     reelsSound = !reelsSound;
     document.querySelectorAll('#reels video[data-reel]').forEach(v => { v.muted = !reelsSound; });

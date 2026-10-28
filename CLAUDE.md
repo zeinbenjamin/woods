@@ -1047,7 +1047,10 @@ the fix, play/pause on the callback, the club filter, the empty state,
 close. **Sound** (2.26.0): the videos start muted so they can autoplay; the
 `.reelsSound` button (`reelsSound` action) unmutes them all on the tap iOS
 needs, the one on screen being the only one playing, and the flag resets
-when the feed closes.
+when the feed closes. **The caption opens the card** (2.26.0, he asked: the
+session page was too much): `reelCard` opens a sheet (`reelCardHtml`: date,
+where, view, note, `swingReading` or "not read yet") over the feed, and
+`reelOpen` closes it and goes to the session or round.
 
 ## Getting to the green (2.22.0)
 
