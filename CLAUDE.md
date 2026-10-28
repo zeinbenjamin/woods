@@ -439,6 +439,16 @@ Each of these cost real debugging time. Don't reintroduce them.
   Both now use `--safe-b`, and `regressions.test.js` checks it. The
   `:root` padding doesn't help: `html` is `height: 100%`, so content
   overflows past it.
+- **Spacing is set by adjacency, not per section** (2.25.1, he sent three
+  screenshots of folds against buttons, Delete buttons against text, and the
+  bag table cut off): `.folds`, `details.fold`, `.row-actions` and `h2` get
+  their gap from what precedes them (`details.sec + .folds`, `.folds +
+  .row-actions`, `.row-actions + h2`, …), and a lone `.danger` button row gets
+  28px above. The bag is `.bagrow` rows (who / three `.bagnum` numbers / Edit),
+  not a table: five columns never fit a phone. Subtitles join their parts
+  with `filter(Boolean).join(' · ')`, so an empty suburb or par can't leave a
+  stray comma or full stop. Check a new section at phone width before
+  shipping; the sweep screenshots are how these were found.
 - **No double-tap zoom, and inputs are 16px** (2.11.2): `html { touch-action:
   manipulation }` stops the double-tap zoom while keeping pinch, and iOS zooms
   into any input under 16px on focus, so the 15px fields zoomed the page.

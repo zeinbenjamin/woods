@@ -94,10 +94,10 @@ test('nominal carry stays what he believes; measured numbers are never written o
   assert.equal(c.nominalCarry, 115);
   assert.equal(c.nominalTotal, 130);
   app.go('settings');
-  const row = app.$$('#view tbody tr').find(tr => /^7i/.test(tr.textContent.trim()));
-  const cells = [...row.querySelectorAll('td')].map(td => td.textContent.trim());
-  assert.equal(cells[2], '115', 'assumed carry column');
-  assert.equal(cells[4], '125', 'stock carry column is measured (124.5, 90-day window)');
+  const row = app.$$('#bagList .bagrow').find(r => /^7i/.test(r.textContent.trim()));
+  const nums = [...row.querySelectorAll('.bagnum')].map(n => n.querySelector('b').textContent.trim());
+  assert.equal(nums[0], '115', 'assumed carry number');
+  assert.equal(nums[2], '125', 'measured carry is derived (124.5, 90-day window)');
 });
 
 test('the freshness line says what the list stands on and that it is recalculated, not stored', () => {

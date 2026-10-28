@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.25.1 — 2026-10-28
+- Spacing fixed throughout: the bag in Settings is a list of rows that fits a phone (the table hid the measured carry and the Edit button off the edge), there is room between the practice list's review folds and the plan button, before Delete buttons, after rows of buttons and before the next heading, the video feed's club chips sit clear of the video, and course and session headings no longer carry stray punctuation ("Nineteenth GC," or ". Par 36").
+
 ## 2.25.0 — 2026-10-28
 
 - Swing history has a "Watch" button: your swing videos one to a screen, newest first, swipe up for the next. Each plays on a loop as it comes into view, with the date, where it was filmed, the club, the angle and the reading's fix over the bottom; tap those to open the session. Chips at the top narrow it to one club, to flick through, say, the 7i swings across months. Only the video on screen and its neighbours are loaded.

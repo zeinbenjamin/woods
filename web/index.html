@@ -173,12 +173,16 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .reelInfo { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px calc(var(--safe-b) + 18px); background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; text-align: left; border: 0; font: inherit; cursor: pointer; }
 .reelInfo .t { font-weight: 600; font-size: 16px; } .reelInfo .s { font-size: 13px; opacity: .85; margin-top: 2px; } .reelInfo .fix { font-family: var(--cond); font-weight: 700; font-size: 20px; line-height: 1.15; margin: 6px 0 4px; } .reelInfo .small { opacity: .7; }
 .reelInfo .tag { background: rgba(255,255,255,.18); color: #fff; border: 0; } .reelInfo .tag.green { background: rgba(120,200,140,.35); } .reelInfo.static { position: static; background: none; }
-.reelsTop { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 8px; background: linear-gradient(rgba(0,0,0,.7), transparent); height: 0; overflow: visible; }
+.reelsTop { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px; background: linear-gradient(rgba(0,0,0,.75), transparent); height: 0; overflow: visible; }
+.reelsTop .chips { padding-right: 12px; } .reel video { padding-top: calc(env(safe-area-inset-top, 0px) + 56px); box-sizing: border-box; }
 .reelsTop .chips { overflow-x: auto; flex-wrap: nowrap; } .reelsTop .chip { background: rgba(255,255,255,.15); color: #fff; border-color: transparent; } .reelsTop .chip[aria-pressed="true"] { background: #fff; color: #000; }
 .reelsClose { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 16px; cursor: pointer; }
 .swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }
 ol.fixes { margin: 4px 0 0; padding-left: 18px; } ol.fixes li { margin: 2px 0; }
 .tgrow { align-items: flex-start; } .tgfields { display: grid; grid-template-columns: 44px 1fr; gap: 4px 8px; align-items: center; flex: 1; min-width: 0; } .tgfields .chips { overflow-x: auto; }
+.bag { border-top: 1px solid var(--rule); margin-top: 8px; } .bagrow { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'who edit' 'nums edit'; align-items: center; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.bagwho { grid-area: who; } .bagnums { grid-area: nums; display: flex; gap: 14px; flex-wrap: wrap; } .bagrow > button { grid-area: edit; }
+.bagnum b { font-family: var(--cond); font-weight: 600; font-size: 16px; } .bagnum small { display: block; font-size: 11px; color: var(--ink-3); line-height: 1.1; }
 table.tg td, table.tg th { text-align: center; } table.tg tr.tot td { border-top: 1px solid var(--ink-3); font-weight: 600; }
 details.sec > summary { cursor: pointer; }
 .shotrow { display: flex; justify-content: space-between; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 8px 0; font: inherit; color: inherit; cursor: pointer; font-size: 13px; }
@@ -253,6 +257,9 @@ table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mi
 .fold { margin: 0; border-top: 1px solid var(--rule); padding: 10px 0; } .fold > summary { cursor: pointer; list-style: none; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; } .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary::after { content: '›'; font-size: 18px; color: var(--ink-3); transition: transform .15s; } .fold[open] > summary::after { transform: rotate(90deg); } .fold[open] > summary { margin-bottom: 10px; }
 .folds { border-bottom: 1px solid var(--rule); } .fold .warn { color: var(--flag); }
+details.sec + .folds, .pcard + .folds, p + .folds, p + details.fold, .row-actions + .folds, .row-actions + details.fold { margin-top: 16px; }
+.row-actions:has(> .danger:only-child) { margin-top: 28px; } .folds + .row-actions, details.sec + .row-actions { margin-top: 16px; }
+.folds + h2, details.sec + h2, .row-actions + h2 { margin-top: 28px; }
 .ftile .tp { font-size: .55em; color: var(--ink-3); margin-left: 6px; font-weight: 600; }
 .next { background: var(--paper-2); border-radius: 12px; padding: 14px 16px; border-left: 4px solid var(--green); } .next .nt { font-family: var(--cond); font-weight: 700; font-size: 26px; line-height: 1.15; margin: 2px 0 4px; } .next .nfrom { margin-top: 6px; } .next .row-actions { margin-top: 12px; }
 .wrow { display: grid; grid-template-columns: 22px 1fr 14px; gap: 10px; align-items: start; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 10px 0; } .wrow > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -260,7 +267,7 @@ table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mi
 .marks { border: 1px dashed var(--rule); border-radius: var(--r); padding: 8px 10px 10px; margin: 8px 0 12px; } .marks .markrow { margin: 8px 0; }
 .markrow { justify-content: center; margin: 12px 0 18px; } .markbtn { padding: 11px 22px; font-size: 15px; }
 #playLive > p { margin: 6px 0 4px; }
-.finding { border-top: 1px solid var(--rule); padding: 8px 0; } .progress { color: var(--ink-2); }
+.finding { border-top: 1px solid var(--rule); padding: 10px 0; } .finding > .spread { align-items: baseline; flex-wrap: wrap; gap: 2px 12px; } .finding .small { margin-top: 4px; } .progress { color: var(--ink-2); }
 .lastshot { border: 1px solid var(--rule); border-radius: var(--r); padding: 8px; margin: 4px 0 10px; }
 .greendist { display: flex; justify-content: center; gap: 4px; margin: 4px 0 0; } .greendist .stat { text-align: center; margin: 0 10px 4px; } .greendist .stat.mid b { font-size: 40px; }
 .hazards { max-width: 360px; margin: 0 auto 8px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: var(--r); } .hazards .spread { padding: 2px 0; }
@@ -1092,7 +1099,7 @@ function vRangeSession() {
   const s = session(S.sub.sessionId); if (!s) return back('range', null, 'Range') + `<p>Session not found.</p>`;
   const blocks = (s.blocks || []).slice().sort((a, b) => a.seq - b.seq);
   let h = back('range', null, 'Range') + `<div class="spread"><h1>${dateLabel(s.date)}</h1><button data-act="editRange" data-id="${s.id}">Edit</button></div>
-  <p class="muted small">${s.venue ? esc(s.venue) + ', ' : ''}${s.ballType ? esc(BALL_LABEL[s.ballType] || s.ballType) : ''}${s.source ? ', ' + esc(SOURCE_LABEL[s.source] || s.source) : ''}${s.focus ? '. Focus: ' + esc(s.focus) : ''}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
+  <p class="muted small">${[s.venue ? esc(s.venue) : '', s.ballType ? esc(BALL_LABEL[s.ballType] || s.ballType) : '', s.source ? esc(SOURCE_LABEL[s.source] || s.source) : '', s.focus ? 'Focus: ' + esc(s.focus) : ''].filter(Boolean).join(' · ')}</p>${s.notes ? `<p class="small">${esc(s.notes)}</p>` : ''}
   ${s.excluded ? `<div class="notice warn" id="leftOut">Left out of your numbers: this session's shots don't count towards stock carry, gapping, calibration or the practice list. <button class="quiet" data-act="toggleExclude" data-id="${s.id}">Count it again</button></div>` : ''}
   ${sessionGoals(s, blocks)}
   <div class="spread"><h2>Blocks</h2><div class="row-actions" style="margin:0"><button data-act="shotsFromImages" data-id="${s.id}">From screenshots</button><button class="primary" data-act="newBlock" data-id="${s.id}">Add block</button></div></div>`;
@@ -1223,7 +1230,7 @@ function vCourse() {
   const rounds = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id);
   const par = sum((c.holes || []).map(h => h.par || 0)), len = sum((c.holes || []).map(h => h.metres || 0));
   let h = back('courses', null, 'Courses') + `<div class="spread"><h1>${esc(c.name)}</h1><button data-act="editCourse" data-id="${c.id}">Edit</button></div>
-  <p class="muted small">${esc(c.suburb || '')}${c.state ? ', ' + esc(c.state) : ''}${c.holes && c.holes.length ? '. Par ' + par + ', ' + len + 'm' : ''}${distanceLabel(c) ? `. ${distanceLabel(c)} from ${esc((home() || {}).label || 'you')}, straight line` : ''}</p>`;
+  <p class="muted small">${[[c.suburb, c.state].filter(Boolean).map(esc).join(', '), c.holes && c.holes.length ? `Par ${par}, ${len}m` : '', distanceLabel(c) ? `${distanceLabel(c)} from ${esc((home() || {}).label || 'you')}, straight line` : ''].filter(Boolean).join(' · ')}</p>`;
   if (c.holes && c.holes.length) {
     const gaps = missingHoles(c.holes);
     if (gaps.length) h += `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing from this scorecard. <button class="quiet" data-act="editCourse" data-id="${c.id}">Add ${gaps.length > 1 ? 'them' : 'it'}</button></div>`;
@@ -1289,8 +1296,13 @@ function vSettings() {
   <p class="small muted">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
   if (!S.clubs.length) h += `<div class="empty"><p>No clubs yet.</p></div>`;
   else {
-    const row = c => { const s = clubStats(c.code); return `<tr class="${c.retired ? 'muted' : ''}"><td><b>${esc(c.code)}</b> <span class="muted small">${esc(c.name)}</span>${c.retired ? ' <span class="tag">retired</span>' : ''}</td><td>${c.loft ? c.loft + '°' : ''}</td><td>${fmt(c.nominalCarry)}</td><td>${fmt(c.nominalTotal)}</td><td class="num">${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td><td><button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></td></tr>`; };
-    h += `<div class="scroll"><table><thead><tr><th>Club</th><th>Loft</th><th>Carry you assume</th><th>Total you assume</th><th>Carry measured</th><th></th></tr></thead><tbody>${S.clubs.map(row).join('')}</tbody></table></div>`;
+    // One row a club (2.25.1): a six-column table ran off a phone's screen and
+    // hid the measured carry and the Edit button behind a sideways scroll.
+    const row = c => { const s = clubStats(c.code); const num = (v, label) => `<span class="bagnum${v == null ? ' muted' : ''}"><b>${v == null ? '–' : fmt(v)}</b><small>${label}</small></span>`;
+      return `<div class="bagrow${c.retired ? ' muted' : ''}"><div class="bagwho"><b>${esc(c.code)}</b> <span class="muted small">${esc(c.name)}${c.loft ? ` · ${c.loft}°` : ''}</span>${c.retired ? ' <span class="tag">retired</span>' : ''}</div>
+        <div class="bagnums">${num(c.nominalCarry, 'carry, assumed')}${num(c.nominalTotal, 'total, assumed')}${num(s && s.stockCarry ? s.stockCarry : null, 'carry, measured')}</div>
+        <button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></div>`; };
+    h += `<div class="bag" id="bagList">${S.clubs.map(row).join('')}</div>`;
   }
   h += `</section><section class="sec" id="rangeNumbers"><h2>Range numbers</h2><p class="small muted">Which range shots count towards stock carry, gapping and the practice list.</p>${rangeFilter()}</section>`;
   h += `<section class="sec" id="location"><h2>Your location</h2><p class="small muted">${home() ? `Distances to courses are from ${esc(home().label || 'your location')}, as the crow flies.` : 'Set it to see how far each course is.'}</p><div class="row-actions"><button data-act="setHome">${home() ? 'Change' : 'Set your location'}</button></div></section>`;
@@ -2596,8 +2608,8 @@ function practiceSection(limit) {
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
-    listReviewSection() + blindSpotsSection() +
-    (now.some(x => x.block) ? `<div class="row-actions"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
+    (listReviewSection() || blindSpotsSection() ? `<div class="folds" id="listChecks" style="margin-top:16px">${listReviewSection()}${blindSpotsSection()}</div>` : '') +
+    (now.some(x => x.block) ? `<div class="row-actions" style="margin-top:18px"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
 }
 // One line for the fold: the biggest difference that counts, or how many taps to check.
 function calibrationTeaser() {
