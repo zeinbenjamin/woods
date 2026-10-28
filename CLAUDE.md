@@ -985,6 +985,45 @@ scorecard sets every length.
   Pittwater Golf Centre, two unnamed outlines, "Stirling Drive". The area
   sweep found no other course. **The queue left:** a Melbourne tiering.
 
+## The course batch (2026-10-28)
+
+The hole-maps chat's note of 2026-10-28 listed 87 new maps (its tier A, A-,
+B, C and D batches). `imports/` now holds a card for 77 of them (`c_<map id>`,
+underscored; `c_st_michaels`), built by a scratchpad script from each
+source's card table, the map's name from `web/course-maps/index.json` and
+its location from the map source's `origin`. Rules kept, so a number is
+never invented:
+
+- **Sources, in order of trust:** Golfify (metres, every tee, the stroke
+  index; 64 courses), then TheGrint (Lakeside Camden, The Ridge: its cells
+  concatenate yards and metres, `369337` = 369 yd / 337 m, read apart; its
+  printed totals are yard sums converted and differ by 1–2 m from the
+  holes, noted), Hole19 (Glenmore, Avalon, Sefton, Woodville: a text page,
+  not a table, one tee set), BlueGolf (Castle Cove: labelled yards but in
+  metres, proven against 18Birdies' yards for the same holes). Hole19 was
+  the cross-check until it started refusing automated reads: Asquith agrees
+  hole for hole; Terrey Hills agrees on par and metres but not the index;
+  Castle Hill shows a different card (not reconciled); each file's notes say
+  which. Golfify's own ratings are **noted, never stored**, as for Bexley.
+- **Primary tee:** the first men's set the source lists; the file says so.
+  Golfify names Bankstown's five sets only "Men's"/"Ladies", so they are
+  keyed by total (`men 5855`) and its first men's column (a different hole
+  order) is left out; Bayview's black and The Lakes' "Blue (T)" are other
+  routings, left out; Cromer's blue and Cronulla's ladies' columns are
+  300 m on every hole (placeholders), dropped. Camden's white is the rated
+  set and hole 9 changes par between tees. A nine's 18-hole index
+  (Avalon, Canterbury: odd numbers only) is not stored.
+- **No import, with the reason in the test's `NO_CARD` list:** Brighton
+  Lakes, Hawkesbury Waters, Kurrajong Hills, Orchard Hills (no readable card
+  anywhere), Del Rio (par 29, no card published), Kingdom Estate (listed,
+  no card; the club domain is for sale), Fairfield City (18Birdies' card has
+  a 937 m hole 2), Shortees and Sylvania Par 3 (cards whose unit can't be
+  told). Auburn is Golfify's "Rosnay Golf Club"; Liverpool its "Oak Point".
+- Only address, phone and fees are missing against Bexley's fuller record:
+  77 clubs' sites weren't visited. The in-app course page's live card check
+  against each map is the next test of these numbers; a flagged hole is a
+  reason to look at the club's own card.
+
 ## Artwork → map (2.17.0)
 
 Hunter Valley's rounds were traced on uploaded artwork (holes 1–9) before
@@ -1310,7 +1349,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 344 tests, about 45s.
+`npm test` — 346 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1415,9 +1454,12 @@ fixture would let the reading be pinned.
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
   holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, the tier-A batch (mapped greens, ref numbers, Manly's 14, Woollahra's nine, Moore Park's ten), the A- batch (partial boundaries, Avondale's outline, Kogarah's shared lines), the B batch (the lines OSM has, Monash's older lines, holes from marks on a partial map), the C batch (lines or marks, flags snapping to mapped greens), the D batch, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
-- `imports.test.js` (2) — every file in `imports/` is a one-course
+- `imports.test.js` (4) — every file in `imports/` is a one-course
   carry-export whose card adds up (holes 1..n, pars, `metres` mirroring the
-  primary tee, each stroke index once, a Sydney location, a source); Bexley
+  primary tee, each stroke index once, a Sydney location, a source); every
+  course map has an import, is on the NAS already, or is on the test's
+  no-card list (see *The course batch*); the batch's notes state each tee's
+  total and the holes add to it, ratings are noted and never stored; Bexley
   (2026-10-28: 18 holes, par 64, 4,097 m blue; Hole19 and TheGrint agree
   hole by hole and with GolfNSW's total; white and red from TheGrint's
   metres; no rating stored; the club's own PDF card is on a host this

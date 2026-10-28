@@ -1,0 +1,241 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.920Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_bankstown",
+      "v": 2,
+      "created": 1793207585920,
+      "name": "Bankstown Golf Club",
+      "state": "NSW",
+      "lat": -33.93287,
+      "lng": 150.98325,
+      "tee": "men 5855",
+      "notes": "18 holes, par 71, 5,855 m off the men 5855 tees. Lengths in metres; tee sets: men 5855, men 5644, ladies 5236, ladies 4880 (men 5855 is the primary: the first men's set the card lists, named by its total because Golfify gives the sets no colours). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify names no tee colours: its five columns are three 'Men's' and two 'Ladies' sets, so the sets here are named by their totals. Its first men's column (5,591 m) runs the holes in a different order (par 4,3,5,3,5,...) from the other four, so it is left out as a different routing. Golfify's rating (70 / 122) is on that left-out column.",
+      "source": "Card: Golfify (three men's sets and two ladies' sets, all unnamed, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175623022, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 370,
+          "tees": {
+            "men 5855": 370,
+            "men 5644": 357,
+            "ladies 5236": 351,
+            "ladies 4880": 289
+          },
+          "si": 11
+        },
+        {
+          "n": 2,
+          "par": 5,
+          "metres": 496,
+          "tees": {
+            "men 5855": 496,
+            "men 5644": 472,
+            "ladies 5236": 405,
+            "ladies 4880": 396
+          },
+          "si": 12
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 135,
+          "tees": {
+            "men 5855": 135,
+            "men 5644": 125,
+            "ladies 5236": 132,
+            "ladies 4880": 112
+          },
+          "si": 16
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 355,
+          "tees": {
+            "men 5855": 355,
+            "men 5644": 352,
+            "ladies 5236": 282,
+            "ladies 4880": 282
+          },
+          "si": 5
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 314,
+          "tees": {
+            "men 5855": 314,
+            "men 5644": 305,
+            "ladies 5236": 279,
+            "ladies 4880": 260
+          },
+          "si": 4
+        },
+        {
+          "n": 6,
+          "par": 5,
+          "metres": 463,
+          "tees": {
+            "men 5855": 463,
+            "men 5644": 455,
+            "ladies 5236": 428,
+            "ladies 4880": 425
+          },
+          "si": 17
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 177,
+          "tees": {
+            "men 5855": 177,
+            "men 5644": 165,
+            "ladies 5236": 158,
+            "ladies 4880": 157
+          },
+          "si": 6
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 374,
+          "tees": {
+            "men 5855": 374,
+            "men 5644": 365,
+            "ladies 5236": 352,
+            "ladies 4880": 332
+          },
+          "si": 7
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 372,
+          "tees": {
+            "men 5855": 372,
+            "men 5644": 359,
+            "ladies 5236": 321,
+            "ladies 4880": 314
+          },
+          "si": 3
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 392,
+          "tees": {
+            "men 5855": 392,
+            "men 5644": 372,
+            "ladies 5236": 386,
+            "ladies 4880": 370
+          },
+          "si": 1
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 149,
+          "tees": {
+            "men 5855": 149,
+            "men 5644": 136,
+            "ladies 5236": 105,
+            "ladies 4880": 93
+          },
+          "si": 14
+        },
+        {
+          "n": 12,
+          "par": 5,
+          "metres": 425,
+          "tees": {
+            "men 5855": 425,
+            "men 5644": 412,
+            "ladies 5236": 367,
+            "ladies 4880": 355
+          },
+          "si": 18
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 152,
+          "tees": {
+            "men 5855": 152,
+            "men 5644": 143,
+            "ladies 5236": 150,
+            "ladies 4880": 134
+          },
+          "si": 13
+        },
+        {
+          "n": 14,
+          "par": 5,
+          "metres": 471,
+          "tees": {
+            "men 5855": 471,
+            "men 5644": 462,
+            "ladies 5236": 418,
+            "ladies 4880": 413
+          },
+          "si": 10
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 154,
+          "tees": {
+            "men 5855": 154,
+            "men 5644": 140,
+            "ladies 5236": 138,
+            "ladies 4880": 127
+          },
+          "si": 15
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 357,
+          "tees": {
+            "men 5855": 357,
+            "men 5644": 347,
+            "ladies 5236": 344,
+            "ladies 4880": 275
+          },
+          "si": 2
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 326,
+          "tees": {
+            "men 5855": 326,
+            "men 5644": 317,
+            "ladies 5236": 307,
+            "ladies 4880": 239
+          },
+          "si": 9
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 373,
+          "tees": {
+            "men 5855": 373,
+            "men 5644": 360,
+            "ladies 5236": 313,
+            "ladies 4880": 307
+          },
+          "si": 8
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

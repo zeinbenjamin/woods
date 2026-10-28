@@ -1,0 +1,97 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.925Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_canterbury",
+      "v": 2,
+      "created": 1793207585925,
+      "name": "Canterbury Public Golf Course",
+      "state": "NSW",
+      "lat": -33.93873,
+      "lng": 151.08537,
+      "tee": "yellow",
+      "notes": "9 holes, par 34, 2,320 m off the yellow tees. Lengths in metres; tee sets: yellow (yellow is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: yellow 34 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's stroke index on the nine is the odd numbers of an 18-hole index (3, 11, 9, 17, ...), so none is stored.",
+      "source": "Card: Golfify (yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/697265508, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 3,
+          "metres": 168,
+          "tees": {
+            "yellow": 168
+          }
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 113,
+          "tees": {
+            "yellow": 113
+          }
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 295,
+          "tees": {
+            "yellow": 295
+          }
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 245,
+          "tees": {
+            "yellow": 245
+          }
+        },
+        {
+          "n": 5,
+          "par": 5,
+          "metres": 443,
+          "tees": {
+            "yellow": 443
+          }
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 364,
+          "tees": {
+            "yellow": 364
+          }
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 109,
+          "tees": {
+            "yellow": 109
+          }
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 300,
+          "tees": {
+            "yellow": 300
+          }
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 283,
+          "tees": {
+            "yellow": 283
+          }
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

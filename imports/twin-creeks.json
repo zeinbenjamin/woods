@@ -1,0 +1,241 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.951Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_twin_creeks",
+      "v": 2,
+      "created": 1793207585951,
+      "name": "Twin Creeks Golf Club",
+      "state": "NSW",
+      "lat": -33.83933,
+      "lng": 150.7583,
+      "tee": "black",
+      "notes": "18 holes, par 72, 6,444 m off the black tees. Lengths in metres; tee sets: black, gold, silver, jade (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 74 / 132, gold 72 / 130, silver 70 / 128, jade 74 / 136. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (black, gold, silver and jade, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4017006, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 359,
+          "tees": {
+            "black": 359,
+            "gold": 340,
+            "silver": 320,
+            "jade": 264
+          },
+          "si": 5
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 144,
+          "tees": {
+            "black": 144,
+            "gold": 134,
+            "silver": 130,
+            "jade": 113
+          },
+          "si": 11
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 302,
+          "tees": {
+            "black": 302,
+            "gold": 282,
+            "silver": 266,
+            "jade": 244
+          },
+          "si": 17
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 395,
+          "tees": {
+            "black": 395,
+            "gold": 376,
+            "silver": 358,
+            "jade": 338
+          },
+          "si": 3
+        },
+        {
+          "n": 5,
+          "par": 5,
+          "metres": 513,
+          "tees": {
+            "black": 513,
+            "gold": 489,
+            "silver": 476,
+            "jade": 454
+          },
+          "si": 15
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 186,
+          "tees": {
+            "black": 186,
+            "gold": 160,
+            "silver": 148,
+            "jade": 129
+          },
+          "si": 9
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 346,
+          "tees": {
+            "black": 346,
+            "gold": 325,
+            "silver": 311,
+            "jade": 297
+          },
+          "si": 13
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 411,
+          "tees": {
+            "black": 411,
+            "gold": 396,
+            "silver": 375,
+            "jade": 353
+          },
+          "si": 1
+        },
+        {
+          "n": 9,
+          "par": 5,
+          "metres": 545,
+          "tees": {
+            "black": 545,
+            "gold": 528,
+            "silver": 504,
+            "jade": 442
+          },
+          "si": 7
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 371,
+          "tees": {
+            "black": 371,
+            "gold": 357,
+            "silver": 331,
+            "jade": 311
+          },
+          "si": 6
+        },
+        {
+          "n": 11,
+          "par": 5,
+          "metres": 521,
+          "tees": {
+            "black": 521,
+            "gold": 498,
+            "silver": 482,
+            "jade": 458
+          },
+          "si": 16
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 309,
+          "tees": {
+            "black": 309,
+            "gold": 289,
+            "silver": 280,
+            "jade": 261
+          },
+          "si": 18
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 356,
+          "tees": {
+            "black": 356,
+            "gold": 344,
+            "silver": 317,
+            "jade": 299
+          },
+          "si": 8
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 179,
+          "tees": {
+            "black": 179,
+            "gold": 175,
+            "silver": 155,
+            "jade": 137
+          },
+          "si": 14
+        },
+        {
+          "n": 15,
+          "par": 5,
+          "metres": 525,
+          "tees": {
+            "black": 525,
+            "gold": 515,
+            "silver": 464,
+            "jade": 443
+          },
+          "si": 10
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 417,
+          "tees": {
+            "black": 417,
+            "gold": 404,
+            "silver": 382,
+            "jade": 353
+          },
+          "si": 2
+        },
+        {
+          "n": 17,
+          "par": 3,
+          "metres": 163,
+          "tees": {
+            "black": 163,
+            "gold": 147,
+            "silver": 138,
+            "jade": 123
+          },
+          "si": 12
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 402,
+          "tees": {
+            "black": 402,
+            "gold": 388,
+            "silver": 371,
+            "jade": 344
+          },
+          "si": 4
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

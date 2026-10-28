@@ -1,0 +1,106 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.941Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_palm_beach",
+      "v": 2,
+      "created": 1793207585941,
+      "name": "Palm Beach Golf Course",
+      "state": "NSW",
+      "lat": -33.58994,
+      "lng": 151.32261,
+      "tee": "white",
+      "notes": "9 holes, par 32, 2,046 m off the white tees. Lengths in metres; tee sets: white (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 25 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (white, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6861189, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 256,
+          "tees": {
+            "white": 256
+          },
+          "si": 8
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 132,
+          "tees": {
+            "white": 132
+          },
+          "si": 4
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 188,
+          "tees": {
+            "white": 188
+          },
+          "si": 2
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 273,
+          "tees": {
+            "white": 273
+          },
+          "si": 9
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 270,
+          "tees": {
+            "white": 270
+          },
+          "si": 6
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 154,
+          "tees": {
+            "white": 154
+          },
+          "si": 5
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 273,
+          "tees": {
+            "white": 273
+          },
+          "si": 7
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 178,
+          "tees": {
+            "white": 178
+          },
+          "si": 1
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 322,
+          "tees": {
+            "white": 322
+          },
+          "si": 3
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

@@ -1,0 +1,115 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.924Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_cammeray",
+      "v": 2,
+      "created": 1793207585924,
+      "name": "Cammeray Golf Course",
+      "state": "NSW",
+      "lat": -33.82508,
+      "lng": 151.21659,
+      "tee": "men",
+      "notes": "9 holes, par 33, 2,417 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's stroke index runs 1 to 9 in hole order, which looks like a placeholder rather than the club's.",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4292638, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 368,
+          "tees": {
+            "men": 368,
+            "ladies": 354
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 287,
+          "tees": {
+            "men": 287,
+            "ladies": 272
+          },
+          "si": 2
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 100,
+          "tees": {
+            "men": 100,
+            "ladies": 90
+          },
+          "si": 3
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 336,
+          "tees": {
+            "men": 336,
+            "ladies": 320
+          },
+          "si": 4
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 311,
+          "tees": {
+            "men": 311,
+            "ladies": 302
+          },
+          "si": 5
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 164,
+          "tees": {
+            "men": 164,
+            "ladies": 140
+          },
+          "si": 6
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 331,
+          "tees": {
+            "men": 331,
+            "ladies": 320
+          },
+          "si": 7
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 402,
+          "tees": {
+            "men": 402,
+            "ladies": 394
+          },
+          "si": 8
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 118,
+          "tees": {
+            "men": 118,
+            "ladies": 112
+          },
+          "si": 9
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

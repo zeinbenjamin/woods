@@ -1,0 +1,223 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.940Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_nsw",
+      "v": 2,
+      "created": 1793207585940,
+      "name": "NSW Golf Club",
+      "state": "NSW",
+      "lat": -33.99352,
+      "lng": 151.24437,
+      "tee": "championship",
+      "notes": "18 holes, par 72, 6,245 m off the championship tees. Lengths in metres; tee sets: championship, ladies, blue (championship is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: championship 74 / 138, ladies 77 / 140, blue 74 / 136. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (championship, blue and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/3045927, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 293,
+          "tees": {
+            "championship": 293,
+            "ladies": 238,
+            "blue": 278
+          },
+          "si": 18
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 184,
+          "tees": {
+            "championship": 184,
+            "ladies": 130,
+            "blue": 165
+          },
+          "si": 4
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 380,
+          "tees": {
+            "championship": 380,
+            "ladies": 330,
+            "blue": 342
+          },
+          "si": 6
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 391,
+          "tees": {
+            "championship": 391,
+            "ladies": 315,
+            "blue": 378
+          },
+          "si": 10
+        },
+        {
+          "n": 5,
+          "par": 5,
+          "metres": 468,
+          "tees": {
+            "championship": 468,
+            "ladies": 430,
+            "blue": 445
+          },
+          "si": 16
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 185,
+          "tees": {
+            "championship": 185,
+            "ladies": 127,
+            "blue": 154
+          },
+          "si": 8
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 376,
+          "tees": {
+            "championship": 376,
+            "ladies": 363,
+            "blue": 365
+          },
+          "si": 2
+        },
+        {
+          "n": 8,
+          "par": 5,
+          "metres": 505,
+          "tees": {
+            "championship": 505,
+            "ladies": 469,
+            "blue": 495
+          },
+          "si": 12
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 340,
+          "tees": {
+            "championship": 340,
+            "ladies": 287,
+            "blue": 334
+          },
+          "si": 14
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 359,
+          "tees": {
+            "championship": 359,
+            "ladies": 295,
+            "blue": 333
+          },
+          "si": 9
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 149,
+          "tees": {
+            "championship": 149,
+            "ladies": 141,
+            "blue": 145
+          },
+          "si": 17
+        },
+        {
+          "n": 12,
+          "par": 5,
+          "metres": 482,
+          "tees": {
+            "championship": 482,
+            "ladies": 422,
+            "blue": 464
+          },
+          "si": 15
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 375,
+          "tees": {
+            "championship": 375,
+            "ladies": 363,
+            "blue": 370
+          },
+          "si": 5
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 323,
+          "tees": {
+            "championship": 323,
+            "ladies": 272,
+            "blue": 303
+          },
+          "si": 7
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 372,
+          "tees": {
+            "championship": 372,
+            "ladies": 368,
+            "blue": 364
+          },
+          "si": 1
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 403,
+          "tees": {
+            "championship": 403,
+            "ladies": 393,
+            "blue": 394
+          },
+          "si": 3
+        },
+        {
+          "n": 17,
+          "par": 3,
+          "metres": 153,
+          "tees": {
+            "championship": 153,
+            "ladies": 119,
+            "blue": 130
+          },
+          "si": 11
+        },
+        {
+          "n": 18,
+          "par": 5,
+          "metres": 507,
+          "tees": {
+            "championship": 507,
+            "ladies": 472,
+            "blue": 489
+          },
+          "si": 13
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

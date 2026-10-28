@@ -1,0 +1,106 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.925Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_castle_cove",
+      "v": 2,
+      "created": 1793207585925,
+      "name": "Castle Cove Golf Club",
+      "state": "NSW",
+      "lat": -33.78464,
+      "lng": 151.2079,
+      "tee": "blue",
+      "notes": "9 holes, par 32, 1,930 m off the blue tees. Lengths in metres; tee sets: blue (blue is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. A nine-hole course played as 18 off 14 tees; only the first nine's tees are here. The stroke index is BlueGolf's 1 to 9 in hole order, likely a placeholder.",
+      "source": "Card: BlueGolf (nine holes, labelled yards but in metres: 18Birdies' figures for the same holes are these times 1.094 and its header converts a 3,888 m total), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6168035, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 305,
+          "tees": {
+            "blue": 305
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 111,
+          "tees": {
+            "blue": 111
+          },
+          "si": 2
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 163,
+          "tees": {
+            "blue": 163
+          },
+          "si": 3
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 253,
+          "tees": {
+            "blue": 253
+          },
+          "si": 4
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 253,
+          "tees": {
+            "blue": 253
+          },
+          "si": 5
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 292,
+          "tees": {
+            "blue": 292
+          },
+          "si": 6
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 271,
+          "tees": {
+            "blue": 271
+          },
+          "si": 7
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 126,
+          "tees": {
+            "blue": 126
+          },
+          "si": 8
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 156,
+          "tees": {
+            "blue": 156
+          },
+          "si": 9
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

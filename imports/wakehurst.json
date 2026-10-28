@@ -1,0 +1,223 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.952Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_wakehurst",
+      "v": 2,
+      "created": 1793207585952,
+      "name": "Wakehurst Golf Course",
+      "state": "NSW",
+      "lat": -33.7753,
+      "lng": 151.24209,
+      "tee": "black",
+      "notes": "18 holes, par 72, 6,112 m off the black tees. Lengths in metres; tee sets: black, white, ladies (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 73 / 136, white 71 / 131, ladies 75 / 133. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Holes 15 and 16 swap par between the black (par 5 then 3) and white (par 3 then 4) sets on Golfify; pars here are the black tees'.",
+      "source": "Card: Golfify (black, white and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175535033, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 282,
+          "tees": {
+            "black": 282,
+            "white": 267,
+            "ladies": 257
+          },
+          "si": 14
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 357,
+          "tees": {
+            "black": 357,
+            "white": 353,
+            "ladies": 314
+          },
+          "si": 8
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 365,
+          "tees": {
+            "black": 365,
+            "white": 336,
+            "ladies": 307
+          },
+          "si": 3
+        },
+        {
+          "n": 4,
+          "par": 5,
+          "metres": 497,
+          "tees": {
+            "black": 497,
+            "white": 477,
+            "ladies": 388
+          },
+          "si": 6
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 134,
+          "tees": {
+            "black": 134,
+            "white": 126,
+            "ladies": 119
+          },
+          "si": 18
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 343,
+          "tees": {
+            "black": 343,
+            "white": 293,
+            "ladies": 307
+          },
+          "si": 11
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 281,
+          "tees": {
+            "black": 281,
+            "white": 283,
+            "ladies": 271
+          },
+          "si": 17
+        },
+        {
+          "n": 8,
+          "par": 5,
+          "metres": 505,
+          "tees": {
+            "black": 505,
+            "white": 504,
+            "ladies": 447
+          },
+          "si": 4
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 286,
+          "tees": {
+            "black": 286,
+            "white": 273,
+            "ladies": 269
+          },
+          "si": 12
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 315,
+          "tees": {
+            "black": 315,
+            "white": 310,
+            "ladies": 285
+          },
+          "si": 10
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 395,
+          "tees": {
+            "black": 395,
+            "white": 380,
+            "ladies": 356
+          },
+          "si": 2
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 394,
+          "tees": {
+            "black": 394,
+            "white": 384,
+            "ladies": 391
+          },
+          "si": 13
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 150,
+          "tees": {
+            "black": 150,
+            "white": 144,
+            "ladies": 118
+          },
+          "si": 15
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 415,
+          "tees": {
+            "black": 415,
+            "white": 397,
+            "ladies": 379
+          },
+          "si": 1
+        },
+        {
+          "n": 15,
+          "par": 5,
+          "metres": 458,
+          "tees": {
+            "black": 458,
+            "white": 151,
+            "ladies": 444
+          },
+          "si": 16
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 197,
+          "tees": {
+            "black": 197,
+            "white": 265,
+            "ladies": 136
+          },
+          "si": 9
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 385,
+          "tees": {
+            "black": 385,
+            "white": 371,
+            "ladies": 350
+          },
+          "si": 5
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 353,
+          "tees": {
+            "black": 353,
+            "white": 337,
+            "ladies": 328
+          },
+          "si": 7
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

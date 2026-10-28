@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.935Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_leonay",
+      "v": 2,
+      "created": 1793207585935,
+      "name": "Leonay Golf Course",
+      "state": "NSW",
+      "lat": -33.7643,
+      "lng": 150.64968,
+      "tee": "blue",
+      "notes": "18 holes, par 67, 5,023 m off the blue tees. Lengths in metres; tee sets: blue, ladies (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 67 / 113, ladies 69 / -. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (blue and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6530751, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 268,
+          "tees": {
+            "blue": 268,
+            "ladies": 279
+          },
+          "si": 14
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 132,
+          "tees": {
+            "blue": 132,
+            "ladies": 136
+          },
+          "si": 16
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 373,
+          "tees": {
+            "blue": 373,
+            "ladies": 384
+          },
+          "si": 1
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 301,
+          "tees": {
+            "blue": 301,
+            "ladies": 320
+          },
+          "si": 13
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 332,
+          "tees": {
+            "blue": 332,
+            "ladies": 353
+          },
+          "si": 4
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 186,
+          "tees": {
+            "blue": 186,
+            "ladies": 180
+          },
+          "si": 8
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 345,
+          "tees": {
+            "blue": 345,
+            "ladies": 346
+          },
+          "si": 7
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 347,
+          "tees": {
+            "blue": 347,
+            "ladies": 373
+          },
+          "si": 5
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 185,
+          "tees": {
+            "blue": 185,
+            "ladies": 183
+          },
+          "si": 10
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 163,
+          "tees": {
+            "blue": 163,
+            "ladies": 176
+          },
+          "si": 11
+        },
+        {
+          "n": 11,
+          "par": 5,
+          "metres": 457,
+          "tees": {
+            "blue": 457,
+            "ladies": 481
+          },
+          "si": 12
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 381,
+          "tees": {
+            "blue": 381,
+            "ladies": 409
+          },
+          "si": 2
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 153,
+          "tees": {
+            "blue": 153,
+            "ladies": 135
+          },
+          "si": 17
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 109,
+          "tees": {
+            "blue": 109,
+            "ladies": 104
+          },
+          "si": 18
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 290,
+          "tees": {
+            "blue": 290,
+            "ladies": 309
+          },
+          "si": 15
+        },
+        {
+          "n": 16,
+          "par": 5,
+          "metres": 454,
+          "tees": {
+            "blue": 454,
+            "ladies": 478
+          },
+          "si": 6
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 352,
+          "tees": {
+            "blue": 352,
+            "ladies": 377
+          },
+          "si": 3
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 195,
+          "tees": {
+            "blue": 195,
+            "ladies": 199
+          },
+          "si": 9
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

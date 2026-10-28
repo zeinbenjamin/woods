@@ -1,0 +1,187 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.944Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_royal_sydney",
+      "v": 2,
+      "created": 1793207585944,
+      "name": "Royal Sydney Golf Club",
+      "state": "NSW",
+      "lat": -33.8781,
+      "lng": 151.26638,
+      "tee": "championship",
+      "notes": "18 holes, par 72, 6,344 m off the championship tees. Lengths in metres; tee sets: championship (championship is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's one set may predate the 2024 to 2025 Championship course redesign; BlueGolf holds only a placeholder card. The stroke index runs 1 to 18 in hole order and looks like a placeholder.",
+      "source": "Card: Golfify (championship, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4354373, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 274,
+          "tees": {
+            "championship": 274
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 5,
+          "metres": 504,
+          "tees": {
+            "championship": 504
+          },
+          "si": 3
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 165,
+          "tees": {
+            "championship": 165
+          },
+          "si": 5
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 403,
+          "tees": {
+            "championship": 403
+          },
+          "si": 7
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 391,
+          "tees": {
+            "championship": 391
+          },
+          "si": 9
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 143,
+          "tees": {
+            "championship": 143
+          },
+          "si": 11
+        },
+        {
+          "n": 7,
+          "par": 5,
+          "metres": 513,
+          "tees": {
+            "championship": 513
+          },
+          "si": 13
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 275,
+          "tees": {
+            "championship": 275
+          },
+          "si": 15
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 328,
+          "tees": {
+            "championship": 328
+          },
+          "si": 17
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 382,
+          "tees": {
+            "championship": 382
+          },
+          "si": 2
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 420,
+          "tees": {
+            "championship": 420
+          },
+          "si": 4
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 359,
+          "tees": {
+            "championship": 359
+          },
+          "si": 6
+        },
+        {
+          "n": 13,
+          "par": 5,
+          "metres": 500,
+          "tees": {
+            "championship": 500
+          },
+          "si": 8
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 173,
+          "tees": {
+            "championship": 173
+          },
+          "si": 10
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 403,
+          "tees": {
+            "championship": 403
+          },
+          "si": 12
+        },
+        {
+          "n": 16,
+          "par": 5,
+          "metres": 535,
+          "tees": {
+            "championship": 535
+          },
+          "si": 14
+        },
+        {
+          "n": 17,
+          "par": 3,
+          "metres": 202,
+          "tees": {
+            "championship": 202
+          },
+          "si": 16
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 374,
+          "tees": {
+            "championship": 374
+          },
+          "si": 18
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

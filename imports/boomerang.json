@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.922Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_boomerang",
+      "v": 2,
+      "created": 1793207585922,
+      "name": "Boomerang Public Golf Course",
+      "state": "NSW",
+      "lat": -34.25259,
+      "lng": 150.94697,
+      "tee": "white",
+      "notes": "18 holes, par 67, 4,395 m off the white tees. Lengths in metres; tee sets: white, red (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 67 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Lengths are round numbers (280, 300, 100 ...): the source card looks estimated rather than measured.",
+      "source": "Card: Golfify (white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/106856639, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 280,
+          "tees": {
+            "white": 280,
+            "red": 245
+          },
+          "si": 11
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 300,
+          "tees": {
+            "white": 300,
+            "red": 220
+          },
+          "si": 10
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 100,
+          "tees": {
+            "white": 100,
+            "red": 90
+          },
+          "si": 14
+        },
+        {
+          "n": 4,
+          "par": 5,
+          "metres": 400,
+          "tees": {
+            "white": 400,
+            "red": 310
+          },
+          "si": 12
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 330,
+          "tees": {
+            "white": 330,
+            "red": 245
+          },
+          "si": 5
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 195,
+          "tees": {
+            "white": 195,
+            "red": 152
+          },
+          "si": 4
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 90,
+          "tees": {
+            "white": 90,
+            "red": 65
+          },
+          "si": 13
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 300,
+          "tees": {
+            "white": 300,
+            "red": 270
+          },
+          "si": 6
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 140,
+          "tees": {
+            "white": 140,
+            "red": 100
+          },
+          "si": 8
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 140,
+          "tees": {
+            "white": 140,
+            "red": 115
+          },
+          "si": 15
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 280,
+          "tees": {
+            "white": 280,
+            "red": 265
+          },
+          "si": 7
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 275,
+          "tees": {
+            "white": 275,
+            "red": 205
+          },
+          "si": 3
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 190,
+          "tees": {
+            "white": 190,
+            "red": 140
+          },
+          "si": 17
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 145,
+          "tees": {
+            "white": 145,
+            "red": 120
+          },
+          "si": 18
+        },
+        {
+          "n": 15,
+          "par": 5,
+          "metres": 495,
+          "tees": {
+            "white": 495,
+            "red": 420
+          },
+          "si": 1
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 300,
+          "tees": {
+            "white": 300,
+            "red": 280
+          },
+          "si": 9
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 230,
+          "tees": {
+            "white": 230,
+            "red": 200
+          },
+          "si": 16
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 205,
+          "tees": {
+            "white": 205,
+            "red": 155
+          },
+          "si": 2
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

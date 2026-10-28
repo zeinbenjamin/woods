@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.943Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_richmond",
+      "v": 2,
+      "created": 1793207585943,
+      "name": "Richmond Golf Club",
+      "state": "NSW",
+      "lat": -33.60489,
+      "lng": 150.76295,
+      "tee": "social",
+      "notes": "18 holes, par 70, 5,330 m off the social tees. Lengths in metres; tee sets: social, ladies (social is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: social 68 / 125. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify ('social' and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4367635, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 5,
+          "metres": 488,
+          "tees": {
+            "social": 488,
+            "ladies": 472
+          },
+          "si": 8
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 126,
+          "tees": {
+            "social": 126,
+            "ladies": 144
+          },
+          "si": 18
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 314,
+          "tees": {
+            "social": 314,
+            "ladies": 320
+          },
+          "si": 9
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 351,
+          "tees": {
+            "social": 351,
+            "ladies": 312
+          },
+          "si": 2
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 359,
+          "tees": {
+            "social": 359,
+            "ladies": 355
+          },
+          "si": 4
+        },
+        {
+          "n": 6,
+          "par": 5,
+          "metres": 446,
+          "tees": {
+            "social": 446,
+            "ladies": 351
+          },
+          "si": 12
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 273,
+          "tees": {
+            "social": 273,
+            "ladies": 287
+          },
+          "si": 14
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 142,
+          "tees": {
+            "social": 142,
+            "ladies": 133
+          },
+          "si": 15
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 352,
+          "tees": {
+            "social": 352,
+            "ladies": 381
+          },
+          "si": 5
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 125,
+          "tees": {
+            "social": 125,
+            "ladies": 124
+          },
+          "si": 13
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 340,
+          "tees": {
+            "social": 340,
+            "ladies": 305
+          },
+          "si": 6
+        },
+        {
+          "n": 12,
+          "par": 3,
+          "metres": 145,
+          "tees": {
+            "social": 145,
+            "ladies": 117
+          },
+          "si": 10
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 368,
+          "tees": {
+            "social": 368,
+            "ladies": 340
+          },
+          "si": 3
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 367,
+          "tees": {
+            "social": 367,
+            "ladies": 391
+          },
+          "si": 1
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 139,
+          "tees": {
+            "social": 139,
+            "ladies": 110
+          },
+          "si": 7
+        },
+        {
+          "n": 16,
+          "par": 5,
+          "metres": 469,
+          "tees": {
+            "social": 469,
+            "ladies": 470
+          },
+          "si": 16
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 293,
+          "tees": {
+            "social": 293,
+            "ladies": 315
+          },
+          "si": 11
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 233,
+          "tees": {
+            "social": 233,
+            "ladies": 248
+          },
+          "si": 17
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

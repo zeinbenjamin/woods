@@ -1,0 +1,223 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.932Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_georges_river",
+      "v": 2,
+      "created": 1793207585932,
+      "name": "Georges River Golf Course",
+      "state": "NSW",
+      "lat": -33.92248,
+      "lng": 150.97867,
+      "tee": "blue",
+      "notes": "18 holes, par 70, 5,692 m off the blue tees. Lengths in metres; tee sets: blue, white, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 69 / 116, white 67 / 115, red 71 / 119. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4388451, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 375,
+          "tees": {
+            "blue": 375,
+            "white": 353,
+            "red": 335
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 379,
+          "tees": {
+            "blue": 379,
+            "white": 339,
+            "red": 327
+          },
+          "si": 5
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 132,
+          "tees": {
+            "blue": 132,
+            "white": 126,
+            "red": 121
+          },
+          "si": 16
+        },
+        {
+          "n": 4,
+          "par": 5,
+          "metres": 510,
+          "tees": {
+            "blue": 510,
+            "white": 480,
+            "red": 358
+          },
+          "si": 8
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 191,
+          "tees": {
+            "blue": 191,
+            "white": 147,
+            "red": 174
+          },
+          "si": 10
+        },
+        {
+          "n": 6,
+          "par": 5,
+          "metres": 465,
+          "tees": {
+            "blue": 465,
+            "white": 425,
+            "red": 385
+          },
+          "si": 13
+        },
+        {
+          "n": 7,
+          "par": 5,
+          "metres": 408,
+          "tees": {
+            "blue": 408,
+            "white": 399,
+            "red": 391
+          },
+          "si": 18
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 367,
+          "tees": {
+            "blue": 367,
+            "white": 338,
+            "red": 294
+          },
+          "si": 4
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 147,
+          "tees": {
+            "blue": 147,
+            "white": 128,
+            "red": 117
+          },
+          "si": 15
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 382,
+          "tees": {
+            "blue": 382,
+            "white": 339,
+            "red": 322
+          },
+          "si": 3
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 339,
+          "tees": {
+            "blue": 339,
+            "white": 314,
+            "red": 299
+          },
+          "si": 7
+        },
+        {
+          "n": 12,
+          "par": 3,
+          "metres": 174,
+          "tees": {
+            "blue": 174,
+            "white": 152,
+            "red": 144
+          },
+          "si": 9
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 378,
+          "tees": {
+            "blue": 378,
+            "white": 361,
+            "red": 333
+          },
+          "si": 6
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 169,
+          "tees": {
+            "blue": 169,
+            "white": 159,
+            "red": 147
+          },
+          "si": 17
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 287,
+          "tees": {
+            "blue": 287,
+            "white": 283,
+            "red": 277
+          },
+          "si": 14
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 153,
+          "tees": {
+            "blue": 153,
+            "white": 141,
+            "red": 103
+          },
+          "si": 12
+        },
+        {
+          "n": 17,
+          "par": 5,
+          "metres": 446,
+          "tees": {
+            "blue": 446,
+            "white": 426,
+            "red": 406
+          },
+          "si": 11
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 390,
+          "tees": {
+            "blue": 390,
+            "white": 379,
+            "red": 371
+          },
+          "si": 2
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}
