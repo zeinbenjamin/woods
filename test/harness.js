@@ -30,6 +30,34 @@ const freePort = () => new Promise((res, rej) => {
   s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => res(port)); });
 });
 
+// Boot server/index.js on a free port and wait for /healthz. Suites run in
+// parallel, each with its own server, so two can draw the same "free" port in
+// the same instant and the loser dies on EADDRINUSE; on CI that showed as a
+// suite whose server never answered (runs 244 and 261). A server that exits
+// before answering is retried on a fresh port, and its stderr is in the error.
+async function bootServer(env, tries = 3) {
+  let last;
+  for (let attempt = 0; attempt < tries; attempt++) {
+    const port = await freePort(), base = `http://127.0.0.1:${port}`;
+    let exited = null, err = '';
+    const proc = spawn('node', ['server/index.js'], { env: { ...env, PORT: String(port) }, stdio: ['ignore', 'ignore', 'pipe'] });
+    proc.stderr.on('data', d => { err += d; });
+    proc.on('exit', code => { exited = code == null ? 'signal' : code; });
+    try {
+      await waitFor(async () => {
+        if (exited != null) throw new Error(`server exited (${exited}) before answering: ${err.trim().slice(-500)}`);
+        return (await fetch(`${base}/healthz`)).ok;
+      }, { timeout: 30000, what: 'server start' });
+      return { proc, port, base };
+    } catch (e) {
+      last = exited != null ? new Error(`server exited (${exited}) on port ${port}: ${err.trim().slice(-500)}`) : e;
+      try { proc.kill(); } catch {}
+      if (exited == null) throw last;           // alive but silent: not a port race, report it
+    }
+  }
+  throw last;
+}
+
 export async function waitFor(cond, { timeout = 4000, step = 20, what = 'condition' } = {}) {
   const end = Date.now() + timeout;
   for (;;) {
@@ -46,13 +74,7 @@ export async function waitFor(cond, { timeout = 4000, step = 20, what = 'conditi
 // storage: localStorage as an earlier visit left it.
 export async function startApp({ seed = {}, pollMs = 150, intercept, query = '', user = ME, signedIn = true, env = {}, storage = {} } = {}) {
   const DATA = mkdtempSync(join(tmpdir(), 'carry-ui-'));
-  const port = await freePort();
-  const base = `http://127.0.0.1:${port}`;
-  const proc = spawn('node', ['server/index.js'], {
-    env: { ...process.env, DATA_DIR: DATA, PORT: String(port), ANTHROPIC_API_KEY: '', ...(await accessEnv()), ...env },
-    stdio: 'ignore',
-  });
-  await waitFor(async () => (await fetch(`${base}/healthz`)).ok, { timeout: 30000, what: 'server start' });
+  const { proc, port, base } = await bootServer({ ...process.env, DATA_DIR: DATA, ANTHROPIC_API_KEY: '', ...(await accessEnv()), ...env });
 
   // Seeding and checks go through the API as `user` (api.as(email) for someone else).
   const makeApi = who => {
