@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.30.1 — 2026-10-28
+- The swing feed no longer slides sideways: the blurred backdrop behind a clip is clipped to the screen, so a clip can't be pushed off to one side.
+
 ## 2.30.0 — 2026-10-28
 - Seven more Sydney courses have course maps ready, each with all 18 holes and real greens: Avondale, Brighton Lakes, Kogarah, Mona Vale, NSW, St Michael's and The Lakes.
 - Kogarah's 16th, 17th and 18th play down the same fairways as the 1st, 2nd and 10th, so their maps are those holes' maps; the card check will say if their tees differ.
