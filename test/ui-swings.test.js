@@ -7,10 +7,15 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startApp, club, card } from './harness.js';
 
-let app, f1, f2;
+let app, f1, f2, analyseReply = null, analyseSeen = null;
 const reading = (one, extra = {}) => ({ one_thing: one, why: 'w', feel: 'f', drill: { name: 'D', how: 'h' }, check: 'c', ball_data: 'agrees', observations: [{ what: one, evidence: 'frame 5', confidence: 'high' }], cannot_tell: ['Wrist angle at the top'], ...extra });
 before(async () => {
-  app = await startApp({ seed: { clubs: [club('D', 'driver', { order: 1 }), club('5W', 'wood', { order: 2 }), club('7i', 'iron', { order: 4 })], courses: [{ id: 'c', v: 2, name: 'Test GC', tee: 'white', holes: card(9) }] } });
+  app = await startApp({ seed: { clubs: [club('D', 'driver', { order: 1 }), club('5W', 'wood', { order: 2 }), club('7i', 'iron', { order: 4 })], courses: [{ id: 'c', v: 2, name: 'Test GC', tee: 'white', holes: card(9) }] },
+    intercept: async (url, o) => {
+      if (!url.endsWith('/api/analyse') || !analyseReply) return null;
+      analyseSeen = JSON.parse(o.body);
+      return new Response(JSON.stringify(analyseReply), { status: 200, headers: { 'content-type': 'application/json' } });
+    } });
   f1 = (await app.api.upload(Buffer.from('frame-one'), 'image/webp')).id; f2 = (await app.api.upload(Buffer.from('frame-two'), 'image/webp')).id;
   const frames = [{ asset: f1, t: 0.05 }, { asset: f2, t: 0.3 }, { asset: f1, t: 0.55 }];
   await app.api.put('sessions', 's_aug', { id: 's_aug', v: 2, type: 'range', date: '2026-08-03', venue: 'Moore Park range', blocks: [], swings: [{ id: 'sw_a', view: 'dtl', club: '7i', note: 'hooking', frames, analysis: reading('Rotate through the ball', { ball_data: 'contradicts' }), analysedOn: '2026-08-03' }] });
@@ -64,4 +69,66 @@ test('with no swings the page says so, and the Range list has no link', async ()
   assert.equal(app.$('#view [data-go="range:view=swings"]'), null);
   app.go('range', { view: 'swings' });
   assert.match(app.text('#view'), /No swings on file yet/);
+});
+
+/* ---------- a reading across the readings (2.24.0) ---------- */
+test('the cross-reading button sends the club\'s readings and ball data, no frames; the answer is stored on the club and shown; newer readings mark it stale', async () => {
+  // Readings back (the earlier test emptied them).
+  const frames = [{ asset: f1, t: 0.05 }, { asset: f2, t: 0.3 }];
+  await app.api.put('sessions', 's_aug', { ...(await app.api.get('sessions', 's_aug')), swings: [{ id: 'sw_a', view: 'dtl', club: '7i', note: 'hooking', frames, analysis: reading('Rotate through the ball', { ball_data: 'contradicts' }), analysedOn: '2026-08-03' }] });
+  await app.api.put('sessions', 's_oct', { ...(await app.api.get('sessions', 's_oct')), swings: [{ id: 'sw_b', view: 'dtl', club: '7i', frames, analysis: reading('Hold the wrist angle longer', { wrist: { top: 'flat', lead_arm_parallel: 'released' } }), analysedOn: '2026-10-19' }] });
+  await app.waitFor(() => app.E(`clubReadings('7i').length`) === 2, { what: 'readings back' });
+  app.go('range', { view: 'swings' });
+  assert.equal(app.$('#swc_5W [data-act="crossRead"]'), null, 'no readings, no button');
+  const btn = app.$('#swc_7i [data-act="crossRead"]');
+  assert.match(btn.textContent, /Read across these 2 readings/);
+  const reply = { thread: 'Both readings point at the hands arriving late: the body turns, the club lags, and the face is open or shut by luck.', moved_on: 'The early rotation cue is no longer mentioned.', still_there: 'Wrist release before impact.', carry_forward: 'Keep the lead wrist flat and let the body wait for it', confidence: 'medium', caveat: 'Two readings, one angle, and the first contradicted the ball data.' };
+  analyseReply = { text: JSON.stringify(reply), json: reply };
+  btn.click();
+  await app.waitFor(() => app.E(`(S.clubs.find(c => c.code === '7i').crossReading || {}).on`) != null, { what: 'stored on the club' });
+  assert.equal(analyseSeen.json, true);
+  assert.deepEqual(analyseSeen.images, [], 'text only: no frames are sent');
+  assert.match(analyseSeen.prompt, /2 readings of a golfer's 7i swing/);
+  assert.match(analyseSeen.prompt, /3 Aug 2026, Down the line, his note: "hooking":\n  fix: Rotate through the ball[\s\S]*against the ball data: contradicts/);
+  assert.match(analyseSeen.prompt, /19 Oct 2026, Down the line:\n  fix: Hold the wrist angle longer[\s\S]*wrist: flat at the top; released with the lead arm parallel/);
+  assert.match(analyseSeen.prompt, /could not tell: Wrist angle at the top/);
+  assert.match(analyseSeen.prompt, /7i: no shot-level range data yet/, 'the club\'s ball data goes in');
+  assert.match(analyseSeen.prompt, /"carry_forward"[\s\S]*"confidence": "high" \| "medium" \| "low"/);
+  const cr = app.J(`S.clubs.find(c => c.code === '7i').crossReading`);
+  assert.deepEqual(cr.swings, ['sw_a', 'sw_b']);
+  assert.equal(cr.carry_forward, reply.carry_forward); assert.equal(cr.confidence, 'medium');
+  assert.equal((await app.api.get('clubs', '7i')).crossReading.thread, reply.thread, 'on the server');
+  app.go('range', { view: 'swings' });
+  assert.equal(app.text('#cross_7i .one'), reply.carry_forward);
+  assert.match(app.text('#cross_7i'), /The thread Both readings[\s\S]*Moved on The early rotation[\s\S]*Still there Wrist release[\s\S]*Could be wrong because Two readings/);
+  assert.match(app.text('#cross_7i'), /Read across 2 readings on .*, medium confidence — a reading of readings, not a measurement\./);
+  assert.doesNotMatch(app.text('#cross_7i'), /newer reading/);
+  assert.match(app.$('#swc_7i [data-act="crossRead"]').textContent, /Read across them again/);
+  assert.equal(app.$('#swc_7i [data-act="crossRead"]').className, '', 'not urged while nothing is newer');
+  // A third reading arrives: the stored one is marked stale, the button is primary again.
+  await app.api.put('sessions', 's_oct', { ...(await app.api.get('sessions', 's_oct')), swings: [...(await app.api.get('sessions', 's_oct')).swings, { id: 'sw_c', view: 'face', club: '7i', frames, analysis: reading('Hold the wrist angle longer'), analysedOn: '2026-10-19' }] });
+  await app.waitFor(() => app.E(`clubReadings('7i').length`) === 3, { what: 'third reading' });
+  app.go('range', { view: 'swings' });
+  assert.match(app.text('#cross_7i'), /1 newer reading since\./);
+  assert.equal(app.$('#swc_7i [data-act="crossRead"]').className, 'primary');
+  analyseReply = null;
+});
+
+test('a failed cross-reading says why and stores nothing', async () => {
+  const before = app.J(`S.clubs.find(c => c.code === '7i').crossReading`);
+  analyseReply = { text: 'not json', json: null };
+  app.go('range', { view: 'swings' });
+  app.$('#swc_7i [data-act="crossRead"]').click();
+  await app.waitFor(() => /expected format/.test(app.text('#crossProg_7i')), { what: 'error shown' });
+  assert.deepEqual(app.J(`S.clubs.find(c => c.code === '7i').crossReading`), before);
+  analyseReply = null;
+});
+
+test('editing the club in the bag keeps its cross-reading', async () => {
+  app.go('settings');
+  app.act('editClub', { id: '7i' });
+  app.fill('notes', 'stiff shaft');
+  assert.equal(await app.save(), true);
+  await app.waitFor(() => app.E(`(S.clubs.find(c => c.code === '7i') || {}).notes`) === 'stiff shaft', { what: 'saved' });
+  assert.equal(app.J(`S.clubs.find(c => c.code === '7i').crossReading.carry_forward`), 'Keep the lead wrist flat and let the body wait for it');
 });

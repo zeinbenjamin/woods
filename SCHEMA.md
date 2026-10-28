@@ -33,6 +33,12 @@ resolving.
   "order": 5,                // display order
   "nominalCarry": 110,       // what the golfer believes, carry
   "nominalTotal": 135,       // what the golfer believes, total
+  "crossReading": {          // 2.24.0: Claude's reading across this club's swing readings, made on
+    "on": "2026-10-28",      // request from Swing history (never on its own); `swings` are the
+    "swings": ["sw_…"],      // swing ids it was read from, so newer readings can be counted;
+    "thread": "…", "moved_on": "…", "still_there": "…", "carry_forward": "…",
+    "confidence": "medium", "caveat": "…"   // word-limited, text only (no frames were sent)
+  },
   "retired": false,
   "notes": "…"
 }

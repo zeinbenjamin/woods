@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.24.0 — 2026-10-28
+
+- Swing history: each club's fold has "Read across these readings". It sends that club's swing readings (the text only, no frames) and the club's ball data to Claude for one reading across them: the thread they keep coming back to, what the later readings no longer see, what is still there, the one thing to carry to the next session, a confidence and the main reason it could be wrong. Needs two readings; nothing is read unless you press it.
+- The result is kept with the club and shown on the fold, labelled a reading of readings, not a measurement, and says how many newer readings have come since so you know when to read again. Editing a club in the bag keeps it.
+
 ## 2.23.0 — 2026-10-28
 
 - Range → "Swing history": every swing you've filmed in one timeline, newest first, each flagged range or course with the date, the venue or course, the club, the camera angle, a frame, and the one fix its reading gave (or "not read yet"). Tap one to open the session or round it was filmed in.
