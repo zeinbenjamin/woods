@@ -47,7 +47,11 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: 
 .status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + var(--safe-b) + 32px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: var(--safe-b); }
-nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(4, 1fr); height: var(--nav-h); }
+nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
+/* Overview is the home tab, in the middle and marked out (2.26.0, he asked): a green pill, brighter when it's the page. */
+nav.tabs li { display: flex; align-items: center; justify-content: center; }
+nav.tabs button.home { width: auto; height: 34px; padding: 0 14px; border-radius: 999px; border: 0; margin: 0; background: var(--green); color: var(--paper); font-weight: 600; }
+nav.tabs button.home[aria-current="page"] { color: var(--paper); border-top-color: transparent; filter: brightness(1.15); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 35%, transparent); }
 nav.tabs button { width: 100%; height: 100%; border: 0; border-radius: 0; background: none; color: var(--ink-3); font: 500 13px var(--body); cursor: pointer; border-top: 2px solid transparent; margin-top: -1px; -webkit-tap-highlight-color: transparent; }
 nav.tabs button:focus:not(:focus-visible) { outline: none; }
 nav.tabs button[aria-current="page"] { color: var(--ink); border-top-color: var(--green); }
@@ -173,10 +177,12 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .reelInfo { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px calc(var(--safe-b) + 18px); background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; text-align: left; border: 0; font: inherit; cursor: pointer; }
 .reelInfo .t { font-weight: 600; font-size: 16px; } .reelInfo .s { font-size: 13px; opacity: .85; margin-top: 2px; } .reelInfo .fix { font-family: var(--cond); font-weight: 700; font-size: 20px; line-height: 1.15; margin: 6px 0 4px; } .reelInfo .small { opacity: .7; }
 .reelInfo .tag { background: rgba(255,255,255,.18); color: #fff; border: 0; } .reelInfo .tag.green { background: rgba(120,200,140,.35); } .reelInfo.static { position: static; background: none; }
-.reelsTop { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px; background: linear-gradient(rgba(0,0,0,.75), transparent); height: 0; overflow: visible; }
-.reelsTop .chips { padding-right: 12px; } .reel video { padding-top: calc(env(safe-area-inset-top, 0px) + 56px); box-sizing: border-box; }
+/* The bar is fixed over the feed, not a sticky item in the snap flow: as a 0-height
+   sticky its chips overflowed above the scroll box and were clipped (2.26.0). */
+.reelsTop { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 14px; background: linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.4) 70%, transparent); }
+.reelsTop .chips { flex: 1 1 auto; min-width: 0; padding: 2px 0; }
 .reelsTop .chips { overflow-x: auto; flex-wrap: nowrap; } .reelsTop .chip { background: rgba(255,255,255,.15); color: #fff; border-color: transparent; } .reelsTop .chip[aria-pressed="true"] { background: #fff; color: #000; }
-.reelsSound { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 16px; cursor: pointer; } .reelsSound[aria-pressed="true"] { background: #fff; }
+.reelsSound { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; } .reelsSound[aria-pressed="true"] { background: #fff; color: #000; }
 .reelsClose { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 16px; cursor: pointer; }
 .swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }
 ol.fixes { margin: 4px 0 0; padding-left: 18px; } ol.fixes li { margin: 2px 0; }
@@ -289,8 +295,9 @@ details.sec + .folds, .pcard + .folds, p + .folds, p + details.fold, .row-action
 <main id="view" aria-live="polite"></main>
 <nav class="tabs" aria-label="Sections">
   <ul>
-    <li><button data-tab="overview">Overview</button></li>
+    <li><button data-tab="swings">Swings</button></li>
     <li><button data-tab="range">Range</button></li>
+    <li><button data-tab="overview" class="home">Overview</button></li>
     <li><button data-tab="rounds">Rounds</button></li>
     <li><button data-tab="courses">Courses</button></li>
   </ul>
@@ -318,7 +325,7 @@ const S = {
   clubs: [], courses: [], sessions: [], settings: null, sampleOk: false,
   tab: 'overview', sub: null,                 // sub: {sessionId, blockId, courseId}
 };
-try { const t = localStorage.getItem('carry.tab'); if (['overview','range','rounds','courses','settings'].includes(t)) S.tab = t; else if (t === 'bag') S.tab = 'settings'; } catch (e) {}
+try { const t = localStorage.getItem('carry.tab'); if (['overview','swings','range','rounds','courses','settings'].includes(t)) S.tab = t; else if (t === 'bag') S.tab = 'settings'; } catch (e) {}
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -644,7 +651,7 @@ function parseGo(str) {
 function render() {
   if (window.HoleMap) HoleMap.onLoad = mapArrived;
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
-  const views = { overview: vOverview, range: vRange, rounds: vRounds, courses: vCourses, settings: vSettings };
+  const views = { overview: vOverview, swings: vSwingsTab, range: vRange, rounds: vRounds, courses: vCourses, settings: vSettings };
   const gear = document.getElementById('settingsBtn'); if (gear) gear.setAttribute('aria-current', S.tab === 'settings' ? 'page' : 'false');
   // Every save redraws the view; panels he opened stay open (matched by id).
   const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
@@ -1085,15 +1092,14 @@ function overviewRecent() {
 
 /* ---------- range ---------- */
 function vRange() {
-  if (S.sub && S.sub.view === 'swings') return vSwings();
-  if (S.sub && S.sub.view === 'reels') return vReels();
+  if (S.sub && (S.sub.view === 'swings' || S.sub.view === 'reels')) { S.tab = 'swings'; if (S.sub.view === 'swings') S.sub = null; return vSwingsTab(); }
   if (S.sub && S.sub.goal) return vGoal();
   if (S.sub && S.sub.blockId) return vBlock();
   if (S.sub && S.sub.sessionId) return vRangeSession();
   const list = S.sessions.filter(s => s.type === 'range');
   const nsw = allSwings().length;
   return `<div class="spread"><h1>Range</h1><button class="primary" data-act="newRange">New session</button></div><h2>What to practise</h2>` + practiceSection() + `<h2>Sessions</h2>` +
-    (nsw ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" data-go="range:view=swings">Swing history: ${plural(nsw, 'swing')} →</button></div>` : '') +
+
     (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a range session, then add a block per club and target. Paste shots straight from a tracked bay: one line per shot, carry then total, then club speed if shown.</p><button class="primary" data-act="newRange">New session</button></div>`);
 }
 function vRangeSession() {
@@ -3202,14 +3208,18 @@ Object.assign(ACTIONS, {
     if (await save('clubs', club, { ...c, crossReading: cr })) { toast('Read across the readings'); render(); }
   },
 });
+// Swings is a tab (2.26.0, he asked: the feed was too hard to reach): the
+// history is its root, the feed its one sub-view. The old range:view=swings
+// and range:view=reels links still land here.
+function vSwingsTab() { return S.sub && S.sub.view === 'reels' ? vReels() : vSwings(); }
 function vSwings() {
   const sws = swingHistory();
-  let h = back('range', null, 'Range') + `<h1>Swing history</h1>`;
+  let h = `<h1>Swings</h1>`;
   if (!sws.length) return h + `<div class="empty"><p>No swings on file yet. Add a video to a range session or a round and it appears here.</p></div>`;
   const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length, places = [...new Set(sws.map(sw => sw.session.id))].length;
   h += `<p class="small muted" id="swingBasis">${plural(sws.length, 'swing')} from ${plural(places, 'session')}, ${swingDate(sws[sws.length - 1]) ? `${dateLabel(swingDate(sws[sws.length - 1]))} to ${dateLabel(swingDate(sws[0]))}` : ''}; ${read} read. Readings are interpretations, not measurements; the summaries below are put together from them, nothing new is read.</p>`;
-  if (sws.some(sw => sw.video)) h += `<div class="row-actions"><button class="primary" data-go="range:view=reels">Watch: ${plural(sws.filter(sw => sw.video).length, 'video')} →</button></div>`;
+  if (sws.some(sw => sw.video)) h += `<div class="row-actions"><button class="primary" data-go="swings:view=reels">Watch: ${plural(sws.filter(sw => sw.video).length, 'video')} →</button></div>`;
   h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
     const c = swingClubSummary(club, sws), name = club || 'No club';
     const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
@@ -3245,9 +3255,9 @@ function reelSwings(club) { return swingHistory().filter(sw => sw.video && (!clu
 function vReels() {
   const club = (S.sub && S.sub.club) || '', all = swingHistory().filter(sw => sw.video), sws = reelSwings(club);
   const clubs = [...new Set(all.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
-  const chip = (code, label) => `<button class="chip" data-go="range:view=reels${code ? `,club=${esc(code)}` : ''}" aria-pressed="${club === code}">${esc(label)}</button>`;
+  const chip = (code, label) => `<button class="chip" data-go="swings:view=reels${code ? `,club=${esc(code)}` : ''}" aria-pressed="${club === code}">${esc(label)}</button>`;
   return `<div class="reels" id="reels">
-    <div class="reelsTop"><button class="reelsClose" data-go="range:view=swings" aria-label="Close">✕</button><div class="chips">${chip('', 'All')}${clubs.map(c => chip(c, c || 'No club')).join('')}</div>${sws.length ? `<button class="reelsSound" data-act="reelsSound" aria-pressed="${reelsSound}" aria-label="${reelsSound ? 'Mute' : 'Sound on'}">${reelsSound ? '🔊' : '🔇'}</button>` : ''}</div>
+    <div class="reelsTop"><button class="reelsClose" data-go="swings" aria-label="Close">✕</button><div class="chips">${chip('', 'All')}${clubs.map(c => chip(c, c || 'No club')).join('')}</div>${sws.length ? `<button class="reelsSound" data-act="reelsSound" aria-pressed="${reelsSound}" aria-label="${reelsSound ? 'Mute' : 'Sound on'}">${soundIcon(reelsSound)}</button>` : ''}</div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
       return `<section class="reel" data-i="${i}"><video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
         <button class="reelInfo" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
@@ -3356,6 +3366,8 @@ function reelCardHtml(sw, s) {
     <div class="swing" id="reelCard">${a ? swingReading(sw, s, a) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
     <div class="row-actions"><button data-act="reelOpen" data-go-session="${go}">Open the ${s.type === 'round' ? 'round' : 'session'} →</button></div>`;
 }
+// A minimalist speaker, drawn not typed (he found the emoji tacky): waves on, a cross off.
+const soundIcon = on => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/>${on ? '<path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18.3 6.5a8 8 0 0 1 0 11"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
 Object.assign(ACTIONS, {
   reelCard(d) {
     const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid);
@@ -3367,7 +3379,7 @@ Object.assign(ACTIONS, {
     reelsSound = !reelsSound;
     document.querySelectorAll('#reels video[data-reel]').forEach(v => { v.muted = !reelsSound; });
     const b = document.querySelector('#reels .reelsSound');
-    if (b) { b.textContent = reelsSound ? '🔊' : '🔇'; b.setAttribute('aria-pressed', String(reelsSound)); b.setAttribute('aria-label', reelsSound ? 'Mute' : 'Sound on'); }
+    if (b) { b.innerHTML = soundIcon(reelsSound); b.setAttribute('aria-pressed', String(reelsSound)); b.setAttribute('aria-label', reelsSound ? 'Mute' : 'Sound on'); }
   },
   addSwing(d) {
     const sid = d.id; let get;

@@ -10,6 +10,8 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 - Swing frames can be packed around impact: the trim has an Impact slider; move it to where the club meets the ball and 10 of the 16 frames sit from 0.3 s before it to 0.1 s after, about 0.04 s apart, with the rest spread over the backswing and finish. Unmarked, the frames stay evenly spaced as before. The reading is told where the frames are packed, and the swing card says so.
 - The trim preview no longer stays black: it was asking the decoder for the very first instant of the clip, and on an iPhone a video that has never played shows nothing. It now starts a frame in and plays and pauses once so the picture appears. A clip the browser can't decode says so instead of showing an empty box.
 - The swing video feed has a sound button: videos start quiet so they can play on their own, and one tap turns the sound on for the clip on screen.
+- Five tabs: Swings · Range · Overview · Rounds · Courses, with Overview in the middle as a green pill. Swings is the swing history, with Watch one tap in; it is no longer a link inside Range.
+- The feed's club chips are no longer clipped at the top, the video sits centred with even black above and below instead of a band under the chips, and the sound button is a drawn speaker (waves on, a cross off) rather than an emoji.
 - Tapping a caption in the feed opens that swing's card over the video (the reading, or "not read yet") with one link on to the session or round, instead of leaving the feed for the whole session page.
 
 ## 2.25.1 — 2026-10-28
