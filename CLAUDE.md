@@ -1425,6 +1425,8 @@ puts him on the wrong hole; he moves holes himself (‹ ›, *Hole n →*).
 ## Working agreements from the chat
 
 - Build it and test it, then report — not "here's what you could do".
+- The Carry chat opens its own PR after each push (asked 2026-10-28); he
+  merges and deploys.
 - Flag uncertainty explicitly rather than smoothing over it (e.g. the
   Bardwell Valley card's units are labelled yards by the source but read
   as metres; that's noted in the course record rather than silently
