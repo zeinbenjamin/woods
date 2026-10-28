@@ -1091,7 +1091,18 @@ white with a dark drop-shadow edge, no disc; each reel has its own
 all). **A sheet's bottom strip** (`.sheet-actions`): the row is sticky at
 the scrollport's bottom, so it carries the sheet's bottom padding; with the
 padding on `.inner`, content scrolled past under Close in that strip (seen
-on the feed's card; every sheet had it).
+on the feed's card; every sheet had it). **Under the status bar, over the tab bar** (2.29.0, he
+asked for Instagram's layout): `apple-mobile-web-app-status-bar-style` is
+`black-translucent`, so the page runs under the status bar everywhere; a
+fixed `body::before` strip of paper, `env(safe-area-inset-top)` tall, sits
+behind the clock on every page and hides under `body.reels` (set by
+`reelsLifecycle`), which also hides `.top` and makes `nav.tabs`
+translucent with a backdrop blur. `.reels` is `z-index: 4`, under the bar
+(5); the caption's bottom padding clears `--nav-h + --safe-b`. Each reel
+has a `.reelBg`: the swing's middle frame (`swingFrame`) blurred and
+darkened behind the clip, so a clip that doesn't fill the screen has no
+black bars; a still, not a second decoding video, so a phone plays one
+clip at a time as before.
 
 ## Getting to the green (2.22.0)
 
