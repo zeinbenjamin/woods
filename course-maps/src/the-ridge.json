@@ -1,0 +1,15 @@
+{
+ "id": "the-ridge",
+ "name": "The Ridge Golf Course & Driving Range",
+ "osm": {
+  "course": "way/50875824",
+  "name": "The Ridge Golf Course & Driving Range",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -34.03025,
+  151.00012
+ ],
+ "holes": "osm",
+ "why": "Tier A on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 344015ef). No card in the source: the course page checks the NAS card once the course is imported."
+}

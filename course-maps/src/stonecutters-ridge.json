@@ -1,0 +1,15 @@
+{
+ "id": "stonecutters-ridge",
+ "name": "Stonecutters Ridge Golf Club",
+ "osm": {
+  "course": "relation/4257469",
+  "name": "Stonecutters Ridge Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.72341,
+  150.86214
+ ],
+ "holes": "osm",
+ "why": "Tier A on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 344015ef). No card in the source: the course page checks the NAS card once the course is imported."
+}
