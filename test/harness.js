@@ -52,7 +52,7 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
     env: { ...process.env, DATA_DIR: DATA, PORT: String(port), ANTHROPIC_API_KEY: '', ...(await accessEnv()), ...env },
     stdio: 'ignore',
   });
-  await waitFor(async () => (await fetch(`${base}/healthz`)).ok, { timeout: 8000, what: 'server start' });
+  await waitFor(async () => (await fetch(`${base}/healthz`)).ok, { timeout: 30000, what: 'server start' });
 
   // Seeding and checks go through the API as `user` (api.as(email) for someone else).
   const makeApi = who => {

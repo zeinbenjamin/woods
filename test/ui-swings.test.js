@@ -160,14 +160,40 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.equal(reels[0].querySelector('.reelInfo .fix').textContent, 'Hold the wrist angle longer');
   assert.match(reels[1].textContent, /not read yet/);
   assert.match(reels[0].querySelector('.reelInfo .count').textContent, /1 of 3 · swipe up/);
-  assert.equal(reels[1].querySelector('.reelInfo').dataset.go, 'rounds:sessionId=r_sep', 'the overlay opens where it was filmed');
+  // The caption opens the swing's card over the feed, not the whole session; one link goes on to where it was filmed.
+  assert.equal(reels[1].querySelector('.reelInfo').dataset.go, undefined);
+  reels[0].querySelector('.reelInfo').click();
+  assert.ok(app.sheetOpen(), 'a sheet over the feed');
+  assert.match(app.text('#sheetInner h2'), /19 Oct 2026/);
+  assert.match(app.text('#sheetInner #reelCard'), /Hold the wrist angle longer/);
+  assert.match(app.text('#sheetInner #reelCard'), /a reading, not a measurement/);
+  assert.ok(app.$('#reels'), 'the feed is still there underneath');
+  app.$('#sheetInner [data-close]').click();
+  reels[1].querySelector('.reelInfo').click();
+  assert.match(app.text('#sheetInner #reelCard'), /Not read yet/);
+  assert.equal(app.$('#sheetInner [data-act="reelOpen"]').dataset.goSession, 'rounds:sessionId=r_sep');
+  app.$('#sheetInner [data-act="reelOpen"]').click();
+  assert.ok(!app.sheetOpen() && !app.$('#reels'), 'the link closes the sheet and leaves the feed');
+  assert.match(app.text('#view'), /14 Sept 2026/);
+  app.go('range', { view: 'reels' });
   assert.equal(app.$('#reels .reelsClose').dataset.go, 'range:view=swings');
   assert.equal(observed.length, 3, 'every video is watched');
   // The third video scrolls into view: it plays, its neighbour gets loaded, the first pauses.
-  const vids = reels.map(r => r.querySelector('video'));
+  const vids = app.$$('#reels video[data-reel]');   // re-read: the feed was rebuilt by the trip out
   cb([{ target: vids[2], intersectionRatio: 1 }, { target: vids[0], intersectionRatio: 0 }]);
   assert.deepEqual([played, paused], [[vids[2].src], [vids[0].src]]);
   assert.equal(vids[2].preload, 'auto'); assert.equal(vids[1].preload, 'auto');
+  // Sound: muted until the button is tapped, then every reel unmuted (only the one on screen plays); off again when the feed closes.
+  assert.ok(vids.every(v => v.muted === true), 'starts muted so it can autoplay');
+  const snd = app.$('#reels .reelsSound');
+  assert.equal(snd.getAttribute('aria-pressed'), 'false');
+  snd.click();
+  assert.ok(vids.every(v => v.muted === false), 'the tap unmutes');
+  assert.equal(app.$('#reels .reelsSound').getAttribute('aria-pressed'), 'true');
+  app.$('#reels .reelsSound').click();
+  assert.ok(vids.every(v => v.muted === true), 'and mutes again');
+  app.$('#reels .reelsSound').click();
+  assert.equal(app.E('reelsSound'), true);
   // Narrow to the 5W.
   app.$('#reels .reelsTop [data-go="range:view=reels,club=5W"]').click();
   assert.equal(app.$$('#reels .reel').length, 1);
@@ -176,5 +202,6 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.match(app.text('#reels'), /No videos for the D/);
   app.$('#reels .reelsClose').click();
   assert.equal(app.$('#reels'), null, 'closed, back on the history');
+  assert.equal(app.E('reelsSound'), false, 'the next open starts quiet');
   assert.ok(app.$('#swingTimeline'));
 });
