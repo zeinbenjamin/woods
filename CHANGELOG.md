@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.23.0 — 2026-10-28
+
+- Range → "Swing history": every swing you've filmed in one timeline, newest first, each flagged range or course with the date, the venue or course, the club, the camera angle, a frame, and the one fix its reading gave (or "not read yet"). Tap one to open the session or round it was filmed in.
+- Above the timeline, a fold per club put together from the readings: how many swings and over what span, the fix reading by reading with whether the ball data agreed, the latest wrist answer, and a note when the fix has changed between readings. Nothing new is read; it's a summary of what's already on file.
+
 ## 2.22.0 — 2026-10-28
 
 - A round's page has a new fold under the scorecard, "Getting to the green": for each hole, the long shots it took to reach the green, the chips, the sand shots and the putts, with the totals and a short account of where the strokes went ("55 strokes, of which 24 got the ball to the green and 31 were spent from inside 60 m"), and how many long shots the par 3s, 4s and 5s took on average.
