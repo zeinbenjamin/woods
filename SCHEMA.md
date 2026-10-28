@@ -297,7 +297,7 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "club": "7i", "note": "…",
   "addedOn": "2026-09-24", "duration": 6.4,
   "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below; 16 since 2.18.0 (8 before), evenly spaced across the trim
-  "video": "<asset id>|null",        // null when over the 20 MB asset cap
+  "video": "<asset id>|null",        // null when over the 60 MB cap (20 before 2.25.0)
   "analysis": { /* free-form; see keys below */ },
   "analysedOn": "2026-09-24",
   "analysedIn": "chat"               // on older analyses pasted back from a chat

@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.25.0 — 2026-10-28
+
+- Swing history has a "Watch" button: your swing videos one to a screen, newest first, swipe up for the next. Each plays on a loop as it comes into view, with the date, where it was filmed, the club, the angle and the reading's fix over the bottom; tap those to open the session. Chips at the top narrow it to one club, to flick through, say, the 7i swings across months. Only the video on screen and its neighbours are loaded.
+- A swing keeps its video up to 60 MB now (it was 20), so a slow-motion clip of 15 seconds or so is stored and plays in the feed. Only swings with a stored video appear there.
+
 ## 2.24.0 — 2026-10-28
 
 - Swing history: each club's fold has "Read across these readings". It sends that club's swing readings (the text only, no frames) and the club's ball data to Claude for one reading across them: the thread they keep coming back to, what the later readings no longer see, what is still there, the one thing to carry to the next session, a confidence and the main reason it could be wrong. Needs two readings; nothing is read unless you press it.

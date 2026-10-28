@@ -167,6 +167,15 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .quick { margin-top: 8px; } .qrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .qrow .qn { font-family: var(--cond); font-weight: 700; font-size: 17px; min-width: 44px; } .qrow .qn small { display: block; font: 400 10px var(--body); color: var(--ink-3); }
 .qrow .chips { flex-wrap: nowrap; overflow-x: auto; }
+.reels { position: fixed; inset: 0; z-index: 8; background: #000; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.reel { position: relative; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; display: flex; align-items: center; justify-content: center; }
+.reel video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.reelInfo { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px calc(var(--safe-b) + 18px); background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; text-align: left; border: 0; font: inherit; cursor: pointer; }
+.reelInfo .t { font-weight: 600; font-size: 16px; } .reelInfo .s { font-size: 13px; opacity: .85; margin-top: 2px; } .reelInfo .fix { font-family: var(--cond); font-weight: 700; font-size: 20px; line-height: 1.15; margin: 6px 0 4px; } .reelInfo .small { opacity: .7; }
+.reelInfo .tag { background: rgba(255,255,255,.18); color: #fff; border: 0; } .reelInfo .tag.green { background: rgba(120,200,140,.35); } .reelInfo.static { position: static; background: none; }
+.reelsTop { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 8px; background: linear-gradient(rgba(0,0,0,.7), transparent); height: 0; overflow: visible; }
+.reelsTop .chips { overflow-x: auto; flex-wrap: nowrap; } .reelsTop .chip { background: rgba(255,255,255,.15); color: #fff; border-color: transparent; } .reelsTop .chip[aria-pressed="true"] { background: #fff; color: #000; }
+.reelsClose { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 16px; cursor: pointer; }
 .swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }
 ol.fixes { margin: 4px 0 0; padding-left: 18px; } ol.fixes li { margin: 2px 0; }
 .tgrow { align-items: flex-start; } .tgfields { display: grid; grid-template-columns: 44px 1fr; gap: 4px 8px; align-items: center; flex: 1; min-width: 0; } .tgfields .chips { overflow-x: auto; }
@@ -634,6 +643,7 @@ function render() {
   $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
   for (const id of open) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
   playLifecycle();
+  reelsLifecycle();
 }
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-go]'); if (a) { const [tab, sub] = parseGo(a.dataset.go); go(tab, sub); return; }
@@ -1068,6 +1078,7 @@ function overviewRecent() {
 /* ---------- range ---------- */
 function vRange() {
   if (S.sub && S.sub.view === 'swings') return vSwings();
+  if (S.sub && S.sub.view === 'reels') return vReels();
   if (S.sub && S.sub.goal) return vGoal();
   if (S.sub && S.sub.blockId) return vBlock();
   if (S.sub && S.sub.sessionId) return vRangeSession();
@@ -2867,6 +2878,9 @@ const VIEWS = { dtl: 'Down the line', face: 'Face on', other: 'Other angle' };
 // failures large image sets have caused (frames stay individual, never a
 // contact sheet). Older swings keep their 8.
 const FRAME_COUNT = 16;
+// The video itself is kept with the frames up to this size (2.25.0: 60 MB, from
+// 20; a 15 s slow-motion clip is about 21 MB and the feed below plays it).
+const VIDEO_MAX = 60 * 1024 * 1024;
 const GAP_WARN = 0.15;                                 // seconds between frames: over this, the downswing is skipped
 // Mean spacing of a swing's frames, in seconds, from their stored times.
 const frameGap = frames => frames && frames.length > 1 ? (frames[frames.length - 1].t - frames[0].t) / (frames.length - 1) : null;
@@ -3159,6 +3173,7 @@ function vSwings() {
   const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length, places = [...new Set(sws.map(sw => sw.session.id))].length;
   h += `<p class="small muted" id="swingBasis">${plural(sws.length, 'swing')} from ${plural(places, 'session')}, ${swingDate(sws[sws.length - 1]) ? `${dateLabel(swingDate(sws[sws.length - 1]))} to ${dateLabel(swingDate(sws[0]))}` : ''}; ${read} read. Readings are interpretations, not measurements; the summaries below are put together from them, nothing new is read.</p>`;
+  if (sws.some(sw => sw.video)) h += `<div class="row-actions"><button class="primary" data-go="range:view=reels">Watch: ${plural(sws.filter(sw => sw.video).length, 'video')} →</button></div>`;
   h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
     const c = swingClubSummary(club, sws), name = club || 'No club';
     const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
@@ -3179,6 +3194,48 @@ function vSwings() {
       <div class="s">${a && a.one_thing ? `<b>${esc(a.one_thing)}</b>${a.ball_data === 'agrees' ? ' · ball data agrees' : a.ball_data === 'contradicts' ? ' · contradicts ball data' : ''}` : a ? esc((a.observations || [])[0]?.what || 'read') : 'not read yet'}</div></div></button>`;
   }).join('') + `</div>`;
   return h;
+}
+
+/* ---------- the feed (2.25.0) ----------
+   Swing videos one to a screen, newest first, swipe up for the next: the
+   browser snaps each swipe to one video (scroll-snap) and an observer plays
+   the one on screen and pauses the rest, loading only the neighbours. The
+   date, where it was filmed, the club, the angle and the reading's fix sit
+   over the bottom; a tap on them opens the session. Club chips at the top
+   narrow it to one club, which is the point: flick through the 7i swings
+   across months. Only swings with a stored video appear (frames-only
+   swings can't play). A viewer over what is stored; nothing changes. */
+function reelSwings(club) { return swingHistory().filter(sw => sw.video && (!club || (sw.club || '') === club)); }
+function vReels() {
+  const club = (S.sub && S.sub.club) || '', all = swingHistory().filter(sw => sw.video), sws = reelSwings(club);
+  const clubs = [...new Set(all.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
+  const chip = (code, label) => `<button class="chip" data-go="range:view=reels${code ? `,club=${esc(code)}` : ''}" aria-pressed="${club === code}">${esc(label)}</button>`;
+  return `<div class="reels" id="reels">
+    <div class="reelsTop"><button class="reelsClose" data-go="range:view=swings" aria-label="Close">✕</button><div class="chips">${chip('', 'All')}${clubs.map(c => chip(c, c || 'No club')).join('')}</div></div>
+    ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
+      return `<section class="reel" data-i="${i}"><video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
+        <button class="reelInfo" data-go="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
+          <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>${a && a.one_thing ? `<div class="fix">${esc(a.one_thing)}</div>` : '<div class="s">not read yet</div>'}
+          <div class="small count">${i + 1} of ${sws.length}${i + 1 < sws.length ? ' · swipe up' : ''}</div></button></section>`; }).join('')
+      : `<section class="reel"><div class="reelInfo static"><div class="t">No videos${club ? ` for the ${esc(club)}` : ''}</div><div class="s">Swings keep their video when it is under ${Math.round(VIDEO_MAX / 1048576)} MB; frames-only swings can't play here.</div></div></section>`}
+  </div>`;
+}
+let reelsObs = null;
+function reelsLifecycle() {
+  const root = document.getElementById('reels');
+  if (reelsObs) { reelsObs.disconnect(); reelsObs = null; }
+  if (!root || typeof IntersectionObserver !== 'function') return;
+  const vids = [...root.querySelectorAll('video[data-reel]')];
+  reelsObs = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      const v = e.target, i = vids.indexOf(v);
+      if (e.intersectionRatio >= 0.6) {
+        try { v.preload = 'auto'; const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (err) {}
+        for (const j of [i - 1, i + 1]) if (vids[j]) vids[j].preload = 'auto';   // the neighbours, ready for the next swipe
+      } else { try { v.pause(); } catch (err) {} }
+    }
+  }, { root, threshold: [0, 0.6] });
+  vids.forEach(v => reelsObs.observe(v));
 }
 
 /* ---------- add a swing ---------- */
@@ -3245,7 +3302,7 @@ Object.assign(ACTIONS, {
         catch (e) { toast(e && e.code === 'quota_or_state' ? 'Image storage is full' : 'Frame upload failed'); return false; }
       }
       let video = null;
-      if (file.size <= 20 * 1024 * 1024) { note.textContent = 'Storing the video…'; try { const r = await S.assets.upload(file, { type: file.type }); video = r.id; } catch (e) { video = null; } }
+      if (file.size <= VIDEO_MAX) { note.textContent = 'Storing the video…'; try { const r = await S.assets.upload(file, { type: file.type }); video = r.id; } catch (e) { video = null; } }
       const s = session(sid);
       const sw = { id: uid('sw'), view: val(root, 'view') || 'dtl', club: val(root, 'club'), note: val(root, 'note'), frames, video, addedOn: today(), duration: +(ex.duration || 0).toFixed(2) };
       const ok = await save('sessions', sid, { ...s, swings: swingsOf(s).concat(sw) });

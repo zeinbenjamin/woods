@@ -1001,6 +1001,28 @@ form keeps it (it used to rebuild the document from the fields alone).
 stored and shown, stale after a third reading, a bad reply stores nothing,
 the bag form keeps it.
 
+**The feed** (2.25.0, "scroll through the swing videos the same way
+Instagram reels works"): `vReels` (`S.sub.view === 'reels'`, optional
+`club`), *Watch* on Swing history when any swing has a video. `#reels` is a
+fixed, full-screen, black `scroll-snap-type: y mandatory` container above
+the tab bar (`z-index: 8`); each `.reel` is `height: 100%`, snap-aligned,
+`<video playsinline muted loop>` with `preload` auto for the first two and
+none after; the overlay (`.reelInfo`, a `data-go` button) carries the
+date, range/course tag, club, angle, note and the reading's `one_thing`,
+and "n of N · swipe up" (`.count`). `reelsLifecycle()` runs after every
+render like `playLifecycle`: an `IntersectionObserver` on the container
+(threshold 0.6) plays the video on screen, pauses the rest and sets the
+neighbours' `preload` to auto, so a swipe through ten clips loads tens of
+MB, not hundreds; it disconnects when the view goes. Only swings with a
+stored video appear, so `VIDEO_MAX` went from 20 to 60 MB (a 15 s
+slow-motion clip is about 21 MB). Chips at the top filter by club
+(`reelSwings(club)`). Checked in Chromium with a real h264 clip: on open
+only the first plays; after scrolling to the third, the first pauses, the
+third plays and its neighbour preloads. `ui-swings` drives it with a
+stand-in observer (jsdom has none): the rows, order, preload, attributes,
+the fix, play/pause on the callback, the club filter, the empty state,
+close.
+
 ## Getting to the green (2.22.0)
 
 Asked for 2026-10-28, from the Moore Park scorecard ("a drop down tab
@@ -1111,7 +1133,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 335 tests, about 45s.
+`npm test` — 336 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1196,7 +1218,8 @@ fixture would let the reading be pinned.
   the round form filling the picked tee's lengths),
   `ui-swings` (Swing history: the timeline newest first flagged range or
   course, the per-club summary from the readings, the empty state, the
-  cross-reading button end to end against a stubbed analysis call),
+  cross-reading button end to end against a stubbed analysis call, the
+  video feed with a stand-in observer),
   `ui-togreen` (Getting to the green: a traced hole from its shots,
   scores-only holes tapped in, the table, teaser and story, the over-count
   and a traced hole refused),
