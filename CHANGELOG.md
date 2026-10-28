@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.32.0 — 2026-10-28
+- In the swing feed, tap the clip to turn sound on or off: the speaker flashes in the middle of the clip and fades. The corner button is gone.
+- A thin bar under the caption follows the clip as it plays, and dragging across it moves to that point in the clip.
+- The "n of N · swipe up" line is gone.
+
 ## 2.31.3 — 2026-10-28
 - In the swing feed the tab bar is the same solid bar as everywhere else; the clip ends at the bar instead of running under it.
 
