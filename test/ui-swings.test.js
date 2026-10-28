@@ -176,6 +176,10 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.ok(app.$('#reels .reelsClose svg'), 'the back control is a drawn chevron');
   assert.equal(app.$$('#reels .reelsTop .chip').length, 0, 'no club chips');
   assert.equal(app.$$('#reels .reel .reelBottom .reelsSound').length, 3, 'a speaker on every reel, above the caption');
+  assert.ok(app.win.document.body.classList.contains('reels'), 'the body knows the feed is open (tab bar translucent, status strip hidden)');
+  assert.ok(app.$('nav.tabs'), 'the tab bar stays in the page under the feed');
+  assert.ok(reels.every(r => r.querySelector('.reelBg')), 'a blurred still of the middle frame fills each clip\'s bars');
+  assert.ok(reels[0].querySelector('.reelBg').getAttribute('src').startsWith('/_blob/'), 'the still is a stored frame');
   assert.ok(app.$('#reels .reelsSound svg') && !/🔊|🔇/.test(app.$('#reels .reelsSound').textContent), 'the sound button is a drawn speaker, not an emoji');
   assert.equal(observed.length, 3, 'every video is watched');
   // The third video scrolls into view: it plays, its neighbour gets loaded, the first pauses.
@@ -201,6 +205,7 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.match(app.text('#reels'), /No videos for the D/);
   app.$('#reels .reelsClose').click();
   assert.equal(app.$('#reels'), null, 'closed, back on the history');
+  assert.ok(!app.win.document.body.classList.contains('reels'), 'the body class goes with the feed');
   // Old links still land on the tab.
   app.go('range', { view: 'reels' }); assert.ok(app.$('#reels')); assert.equal(app.E('S.tab'), 'swings');
   app.go('range', { view: 'swings' }); assert.ok(app.$('#swingTimeline')); assert.equal(app.E('S.tab'), 'swings');
