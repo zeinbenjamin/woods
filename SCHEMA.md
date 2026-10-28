@@ -194,6 +194,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
       "strokes": 7,                       // derived when shots exist
       "manualStrokes": 7,                 // typed score, kept if shots are cleared
       "putts": 3,
+      "chips": 1, "sand": 0,             // 2.21.0: his counts on a scores-only hole (Getting to the
+                                          // green); on a traced hole they come from the shots and
+                                          // are never stored
       "firstPutt": 8,                     // metres — can never be backfilled
       "firstPuttEstimated": true,         // set when derived from an approach tap on the
                                           // green; cleared when the distance is typed

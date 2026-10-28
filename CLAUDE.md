@@ -961,6 +961,28 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   under trees and how a phone browser treats Cloudflare's offline errors
   are the first round's test.
 
+## Getting to the green (2.22.0)
+
+Asked for 2026-10-28, from the Moore Park scorecard ("a drop down tab
+underneath to elaborate on the number of chip shots, sand shots and
+putts… a better narrative on the final score"). `toGreenSection(r)`, the
+fold `#toGreen` right under the scorecard: a table per scored hole (Long,
+Chips, Sand, Putts, Pen. when any, Score), a total row, and `#toGreenStory`,
+one paragraph: strokes, how many got the ball to the green, how many were
+spent inside `CHIP_FROM` (60 m), and the long shots per hole by par.
+`holeBreakdown(h)`: on a traced hole, from the shots (from a bunker lie →
+sand; `i > 0` and `from < 60` → chip; else long: the tee shot and anything
+from 60 m out, an unplaceable shot included); `putts` is `h.putts`. On a
+scores-only hole, `h.putts`, `h.chips`, `h.sand` are his counts (SCHEMA.md),
+tapped under `#toGreenEntry` (chip rows, `setHoleCount`; a traced hole
+refuses), and long = strokes − putts − chips − sand − `holePens(h)`, only
+once putts are in (`known`); the teaser and story use known holes only.
+Penalties are counted apart, never as long shots. `holePens` is now one
+global (the practice list's local copy went). Nothing derived is stored.
+`ui-togreen` works a hand-made round: a traced hole (2 long, 1 sand, 1
+chip, 2 putts), two scores-only holes tapped in, one with a penalty, the
+over-count refused, the traced hole refusing taps.
+
 ## The practice loop (2.6.0)
 
 Release 2 of his UI/UX review ("Connect the journey"): one named objective
@@ -1049,7 +1071,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 325 tests, about 45s.
+`npm test` — 329 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1132,6 +1154,9 @@ fixture would let the reading be pinned.
   `ui-tenhole` (a 10-hole card: the Moore Park import against the club's
   card, card sizes, the forms, a round scored as ten, the handicap's reason,
   the round form filling the picked tee's lengths),
+  `ui-togreen` (Getting to the green: a traced hole from its shots,
+  scores-only holes tapped in, the table, teaser and story, the over-count
+  and a traced hole refused),
   `ui-format` (a team round: not a handicap score and the reason shown,
   out of form, trend, course history and evidence, listed and labelled; set
   and cleared on the round form),

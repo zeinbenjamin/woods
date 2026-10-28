@@ -167,6 +167,8 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .quick { margin-top: 8px; } .qrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .qrow .qn { font-family: var(--cond); font-weight: 700; font-size: 17px; min-width: 44px; } .qrow .qn small { display: block; font: 400 10px var(--body); color: var(--ink-3); }
 .qrow .chips { flex-wrap: nowrap; overflow-x: auto; }
+.tgrow { align-items: flex-start; } .tgfields { display: grid; grid-template-columns: 44px 1fr; gap: 4px 8px; align-items: center; flex: 1; min-width: 0; } .tgfields .chips { overflow-x: auto; }
+table.tg td, table.tg th { text-align: center; } table.tg tr.tot td { border-top: 1px solid var(--ink-3); font-weight: 600; }
 details.sec > summary { cursor: pointer; }
 .shotrow { display: flex; justify-content: space-between; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 8px 0; font: inherit; color: inherit; cursor: pointer; font-size: 13px; }
 .shotrow:hover { background: var(--paper-2); }
@@ -1139,6 +1141,7 @@ function vRound() {
   // Today's round offers Play while a hole is still unfinished; once every hole is done there is nothing to play on to.
   if (r.date === today() && holesOf(r).some(x => !holeDone(x))) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
   h += scorecard(r, holes) + `<p class="small muted" style="margin-top:8px">Tap a hole to trace shots on it.</p>`;
+  h += toGreenSection(r);
   h += roundFindingsSection(r);
   h += quickScoreSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
@@ -2346,8 +2349,7 @@ function practiceItems() {
     title: `Three-putts: ${threes.length} in ${plural(ph.length, 'hole')}`,
     detail: `${sum(ph.map(p => p.h.putts))} putts over ${plural(ph.length, 'hole')}, ${(sum(ph.map(p => p.h.putts)) / ph.length).toFixed(1)} a hole.`, practice: 'Putting green: 20 lag putts from 8–12m, trying to finish inside a metre.', recs: threes.map(p => ({ r: p.r, h: p.h })) });
   const traced = soloRounds().flatMap(r => holesOf(r).filter(h => (h.shots || []).length).map(h => ({ r, h })));
-  // Both kinds: added with the hole's counter, or ticked on the shot that cost it.
-  const holePens = h => (h.penalties || 0) + (h.shots || []).filter(s => s.penalty).length;
+  // Both kinds: added with the hole's counter, or ticked on the shot that cost it (holePens).
   const pens = traced.filter(p => holePens(p.h));
   if (pens.length) items.push({ key: 'penalty', kind: 'penalty', n: shotHoleCount(), score: COST.penalty * sum(pens.map(p => holePens(p.h))),
     ev: pens.map(p => ({ date: p.r.date, cost: COST.penalty * holePens(p.h) })), chances: traced.map(p => ({ date: p.r.date, hit: !!holePens(p.h) })),
@@ -3778,6 +3780,64 @@ function clubArmRow(r, h, distLeft) {
 }
 const puttRow = (r, h) => `<div class="armrow"><div class="small muted">Putts${h.putts != null ? `: <b>${h.putts}</b>` : ''}</div>
   <div class="chips">${[0, 1, 2, 3, 4, 5].map(p => `<button class="chip" data-act="setPutts" data-sid="${r.id}" data-n="${h.n}" data-p="${p}" aria-pressed="${h.putts === p}">${p}</button>`).join('')}</div></div>`;
+
+/* ---------- getting to the green (2.21.0) ----------
+   Under the scorecard: how each hole's score was made up. Long shots (the
+   tee shot, and anything played from 60 m or more), chips (inside 60 m,
+   not from sand), sand shots (played from a bunker) and putts. On a traced
+   hole they come from the shots; on a scores-only hole he taps the putts,
+   chips and sand shots in and the long shots are what's left. Nothing
+   derived is stored: `chips` and `sand` on a hole are his counts, like
+   `putts`. Asked for 2026-10-28, for "a better narrative on the final
+   score": how long it takes to get near the green, and on it. */
+const CHIP_FROM = 60;                                   // metres: inside this, a shot is a chip
+const holePens = h => (h.penalties || 0) + (h.shots || []).filter(s => s.penalty).length;
+function holeBreakdown(h) {
+  if (h.strokes == null) return null;
+  const shots = h.shots || [], pens = holePens(h);
+  if (shots.length) {
+    let long = 0, chips = 0, sand = 0;
+    shots.forEach((s, i) => {
+      const fromLie = i ? lieOf(h, shots[i - 1]) : 'tee', from = i ? toGreen(h, shots[i - 1]) : (h.metres || 0);
+      if (fromLie === 'bunker') sand++;
+      else if (i > 0 && from != null && from < CHIP_FROM) chips++;
+      else long++;
+    });
+    return { long, chips, sand, putts: h.putts ?? null, pens, derived: true, known: h.putts != null };
+  }
+  const putts = h.putts ?? null, chips = h.chips ?? null, sand = h.sand ?? null, known = putts != null;
+  return { long: known ? h.strokes - putts - (chips || 0) - (sand || 0) - pens : null, chips, sand, putts, pens, derived: false, known };
+}
+function toGreenSection(r) {
+  const holes = holesOf(r).filter(h => h.strokes != null); if (!holes.length) return '';
+  const rows = holes.map(h => ({ h, b: holeBreakdown(h) })), known = rows.filter(x => x.b.known);
+  const tot = k => sum(known.map(x => x.b[k] || 0)), per = k => (tot(k) / known.length).toFixed(1);
+  const strokes = sum(known.map(x => x.h.strokes));
+  const teaser = known.length ? `${per('long')} to the green · ${per('chips')} chips · ${per('sand')} sand · ${per('putts')} putts a hole` : 'tap in putts, chips and sand shots';
+  const byPar = [3, 4, 5].map(p => { const xs = known.filter(x => x.h.par === p); return xs.length ? `par ${p}s in ${(sum(xs.map(x => x.b.long)) / xs.length).toFixed(1)}` : ''; }).filter(Boolean).join(', ');
+  const cell = v => v == null ? '<td class="muted">–</td>' : `<td>${v}</td>`;
+  const table = `<div class="scroll"><table class="tg"><thead><tr><th>Hole</th><th>Long</th><th>Chips</th><th>Sand</th><th>Putts</th>${rows.some(x => x.b.pens) ? '<th>Pen.</th>' : ''}<th>Score</th></tr></thead><tbody>` +
+    rows.map(({ h, b }) => `<tr><td><b>${h.n}</b></td>${cell(b.long)}${cell(b.chips)}${cell(b.sand)}${cell(b.putts)}${rows.some(x => x.b.pens) ? cell(b.pens || null) : ''}<td><b>${h.strokes}</b></td></tr>`).join('') +
+    (known.length ? `<tr class="tot"><td>${known.length === rows.length ? 'Total' : `${known.length} holes`}</td><td>${tot('long')}</td><td>${tot('chips')}</td><td>${tot('sand')}</td><td>${tot('putts')}</td>${rows.some(x => x.b.pens) ? `<td>${tot('pens') || ''}</td>` : ''}<td><b>${strokes}</b></td></tr>` : '') + `</tbody></table></div>`;
+  const story = known.length ? `<p class="small" id="toGreenStory">Over ${plural(known.length, 'hole')} with putts recorded: ${strokes} strokes, of which ${tot('long')} (${pct(tot('long'), strokes)}%) got the ball to the green and ${tot('chips') + tot('sand') + tot('putts')} (${pct(tot('chips') + tot('sand') + tot('putts'), strokes)}%) were spent from inside ${CHIP_FROM} m: ${plural(tot('chips'), 'chip')}, ${plural(tot('sand'), 'sand shot')} and ${plural(tot('putts'), 'putt')}${tot('pens') ? `, plus ${plural(tot('pens'), 'penalty stroke')}` : ''}.${byPar ? ` Reaching the green took ${byPar} long shots on average.` : ''}</p>` : '';
+  const entry = rows.filter(x => !x.b.derived);
+  const chipsRow = (h, field, max) => `<span class="small muted">${field === 'putts' ? 'Putts' : field === 'chips' ? 'Chips' : 'Sand'}</span><div class="chips">${Array.from({ length: max + 1 }, (_, v) => `<button class="chip" data-act="setHoleCount" data-sid="${r.id}" data-n="${h.n}" data-field="${field}" data-v="${v}" aria-pressed="${h[field] === v}">${v}</button>`).join('')}</div>`;
+  const entryHtml = entry.length ? `<details class="sec" id="toGreenEntry"><summary><b>Tap them in</b> <span class="small muted">— ${plural(entry.length, 'hole')} without traced shots</span></summary><div class="quick">` +
+    entry.map(({ h }) => `<div class="qrow tgrow"><span class="qn">${h.n}<small>${plural(h.strokes, 'stroke')}</small></span><div class="tgfields">${chipsRow(h, 'putts', 5)}${chipsRow(h, 'chips', 3)}${chipsRow(h, 'sand', 3)}</div></div>`).join('') +
+    `</div><p class="small muted">Long shots are what's left once putts, chips and sand shots are taken off the score, so putts at least are needed before a hole counts here.</p></details>` : '';
+  return fold('toGreen', 'Getting to the green', teaser, story + table + `<p class="small muted">Long: the tee shot and anything played from ${CHIP_FROM} m or more. Chips: inside ${CHIP_FROM} m, not from sand. Sand: played from a bunker. On traced holes these come from the shots; otherwise from what you tap in. Penalty strokes are counted apart.</p>` + entryHtml);
+}
+Object.assign(ACTIONS, {
+  async setHoleCount(d) {
+    const r = session(d.sid), n = Number(d.n), v = Number(d.v), field = d.field;
+    if (!['putts', 'chips', 'sand'].includes(field)) return;
+    const h = (r.holes || []).find(x => x.n === n); if (!h) return;
+    if ((h.shots || []).length) { toast('This hole has shots traced — they decide this'); return; }
+    const next = { putts: h.putts || 0, chips: h.chips || 0, sand: h.sand || 0, [field]: v };
+    if (h.strokes != null && next.putts + next.chips + next.sand + holePens(h) > h.strokes) { toast(`That's more than the ${h.strokes} strokes on this hole`); return; }
+    if (await updateHole(r, n, hh => { hh[field] = v; })) render();
+  },
+});
 
 // The round as a scorecard: a nine per table, par, score (coloured as in the
 // strips), putts and penalties when they were logged, and the nine's total.

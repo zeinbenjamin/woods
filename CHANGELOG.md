@@ -6,7 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.22.0 — 2026-10-28
+
+- A round's page has a new fold under the scorecard, "Getting to the green": for each hole, the long shots it took to reach the green, the chips, the sand shots and the putts, with the totals and a short account of where the strokes went ("55 strokes, of which 24 got the ball to the green and 31 were spent from inside 60 m"), and how many long shots the par 3s, 4s and 5s took on average.
+- On a hole with traced shots the numbers come from the shots (inside 60 m is a chip, from a bunker is a sand shot). On a scores-only hole, tap in the putts, chips and sand shots under "Tap them in" and the long shots are what's left; it refuses a count that would exceed the hole's score.
+
 ## 2.21.0 — 2026-10-28
+
 - Bexley has a course map. Link it from the course page and every hole is drawn from OpenStreetMap: real greens, tee boxes, fairways, bunkers and water, so tapping a shot reads the lie from where it lands.
 - Checked against your card for the blue, white and red tees: every tee lands on a mapped tee box, so nothing is flagged.
 - In Play, Bexley's greens are mapped shapes, so you get the front, middle and back distances.
