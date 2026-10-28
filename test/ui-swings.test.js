@@ -211,7 +211,21 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.equal(bar.getAttribute('aria-valuenow'), '25');
   app.E('reelSeek(document.querySelectorAll("#reels video[data-reel]")[2], 0.75)');
   assert.equal(ct, 6, 'seeking sets the clip\'s time from the fraction');
+  v2.dispatchEvent(new app.win.Event('timeupdate'));
   assert.equal(live[2].querySelector('.reelFill').style.width, '75%');
+  // While a finger is on the bar the fill follows it, not the clip (2.32.1), and
+  // the fill is a fraction, never rounded to a second.
+  bar.dataset.drag = '1';
+  app.E('reelFill(document.querySelectorAll("#reels video[data-reel]")[2], 0.3125)');
+  assert.equal(live[2].querySelector('.reelFill').style.width, '31.25%');
+  ct = 4; v2.dispatchEvent(new app.win.Event('timeupdate'));
+  assert.equal(live[2].querySelector('.reelFill').style.width, '31.25%', 'the clip does not move the fill under a drag');
+  delete bar.dataset.drag;
+  v2.dispatchEvent(new app.win.Event('timeupdate'));
+  assert.equal(live[2].querySelector('.reelFill').style.width, '50%');
+  const css = app.doc.querySelector('style').textContent;
+  assert.match(css, /\.reelBar \{ position: relative; height: 2px;/, 'the bar is the 2px track itself, flush on the tab bar, no padding');
+  assert.match(css, /\.reelInfo \{ [^}]*padding: 14px 16px 6px;/, 'the caption keeps no gap above the bar');
   // A club in the link still narrows it (no chips on the bar any more).
   app.go('swings', { view: 'reels', club: '5W' });
   assert.equal(app.$$('#reels .reel').length, 1);

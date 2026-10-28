@@ -1237,7 +1237,15 @@ and `aria-valuenow`; pointer down/move on the bar seeks (`reelSeek(v,
 frac)`, pointer capture, `touch-action: none` so a drag never becomes a
 swipe). The "n of N · swipe up" `.count` line is gone. Checked in Chromium
 with a real clip: a tap unmutes all and flashes, a pointer at half the bar
-seeks to 1.08 of 2 s.
+seeks to 1.08 of 2 s. **Flush and smooth** (2.32.1, he sent two screenshots of
+a gap between caption, bar and tab bar, and found the slide clunky and
+per-second): `.reelBar` is the 2px track itself with no padding and an
+invisible 28px `::before` strip as the touch target, the caption's bottom
+padding is 6px, and the fill is driven by `requestAnimationFrame` while the
+clip plays (`timeupdate` fires about 4 Hz, which read as steps). A drag paints
+the fill under the finger at once (`reelFill`) and seeks at most once a frame
+(`fastSeek` where the browser has it); `reelProgress` leaves the fill alone
+while `data-drag` is set, so the clip can't fight the finger.
 
 ## Getting to the green (2.22.0)
 
