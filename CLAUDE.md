@@ -434,6 +434,18 @@ Each of these cost real debugging time. Don't reintroduce them.
   redirect (or a 401 that isn't Carry's JSON) → `signed_out`, "Sign in
   again"; Carry's own 401 → `unauthorised`, "open it through Cloudflare".
   1.x's `?token=` and stored token are dropped, never kept.
+  **Quietly, since 2.31.2** (he asked; the sheet took over the feed, and
+  with the Access session at a month he was still being refused): the first
+  refused poll is ignored; the second mounts a hidden iframe on
+  `/api/stamps?reauth=…` (a protected URL, not the app), so a login session
+  still good completes Cloudflare's hops and sets a fresh cookie with no
+  page; the shim fires `signed_in` on the next good poll and the app clears
+  up with a toast. Only after `CARRY_SIGNIN_WAIT_MS` (8 s) still refused does
+  `#signinBar` appear, with *Sign in again* (a reload). Never a sheet,
+  never a reload on its own. The home-address refusal (`unauthorised`)
+  keeps its one sheet. Why a month-long session is refused at all is
+  still open: if it keeps happening, look at what Cloudflare answers
+  (`redirect` vs 401) and at the PWA's cookie store.
 - **The server logs writes and errors**, never GETs that succeed, and never
   the query string.
 - **The container stops cleanly**: SIGTERM closes the HTTP server and

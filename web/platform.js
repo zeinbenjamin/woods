@@ -102,20 +102,23 @@
   window.addEventListener('online', () => flush());
   window.carryOutbox = () => ({ pending: Object.keys(readBox()).length, flush });
 
-  let polling = false;
+  let polling = false, signedOut = false;
   async function poll() {
     if (polling || document.hidden) return;
     polling = true;
     try {
       if (Object.keys(readBox()).length) await flush();
       const s = await api('/stamps');
+      // Back after being signed out (a silent re-sign-in got through, or he
+      // signed in in another tab): the app clears its banner.
+      if (signedOut) { signedOut = false; errorHandlers.forEach(f => f({ code: 'signed_in' })); }
       for (const name of Object.keys(listeners)) {
         if (s[name] !== lastStamps[name]) { lastStamps[name] = s[name]; await refresh(name); }
       }
     } catch (e) {
       // Being signed out is worth telling the app about (it offers to sign in
       // again); anything else is probably offline: keep showing what we have.
-      if (e && (e.code === 'unauthorised' || e.code === 'signed_out')) errorHandlers.forEach(f => f(e));
+      if (e && (e.code === 'unauthorised' || e.code === 'signed_out')) { if (e.code === 'signed_out') signedOut = true; errorHandlers.forEach(f => f(e)); }
     }
     finally { polling = false; }
   }

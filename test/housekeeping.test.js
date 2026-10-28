@@ -29,23 +29,42 @@ test('opened at an address that skips Cloudflare, the app says where to open it,
   } finally { app.stop(); }
 });
 
-test('when the Access session runs out, the app asks to sign in again', async () => {
+test('when the Access session is refused, the app re-signs in quietly: a glitch ignored, a hidden sign-in, then a banner, never a sheet', async () => {
   // Cloudflare answers an expired session with a redirect to its login page
   // (seen as one with redirect: 'manual'), or with a 401 of its own.
   for (const expired of [
     () => new Response(null, { status: 302, headers: { location: 'https://team.cloudflareaccess.com/cdn-cgi/access/login' } }),
     () => new Response('<html>Forbidden</html>', { status: 401, headers: { 'content-type': 'text/html' } }),
   ]) {
-    let out = false;
-    const app = await startApp({ seed: { clubs: [club('7i', 'iron')] }, intercept: url => (out && url.includes('/api/') ? expired() : null) });
+    let out = false, polls = 0;
+    const app = await startApp({ seed: { clubs: [club('7i', 'iron')] }, intercept: url => { if (!out || !url.includes('/api/')) return null; polls++; return expired(); } });
     try {
       assert.equal(app.E('S.clubs.length'), 1, 'signed in, loaded');
+      app.E('window.CARRY_SIGNIN_WAIT_MS = 400');
       out = true;
-      await app.waitFor(() => app.sheetOpen(), { what: 'sign-in sheet' });
-      assert.match(app.text('#sheetInner h2'), /Sign in again/);
-      assert.equal(app.text('#sheetInner [data-save]'), 'Sign in again');
+      // One refused poll is a glitch: nothing shows. The second starts the silent sign-in.
+      await app.waitFor(() => polls >= 1, { what: 'first refused poll' });
+      assert.equal(app.$('#reauth'), null, 'one refusal: nothing yet');
+      assert.equal(app.sheetOpen(), false);
+      await app.waitFor(() => app.$('#reauth'), { what: 'the hidden sign-in frame' });
+      assert.match(app.$('#reauth').getAttribute('src'), /^\/api\/stamps\?reauth=/, 'a small protected URL through Cloudflare, not the whole app');
+      assert.ok(app.$('#reauth').hidden);
       assert.equal(app.text('#status'), 'Signed out');
+      assert.equal(app.sheetOpen(), false, 'no sheet');
+      assert.equal(app.$('#signinBar'), null, 'no banner yet: the silent sign-in gets its chance');
       assert.equal(app.E('S.clubs.length'), 1, 'what was on screen stays');
+      // Still refused after the wait: the banner, with the one button.
+      await app.waitFor(() => app.$('#signinBar'), { what: 'the banner' });
+      assert.match(app.text('#signinBar'), /Signed out/);
+      assert.equal(app.text('#signinBar [data-act="signInAgain"]'), 'Sign in again');
+      assert.equal(app.sheetOpen(), false, 'still no sheet');
+      assert.equal(app.$$('#reauth').length, 1, 'one frame, not one per poll');
+      // The cookie comes back (the silent sign-in got through): banner and frame go, quietly.
+      out = false;
+      await app.waitFor(() => !app.$('#signinBar'), { what: 'banner gone' });
+      assert.equal(app.$('#reauth'), null);
+      assert.equal(app.text('#status'), '');
+      assert.match(app.toast(), /Signed in again/);
     } finally { app.stop(); }
   }
 });
