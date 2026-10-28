@@ -25,6 +25,7 @@ function installFakeMedia(win, { duration = 2, width = 1920, height = 1080, blan
         __painted: { get: () => painted },
       });
       v.requestVideoFrameCallback = cb => setTimeout(() => { painted = ct; cb(); }, 4);
+      v.play = () => Promise.resolve(); v.pause = () => {};
       return v;
     }
     if (tag === 'canvas') {
@@ -117,14 +118,15 @@ test('adding a swing end to end: frames and video land as fetchable assets, ever
     input.dispatchEvent(new app.win.Event('change'));
     await app.waitFor(() => app.$('#sheetInner [name=s0]'), { what: 'trim sliders' });
     // The trim hint says what the frames will be, and warns when they're too far apart to see the downswing.
-    assert.match(app.text('#frameNote'), /^16 frames, 0\.20 s apart across 3\.0 s\. Over 0\.15 s apart the downswing \(about 0\.3 s, top to ball\) is mostly skipped: trim to about 1\.5 s, address to a beat after the finish\.$/);
+    assert.match(app.text('#frameNote'), /^16 frames, 0\.20 s apart across 3\.0 s\. Over 0\.15 s apart the downswing \(about 0\.3 s, top to ball\) is mostly skipped: trim to about 1\.5 s, address to a beat after the finish\. Or move Impact to where the club meets the ball and the frames pack there\.$/);
     const s1 = app.$('#sheetInner [name=s1]'); s1.value = '1.5'; s1.dispatchEvent(new app.win.Event('input'));
-    assert.equal(app.text('#frameNote'), '16 frames, 0.10 s apart across 1.5 s. Trim tight: address to a beat after the finish.');
+    assert.equal(app.text('#frameNote'), '16 frames, 0.10 s apart across 1.5 s. Trim tight: address to a beat after the finish. Or move Impact to where the club meets the ball and the frames pack there.');
     app.fill('view', 'face'); app.fill('club', '7i'); app.fill('note', 'test swing');
     assert.equal(await app.save(), true);
     const s = await app.api.get('sessions', 's_data');
     const added = s.swings[0];
     assert.equal(added.view, 'face');
+    assert.equal(added.impact, null, 'no impact marked: stored as null, frames even');
     assert.equal(added.frames.length, 16);
     assert.ok(added.frames.every(f => f.t >= 0.05 && f.t <= 1.5), JSON.stringify(added.frames.map(f => f.t)));
     assert.ok(Math.abs(added.frames[1].t - added.frames[0].t - 0.1) < 0.011, 'about 0.1 s apart on a 1.5 s trim');
@@ -133,6 +135,73 @@ test('adding a swing end to end: frames and video land as fetchable assets, ever
     for (const f of added.frames) assert.equal(await app.api.blobStatus(f.asset), 200);
     assert.ok(added.video, 'a small video is stored too');
     assert.equal(await app.api.blobStatus(added.video), 200);
+  } finally { log.restore(); }
+});
+
+/* ---------- packed around impact (2.26.0) ---------- */
+
+test('frameTimes: even without a mark; with one, 10 of 16 sit from 0.3 s before the ball to 0.1 s after', () => {
+  const even = app.J(`frameTimes({ start: 0, end: 1.5 })`);
+  assert.equal(even.length, 16); assert.equal(even[0], 0.05); assert.equal(even[15], 1.5);
+  assert.ok(even.every((t, i) => i === 0 || Math.abs(t - even[i - 1] - 0.0967) < 0.011), 'even spacing');
+  const packed = app.J(`frameTimes({ start: 0, end: 1.5, impact: 1.0 })`);
+  assert.equal(packed.length, 16);
+  assert.deepEqual(packed, [...packed].sort((a, b) => a - b), 'in order');
+  assert.equal(new Set(packed).size, 16, 'no repeats');
+  const inWin = packed.filter(t => t >= 0.7 - 0.001 && t <= 1.1 + 0.001);
+  assert.equal(inWin.length, 10, `10 in the window: ${packed.join(' ')}`);
+  assert.ok(inWin.every((t, i) => i === 0 || t - inWin[i - 1] < 0.056), 'about 0.04 s apart there');
+  assert.equal(packed[0], 0.05); assert.equal(packed[15], 1.5, 'still address to finish');
+  assert.equal(packed.filter(t => t < 0.7 - 0.001).length, 4, 'the rest in proportion: 0.7 s before against 0.4 s after');
+  assert.equal(packed.filter(t => t > 1.1 + 0.001).length, 2);
+  // A mark at the very start of the trim packs what it can and spreads the rest after.
+  const early = app.J(`frameTimes({ start: 0, end: 1.5, impact: 0.1 })`);
+  assert.equal(early.length, 16); assert.equal(early[0], 0.05); assert.equal(early[15], 1.5);
+  assert.equal(early.filter(t => t <= 0.2 + 0.001).length, 10);
+  // A mark outside the trim is ignored: even again.
+  assert.deepEqual(app.J(`frameTimes({ start: 0, end: 1.5, impact: 2 })`), even);
+});
+
+test('marking impact on the trim packs the stored frames there, is kept on the swing, and reaches the prompt', async () => {
+  const log = installFakeMedia(app.win, { duration: 3 });
+  try {
+    app.go('range', { sessionId: 's_data' });
+    app.act('addSwing', { id: 's_data' });
+    const input = app.field('vid');
+    const file = new app.win.File(['fake video bytes'], 'swing2.mp4', { type: 'video/mp4' });
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new app.win.Event('change'));
+    await app.waitFor(() => app.$('#sheetInner [name=imp]'), { what: 'impact slider' });
+    assert.equal(app.text('#sheetInner #ii'), 'not marked');
+    const preview = log.videos[log.videos.length - 1];
+    assert.ok(preview.seeks.length && preview.seeks.every(t => t >= 0.05), `the preview is never seeked to 0: ${preview.seeks.join(' ')}`);
+    const s1 = app.$('#sheetInner [name=s1]'); s1.value = '1.5'; s1.dispatchEvent(new app.win.Event('input'));
+    const imp = app.$('#sheetInner [name=imp]'); imp.value = '1.0'; imp.dispatchEvent(new app.win.Event('input'));
+    assert.equal(app.text('#sheetInner #ii'), '1.00s');
+    assert.equal(app.text('#frameNote'), '16 frames: 10 packed 0.04 s apart from 0.7 to 1.1 s (0.3 s before the ball to 0.1 s after), 6 across the rest of the 1.5 s.');
+    // Trimming the end inside the mark drags the mark with it.
+    s1.value = '0.9'; s1.dispatchEvent(new app.win.Event('input'));
+    assert.equal(app.text('#sheetInner #ii'), '0.90s');
+    s1.value = '1.5'; s1.dispatchEvent(new app.win.Event('input'));
+    imp.value = '1.0'; imp.dispatchEvent(new app.win.Event('input'));
+    app.fill('view', 'dtl'); app.fill('club', '7i'); app.fill('note', 'marked');
+    assert.equal(await app.save(), true);
+    const s = await app.api.get('sessions', 's_data');
+    const added = s.swings.find(w => w.note === 'marked');
+    assert.equal(added.impact, 1);
+    const ts = added.frames.map(f => f.t);
+    assert.equal(ts.length, 16);
+    assert.equal(ts.filter(t => t >= 0.699 && t <= 1.101).length, 10, `packed: ${ts.join(' ')}`);
+    assert.ok(ts.every(t => t >= 0.05 && t <= 1.5));
+    app.go('range', { sessionId: 's_data' });
+    const card = app.$$('#view .swing').find(el => /marked/.test(el.textContent));
+    assert.match(card.querySelector('.spread .small').textContent, /^16 frames, packed around impact at 1\.0 s$/);
+    const prompt = app.E(`swingPrompt(session('s_data').swings.find(w => w.note === 'marked'), session('s_data'))`);
+    assert.match(prompt, /marked the club meeting the ball at 1\.00 s/);
+    assert.match(prompt, /from 0\.70 s to 1\.10 s they are about 0\.04 s apart/);
+    assert.match(prompt, /may be a frame either side/);
+    assert.doesNotMatch(prompt, /fixed intervals/);
+    assert.doesNotMatch(prompt, /\(about [\d.]+ s apart\)/, 'no mean gap when packed');
   } finally { log.restore(); }
 });
 

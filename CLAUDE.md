@@ -365,7 +365,20 @@ Each of these cost real debugging time. Don't reintroduce them.
   the wrist angle went): `FRAME_COUNT`, about 0.1 s apart on a 1.5 s trim.
   The trim hint (`trimNote`) shows the gap and warns over `GAP_WARN` (0.15 s).
   Not 24: analysis time, phone video blurs through impact anyway, and the
-  image-set limit above. The prompt gets each frame's time, and a
+  image-set limit above.
+  **Packed around impact** (2.26.0, the monitor's third item, he asked for it):
+  the trim has an *Impact* slider; marked, `frameTimes()` puts `IMPACT_FRAMES`
+  (10) of the 16 from `IMPACT_BEFORE` (0.3 s) before the mark to `IMPACT_AFTER`
+  (0.1 s) after, about 0.04 s apart, and the other 6 over the rest in
+  proportion to its length, still address to finish; unmarked, even as before.
+  The mark is stored on the swing as `impact` (SCHEMA.md), the prompt says the
+  frames are packed around it and that the mark is by eye, and the card says
+  "packed around impact at 1.0 s" instead of a mean gap. A mark outside the
+  trim is ignored. **The trim preview stayed black** on some clips: it was
+  seeked to exactly 0 (the same gotcha), and iOS doesn't paint a frame of a
+  video that has never played. It now never seeks under 0.05 s, is played and
+  paused once (muted, inline), and a file the browser can't decode (HEVC
+  from Photos outside Safari) says so instead of a blank box. The prompt gets each frame's time, and a
   down-the-line swing is asked the wrist question (`wrist` in the analysis;
   shown under *What Claude saw*). Older swings keep their 8.
 - **TrueNAS runs containers as 568:568.** The dataset must be owned by it
@@ -1031,7 +1044,10 @@ only the first plays; after scrolling to the third, the first pauses, the
 third plays and its neighbour preloads. `ui-swings` drives it with a
 stand-in observer (jsdom has none): the rows, order, preload, attributes,
 the fix, play/pause on the callback, the club filter, the empty state,
-close.
+close. **Sound** (2.26.0): the videos start muted so they can autoplay; the
+`.reelsSound` button (`reelsSound` action) unmutes them all on the tap iOS
+needs, the one on screen being the only one playing, and the flag resets
+when the feed closes.
 
 ## Getting to the green (2.22.0)
 
@@ -1143,7 +1159,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 336 tests, about 45s.
+`npm test` — 338 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,

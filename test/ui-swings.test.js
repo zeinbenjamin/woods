@@ -168,6 +168,17 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   cb([{ target: vids[2], intersectionRatio: 1 }, { target: vids[0], intersectionRatio: 0 }]);
   assert.deepEqual([played, paused], [[vids[2].src], [vids[0].src]]);
   assert.equal(vids[2].preload, 'auto'); assert.equal(vids[1].preload, 'auto');
+  // Sound: muted until the button is tapped, then every reel unmuted (only the one on screen plays); off again when the feed closes.
+  assert.ok(vids.every(v => v.muted === true), 'starts muted so it can autoplay');
+  const snd = app.$('#reels .reelsSound');
+  assert.equal(snd.getAttribute('aria-pressed'), 'false');
+  snd.click();
+  assert.ok(vids.every(v => v.muted === false), 'the tap unmutes');
+  assert.equal(app.$('#reels .reelsSound').getAttribute('aria-pressed'), 'true');
+  app.$('#reels .reelsSound').click();
+  assert.ok(vids.every(v => v.muted === true), 'and mutes again');
+  app.$('#reels .reelsSound').click();
+  assert.equal(app.E('reelsSound'), true);
   // Narrow to the 5W.
   app.$('#reels .reelsTop [data-go="range:view=reels,club=5W"]').click();
   assert.equal(app.$$('#reels .reel').length, 1);
@@ -176,5 +187,6 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.match(app.text('#reels'), /No videos for the D/);
   app.$('#reels .reelsClose').click();
   assert.equal(app.$('#reels'), null, 'closed, back on the history');
+  assert.equal(app.E('reelsSound'), false, 'the next open starts quiet');
   assert.ok(app.$('#swingTimeline'));
 });

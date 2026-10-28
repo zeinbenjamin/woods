@@ -296,7 +296,8 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "view": "dtl|face|other",          // changes how the analysis reads them
   "club": "7i", "note": "…",
   "addedOn": "2026-09-24", "duration": 6.4,
-  "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below; 16 since 2.18.0 (8 before), evenly spaced across the trim
+  "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below; 16 since 2.18.0 (8 before), even across the trim, or packed around `impact`
+  "impact": 1.02,                     // 2.26.0: where he marked the club meeting the ball, s from the clip's start; null or absent = not marked, frames even
   "video": "<asset id>|null",        // null when over the 60 MB cap (20 before 2.25.0)
   "analysis": { /* free-form; see keys below */ },
   "analysedOn": "2026-09-24",

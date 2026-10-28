@@ -176,6 +176,7 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .reelsTop { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px; background: linear-gradient(rgba(0,0,0,.75), transparent); height: 0; overflow: visible; }
 .reelsTop .chips { padding-right: 12px; } .reel video { padding-top: calc(env(safe-area-inset-top, 0px) + 56px); box-sizing: border-box; }
 .reelsTop .chips { overflow-x: auto; flex-wrap: nowrap; } .reelsTop .chip { background: rgba(255,255,255,.15); color: #fff; border-color: transparent; } .reelsTop .chip[aria-pressed="true"] { background: #fff; color: #000; }
+.reelsSound { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 16px; cursor: pointer; } .reelsSound[aria-pressed="true"] { background: #fff; }
 .reelsClose { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 16px; cursor: pointer; }
 .swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }
 ol.fixes { margin: 4px 0 0; padding-left: 18px; } ol.fixes li { margin: 2px 0; }
@@ -2896,6 +2897,28 @@ const VIDEO_MAX = 60 * 1024 * 1024;
 const GAP_WARN = 0.15;                                 // seconds between frames: over this, the downswing is skipped
 // Mean spacing of a swing's frames, in seconds, from their stored times.
 const frameGap = frames => frames && frames.length > 1 ? (frames[frames.length - 1].t - frames[0].t) / (frames.length - 1) : null;
+// Packed around impact (2.26.0, asked through the monitor chat): even spacing
+// put at most three frames in the downswing, so the readings could not say
+// when the wrist angle went. With the ball marked on the trim, IMPACT_FRAMES
+// of the 16 go from IMPACT_BEFORE s before it to IMPACT_AFTER s after (about
+// 0.04 s apart, inside what 30 fps phone video holds) and the rest spread over
+// what's left in proportion to its length. Unmarked, the trim is still even.
+const IMPACT_BEFORE = 0.3, IMPACT_AFTER = 0.1, IMPACT_FRAMES = 10;
+function frameTimes({ start = 0, end, impact = null }, count = FRAME_COUNT) {
+  const EPS = 0.05, a = Math.max(EPS, start), b = Math.max(a + 0.001, end);
+  const spread = (lo, hi, n, from) => Array.from({ length: n }, (_, i) => lo + (hi - lo) * ((i + from) / (n - 1 + from || 1)));
+  const r = ts => [...new Set(ts.map(t => +t.toFixed(2)))].sort((x, y) => x - y);
+  const packed = impact != null && impact >= a && impact <= b && count > 2;
+  if (!packed) return r(spread(a, b, count, 0));
+  const w0 = Math.max(a, impact - IMPACT_BEFORE), w1 = Math.min(b, impact + IMPACT_AFTER);
+  const nWin = Math.min(IMPACT_FRAMES, count), rest = count - nWin, lb = w0 - a, la = b - w1;
+  const nBefore = lb + la > 0 ? Math.round(rest * lb / (lb + la)) : 0, nAfter = rest - nBefore;
+  const before = Array.from({ length: nBefore }, (_, i) => a + lb * (i / nBefore));        // ends short of the window
+  const after = Array.from({ length: nAfter }, (_, i) => w1 + la * ((i + 1) / nAfter));   // runs to the end
+  return r(before.concat(spread(w0, w1, nWin, 0), after));
+}
+// The window a mark packs, for the hint and the prompt.
+const impactWindow = (range, impact) => [Math.max(range.start, impact - IMPACT_BEFORE), Math.min(range.end, impact + IMPACT_AFTER)];
 
 // What each view can actually show. Sent to Claude so it reads the
 // frames for what they support, and says so when they don't.
@@ -2911,7 +2934,7 @@ const allSwings = () => S.sessions.flatMap(s => swingsOf(s).map(sw => ({ ...sw, 
 /* ---------- frames out of a video, in the page ---------- */
 // Frames are individually sized to ~880px, not tiled into one large
 // contact sheet: big sheets have failed to render reliably before.
-async function extractFrames(file, { start = 0, end = null, count = FRAME_COUNT, onProgress } = {}) {
+async function extractFrames(file, { start = 0, end = null, impact = null, count = FRAME_COUNT, onProgress } = {}) {
   const url = URL.createObjectURL(file);
   const vid = document.createElement('video');
   vid.preload = 'auto'; vid.muted = true; vid.playsInline = true; vid.src = url;
@@ -2921,7 +2944,7 @@ async function extractFrames(file, { start = 0, end = null, count = FRAME_COUNT,
   const dur = vid.duration && isFinite(vid.duration) ? vid.duration : 0;
   const EPS = 0.05;                                    // never ask for exactly 0
   const a = Math.max(EPS, start), b = Math.min(end == null ? dur : end, dur || 1e9);
-  const span = Math.max(0.001, b - a);
+  const times = frameTimes({ start: a, end: b, impact }, count);
   const scale = Math.min(1, 880 / Math.max(vid.videoWidth || 880, vid.videoHeight || 880));
   const w = Math.round((vid.videoWidth || 880) * scale), h = Math.round((vid.videoHeight || 880) * scale);
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
@@ -2945,8 +2968,8 @@ async function extractFrames(file, { start = 0, end = null, count = FRAME_COUNT,
     setTimeout(finish, 1200);                          // a seek that never reports back
   });
   const out = [];
-  for (let i = 0; i < count; i++) {
-    let t = a + span * (i / (count - 1 || 1));
+  for (let i = 0; i < times.length; i++) {
+    let t = times[i];
     let blob = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       await seekTo(t);
@@ -2958,7 +2981,7 @@ async function extractFrames(file, { start = 0, end = null, count = FRAME_COUNT,
     }
     blob = await new Promise(r => cv.toBlob(r, 'image/webp', 0.85)) || await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.85));
     out.push({ blob, t: +t.toFixed(2), blank: looksBlank() });
-    if (onProgress) onProgress(i + 1, count);
+    if (onProgress) onProgress(i + 1, times.length);
   }
   URL.revokeObjectURL(url);
   const kept = out.filter(f => !f.blank);              // drop any that stayed blank
@@ -2983,12 +3006,13 @@ function swingPrompt(sw, session) {
   const focus = session.focus ? `The player's stated focus for this session was: "${session.focus}".` : '';
   const hist = `Background on the player: a beginner roughly a year in, working on iron consistency and course management. Known history: lateral hip sway on the backswing and early extension through impact were early faults; adding hip rotation gained distance but introduced an alternating hook and shank pattern on irons, thought to be body rotation outrunning hand and arm timing.`;
   const frames = sw.frames || [], gap = frameGap(frames);
-  const timing = frames.length ? ` They are at these times from the start of the clip, in seconds: ${frames.map(f => f.t).join(', ')}${gap != null ? ` (about ${gap.toFixed(2)} s apart)` : ''}.` : '';
+  const timing = frames.length ? ` They are at these times from the start of the clip, in seconds: ${frames.map(f => f.t).join(', ')}${gap != null && sw.impact == null ? ` (about ${gap.toFixed(2)} s apart)` : ''}.` : '';
   // The cast-vs-flip question: only a down-the-line view can show it.
   const wrist = sw.view === 'dtl' ? `
 WRIST ANGLE (this view can show it): first find the frame nearest the top of the backswing and the frame nearest the lead arm parallel to the ground on the way down. From the top frame, say whether the lead wrist is cupped, flat or bowed. From the lead-arm-parallel frame, say whether the angle between the shaft and the lead arm is still held (an L or tighter), opening, or already released (shaft near in line with the arm). Answer from those two frames only; if no frame is close enough to either position, say "cannot tell". Do not infer it from the ball data.
 ` : '';
-  return `You are looking at ${frames.length || FRAME_COUNT} still frames taken in order from a single golf swing, earliest first. They were pulled from a phone video at fixed intervals, so they may not land exactly on the key positions.${timing} Say which frame is nearest the top of the backswing and which is nearest impact before reading what happens between them.
+  const spacing = sw.impact != null ? ` The player marked the club meeting the ball at ${sw.impact.toFixed(2)} s, and the frames are packed around it: from ${(sw.impact - IMPACT_BEFORE).toFixed(2)} s to ${(sw.impact + IMPACT_AFTER).toFixed(2)} s they are about ${((IMPACT_BEFORE + IMPACT_AFTER) / (IMPACT_FRAMES - 1)).toFixed(2)} s apart, the rest wider. The mark is by eye, so impact may be a frame either side of it.` : ' They were pulled from a phone video at fixed intervals, so they may not land exactly on the key positions.';
+  return `You are looking at ${frames.length || FRAME_COUNT} still frames taken in order from a single golf swing, earliest first.${spacing}${timing} Say which frame is nearest the top of the backswing and which is nearest impact before reading what happens between them.
 
 CAMERA VIEW: ${VIEW_BRIEF[sw.view] || VIEW_BRIEF.other}
 ${wrist}
@@ -3061,7 +3085,7 @@ function swingCard(sw, s, opts = {}) {
   const a = sw.analysis;
   return `<div class="swing">
     <div class="spread"><div><b>${esc(VIEWS[sw.view] || 'Swing')}</b>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}${a ? ' <span class="tag green">analysed</span>' : ''}</div>
-      <span class="small muted">${sw.frames.length} frames${frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
+      <span class="small muted">${sw.frames.length} frames${sw.impact != null ? `, packed around impact at ${sw.impact.toFixed(1)} s` : frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
     <div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
     ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}
@@ -3223,7 +3247,7 @@ function vReels() {
   const clubs = [...new Set(all.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
   const chip = (code, label) => `<button class="chip" data-go="range:view=reels${code ? `,club=${esc(code)}` : ''}" aria-pressed="${club === code}">${esc(label)}</button>`;
   return `<div class="reels" id="reels">
-    <div class="reelsTop"><button class="reelsClose" data-go="range:view=swings" aria-label="Close">✕</button><div class="chips">${chip('', 'All')}${clubs.map(c => chip(c, c || 'No club')).join('')}</div></div>
+    <div class="reelsTop"><button class="reelsClose" data-go="range:view=swings" aria-label="Close">✕</button><div class="chips">${chip('', 'All')}${clubs.map(c => chip(c, c || 'No club')).join('')}</div>${sws.length ? `<button class="reelsSound" data-act="reelsSound" aria-pressed="${reelsSound}" aria-label="${reelsSound ? 'Mute' : 'Sound on'}">${reelsSound ? '🔊' : '🔇'}</button>` : ''}</div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
       return `<section class="reel" data-i="${i}"><video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
         <button class="reelInfo" data-go="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
@@ -3233,11 +3257,18 @@ function vReels() {
   </div>`;
 }
 let reelsObs = null;
+// Sound (2.26.0, he asked): the videos start muted so the browser lets them
+// autoplay; the button unmutes them all (the tap is the gesture iOS wants),
+// and the one on screen is the only one playing. Off again when the feed
+// closes, so the next open starts quiet.
+let reelsSound = false;
 function reelsLifecycle() {
   const root = document.getElementById('reels');
   if (reelsObs) { reelsObs.disconnect(); reelsObs = null; }
+  if (!root) reelsSound = false;
   if (!root || typeof IntersectionObserver !== 'function') return;
   const vids = [...root.querySelectorAll('video[data-reel]')];
+  vids.forEach(v => { v.muted = !reelsSound; });
   reelsObs = new IntersectionObserver(entries => {
     for (const e of entries) {
       const v = e.target, i = vids.indexOf(v);
@@ -3267,8 +3298,13 @@ function addSwingForm() {
 // wide to see the downswing (about 0.3 s from the top to the ball).
 function trimNote(range) {
   const len = Math.max(0, range.end - range.start), gap = len / (FRAME_COUNT - 1);
+  if (range.impact != null) {
+    const [w0, w1] = impactWindow(range, range.impact);
+    return `${FRAME_COUNT} frames: ${IMPACT_FRAMES} packed ${((w1 - w0) / (IMPACT_FRAMES - 1)).toFixed(2)} s apart from ${w0.toFixed(1)} to ${w1.toFixed(1)} s (${IMPACT_BEFORE} s before the ball to ${IMPACT_AFTER} s after), ${FRAME_COUNT - IMPACT_FRAMES} across the rest of the ${len.toFixed(1)} s.`;
+  }
   return `${FRAME_COUNT} frames, ${gap.toFixed(2)} s apart across ${len.toFixed(1)} s. ` +
-    (gap > GAP_WARN ? `Over ${GAP_WARN.toFixed(2)} s apart the downswing (about 0.3 s, top to ball) is mostly skipped: trim to about 1.5 s, address to a beat after the finish.` : 'Trim tight: address to a beat after the finish.');
+    (gap > GAP_WARN ? `Over ${GAP_WARN.toFixed(2)} s apart the downswing (about 0.3 s, top to ball) is mostly skipped: trim to about 1.5 s, address to a beat after the finish.` : 'Trim tight: address to a beat after the finish.') +
+    ' Or move Impact to where the club meets the ball and the frames pack there.';
 }
 function wireSwingForm(root, sessionId) {
   const fileIn = root.querySelector('[name=vid]'); let picked = null, range = null;
@@ -3277,27 +3313,46 @@ function wireSwingForm(root, sessionId) {
     picked = f;
     const url = URL.createObjectURL(f), v = document.createElement('video');
     v.src = url; v.muted = true; v.playsInline = true; v.preload = 'auto'; v.style.width = '100%'; v.style.borderRadius = 'var(--r)';
-    await new Promise(res => { v.onloadedmetadata = res; v.onerror = res; });
+    // Why the preview sometimes stayed black (2.26.0): it was seeked to
+    // exactly 0, the one time the decoder never paints (the extraction gotcha),
+    // and iOS doesn't decode a frame of an unplayed video at all, so the
+    // sliders moved a blank box. Now it never seeks under 0.05 s, is played
+    // and paused once (muted, inline: allowed without a tap) so the first
+    // frame paints, and says so when the browser can't decode the file.
+    let failed = false;
+    await new Promise(res => { v.onloadedmetadata = res; v.onerror = () => { failed = true; res(); }; });
     const dur = isFinite(v.duration) ? v.duration : 0;
-    range = { start: 0, end: dur };
+    range = { start: 0, end: dur, impact: null };
+    if (failed || !dur) { $('#trim', root).innerHTML = `<p class="small muted" id="previewNote">This browser can't play that video, so there's no preview and frames can't be pulled from it either. Clips from an iPhone's Photos are usually HEVC: export as "Most compatible", or open Carry in Safari.</p>`; return; }
     $('#trim', root).innerHTML = `<div class="bigmap" style="max-width:340px"></div>
       <label>Start <span id="ss"></span><input type="range" name="s0" min="0" max="${dur.toFixed(2)}" step="0.05" value="0"></label>
-      <label>End <span id="ee"></span><input type="range" name="s1" min="0" max="${dur.toFixed(2)}" step="0.05" value="${dur.toFixed(2)}"></label>`;
+      <label>End <span id="ee"></span><input type="range" name="s1" min="0" max="${dur.toFixed(2)}" step="0.05" value="${dur.toFixed(2)}"></label>
+      <label>Impact <span id="ii">not marked</span><input type="range" name="imp" min="0" max="${dur.toFixed(2)}" step="0.01" value="${(dur / 2).toFixed(2)}"></label>`;
     $('#trim .bigmap', root).appendChild(v);
-    const s0 = root.querySelector('[name=s0]'), s1 = root.querySelector('[name=s1]');
+    const s0 = root.querySelector('[name=s0]'), s1 = root.querySelector('[name=s1]'), imp = root.querySelector('[name=imp]');
     const upd = which => {
       range.start = Math.min(Number(s0.value), Number(s1.value) - 0.1);
       range.end = Math.max(Number(s1.value), range.start + 0.1);
       s0.value = range.start.toFixed(2);
+      if (which === 'impact') range.impact = Number(imp.value);
+      if (range.impact != null) { range.impact = Math.min(range.end, Math.max(range.start, range.impact)); imp.value = range.impact.toFixed(2); }
       $('#ss', root).textContent = range.start.toFixed(1) + 's'; $('#ee', root).textContent = range.end.toFixed(1) + 's';
-      v.currentTime = which === 'end' ? range.end : range.start;
+      $('#ii', root).textContent = range.impact == null ? 'not marked' : range.impact.toFixed(2) + 's';
+      v.currentTime = Math.max(0.05, which === 'end' ? range.end : which === 'impact' ? range.impact : range.start);
       $('#frameNote', root).textContent = trimNote(range);
     };
-    s0.addEventListener('input', () => upd('start')); s1.addEventListener('input', () => upd('end')); upd('start');
+    s0.addEventListener('input', () => upd('start')); s1.addEventListener('input', () => upd('end')); imp.addEventListener('input', () => upd('impact')); upd('start');
+    try { const p = v.play(); if (p && p.then) p.then(() => { v.pause(); v.currentTime = Math.max(0.05, range.start); }, () => {}); } catch (e) { /* no play in this runtime */ }
   });
   return () => ({ file: picked, range });
 }
 Object.assign(ACTIONS, {
+  reelsSound() {
+    reelsSound = !reelsSound;
+    document.querySelectorAll('#reels video[data-reel]').forEach(v => { v.muted = !reelsSound; });
+    const b = document.querySelector('#reels .reelsSound');
+    if (b) { b.textContent = reelsSound ? '🔊' : '🔇'; b.setAttribute('aria-pressed', String(reelsSound)); b.setAttribute('aria-label', reelsSound ? 'Mute' : 'Sound on'); }
+  },
   addSwing(d) {
     const sid = d.id; let get;
     openSheet(addSwingForm(), async root => {
@@ -3316,7 +3371,7 @@ Object.assign(ACTIONS, {
       let video = null;
       if (file.size <= VIDEO_MAX) { note.textContent = 'Storing the video…'; try { const r = await S.assets.upload(file, { type: file.type }); video = r.id; } catch (e) { video = null; } }
       const s = session(sid);
-      const sw = { id: uid('sw'), view: val(root, 'view') || 'dtl', club: val(root, 'club'), note: val(root, 'note'), frames, video, addedOn: today(), duration: +(ex.duration || 0).toFixed(2) };
+      const sw = { id: uid('sw'), view: val(root, 'view') || 'dtl', club: val(root, 'club'), note: val(root, 'note'), frames, video, addedOn: today(), duration: +(ex.duration || 0).toFixed(2), impact: range.impact == null ? null : +range.impact.toFixed(2) };
       const ok = await save('sessions', sid, { ...s, swings: swingsOf(s).concat(sw) });
       if (ok) { toast(ex.dropped ? `Swing added (${ex.dropped} blank frame${ex.dropped > 1 ? 's' : ''} dropped)` : video ? 'Swing added' : 'Frames added — video too large to store'); render(); }
       return ok;
