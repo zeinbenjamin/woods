@@ -1,5 +1,11 @@
 [
  {
+  "id": "antill-park",
+  "name": "Antill Park Country Golf Club",
+  "osmName": "Antill Park Country Golf Club",
+  "holes": 18
+ },
+ {
   "id": "asquith",
   "name": "Asquith Golf Club",
   "osmName": "Asquith Golf Club",
@@ -12,10 +18,22 @@
   "holes": 18
  },
  {
+  "id": "avalon",
+  "name": "Avalon Golf Course",
+  "osmName": "Avalon Golf Course",
+  "holes": 0
+ },
+ {
   "id": "avondale",
   "name": "Avondale Golf Club",
   "osmName": "Avondale Golf Club",
   "holes": 18
+ },
+ {
+  "id": "balgowlah",
+  "name": "Balgowlah Golf Club",
+  "osmName": "Balgowlah Golf Club",
+  "holes": 0
  },
  {
   "id": "bankstown",
@@ -66,6 +84,12 @@
   "holes": 18
  },
  {
+  "id": "boomerang",
+  "name": "Boomerang Public Golf Course",
+  "osmName": "Boomerang Public Golf Course",
+  "holes": 18
+ },
+ {
   "id": "botany",
   "name": "Botany Golf Club",
   "osmName": "Botany Golf Club",
@@ -84,16 +108,46 @@
   "holes": 0
  },
  {
+  "id": "camden",
+  "name": "Camden Golf Club",
+  "osmName": "Camden Golf Club",
+  "holes": 18
+ },
+ {
   "id": "cammeray",
   "name": "Cammeray Golf Course",
   "osmName": "Cammeray Golf Course",
   "holes": 7
  },
  {
+  "id": "campbelltown",
+  "name": "Campbelltown Golf Course",
+  "osmName": "Campbelltown Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "canterbury",
+  "name": "Canterbury Public Golf Course",
+  "osmName": "Canterbury Public Golf Course",
+  "holes": 9
+ },
+ {
+  "id": "carnarvon",
+  "name": "Carnarvon Golf Course",
+  "osmName": "Carnarvon Golf Course",
+  "holes": 18
+ },
+ {
   "id": "castle-cove",
   "name": "Castle Cove Golf Club",
   "osmName": "Castle Cove Golf Club",
   "holes": 0
+ },
+ {
+  "id": "castle-hill",
+  "name": "Castle Hill Country Club",
+  "osmName": "Castle Hill Country Club",
+  "holes": 18
  },
  {
   "id": "chatswood",
@@ -108,9 +162,33 @@
   "holes": 9
  },
  {
+  "id": "concord",
+  "name": "Concord Golf Club",
+  "osmName": "Concord Golf Club",
+  "holes": 0
+ },
+ {
+  "id": "cromer",
+  "name": "Cromer Golf Course",
+  "osmName": "Cromer Golf Course",
+  "holes": 18
+ },
+ {
   "id": "cronulla",
   "name": "Cronulla Golf Course",
   "osmName": "Cronulla Golf Course",
+  "holes": 0
+ },
+ {
+  "id": "cumberland",
+  "name": "Cumberland Country Golf Course",
+  "osmName": "Cumberland Country Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "del-rio",
+  "name": "Del Rio Golf Course",
+  "osmName": "Del Rio Golf Course",
   "holes": 0
  },
  {
@@ -138,6 +216,18 @@
   "holes": 18
  },
  {
+  "id": "fairfield-city",
+  "name": "Fairfield City Golf Course",
+  "osmName": "Fairfield City Golf Course",
+  "holes": 0
+ },
+ {
+  "id": "fox-hills",
+  "name": "Fox Hills Golf Course",
+  "osmName": "Fox Hills Golf Course",
+  "holes": 0
+ },
+ {
   "id": "georges-river",
   "name": "Georges River Golf Course",
   "osmName": "Georges River Golf Course",
@@ -156,6 +246,18 @@
   "holes": 18
  },
  {
+  "id": "gosford",
+  "name": "Gosford Golf Course",
+  "osmName": "Gosford Golf Course",
+  "holes": 0
+ },
+ {
+  "id": "hawkesbury-waters",
+  "name": "Hawkesbury Waters Golf Course",
+  "osmName": "Hawkesbury Waters Golf Course",
+  "holes": 0
+ },
+ {
   "id": "hunter-valley",
   "name": "Hunter Valley Golf Club",
   "osmName": "an unnamed course at Lovedale",
@@ -168,10 +270,34 @@
   "holes": 18
  },
  {
+  "id": "kareela",
+  "name": "Kareela Golf Course",
+  "osmName": "Kareela Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "killara",
+  "name": "Killara Golf Club",
+  "osmName": "Killara Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "kingdom-estate",
+  "name": "Kingdom Estate Hawkesbury River Golf Club",
+  "osmName": "Kingdom Estate Hawkesbury River Golf Club",
+  "holes": 0
+ },
+ {
   "id": "kogarah",
   "name": "Kogarah Golf Course",
   "osmName": "Kogarah Golf Course",
   "holes": 18
+ },
+ {
+  "id": "kurrajong-hills",
+  "name": "Kurrajong Hills Golf Course",
+  "osmName": "Kurrajong Hills Golf Course",
+  "holes": 0
  },
  {
   "id": "lakeside-camden",
@@ -294,6 +420,18 @@
   "holes": 18
  },
  {
+  "id": "orchard-hills",
+  "name": "Orchard Hills Golf Club",
+  "osmName": "Orchard Hills Golf Club",
+  "holes": 0
+ },
+ {
+  "id": "palm-beach",
+  "name": "Palm Beach Golf Course",
+  "osmName": "Palm Beach Golf Course",
+  "holes": 0
+ },
+ {
   "id": "pennant-hills",
   "name": "Pennant Hills Golf Course",
   "osmName": "Pennant Hills Golf Course",
@@ -342,10 +480,22 @@
   "holes": 1
  },
  {
+  "id": "sefton",
+  "name": "Sefton Golf Course",
+  "osmName": "Sefton Golf Course",
+  "holes": 0
+ },
+ {
   "id": "shortees",
   "name": "Shortees Golf",
   "osmName": "Shortees Golf",
   "holes": 18
+ },
+ {
+  "id": "springwood",
+  "name": "Springwood Country Club",
+  "osmName": "Springwood Country Club",
+  "holes": 0
  },
  {
   "id": "st-michael-s",
@@ -364,6 +514,12 @@
   "name": "Strathfield Golf Course",
   "osmName": "Strathfield Golf Course (private)",
   "holes": 18
+ },
+ {
+  "id": "sylvania-par-3",
+  "name": "Sylvania Par 3 Golf and Soccer",
+  "osmName": "Sylvania Par 3 Golf and Soccer",
+  "holes": 0
  },
  {
   "id": "terrey-hills",
@@ -408,9 +564,27 @@
   "holes": 0
  },
  {
+  "id": "wallacia-panthers",
+  "name": "Wallacia Panthers Golf Course",
+  "osmName": "Wallacia Panthers Golf Course",
+  "holes": 0
+ },
+ {
   "id": "warringah",
   "name": "Warringah Golf Club",
   "osmName": "Warringah Golf Club",
+  "holes": 0
+ },
+ {
+  "id": "windsor",
+  "name": "Windsor Golf Course",
+  "osmName": "Windsor Golf Course",
+  "holes": 0
+ },
+ {
+  "id": "woodville",
+  "name": "Woodville Golf Course",
+  "osmName": "Woodville Golf Course",
   "holes": 0
  },
  {
@@ -418,5 +592,11 @@
   "name": "Woollahra Golf Club",
   "osmName": "Woollahra Golf Club",
   "holes": 9
+ },
+ {
+  "id": "woolooware",
+  "name": "Woolooware Golf Course",
+  "osmName": "Woolooware Golf Course",
+  "holes": 18
  }
 ]

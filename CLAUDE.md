@@ -960,6 +960,18 @@ scorecard sets every length.
   estimate as before. Bunkers and water stay unowned (faded, and not in Play's
   hazards ahead) on marks holes. Left out of C: Bardwell (mapped), Thornleigh
   (a range), Concord (D).
+  **D batch** (2.31.0 too, 30 courses, `e46bab2f`, with the Campbelltown/
+  Camden area the first tiering never fetched): Antill Park, Boomerang,
+  Camden, Campbelltown, Canterbury (9), Carnarvon, Castle Hill, Cromer,
+  Cumberland, Kareela, Killara and Woolooware now have every line
+  (Woolooware 5 is 84% inside the outline: `minInside` 0.8, Cronulla next
+  door has no lines). The other 18, Concord included, are `holes: "marks"`
+  outlines with whatever shapes OSM has (Hawkesbury Waters and Kingdom
+  Estate: none). Left out: a second "Lakeside Golf Club Camden" outline
+  (way/721778478), 1.3 km from the mapped course, a quarter its size and
+  tagged like a road; Riverlands (closed), Dural and Helensburgh (ranges),
+  Pittwater Golf Centre, two unnamed outlines, "Stirling Drive". The area
+  sweep found no other course. **The queue left:** a Melbourne tiering.
 
 ## Artwork → map (2.17.0)
 
@@ -1262,7 +1274,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 343 tests, about 45s.
+`npm test` — 344 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1362,10 +1374,10 @@ fixture would let the reading be pinned.
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking, a boundary-only map drawing
   only the holes with marks).
-- `course-maps.test.js` (30) — the committed maps match their sources,
+- `course-maps.test.js` (31) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, the tier-A batch (mapped greens, ref numbers, Manly's 14, Woollahra's nine, Moore Park's ten), the A- batch (partial boundaries, Avondale's outline, Kogarah's shared lines), the B batch (the lines OSM has, Monash's older lines, holes from marks on a partial map), the C batch (lines or marks, flags snapping to mapped greens), artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, the tier-A batch (mapped greens, ref numbers, Manly's 14, Woollahra's nine, Moore Park's ten), the A- batch (partial boundaries, Avondale's outline, Kogarah's shared lines), the B batch (the lines OSM has, Monash's older lines, holes from marks on a partial map), the C batch (lines or marks, flags snapping to mapped greens), the D batch, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `imports.test.js` (2) — every file in `imports/` is a one-course
   carry-export whose card adds up (holes 1..n, pars, `metres` mirroring the

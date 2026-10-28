@@ -1,0 +1,15 @@
+{
+ "id": "palm-beach",
+ "name": "Palm Beach Golf Course",
+ "osm": {
+  "course": "relation/6861189",
+  "name": "Palm Beach Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.58994,
+  151.32261
+ ],
+ "holes": "marks",
+ "why": "Tier D on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, e46bab2f). No hole lines on OSM: every hole comes from his GPS marks, and flags snap to any mapped greens."
+}

@@ -1,0 +1,15 @@
+{
+ "id": "antill-park",
+ "name": "Antill Park Country Golf Club",
+ "osm": {
+  "course": "way/48622812",
+  "name": "Antill Park Country Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -34.16406,
+  150.62884
+ ],
+ "holes": "osm",
+ "why": "Tier D on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, e46bab2f). No card in the source: the course page checks the NAS card once the course is imported."
+}

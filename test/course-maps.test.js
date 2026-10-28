@@ -37,9 +37,9 @@ test('every map credits OpenStreetMap and has a fixed origin', () => {
     // (Manly's two alternative 14ths); with a card, a line for every hole on it.
     const geo = JSON.parse(readFileSync(`course-maps/osm/${id}.geojson`, 'utf8')).features;
     const leftOut = new Set(geo.filter(f => f.properties.golf === 'hole' && (src.ignore || {})[f.properties['@id']]).map(f => parseInt(String(f.properties.ref).match(/\d+/)[0], 10)));
-    // Tier B and C courses have only some of their lines (or greens) on OSM (their own
+    // Tier B, C and D courses have only some of their lines (or greens) on OSM (their own
     // tests list which); the rest are drawn from his marks.
-    const partial = /^Tier [BC] on/.test(src.why || ''), top = Math.max(0, ...m.holes.map(h => h.n));
+    const partial = /^Tier [BCD] on/.test(src.why || ''), top = Math.max(0, ...m.holes.map(h => h.n));
     if (!partial) assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: top }, (_, i) => i + 1).filter(n => !leftOut.has(n) || m.byN[n]));
     if (src.card) for (const [n] of src.card.holes) assert.ok(m.byN[n], `a line for hole ${n} on the card`);
     for (const h of m.holes) {
@@ -439,6 +439,21 @@ test('the C batch of 2026-10-28: six courses with every line, ten from marks ove
   }
   for (const id of ['north-turramurra', 'pennant-hills']) assert.ok(mapOf(id).holes.every(h => !mapOf(id).features[h.green].est), `${id}: every green mapped`);
   assert.ok(mapOf('cabramatta').features.filter(f => f.k === 'green').length >= 18, 'the marks courses keep their mapped greens');
+});
+
+test('the D batch of 2026-10-28: twelve now have their lines, eighteen are outlines for marks', () => {
+  const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /^Tier D on OSM data of 2026-10-28/.test(s.why || ''));
+  const lines = { 'antill-park': 18, boomerang: 18, camden: 18, campbelltown: 18, canterbury: 9, carnarvon: 18, 'castle-hill': 18, cromer: 18, cumberland: 18, kareela: 18, killara: 18, woolooware: 18 };
+  assert.equal(batch.length, 30);
+  for (const src of batch) {
+    const m = mapOf(src.id);
+    if (src.id in lines) { assert.equal(src.holes, 'osm'); assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: lines[src.id] }, (_, i) => i + 1), src.id); }
+    else { assert.equal(src.holes, 'marks', src.id); assert.deepEqual(m.holes, [], src.id); }
+  }
+  // Woolooware 5 runs past OSM's outline: kept by minInside.
+  assert.ok(mapOf('woolooware').byN[5]);
+  // The second "Lakeside Golf Club Camden" outline is not a map of its own.
+  assert.ok(!batch.some(s => s.osm.course === 'way/721778478'));
 });
 
 test('a flag marked on a mapped green takes that green: the line to its middle, a green lie, front and back', () => {

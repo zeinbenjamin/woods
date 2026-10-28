@@ -1,0 +1,15 @@
+{
+ "id": "fairfield-city",
+ "name": "Fairfield City Golf Course",
+ "osm": {
+  "course": "way/155097169",
+  "name": "Fairfield City Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.86257,
+  150.90693
+ ],
+ "holes": "marks",
+ "why": "Tier D on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, e46bab2f). No hole lines on OSM: every hole comes from his GPS marks, and flags snap to any mapped greens."
+}

@@ -1,0 +1,15 @@
+{
+ "id": "kingdom-estate",
+ "name": "Kingdom Estate Hawkesbury River Golf Club",
+ "osm": {
+  "course": "way/1135878025",
+  "name": "Kingdom Estate Hawkesbury River Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.60612,
+  150.80466
+ ],
+ "holes": "marks",
+ "why": "Tier D on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, e46bab2f). No hole lines on OSM: every hole comes from his GPS marks, and flags snap to any mapped greens."
+}
