@@ -1065,7 +1065,14 @@ where, view, note, `swingReading` or "not read yet") over the feed, and
 scroll box and were clipped on his phone; now `position: fixed` over the
 feed with the safe-area padding, the video centred (even letterbox, no
 padding under the chips), and the sound button is an inline SVG
-(`soundIcon(on)`), not an emoji.
+(`soundIcon(on)`), not an emoji. **2.27.2** (he asked): no club chips (`club` in
+the link still narrows `reelSwings`); the bar is just a back chevron,
+white with a dark drop-shadow edge, no disc; each reel has its own
+`.reelsSound` in `.reelBottom` above `.reelInfo` (the toggle updates them
+all). **A sheet's bottom strip** (`.sheet-actions`): the row is sticky at
+the scrollport's bottom, so it carries the sheet's bottom padding; with the
+padding on `.inner`, content scrolled past under Close in that strip (seen
+on the feed's card; every sheet had it).
 
 ## Getting to the green (2.22.0)
 
