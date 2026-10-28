@@ -1162,7 +1162,11 @@ installed Carry keeps its opaque bar until it is removed and added again;
 the served page has the tag. The caption's gradient must stop at the bar
 (2.30.2): `.reelBottom` carries the `--nav-h + --safe-b` padding and
 `.reelInfo` only its own, or the bar sits on near-black and reads as a
-solid band; the bar is 55% paper in the feed.
+solid band; the bar is 55% paper in the feed. **The document is pinned under the feed** (2.30.3,
+`body.reels { position: fixed; inset: 0 }` and a `scrollTo(0, 0)`): with the
+page under the status bar, the root's safe-area padding let the document
+scroll by about the two insets, and his phone showed the whole view ~90px
+high with bare screen under the bar.
 
 ## Getting to the green (2.22.0)
 

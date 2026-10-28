@@ -14,6 +14,9 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 - 30 more: Antill Park, Boomerang, Camden, Campbelltown, Canterbury, Carnarvon, Castle Hill, Cromer, Cumberland, Kareela, Killara and Woolooware with every hole; Avalon, Balgowlah, Concord, Del Rio, Fairfield City, Fox Hills, Gosford, Hawkesbury Waters, Kingdom Estate, Kurrajong Hills, Orchard Hills, Palm Beach, Sefton, Springwood, Sylvania Par 3, Wallacia Panthers, Windsor and Woodville as outlines whose holes come from your marks.
 - A flag you mark on a mapped green now takes that green: distances to its front, middle and back, and a green lie when your ball lands on it, instead of a dashed estimate.
 
+## 2.30.3 — 2026-10-28
+- The swing feed no longer sits high on the screen with bare black under the tab bar: the page behind the feed is held still while it is open.
+
 ## 2.30.2 — 2026-10-28
 - In the swing feed the clip now shows through the tab bar instead of a black band: the caption's dark shading stops at the bar, and the bar is a touch more see-through.
 

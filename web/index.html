@@ -40,7 +40,11 @@ html, body { height: 100%; }
    Instagram); everywhere else a fixed paper strip sits behind the clock and
    battery, hidden while the feed is open. */
 body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--paper); z-index: 6; }
-body.reels::before { display: none; } body.reels .top { visibility: hidden; }   /* the header sits above the feed's layer; the bar below it is the one that shows */
+body.reels::before { display: none; } body.reels .top { visibility: hidden; }
+/* While the feed is open the document itself is pinned (2.30.3): with the page running under the
+   status bar, the root's safe-area padding let the document scroll by about the two insets, and
+   on his phone the whole view sat ~90px high with bare screen under the tab bar. */
+body.reels { position: fixed; inset: 0; overflow: hidden; height: auto; }   /* the header sits above the feed's layer; the bar below it is the one that shows */
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; -webkit-text-size-adjust: 100%; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 
@@ -3290,6 +3294,7 @@ let reelsSound = false;
 function reelsLifecycle() {
   const root = document.getElementById('reels');
   document.body.classList.toggle('reels', !!root);   // the bar goes translucent and the status-bar strip hides
+  if (root) window.scrollTo(0, 0);
   if (reelsObs) { reelsObs.disconnect(); reelsObs = null; }
   if (!root) reelsSound = false;
   if (!root || typeof IntersectionObserver !== 'function') return;
