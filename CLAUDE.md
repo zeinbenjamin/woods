@@ -499,7 +499,7 @@ Each of these cost real debugging time. Don't reintroduce them.
 
 ## The Overview
 
-**Five tabs and a gear** (2.26.0, he asked, breaking 2.13.0's four: the
+**Five tabs and a gear** (2.27.0, he asked, breaking 2.13.0's four: the
 swing feed was too hard to reach): Swings · Range · Overview · Rounds ·
 Courses, Overview in the middle as a green pill (`nav.tabs button.home`,
 brighter when current). `swings` is a tab (`vSwingsTab`: the history, or
@@ -1057,7 +1057,7 @@ when the feed closes. **The caption opens the card** (2.26.0, he asked: the
 session page was too much): `reelCard` opens a sheet (`reelCardHtml`: date,
 where, view, note, `swingReading` or "not read yet") over the feed, and
 `reelOpen` closes it and goes to the session or round. **The bar is fixed**
-(2.26.0): as a zero-height sticky item its chips overflowed above the
+(2.27.0): as a zero-height sticky item its chips overflowed above the
 scroll box and were clipped on his phone; now `position: fixed` over the
 feed with the safe-area padding, the video centred (even letterbox, no
 padding under the chips), and the sound button is an inline SVG

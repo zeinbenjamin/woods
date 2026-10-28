@@ -48,7 +48,7 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: 
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + var(--safe-b) + 32px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: var(--safe-b); }
 nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
-/* Overview is the home tab, in the middle and marked out (2.26.0, he asked): a green pill, brighter when it's the page. */
+/* Overview is the home tab, in the middle and marked out (2.27.0, he asked): a green pill, brighter when it's the page. */
 nav.tabs li { display: flex; align-items: center; justify-content: center; }
 nav.tabs button.home { width: auto; height: 34px; padding: 0 14px; border-radius: 999px; border: 0; margin: 0; background: var(--green); color: var(--paper); font-weight: 600; }
 nav.tabs button.home[aria-current="page"] { color: var(--paper); border-top-color: transparent; filter: brightness(1.15); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 35%, transparent); }
@@ -178,7 +178,7 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .reelInfo .t { font-weight: 600; font-size: 16px; } .reelInfo .s { font-size: 13px; opacity: .85; margin-top: 2px; } .reelInfo .fix { font-family: var(--cond); font-weight: 700; font-size: 20px; line-height: 1.15; margin: 6px 0 4px; } .reelInfo .small { opacity: .7; }
 .reelInfo .tag { background: rgba(255,255,255,.18); color: #fff; border: 0; } .reelInfo .tag.green { background: rgba(120,200,140,.35); } .reelInfo.static { position: static; background: none; }
 /* The bar is fixed over the feed, not a sticky item in the snap flow: as a 0-height
-   sticky its chips overflowed above the scroll box and were clipped (2.26.0). */
+   sticky its chips overflowed above the scroll box and were clipped (2.27.0). */
 .reelsTop { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 14px; background: linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.4) 70%, transparent); }
 .reelsTop .chips { flex: 1 1 auto; min-width: 0; padding: 2px 0; }
 .reelsTop .chips { overflow-x: auto; flex-wrap: nowrap; } .reelsTop .chip { background: rgba(255,255,255,.15); color: #fff; border-color: transparent; } .reelsTop .chip[aria-pressed="true"] { background: #fff; color: #000; }
@@ -3208,7 +3208,7 @@ Object.assign(ACTIONS, {
     if (await save('clubs', club, { ...c, crossReading: cr })) { toast('Read across the readings'); render(); }
   },
 });
-// Swings is a tab (2.26.0, he asked: the feed was too hard to reach): the
+// Swings is a tab (2.27.0, he asked: the feed was too hard to reach): the
 // history is its root, the feed its one sub-view. The old range:view=swings
 // and range:view=reels links still land here.
 function vSwingsTab() { return S.sub && S.sub.view === 'reels' ? vReels() : vSwings(); }
