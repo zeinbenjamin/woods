@@ -1127,7 +1127,12 @@ translucent with a backdrop blur. `.reels` is `z-index: 4`, under the bar
 has a `.reelBg`: the swing's middle frame (`swingFrame`) blurred and
 darkened behind the clip, so a clip that doesn't fill the screen has no
 black bars; a still, not a second decoding video, so a phone plays one
-clip at a time as before.
+clip at a time as before. The backdrop is scaled 1.2 to hide its soft edges, so
+`.reel` is `overflow: hidden` and `.reels` `overflow-x: hidden` (2.30.1):
+unclipped, it widened the feed and his phone scrolled it sideways. **The
+status-bar style is read when the app is added to the home screen**: an
+installed Carry keeps its opaque bar until it is removed and added again;
+the served page has the tag.
 
 ## Getting to the green (2.22.0)
 
