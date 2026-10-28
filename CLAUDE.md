@@ -499,7 +499,13 @@ Each of these cost real debugging time. Don't reintroduce them.
 
 ## The Overview
 
-**Four tabs and a gear** (2.13.0, he asked whether Courses and Bag
+**Five tabs and a gear** (2.27.0, he asked, breaking 2.13.0's four: the
+swing feed was too hard to reach): Swings · Range · Overview · Rounds ·
+Courses, Overview in the middle as a green pill (`nav.tabs button.home`,
+brighter when current). `swings` is a tab (`vSwingsTab`: the history, or
+the feed with `sub.view === 'reels'`); the old `range:view=swings` and
+`range:view=reels` links are forwarded by `vRange`, which sets `S.tab`.
+Before that (2.13.0, he asked whether Courses and Bag
 needed to be tabs): Overview · Range · Rounds · Courses on the bar, and
 *Settings* (`vSettings`, tab `settings`, the gear `#settingsBtn` in the
 header) holding everything set once: the bag (clubs), *Range numbers* (the
@@ -1050,7 +1056,12 @@ needs, the one on screen being the only one playing, and the flag resets
 when the feed closes. **The caption opens the card** (2.26.0, he asked: the
 session page was too much): `reelCard` opens a sheet (`reelCardHtml`: date,
 where, view, note, `swingReading` or "not read yet") over the feed, and
-`reelOpen` closes it and goes to the session or round.
+`reelOpen` closes it and goes to the session or round. **The bar is fixed**
+(2.27.0): as a zero-height sticky item its chips overflowed above the
+scroll box and were clipped on his phone; now `position: fixed` over the
+feed with the safe-area padding, the video centred (even letterbox, no
+padding under the chips), and the sound button is an inline SVG
+(`soundIcon(on)`), not an emoji.
 
 ## Getting to the green (2.22.0)
 

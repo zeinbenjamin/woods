@@ -26,9 +26,7 @@ before(async () => {
 after(() => app && app.stop());
 
 test('the timeline lists every swing newest first, flagged range or course, with the date and the fix', () => {
-  app.go('range');
-  assert.match(app.text('#view [data-go="range:view=swings"]'), /Swing history: 4 swings/);
-  app.go('range', { view: 'swings' });
+  app.go('swings');
   assert.match(app.text('#swingBasis'), /4 swings from 3 sessions, 3 Aug 2026 to 19 Oct 2026; 3 read/);
   const rows = app.$$('#swingTimeline .swrow');
   assert.equal(rows.length, 4);
@@ -49,7 +47,7 @@ test('a summary per club is put together from the readings: count, span, the fix
   assert.deepEqual(c.latest.wrist, null, 'the latest reading is the face-on one, which has no wrist answer');
   const w = app.J(`swingClubSummary('5W', swingHistory())`);
   assert.deepEqual([w.n, w.read, w.latest], [1, 0, null]);
-  app.go('range', { view: 'swings' });
+  app.go('swings');
   const folds = app.$$('#swingClubs details');
   assert.deepEqual(folds.map(d => d.id), ['swc_5W', 'swc_7i'], 'bag order, closed folds with ids');
   assert.match(app.text('#swc_5W summary'), /5W 1 swing, none read yet/);
@@ -65,9 +63,7 @@ test('with no swings the page says so, and the Range list has no link', async ()
   for (const id of ['s_aug', 's_oct']) await app.api.put('sessions', id, { ...(await app.api.get('sessions', id)), swings: [] });
   await app.api.put('sessions', 'r_sep', { ...(await app.api.get('sessions', 'r_sep')), swings: [] });
   await app.waitFor(() => app.E(`allSwings().length`) === 0, { what: 'cleared' });
-  app.go('range');
-  assert.equal(app.$('#view [data-go="range:view=swings"]'), null);
-  app.go('range', { view: 'swings' });
+  app.go('swings');
   assert.match(app.text('#view'), /No swings on file yet/);
 });
 
@@ -78,7 +74,7 @@ test('the cross-reading button sends the club\'s readings and ball data, no fram
   await app.api.put('sessions', 's_aug', { ...(await app.api.get('sessions', 's_aug')), swings: [{ id: 'sw_a', view: 'dtl', club: '7i', note: 'hooking', frames, analysis: reading('Rotate through the ball', { ball_data: 'contradicts' }), analysedOn: '2026-08-03' }] });
   await app.api.put('sessions', 's_oct', { ...(await app.api.get('sessions', 's_oct')), swings: [{ id: 'sw_b', view: 'dtl', club: '7i', frames, analysis: reading('Hold the wrist angle longer', { wrist: { top: 'flat', lead_arm_parallel: 'released' } }), analysedOn: '2026-10-19' }] });
   await app.waitFor(() => app.E(`clubReadings('7i').length`) === 2, { what: 'readings back' });
-  app.go('range', { view: 'swings' });
+  app.go('swings');
   assert.equal(app.$('#swc_5W [data-act="crossRead"]'), null, 'no readings, no button');
   const btn = app.$('#swc_7i [data-act="crossRead"]');
   assert.match(btn.textContent, /Read across these 2 readings/);
@@ -98,7 +94,7 @@ test('the cross-reading button sends the club\'s readings and ball data, no fram
   assert.deepEqual(cr.swings, ['sw_a', 'sw_b']);
   assert.equal(cr.carry_forward, reply.carry_forward); assert.equal(cr.confidence, 'medium');
   assert.equal((await app.api.get('clubs', '7i')).crossReading.thread, reply.thread, 'on the server');
-  app.go('range', { view: 'swings' });
+  app.go('swings');
   assert.equal(app.text('#cross_7i .one'), reply.carry_forward);
   assert.match(app.text('#cross_7i'), /The thread Both readings[\s\S]*Moved on The early rotation[\s\S]*Still there Wrist release[\s\S]*Could be wrong because Two readings/);
   assert.match(app.text('#cross_7i'), /Read across 2 readings on .*, medium confidence — a reading of readings, not a measurement\./);
@@ -108,7 +104,7 @@ test('the cross-reading button sends the club\'s readings and ball data, no fram
   // A third reading arrives: the stored one is marked stale, the button is primary again.
   await app.api.put('sessions', 's_oct', { ...(await app.api.get('sessions', 's_oct')), swings: [...(await app.api.get('sessions', 's_oct')).swings, { id: 'sw_c', view: 'face', club: '7i', frames, analysis: reading('Hold the wrist angle longer'), analysedOn: '2026-10-19' }] });
   await app.waitFor(() => app.E(`clubReadings('7i').length`) === 3, { what: 'third reading' });
-  app.go('range', { view: 'swings' });
+  app.go('swings');
   assert.match(app.text('#cross_7i'), /1 newer reading since\./);
   assert.equal(app.$('#swc_7i [data-act="crossRead"]').className, 'primary');
   analyseReply = null;
@@ -117,7 +113,7 @@ test('the cross-reading button sends the club\'s readings and ball data, no fram
 test('a failed cross-reading says why and stores nothing', async () => {
   const before = app.J(`S.clubs.find(c => c.code === '7i').crossReading`);
   analyseReply = { text: 'not json', json: null };
-  app.go('range', { view: 'swings' });
+  app.go('swings');
   app.$('#swc_7i [data-act="crossRead"]').click();
   await app.waitFor(() => /expected format/.test(app.text('#crossProg_7i')), { what: 'error shown' });
   assert.deepEqual(app.J(`S.clubs.find(c => c.code === '7i').crossReading`), before);
@@ -143,15 +139,15 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   const r = await app.api.get('sessions', 'r_sep');
   await app.api.put('sessions', 'r_sep', { ...r, swings: [{ id: 'sw_d', view: 'face', club: '5W', frames: [{ asset: f1, t: 0.05 }], video: vid, addedOn: '2026-09-14' }] });
   await app.waitFor(() => app.E(`reelSwings('').length`) === 3, { what: 'videos' });
-  app.go('range', { view: 'swings' });
-  assert.match(app.text('#view [data-go="range:view=reels"]'), /Watch: 3 videos/);
+  app.go('swings');
+  assert.match(app.text('#view [data-go="swings:view=reels"]'), /Watch: 3 videos/);
   // A stand-in observer: jsdom has none. Record what gets observed and let the test fire it.
   let cb = null, observed = [];
   app.win.IntersectionObserver = class { constructor(f, o) { cb = f; this.o = o; } observe(el) { observed.push(el); } disconnect() { observed = []; } };
   const played = [], paused = [];
   app.win.HTMLMediaElement.prototype.play = function () { played.push(this.src); return Promise.resolve(); };
   app.win.HTMLMediaElement.prototype.pause = function () { paused.push(this.src); };
-  app.go('range', { view: 'reels' });
+  app.go('swings', { view: 'reels' });
   const reels = app.$$('#reels .reel');
   assert.equal(reels.length, 3, 'the swing without a video (sw_c) is left out');
   assert.deepEqual(reels.map(r => r.querySelector('.reelInfo .t').textContent.replace(/\s+/g, ' ').trim()), ['19 Oct 2026 range 7i Down the line', '14 Sept 2026 course 5W Face on', '3 Aug 2026 range 7i Down the line']);
@@ -175,8 +171,9 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   app.$('#sheetInner [data-act="reelOpen"]').click();
   assert.ok(!app.sheetOpen() && !app.$('#reels'), 'the link closes the sheet and leaves the feed');
   assert.match(app.text('#view'), /14 Sept 2026/);
-  app.go('range', { view: 'reels' });
-  assert.equal(app.$('#reels .reelsClose').dataset.go, 'range:view=swings');
+  app.go('swings', { view: 'reels' });
+  assert.equal(app.$('#reels .reelsClose').dataset.go, 'swings');
+  assert.ok(app.$('#reels .reelsSound svg') && !/🔊|🔇/.test(app.$('#reels .reelsSound').textContent), 'the sound button is a drawn speaker, not an emoji');
   assert.equal(observed.length, 3, 'every video is watched');
   // The third video scrolls into view: it plays, its neighbour gets loaded, the first pauses.
   const vids = app.$$('#reels video[data-reel]');   // re-read: the feed was rebuilt by the trip out
@@ -195,13 +192,17 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   app.$('#reels .reelsSound').click();
   assert.equal(app.E('reelsSound'), true);
   // Narrow to the 5W.
-  app.$('#reels .reelsTop [data-go="range:view=reels,club=5W"]').click();
+  app.$('#reels .reelsTop [data-go="swings:view=reels,club=5W"]').click();
   assert.equal(app.$$('#reels .reel').length, 1);
   assert.equal(app.$('#reels .reelsTop .chip[aria-pressed="true"]').textContent, '5W');
-  app.go('range', { view: 'reels', club: 'D' });
+  app.go('swings', { view: 'reels', club: 'D' });
   assert.match(app.text('#reels'), /No videos for the D/);
   app.$('#reels .reelsClose').click();
   assert.equal(app.$('#reels'), null, 'closed, back on the history');
+  // Old links still land on the tab.
+  app.go('range', { view: 'reels' }); assert.ok(app.$('#reels')); assert.equal(app.E('S.tab'), 'swings');
+  app.go('range', { view: 'swings' }); assert.ok(app.$('#swingTimeline')); assert.equal(app.E('S.tab'), 'swings');
+  app.go('swings');
   assert.equal(app.E('reelsSound'), false, 'the next open starts quiet');
   assert.ok(app.$('#swingTimeline'));
 });

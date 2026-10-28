@@ -60,7 +60,8 @@ test('the page is called Overview: the answer first, the detail folded behind on
     'Evidence 18 holes of shot data, 33 range shots, 2 scorecard-only rounds (not used)',
   ]);
   assert.ok(app.$('#rangeFilterLine [data-go="settings"]'), 'the range filter is one line by the numbers it filters, with the controls in Settings');
-  assert.deepEqual(app.$$('nav.tabs button').map(b => b.textContent), ['Overview', 'Range', 'Rounds', 'Courses']);
+  assert.deepEqual(app.$$('nav.tabs button').map(b => b.textContent), ['Swings', 'Range', 'Overview', 'Rounds', 'Courses'], 'five tabs, Overview in the middle');
+  assert.ok(app.$('nav.tabs button[data-tab="overview"]').classList.contains('home'), 'Overview is marked out as the home tab');
   assert.ok(app.$('#settingsBtn'), 'Settings is behind the gear');
   assert.ok(app.$$('#view details.fold').every(d => d.id), 'every fold keeps its state across redraws');
 });
