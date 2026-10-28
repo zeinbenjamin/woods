@@ -920,6 +920,19 @@ scorecard sets every length.
   and 16, Lynwood 15. Map names are OSM's, less "(private)". The queue he
   set after this: A- (8), B and B- (7), C (17, marks with flags snapping to
   mapped greens), D (about 30), then a Melbourne tiering.
+  **A- batch** (2.29.0, 7 courses): his export of 2026-10-28 (`ebf649b3`).
+  Avondale, Brighton Lakes, Kogarah, Mona Vale, NSW, St Michael's, The Lakes,
+  18 holes each, every green mapped. Fresher than the tiering's mirror data:
+  Brighton Lakes is now one 18-hole relation (the tiering had an 11 and a 7
+  on two ways), so one map. Avondale's outline is tagged `golf=tee` in OSM;
+  it is the boundary. NSW 5 and 6 (the cliff-top tees, 84% and 30% inside)
+  and The Lakes 14 (79%) run past OSM's boundary, so `minInside` is 0.25 and
+  0.75 there; every neighbour's line is wholly outside. Kogarah has 15 lines,
+  three played twice ("1/16", "2/17", "10/18"): the source's **`share`**
+  gives 16, 17 and 18 the line and green of 1, 2 and 10, and `forHole` lends
+  them that hole's shapes (`lent`, cached on the map), so the fairway,
+  hazards and legend are theirs; the file keeps the shapes on the first
+  hole. No mapped tee box: The Lakes 7.
 
 ## Artwork → map (2.17.0)
 
@@ -1203,7 +1216,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 339 tests, about 45s.
+`npm test` — 340 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1303,10 +1316,10 @@ fixture would let the reading be pinned.
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking, a boundary-only map drawing
   only the holes with marks).
-- `course-maps.test.js` (26) — the committed maps match their sources,
+- `course-maps.test.js` (27) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, the tier-A batch (mapped greens, ref numbers, Manly's 14, Woollahra's nine, Moore Park's ten), artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, the tier-A batch (mapped greens, ref numbers, Manly's 14, Woollahra's nine, Moore Park's ten), the A- batch (partial boundaries, Avondale's outline, Kogarah's shared lines), artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `imports.test.js` (2) — every file in `imports/` is a one-course
   carry-export whose card adds up (holes 1..n, pars, `metres` mirroring the
@@ -1332,7 +1345,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for Hunter Valley, 2 for the tier-A batch, 5 for `fromArt` (also run against the Carry chat's ui-artconvert), 2 for the legend, 5 for the
+9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for Hunter Valley, 2 for the tier-A batch, 2 for the A- batch, 5 for `fromArt` (also run against the Carry chat's ui-artconvert), 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 `tee` field from the app survives it because the server corrects it), 9 for 2.5.0's

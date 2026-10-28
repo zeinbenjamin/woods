@@ -1,0 +1,16 @@
+{
+ "id": "nsw",
+ "name": "NSW Golf Club",
+ "osm": {
+  "course": "relation/3045927",
+  "name": "NSW Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.99352,
+  151.24437
+ ],
+ "holes": "osm",
+ "minInside": 0.25,
+ "why": "Tier A- on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ebf649b3). No card in the source: the course page checks the NAS card once the course is imported. Holes 5 and 6 run partly outside OSM's boundary (84% and 30% inside: the cliff-top tees), so minInside is 0.25; every neighbouring line is wholly outside it."
+}

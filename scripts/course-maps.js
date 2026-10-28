@@ -22,6 +22,10 @@
 //                                boundary is partial and no course is next door
 //   renumber: { "10": 1, ... }   OSM's ref → the course's hole number, where OSM
 //                                numbers from an old start (Hurstville's nines)
+//   share: { "16": 1, ... }      a hole that plays another's line (OSM's "1/16"
+//                                at Kogarah): hole 16 gets hole 1's line, green
+//                                and shapes (the shapes stay hole 1's in the
+//                                file; holemap.js lends them to 16)
 //   holes: { "1": { tees: [osm id | {id, half: "nearest"}], green: osm id, via?: fairway id } }
 //                                for courses OSM has no hole lines for
 //   holes: "marks"               no hole lines anywhere: only the boundary (and
@@ -265,6 +269,14 @@ function build(id) {
       holes.push({ n, line: pick.line, green: gi, teeFrom: pick.t.osm + (pick.t.half ? ' (half)' : ''), teeOsm: teeSpots.map(t => t.osm) });
     }
   }
+  // A hole played along another's line ("1/16"): the same line and green,
+  // its own number. Its card length (and the card check) can still differ.
+  for (const [ns, from] of Object.entries(src.share || {})) {
+    const h = holes.find(x => x.n === from), n = Number(ns);
+    if (!h) throw new Error(`${id}: share ${ns} names hole ${from}, which has no line`);
+    if (holes.some(x => x.n === n)) throw new Error(`${id}: hole ${ns} has a line of its own and a share`);
+    holes.push({ n, line: h.line, green: h.green, osmLine: h.osmLine, share: from });
+  }
   holes.sort((a, b) => a.n - b.n);
 
   // Which hole each shape belongs to: the nearest hole line, for shapes
@@ -299,7 +311,7 @@ function build(id) {
     origin: src.origin, holesFrom: src.holesFrom || (src.holes === 'osm' ? 'OpenStreetMap' : src.holes === 'marks' ? 'your GPS marks' : 'a mapping by hand'),
     boundary,
     features: features.map(({ osm, ...f }) => ({ ...f, osm })),
-    holes: holes.map(h => ({ n: h.n, line: h.line, green: h.green, tees: h.tees })),
+    holes: holes.map(h => ({ n: h.n, line: h.line, green: h.green, tees: h.tees, ...(h.share ? { share: h.share } : {}) })),
   };
   if (!existsSync(OUT)) mkdirSync(OUT, { recursive: true });
   writeFileSync(join(OUT, id + '.json'), JSON.stringify(out) + '\n');

@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.29.0 — 2026-10-28
+- Seven more Sydney courses have course maps ready, each with all 18 holes and real greens: Avondale, Brighton Lakes, Kogarah, Mona Vale, NSW, St Michael's and The Lakes.
+- Kogarah's 16th, 17th and 18th play down the same fairways as the 1st, 2nd and 10th, so their maps are those holes' maps; the card check will say if their tees differ.
+- To use one, add the course with its card, then link its map on the course page.
+
 ## 2.28.0 — 2026-10-28
 - 27 more Sydney courses have course maps ready, every one fully mapped in OpenStreetMap with real greens, tees, bunkers and water: Asquith, Auburn, Bankstown, Bonnie Doon, Botany, Colonial, Dunheved, Elanora, Georges River, Glenmore Heritage Valley, Lakeside Camden, Lynwood, Manly, Moore Park, Oatlands, Penrith, Pymble, Richmond, Royal Sydney, Shortees, Stonecutters Ridge, Strathfield, Terrey Hills, The Australian, The Ridge, Twin Creeks and Woollahra.
 - To use one, add the course with its card, then link its map on the course page; the card check compares the two.
