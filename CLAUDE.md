@@ -434,6 +434,18 @@ Each of these cost real debugging time. Don't reintroduce them.
   redirect (or a 401 that isn't Carry's JSON) → `signed_out`, "Sign in
   again"; Carry's own 401 → `unauthorised`, "open it through Cloudflare".
   1.x's `?token=` and stored token are dropped, never kept.
+  **Quietly, since 2.31.2** (he asked; the sheet took over the feed, and
+  with the Access session at a month he was still being refused): the first
+  refused poll is ignored; the second mounts a hidden iframe on
+  `/api/stamps?reauth=…` (a protected URL, not the app), so a login session
+  still good completes Cloudflare's hops and sets a fresh cookie with no
+  page; the shim fires `signed_in` on the next good poll and the app clears
+  up with a toast. Only after `CARRY_SIGNIN_WAIT_MS` (8 s) still refused does
+  `#signinBar` appear, with *Sign in again* (a reload). Never a sheet,
+  never a reload on its own. The home-address refusal (`unauthorised`)
+  keeps its one sheet. Why a month-long session is refused at all is
+  still open: if it keeps happening, look at what Cloudflare answers
+  (`redirect` vs 401) and at the PWA's cookie store.
 - **The server logs writes and errors**, never GETs that succeed, and never
   the query string.
 - **The container stops cleanly**: SIGTERM closes the HTTP server and
@@ -1166,7 +1178,18 @@ solid band; the bar is 55% paper in the feed. **The document is pinned under the
 `body.reels { position: fixed; inset: 0 }` and a `scrollTo(0, 0)`): with the
 page under the status bar, the root's safe-area padding let the document
 scroll by about the two insets, and his phone showed the whole view ~90px
-high with bare screen under the bar.
+high with bare screen under the bar. That pin changed nothing (2.30.3 on his phone): the
+gap measured the status bar's height, which is iOS's own fault with
+`black-translucent` in a home-screen app: it shifts the web view up under
+the status bar without lengthening it. **So the meta tag is gone (2.31.1)**
+and the feed starts below the status bar; the `body::before` strip and
+`body.reels` pin are harmless and stay. The only known way to a filled top
+is a document that never scrolls (`html, body { overflow: hidden }` with
+`main` as the scroller), untried and not testable here; the status-bar
+style is read at install, so any change means removing and re-adding the
+app. **The tab bar is plain in the feed** (2.31.3, he asked: the same as
+everywhere, not translucent): `.reels` ends at `--nav-h + --safe-b`, the
+caption carries no bar padding, and the translucent rule is gone.
 
 ## Getting to the green (2.22.0)
 

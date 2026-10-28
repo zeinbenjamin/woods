@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- No black-translucent status bar (2.31.1): on his iPhone, iOS shifted the whole web view up under the status bar without lengthening it, leaving a bare strip under the tab bar. See CLAUDE.md. -->
 <title>Carry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,9 +55,9 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: 
 .brand small { font: 500 11px var(--body); color: var(--ink-3); margin-left: 5px; letter-spacing: 0; }
 .vlist { list-style: none; margin: 8px 0 0; padding: 0; } .vlist li { border-top: 1px solid var(--rule); padding: 10px 0; } .vlist ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; } .vlist ul li { border: 0; padding: 2px 0; }
 .status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
+.signinBar { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 12px; right: 12px; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.25); } .signinBar button { margin-left: auto; flex: 0 0 auto; }
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + var(--safe-b) + 32px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: var(--safe-b); }
-body.reels nav.tabs { background: color-mix(in srgb, var(--paper) 55%, transparent); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); border-top-color: color-mix(in srgb, var(--rule) 50%, transparent); }
 nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
 /* Overview is the home tab, in the middle and marked out (2.27.0, he asked): a green pill, brighter when it's the page. */
 nav.tabs li { display: flex; align-items: center; justify-content: center; }
@@ -183,7 +183,8 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .quick { margin-top: 8px; } .qrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .qrow .qn { font-family: var(--cond); font-weight: 700; font-size: 17px; min-width: 44px; } .qrow .qn small { display: block; font: 400 10px var(--body); color: var(--ink-3); }
 .qrow .chips { flex-wrap: nowrap; overflow-x: auto; }
-.reels { position: fixed; inset: 0; z-index: 4; background: #000; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+/* The feed ends at the tab bar (2.31.3, he asked: the bar the same as everywhere, not translucent). */
+.reels { position: fixed; top: 0; left: 0; right: 0; bottom: calc(var(--nav-h) + var(--safe-b)); z-index: 4; background: #000; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .reel { position: relative; height: 100%; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always; display: flex; align-items: center; justify-content: center; }   /* clips the scaled backdrop: unclipped it widened the feed and let it slide sideways (2.29.1) */
 .reel video { position: relative; width: 100%; height: 100%; object-fit: contain; }
 .reelBg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) brightness(.55) saturate(1.1); transform: scale(1.2); pointer-events: none; }
@@ -197,7 +198,7 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 /* 2.27.2 (he asked): no club chips; a bare back chevron, white with a dark edge so it reads on a light or dark clip; the speaker sits above the caption. */
 .reelsClose { width: 44px; height: 44px; border: 0; background: none; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.9)) drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
 /* The caption's gradient ends at the tab bar (2.30.2): run under it, it put a near-black band behind the translucent bar instead of the clip. */
-.reelBottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; padding-bottom: calc(var(--nav-h) + var(--safe-b)); }
+.reelBottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
 .reelTools { display: flex; justify-content: flex-end; padding: 0 14px 6px; }
 .reelsSound { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0,0,0,.35); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); } .reelsSound[aria-pressed="true"] { background: #fff; color: #000; }
 .swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }
@@ -385,7 +386,7 @@ async function connect() {
   try { S.assets = await claude.use('assets'); } catch (e) { S.assets = null; }
   // Swing analysis needs a view that can send images to Claude.
   try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
-  const onErr = e => { if (e && (e.code === 'unauthorised' || e.code === 'signed_out')) return askSignIn(e.code); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
+  const onErr = e => { if (e && e.code === 'signed_in') return signedInAgain(); if (e && (e.code === 'unauthorised' || e.code === 'signed_out')) return askSignIn(e.code); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
   db.collection('clubs').onSnapshot(snap => { S.clubs = snap.docs.map(d => d.data()).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); render(); }, onErr);
   db.collection('courses').onSnapshot(snap => { S.courses = snap.docs.map(d => d.data()).sort((a, b) => a.name.localeCompare(b.name)); render(); }, onErr);
   setTimeout(() => runMigrations(), 400);
@@ -397,20 +398,48 @@ async function connect() {
 // the page was opened at an address that doesn't go through Cloudflare (the
 // NAS's own http://…:1818), which no longer opens anything. Asked once per
 // page load: every poll fails the same way, and Cancel should mean it.
+// Signed out, quietly (2.31.2, he asked: the sheet took over the feed, and a
+// month-long Access session was still being refused). One failed poll is
+// ignored (a glitch). The second starts a silent sign-in: a hidden iframe
+// loads /api/stamps through Cloudflare, and a login session that is still
+// good completes the redirect hops with no page to show, setting a fresh
+// cookie; the next poll then succeeds and the shim says `signed_in`. Only if
+// polls still fail SIGNIN_WAIT later does a slim banner appear, with the one
+// button, which reloads (that lands on Cloudflare's login if it must). Never
+// a sheet, never a reload on its own. The home-address refusal keeps its
+// sheet: that one needs reading, once.
 let askingSignIn = false;
+const signIn = { strikes: 0, frame: null, timer: null };
 function askSignIn(code) {
+  if (code === 'signed_out') {
+    if (signIn.strikes++ < 1 || signIn.frame) return;
+    setStatus('Signed out', true);
+    const f = document.createElement('iframe'); f.id = 'reauth'; f.hidden = true; f.setAttribute('aria-hidden', 'true'); f.src = '/api/stamps?reauth=' + Date.now();
+    document.body.appendChild(f); signIn.frame = f;
+    signIn.timer = setTimeout(signInBar, Number(window.CARRY_SIGNIN_WAIT_MS || 8000));
+    return;
+  }
   if (askingSignIn) return;
   askingSignIn = true;
-  const expired = code === 'signed_out';
-  setStatus(expired ? 'Signed out' : 'Not signed in', true);
-  openSheet(expired
-    ? `<h2>Sign in again</h2>
-      <p class="small muted">Your sign-in has expired. Nothing unsaved is lost from what's on screen, but changes can't be saved until you sign in again.</p>`
-    : `<h2>Open Carry through Cloudflare</h2>
+  setStatus('Not signed in', true);
+  openSheet(`<h2>Open Carry through Cloudflare</h2>
       <p class="small muted">Carry now signs you in with Cloudflare Access, so it only opens at its Cloudflare address (for example https://carry.elevengrant.com). The NAS's own address no longer works, on the LAN too.</p>`,
     async () => { location.reload(); return true; });
-  const btn = $('#sheetInner [data-save]'); if (btn) btn.textContent = expired ? 'Sign in again' : 'Try again';
+  const btn = $('#sheetInner [data-save]'); if (btn) btn.textContent = 'Try again';
 }
+function signInBar() {
+  if (document.getElementById('signinBar')) return;
+  const el = document.createElement('div'); el.id = 'signinBar'; el.className = 'signinBar'; el.setAttribute('role', 'status');
+  el.innerHTML = `<span>Signed out. What's on screen stays, but nothing saves until you sign in.</span><button class="primary" data-act="signInAgain">Sign in again</button>`;
+  document.body.appendChild(el);
+}
+function signedInAgain() {
+  signIn.strikes = 0; clearTimeout(signIn.timer); signIn.timer = null;
+  if (signIn.frame) { signIn.frame.remove(); signIn.frame = null; }
+  const bar = document.getElementById('signinBar'); if (bar) bar.remove();
+  setStatus(''); toast('Signed in again');
+}
+
 async function save(col, id, doc) {
   if (!S.db) { toast('Storage unavailable'); return false; }
   try { await S.db.collection(col).doc(id).set(doc); return true; }
@@ -3390,6 +3419,7 @@ function reelCardHtml(sw, s) {
 // A minimalist speaker, drawn not typed (he found the emoji tacky): waves on, a cross off.
 const soundIcon = on => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/>${on ? '<path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18.3 6.5a8 8 0 0 1 0 11"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
 Object.assign(ACTIONS, {
+  signInAgain() { location.reload(); },
   reelCard(d) {
     const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid);
     if (!sw) return;
