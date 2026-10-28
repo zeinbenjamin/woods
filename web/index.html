@@ -1519,7 +1519,9 @@ function wireHoleCount(root, withScores, initial) {
 function roundForm(r = {}) {
   const courses = S.courses.map(c => [c.id, c.name]);
   const c = r.courseId ? course(r.courseId) : (S.courses[0] || null);
-  const holes = r.holes && r.holes.length ? fullCard(r.holes) : fullCard(c && c.holes ? c.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []);
+  // Lengths come from the tee being played, not the card's primary tee (2.20.3:
+  // a red-tee round at Moore Park used to store the blue lengths).
+  const holes = r.holes && r.holes.length ? fullCard(r.holes) : fullCard(c && c.holes ? cardForTee(c, r.tee) : []);
   return `<h2>${r.id ? 'Edit round' : 'New round'}</h2>
   ${S.courses.length ? coursePicker(r.courseId || (c && c.id)) : `<div class="notice">Add a course first, then log rounds against it.</div>`}
   <div class="grid2">${field('Date', 'date', 'date', r.date || today())}${teeControl(c, r.tee)}</div>
@@ -1610,9 +1612,25 @@ function wireCoursePicker(root) {
     if (e.target.closest('[data-newcourse]')) { sheet.close(); ACTIONS.newCourse(); }
   });
 }
+// The round form's card for a course and tee: par and that tee's lengths.
+const cardForTee = (c, tee) => holesForTee(c, tee).map(h => ({ n: h.n, par: h.par, metres: h.metres }));
 function wireCoursePick(root) {
   const sel = root.querySelector('[name=courseId]'); if (!sel) return;
-  sel.addEventListener('change', () => { const c = course(sel.value); if (!c || !c.holes) return; const teeEl = root.querySelector('[name=tee]'); if (teeEl) teeEl.closest('label').outerHTML = teeControl(c); const card = fullCard(c.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres }))); root.querySelectorAll('[data-holes]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.holes) === card.length)); $('#holesWrap', root).innerHTML = holesEditor(card, true); wireHoleCount(root, true, card); });
+  let prevTee = val(root, 'tee');
+  sel.addEventListener('change', () => { const c = course(sel.value); if (!c || !c.holes) return; const teeEl = root.querySelector('[name=tee]'); if (teeEl) teeEl.closest('label').outerHTML = teeControl(c); prevTee = val(root, 'tee'); const card = fullCard(cardForTee(c, prevTee)); root.querySelectorAll('[data-holes]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.holes) === card.length)); $('#holesWrap', root).innerHTML = holesEditor(card, true); wireHoleCount(root, true, card); });
+  // Changing the tee re-fills the lengths with that tee's; a length he typed
+  // himself (one that isn't the previous tee's card value) is left alone.
+  // Delegated: the tee control is rebuilt when the course changes.
+  root.addEventListener('change', e => {
+    if (!e.target.matches('[name=tee]')) return;
+    const c = course(val(root, 'courseId')), tee = val(root, 'tee');
+    if (c && c.holes) for (const h of c.holes) {
+      const inp = root.querySelector(`[name="m_${h.n}"]`); if (!inp) continue;
+      const was = teeMetres(h, prevTee);
+      if (inp.value === '' || Number(inp.value) === was) inp.value = teeMetres(h, tee) ?? '';
+    }
+    prevTee = tee;
+  });
 }
 async function saveRange(root, s) {
   const doc = { ...s, date: val(root, 'date') || today(), venue: val(root, 'venue'), ballType: val(root, 'ballType'), source: val(root, 'source'), focus: val(root, 'focus'), notes: val(root, 'notes') };
