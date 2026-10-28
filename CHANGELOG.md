@@ -13,6 +13,9 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 - The other sixteen: Bayview, Gordon, Liverpool, Muirfield, North Turramurra and Pennant Hills with all 18 holes; Cabramatta, Castle Cove, Cronulla, Leonay, Macquarie Links, Marrickville, North Ryde, Roseville, Wakehurst and Warringah with every hole from your marks, over the greens, bunkers and trees OpenStreetMap has.
 - A flag you mark on a mapped green now takes that green: distances to its front, middle and back, and a green lie when your ball lands on it, instead of a dashed estimate.
 
+## 2.30.2 — 2026-10-28
+- In the swing feed the clip now shows through the tab bar instead of a black band: the caption's dark shading stops at the bar, and the bar is a touch more see-through.
+
 ## 2.30.1 — 2026-10-28
 - The swing feed no longer slides sideways: the blurred backdrop behind a clip is clipped to the screen, so a clip can't be pushed off to one side.
 
