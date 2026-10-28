@@ -1,0 +1,135 @@
+{
+ "id": "bexley",
+ "name": "Bexley Golf Club",
+ "osm": {
+  "course": "way/174002039",
+  "name": "Bexley Golf Course",
+  "exported": "2026-07-15"
+ },
+ "origin": [
+  -33.951,
+  151.10685
+ ],
+ "holes": "osm",
+ "why": "OSM data as of 2026-07-15 (overpass.private.coffee; overpass-api.de resets from this container). 18 hole lines whose pars match the club card hole for hole; greens, tees, fairways, bunkers and water mapped. Card from imports/bexley.json (blue, Hole19/TheGrint, checked against GolfNSW total).",
+ "card": {
+  "tee": "blue",
+  "source": "imports/bexley.json (Hole19 and TheGrint, total checked against GolfNSW)",
+  "fields": [
+   "n",
+   "par",
+   "metres",
+   "si"
+  ],
+  "holes": [
+   [
+    1,
+    4,
+    312,
+    3
+   ],
+   [
+    2,
+    4,
+    295,
+    6
+   ],
+   [
+    3,
+    3,
+    128,
+    15
+   ],
+   [
+    4,
+    4,
+    279,
+    11
+   ],
+   [
+    5,
+    4,
+    267,
+    13
+   ],
+   [
+    6,
+    3,
+    156,
+    8
+   ],
+   [
+    7,
+    3,
+    200,
+    5
+   ],
+   [
+    8,
+    3,
+    115,
+    16
+   ],
+   [
+    9,
+    4,
+    335,
+    4
+   ],
+   [
+    10,
+    4,
+    307,
+    7
+   ],
+   [
+    11,
+    3,
+    102,
+    18
+   ],
+   [
+    12,
+    4,
+    273,
+    12
+   ],
+   [
+    13,
+    4,
+    262,
+    14
+   ],
+   [
+    14,
+    3,
+    114,
+    17
+   ],
+   [
+    15,
+    4,
+    298,
+    2
+   ],
+   [
+    16,
+    3,
+    158,
+    9
+   ],
+   [
+    17,
+    4,
+    353,
+    1
+   ],
+   [
+    18,
+    3,
+    143,
+    10
+   ]
+  ]
+ }
+}

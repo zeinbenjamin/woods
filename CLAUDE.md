@@ -726,7 +726,7 @@ scorecard sets every length.
   flagged 9 of its 18). A hole's tee boxes (`hole.tees`) are its own mapped
   tees within 20 m of its line in the tee 60% of it, a box the line runs over
   (≤ 3 m, for one box shared by two holes), and any tee a hand mapping names.
-  Flagged now: Bardwell 11 (28 m from any box), The Coast 18 (17 m), Hurstville 18 (38 m). Randwick
+  Flagged now: Bardwell 11 (28 m from any box), The Coast 18 (17 m), Hurstville 18 (38 m); Bexley none. Randwick
   3 and 5 aren't: the red tee is on the box (3's is 45 m long).
 - **Lies** come from the shape under the tap: water, bunker, green, tee or
   fairway (→ fairway), trees (woods, merged crowns, lone trees), mapped
@@ -859,6 +859,15 @@ scorecard sets every length.
   it good enough, approximate as expected.
   The same export added trees and bush at Barnwell Park, Beverley Park and
   Lane Cove (still no hole lines there); origins and boundaries unchanged.
+  Bexley (2.21.0, tier A, the most complete yet): OSM has 18 hole lines whose
+  pars match `imports/bexley.json` hole for hole (par 64), 20 greens, 35 tee
+  boxes, 19 fairways, 22 bunkers, 3 water hazards; no estimates needed.
+  Data from overpass.private.coffee, dated 2026-07-15 (overpass-api.de still
+  resets from the container; this session's container had lost the September
+  uploads), converted from Overpass JSON to GeoJSON with a small script in
+  the scratchpad, not the repo. The blue card is in the source; every blue,
+  white and red tee lands on a mapped box, nothing flagged (lines 0–14 m
+  shorter than the blue card).
 
 ## Artwork → map (2.17.0)
 
@@ -1040,7 +1049,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 324 tests, about 45s.
+`npm test` — 325 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1133,10 +1142,10 @@ fixture would let the reading be pinned.
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking, a boundary-only map drawing
   only the holes with marks).
-- `course-maps.test.js` (24) — the committed maps match their sources,
+- `course-maps.test.js` (25) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
-  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
+  holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
 - `imports.test.js` (2) — every file in `imports/` is a one-course
   carry-export whose card adds up (holes 1..n, pars, `metres` mirroring the

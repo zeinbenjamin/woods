@@ -6,6 +6,11 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.21.0 — 2026-10-28
+- Bexley has a course map. Link it from the course page and every hole is drawn from OpenStreetMap: real greens, tee boxes, fairways, bunkers and water, so tapping a shot reads the lie from where it lands.
+- Checked against your card for the blue, white and red tees: every tee lands on a mapped tee box, so nothing is flagged.
+- In Play, Bexley's greens are mapped shapes, so you get the front, middle and back distances.
+
 ## 2.20.3 — 2026-10-28
 
 - A round typed into the round form now records the lengths of the tee you picked. It used to copy the course's main tee whatever you chose (a red-tee round at Moore Park kept the blue lengths), and changing the tee now re-fills the lengths, leaving any you typed yourself. Distances were already worked out from the right tee, so nothing you've seen changes; the round's own copy of the card is now right too.
