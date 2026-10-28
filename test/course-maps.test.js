@@ -27,7 +27,7 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'barnwell-park', 'beverley-park', 'bondi', 'hunter-valley', 'hurstville', 'lane-cove', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'barnwell-park', 'beverley-park', 'bexley', 'bondi', 'hunter-valley', 'hurstville', 'lane-cove', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
@@ -339,6 +339,21 @@ test('with tee marks for two tees, the line starts at the tee played, else the o
   assert.ok(dist(HM.forHole('barnwell-park', 1, 182, { marks, tee: 'blue' }).hole.line[0], red) < 0.2, 'no blue marks: the set nearest the card');
   const hm = HM.forHole('barnwell-park', 1, 220, { marks, tee: 'white' });
   assert.equal(hm.hole.tees.length, 2, 'both are tee boxes for the card check');
+});
+
+test('Bexley: 18 OSM lines with mapped greens and tees; every blue, white and red tee on a box', () => {
+  const m = mapOf('bexley'), geo = JSON.parse(readFileSync('course-maps/osm/bexley.geojson', 'utf8')).features;
+  const imp = JSON.parse(readFileSync('imports/bexley.json', 'utf8')), c = (imp.data?.courses || imp.courses)[0];
+  assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1));
+  // OSM's pars are the club card's, hole for hole.
+  const osmPar = Object.fromEntries(geo.filter(f => f.properties.golf === 'hole').map(f => [Number(f.properties.ref), Number(f.properties.par)]));
+  for (const h of c.holes) assert.equal(osmPar[h.n], h.par, `hole ${h.n}'s par`);
+  for (const h of m.holes) assert.ok(!m.features[h.green].est, `hole ${h.n}'s green is mapped`);
+  assert.equal(new Set(m.holes.map(h => h.green)).size, 18, 'a green each');
+  for (const tee of ['blue', 'white', 'red']) for (const h of c.holes) {
+    const x = HM.mismatch(m.byN[h.n], h.tees[tee], m);
+    assert.ok(x.onTee && !x.flagged, `hole ${h.n} ${tee}: card ${h.tees[tee]}, line ${Math.round(x.line)}, ${Math.round(x.teeGap)} m from a box`);
+  }
 });
 
 test('Hunter Valley: 18 OSM lines on a partial boundary, each green estimated on its own pin', () => {

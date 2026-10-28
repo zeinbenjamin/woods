@@ -18,6 +18,12 @@
   "holes": 0
  },
  {
+  "id": "bexley",
+  "name": "Bexley Golf Club",
+  "osmName": "Bexley Golf Course",
+  "holes": 18
+ },
+ {
   "id": "bondi",
   "name": "Bondi Golf & Diggers Club",
   "osmName": "Bondi Golf Course",
