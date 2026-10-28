@@ -1,0 +1,16 @@
+{
+ "id": "the-lakes",
+ "name": "The Lakes Golf Course",
+ "osm": {
+  "course": "way/605447062",
+  "name": "The Lakes Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.93096,
+  151.20987
+ ],
+ "holes": "osm",
+ "minInside": 0.75,
+ "why": "Tier A- on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ebf649b3). No card in the source: the course page checks the NAS card once the course is imported. Hole 14 runs partly outside OSM's boundary (79% inside), so minInside is 0.75; every neighbouring line is wholly outside it."
+}

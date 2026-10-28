@@ -267,8 +267,16 @@
       const x = withMarks(map, n, opts.marks, opts.tee, metres); if (x) ({ map, hole } = x);
     }
     if (!hole) return null;
+    // A hole played along another's line (Kogarah's "1/16"): that hole's
+    // shapes are this one's too, so its fairway, hazards and legend are its own.
+    if (hole.share) map = lent(map, hole);
     const pl = playLine(hole, metres);
     return { map, hole, pl, tee: pl[0], green: pl[pl.length - 1], check: mismatch(hole, metres, map), fromMarks: hole.fromMarks || null };
+  }
+
+  function lent(map, hole) {
+    const c = map.lent || (map.lent = {});
+    return c[hole.n] || (c[hole.n] = { ...map, features: map.features.map(f => f.h === hole.share ? { ...f, h: hole.n } : f) });
   }
 
   /* ---------- holes from GPS marks ----------

@@ -1,0 +1,20 @@
+{
+ "id": "kogarah",
+ "name": "Kogarah Golf Course",
+ "osm": {
+  "course": "relation/2031564",
+  "name": "Kogarah Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.93841,
+  151.15757
+ ],
+ "holes": "osm",
+ "share": {
+  "16": 1,
+  "17": 2,
+  "18": 10
+ },
+ "why": "Tier A- on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ebf649b3). No card in the source: the course page checks the NAS card once the course is imported. OSM has 15 hole lines; three are played twice (\"1/16\", \"2/17\", \"10/18\"), so 16, 17 and 18 share the lines of 1, 2 and 10 (share). The card check will say if their tees differ."
+}

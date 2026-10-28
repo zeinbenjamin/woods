@@ -362,7 +362,7 @@ test('Bexley: 18 OSM lines with mapped greens and tees; every blue, white and re
 });
 
 test('the tier-A batch of 2026-10-28: every hole ends on a mapped green, numbered as the course is', () => {
-  const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /OSM data of 2026-10-28/.test(s.why || ''));
+  const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /^Tier A on OSM data of 2026-10-28/.test(s.why || ''));
   assert.equal(batch.length, 27);
   const expect = { manly: 17, 'moore-park': 10, woollahra: 9, botany: 9, colonial: 9 };
   for (const src of batch) {
@@ -379,6 +379,33 @@ test('the tier-A batch of 2026-10-28: every hole ends on a mapped green, numbere
   assert.equal(mapOf('manly').byN[1].green, mapOf('manly').byN[17].green);
   // Moore Park: OSM already has the interim ten, inside its new boundary.
   assert.deepEqual(mapOf('moore-park').holes.map(h => h.n), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+});
+
+test('the A- batch of 2026-10-28: 18 holes each on mapped greens; partial boundaries and shared lines', () => {
+  const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /^Tier A- on OSM data of 2026-10-28/.test(s.why || ''));
+  assert.deepEqual(batch.map(s => s.id).sort(), ['avondale', 'brighton-lakes', 'kogarah', 'mona-vale', 'nsw', 'st-michael-s', 'the-lakes']);
+  for (const src of batch) {
+    const m = mapOf(src.id);
+    assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1), `${src.id}: holes 1-18`);
+    for (const h of m.holes) assert.ok(!m.features[h.green].est, `${src.id} ${h.n}: a mapped green`);
+  }
+  // NSW 5 and 6 and The Lakes 14 run partly outside OSM's boundary: kept by minInside.
+  assert.ok(mapOf('nsw').byN[5] && mapOf('nsw').byN[6] && mapOf('the-lakes').byN[14]);
+  // Avondale's outline is tagged golf=tee in OSM: it is the boundary, never a tee box.
+  assert.ok(!mapOf('avondale').features.some(f => f.osm === 'relation/12733778'));
+  // Kogarah plays three lines twice ("1/16", "2/17", "10/18"): the second hole has the
+  // first's line, green and shapes, so no estimated fairway and its own hazards.
+  const k = mapOf('kogarah');
+  for (const [n, from] of [[16, 1], [17, 2], [18, 10]]) {
+    assert.equal(k.byN[n].share, from);
+    assert.deepEqual(k.byN[n].line, k.byN[from].line);
+    assert.equal(k.byN[n].green, k.byN[from].green);
+    const L = lineLen(k.byN[n].line), a = HM.forHole('kogarah', n, L), b = HM.forHole('kogarah', from, L);
+    assert.equal(a.map.features.filter(f => f.h === n).length, b.map.features.filter(f => f.h === from).length, `${n}: ${from}'s shapes are its own`);
+    assert.ok(!HM.svg(a, { par: 4 }).includes('hm-fwe'), `${n}: its mapped fairway, not an estimate`);
+    assert.deepEqual(HM.legendKinds(a, { par: 4 }), HM.legendKinds(b, { par: 4 }));
+  }
+  assert.ok(k.features.every(f => f.h !== 16), 'the file keeps the shapes on hole 1');
 });
 
 test('Hunter Valley: 18 OSM lines on a partial boundary, each green estimated on its own pin', () => {

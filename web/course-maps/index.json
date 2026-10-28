@@ -12,6 +12,12 @@
   "holes": 18
  },
  {
+  "id": "avondale",
+  "name": "Avondale Golf Club",
+  "osmName": "Avondale Golf Club",
+  "holes": 18
+ },
+ {
   "id": "bankstown",
   "name": "Bankstown Golf Club",
   "osmName": "Bankstown Golf Club",
@@ -60,6 +66,12 @@
   "holes": 9
  },
  {
+  "id": "brighton-lakes",
+  "name": "Brighton Lakes Golf Club",
+  "osmName": "Brighton Lakes Golf Club",
+  "holes": 18
+ },
+ {
   "id": "colonial",
   "name": "Colonial Golf Course",
   "osmName": "Colonial Golf Course",
@@ -102,6 +114,12 @@
   "holes": 18
  },
  {
+  "id": "kogarah",
+  "name": "Kogarah Golf Course",
+  "osmName": "Kogarah Golf Course",
+  "holes": 18
+ },
+ {
   "id": "lakeside-camden",
   "name": "Lakeside Golf Club Camden",
   "osmName": "Lakeside Golf Club Camden",
@@ -138,6 +156,12 @@
   "holes": 18
  },
  {
+  "id": "mona-vale",
+  "name": "Mona Vale Golf Course",
+  "osmName": "Mona Vale Golf Course",
+  "holes": 18
+ },
+ {
   "id": "moore-park",
   "name": "Moore Park Golf",
   "osmName": "Moore Park Golf",
@@ -147,6 +171,12 @@
   "id": "northbridge",
   "name": "Northbridge Golf Club",
   "osmName": "Northbridge Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "nsw",
+  "name": "NSW Golf Club",
+  "osmName": "NSW Golf Club",
   "holes": 18
  },
  {
@@ -192,6 +222,12 @@
   "holes": 18
  },
  {
+  "id": "st-michael-s",
+  "name": "St Michael's Golf Club",
+  "osmName": "St Michael's Golf Club",
+  "holes": 18
+ },
+ {
   "id": "stonecutters-ridge",
   "name": "Stonecutters Ridge Golf Club",
   "osmName": "Stonecutters Ridge Golf Club",
@@ -219,6 +255,12 @@
   "id": "the-coast",
   "name": "The Coast Golf Club",
   "osmName": "The Coast Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "the-lakes",
+  "name": "The Lakes Golf Course",
+  "osmName": "The Lakes Golf Course",
   "holes": 18
  },
  {
