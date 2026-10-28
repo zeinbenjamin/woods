@@ -1,0 +1,233 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T06:01:31+11:00",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_bexley",
+      "v": 2,
+      "created": 1793167291894,
+      "name": "Bexley Golf Club",
+      "suburb": "Kingsgrove",
+      "state": "NSW",
+      "address": "203 Stoney Creek Road, Kingsgrove NSW 2208",
+      "phone": "02 9150 9062",
+      "website": "https://www.bexleygolf.com.au/",
+      "bookingUrl": "https://www.bexleygolf.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000",
+      "lat": -33.9494,
+      "lng": 151.1069,
+      "bookable": true,
+      "prereg": true,
+      "walkable": true,
+      "feeWeekday": 40,
+      "feeWeekend": 45,
+      "tee": "blue",
+      "notes": "18 holes, par 64 (eight par 3s, ten par 4s), 4,097 m off the blue tees: short, tight and tree-lined, with a couple of dams; the club says accuracy off the tee beats length and the par 4s tempt the driver. Public play seven days; public timesheets open online 14 days ahead (8 for weekends), you register once as a public player on the club's MiClub site, and weekend and public-holiday public bookings are online only, not through the pro shop. Check in at the pro shop 15 minutes before your time; a group of fewer than four may be filled. Cancellations need 12 hours' notice. Green fees (club site, Oct 2026): 18 holes $40 weekdays / $45 weekends, 9 holes $35 / $40, twilight after 3pm $30 / $35 unlimited, seniors and students $30 for 18 on weekdays; cart $45 for 18, $35 for 9. Weekday social bookings also by phone, 02 9150 9062, press 1 for the pro shop. Lengths in metres, blue (men's primary), white and the women's red; no handicap rating stored: none published by Golf Australia was found. Seen elsewhere: blue 62.4 / 106, white 61.1 / 104, red (women's) 65.6 / 104 (TheGrint), 61 SSS men / 63 women (Offcourse). Take the scratch rating and slope from the club's card or GolfLink. Stroke index: hole 17 hardest, 11 easiest, as Hole19 and TheGrint both list it; Offcourse and BlueGolf give other orders. The club's own scorecard PDF (bexleygolf.com.au, Score Card.pdf, 2019) could not be fetched from here; check this card against it when you have one in hand.",
+      "source": "Card: Hole19 (blue, metres, total 4,097 m matching GolfNSW's and the club's 4,097/4,113 m) and TheGrint (blue, white and red in metres, same blue figures and stroke index), Oct 2026; par and description: bexleygolf.com.au and golfnsw.org.au; fees, booking and contact: bexleygolf.com.au/cms/play-golf, /online-bookings and /contact-us (Oct 2026); ratings seen: TheGrint and Offcourse (not stored); location: OpenStreetMap way 558689544 (ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 312,
+          "tees": {
+            "blue": 312,
+            "white": 300,
+            "red": 298
+          },
+          "si": 3
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 295,
+          "tees": {
+            "blue": 295,
+            "white": 283,
+            "red": 290
+          },
+          "si": 6
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 128,
+          "tees": {
+            "blue": 128,
+            "white": 112,
+            "red": 122
+          },
+          "si": 15
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 279,
+          "tees": {
+            "blue": 279,
+            "white": 266,
+            "red": 245
+          },
+          "si": 11
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 267,
+          "tees": {
+            "blue": 267,
+            "white": 253,
+            "red": 257
+          },
+          "si": 13
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 156,
+          "tees": {
+            "blue": 156,
+            "white": 144,
+            "red": 152
+          },
+          "si": 8
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 200,
+          "tees": {
+            "blue": 200,
+            "white": 176,
+            "red": 178
+          },
+          "si": 5
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 115,
+          "tees": {
+            "blue": 115,
+            "white": 100,
+            "red": 96
+          },
+          "si": 16
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 335,
+          "tees": {
+            "blue": 335,
+            "white": 323,
+            "red": 296
+          },
+          "si": 4
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 307,
+          "tees": {
+            "blue": 307,
+            "white": 299,
+            "red": 302
+          },
+          "si": 7
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 102,
+          "tees": {
+            "blue": 102,
+            "white": 94,
+            "red": 100
+          },
+          "si": 18
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 273,
+          "tees": {
+            "blue": 273,
+            "white": 259,
+            "red": 267
+          },
+          "si": 12
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 262,
+          "tees": {
+            "blue": 262,
+            "white": 256,
+            "red": 261
+          },
+          "si": 14
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 114,
+          "tees": {
+            "blue": 114,
+            "white": 107,
+            "red": 102
+          },
+          "si": 17
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 298,
+          "tees": {
+            "blue": 298,
+            "white": 286,
+            "red": 296
+          },
+          "si": 2
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 158,
+          "tees": {
+            "blue": 158,
+            "white": 148,
+            "red": 143
+          },
+          "si": 9
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 353,
+          "tees": {
+            "blue": 353,
+            "white": 347,
+            "red": 342
+          },
+          "si": 1
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 143,
+          "tees": {
+            "blue": 143,
+            "white": 138,
+            "red": 141
+          },
+          "si": 10
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}
