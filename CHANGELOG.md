@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.32.1 — 2026-10-28
+- Swings feed: the thin progress bar now sits right on the tab bar, with the caption directly above it and no gap between the three.
+- The bar fills smoothly as the clip plays (every frame, not in steps), and dragging it scrubs without the stutter: the bar follows your finger at once and the clip catches up once a frame.
+
 ## 2.32.0 — 2026-10-28
 - In the swing feed, tap the clip to turn sound on or off: the speaker flashes in the middle of the clip and fades. The corner button is gone.
 - A thin bar under the caption follows the clip as it plays, and dragging across it moves to that point in the clip.
