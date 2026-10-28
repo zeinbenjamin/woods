@@ -1,0 +1,19 @@
+{
+ "id": "manly",
+ "name": "Manly Golf Club",
+ "osm": {
+  "course": "relation/7894056",
+  "name": "Manly Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.78712,
+  151.27506
+ ],
+ "holes": "osm",
+ "why": "Tier A on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 344015ef). No card in the source: the course page checks the NAS card once the course is imported. Two alternative 14th holes (14a, 14b) are left out until the card says which is played; hole 14 is drawn from the outline or his marks until then.",
+ "ignore": {
+  "way/1046718391": "hole \"14a\" (299 m): one of two alternative 14ths; which is played is for the card or his marks",
+  "way/1046718392": "hole \"14b\" (376 m): the other alternative 14th"
+ }
+}

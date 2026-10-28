@@ -192,8 +192,9 @@ function build(id) {
   if (src.holes === 'osm') {
     const seen = {};
     for (const f of geo) {
-      if (f.properties.golf !== 'hole' || f.geometry.type !== 'LineString') continue;
-      const ref = parseInt(f.properties.ref, 10), n = src.renumber ? src.renumber[ref] : ref;
+      if (f.properties.golf !== 'hole' || f.geometry.type !== 'LineString' || ignore[idOf(f)]) continue;
+      // The first number in the ref: OSM has "Hole 13", "1;17" and "1/10" as well as "13".
+      const ref = parseInt((String(f.properties.ref ?? '').match(/\d+/) || [])[0], 10), n = src.renumber ? src.renumber[ref] : ref;
       if (src.renumber && !(n > 0)) throw new Error(`${id}: OSM hole ${f.properties.ref} has no number in renumber`);
       const l = f.geometry.coordinates.map(P);
       // A line mostly outside is another course's hole next door. minInside lowers

@@ -1,5 +1,23 @@
 [
  {
+  "id": "asquith",
+  "name": "Asquith Golf Club",
+  "osmName": "Asquith Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "auburn",
+  "name": "Auburn Golf Course",
+  "osmName": "Auburn Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "bankstown",
+  "name": "Bankstown Golf Club",
+  "osmName": "Bankstown Golf Club",
+  "holes": 18
+ },
+ {
   "id": "bardwell-valley",
   "name": "Bardwell Valley Golf Club",
   "osmName": "Bardwell Valley Golf Course",
@@ -30,6 +48,48 @@
   "holes": 9
  },
  {
+  "id": "bonnie-doon",
+  "name": "Bonnie Doon Golf Course",
+  "osmName": "Bonnie Doon Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "botany",
+  "name": "Botany Golf Club",
+  "osmName": "Botany Golf Club",
+  "holes": 9
+ },
+ {
+  "id": "colonial",
+  "name": "Colonial Golf Course",
+  "osmName": "Colonial Golf Course",
+  "holes": 9
+ },
+ {
+  "id": "dunheved",
+  "name": "Dunheved Golf Club",
+  "osmName": "Dunheved Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "elanora",
+  "name": "Elanora Country Club",
+  "osmName": "Elanora Country Club",
+  "holes": 18
+ },
+ {
+  "id": "georges-river",
+  "name": "Georges River Golf Course",
+  "osmName": "Georges River Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "glenmore-heritage-valley",
+  "name": "Glenmore Heritage Valley Golf Course",
+  "osmName": "Glenmore Heritage Valley Golf Course",
+  "holes": 18
+ },
+ {
   "id": "hunter-valley",
   "name": "Hunter Valley Golf Club",
   "osmName": "an unnamed course at Lovedale",
@@ -39,6 +99,12 @@
   "id": "hurstville",
   "name": "Hurstville Golf Club",
   "osmName": "Hurstville Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "lakeside-camden",
+  "name": "Lakeside Golf Club Camden",
+  "osmName": "Lakeside Golf Club Camden",
   "holes": 18
  },
  {
@@ -54,15 +120,51 @@
   "holes": 18
  },
  {
+  "id": "lynwood",
+  "name": "Lynwood Golf Course",
+  "osmName": "Lynwood Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "manly",
+  "name": "Manly Golf Club",
+  "osmName": "Manly Golf Club",
+  "holes": 17
+ },
+ {
   "id": "massey-park",
   "name": "Massey Park Golf Club",
   "osmName": "Massey Park Golf Course",
   "holes": 18
  },
  {
+  "id": "moore-park",
+  "name": "Moore Park Golf",
+  "osmName": "Moore Park Golf",
+  "holes": 10
+ },
+ {
   "id": "northbridge",
   "name": "Northbridge Golf Club",
   "osmName": "Northbridge Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "oatlands",
+  "name": "Oatlands Golf Course",
+  "osmName": "Oatlands Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "penrith",
+  "name": "Penrith Golf Club",
+  "osmName": "Penrith Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "pymble",
+  "name": "Pymble Golf Club",
+  "osmName": "Pymble Golf Club",
   "holes": 18
  },
  {
@@ -72,9 +174,69 @@
   "holes": 18
  },
  {
+  "id": "richmond",
+  "name": "Richmond Golf Club",
+  "osmName": "Richmond Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "royal-sydney",
+  "name": "Royal Sydney Golf Club",
+  "osmName": "Royal Sydney Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "shortees",
+  "name": "Shortees Golf",
+  "osmName": "Shortees Golf",
+  "holes": 18
+ },
+ {
+  "id": "stonecutters-ridge",
+  "name": "Stonecutters Ridge Golf Club",
+  "osmName": "Stonecutters Ridge Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "strathfield",
+  "name": "Strathfield Golf Course",
+  "osmName": "Strathfield Golf Course (private)",
+  "holes": 18
+ },
+ {
+  "id": "terrey-hills",
+  "name": "Terrey Hills Golf & Country Club",
+  "osmName": "Terrey Hills Golf & Country Club",
+  "holes": 18
+ },
+ {
+  "id": "the-australian",
+  "name": "The Australian Golf Club",
+  "osmName": "The Australian Golf Club",
+  "holes": 18
+ },
+ {
   "id": "the-coast",
   "name": "The Coast Golf Club",
   "osmName": "The Coast Golf Club",
   "holes": 18
+ },
+ {
+  "id": "the-ridge",
+  "name": "The Ridge Golf Course & Driving Range",
+  "osmName": "The Ridge Golf Course & Driving Range",
+  "holes": 18
+ },
+ {
+  "id": "twin-creeks",
+  "name": "Twin Creeks Golf Club",
+  "osmName": "Twin Creeks Golf Club",
+  "holes": 18
+ },
+ {
+  "id": "woollahra",
+  "name": "Woollahra Golf Club",
+  "osmName": "Woollahra Golf Club",
+  "holes": 9
  }
 ]

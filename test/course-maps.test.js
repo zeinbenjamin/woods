@@ -27,13 +27,18 @@ test('the committed maps are exactly what their sources build', () => {
 
 test('every map credits OpenStreetMap and has a fixed origin', () => {
   const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
-  assert.deepEqual(idx.map(x => x.id), ['bardwell-valley', 'barnwell-park', 'beverley-park', 'bexley', 'bondi', 'hunter-valley', 'hurstville', 'lane-cove', 'long-reef', 'massey-park', 'northbridge', 'randwick', 'the-coast']);
+  assert.deepEqual(idx.map(x => x.id), readdirSync('course-maps/src').map(f => f.slice(0, -5)).sort());
+  for (const id of ['bexley', 'hunter-valley', 'randwick', 'asquith', 'royal-sydney', 'moore-park', 'woollahra']) assert.ok(idx.some(x => x.id === id), id);
   for (const { id } of idx) {
     const m = mapOf(id), src = JSON.parse(readFileSync(`course-maps/src/${id}.json`, 'utf8'));
     assert.equal(m.attribution, '© OpenStreetMap contributors'); assert.equal(m.licence, 'ODbL-1.0');
     assert.deepEqual(m.origin, src.origin, 'shots are stored in this plane, so it never moves');
-    // Holes 1..N with no gaps; with a card, a line for every hole on it.
-    assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: m.holes.length }, (_, i) => i + 1));
+    // Holes 1..N with no gaps, except a hole whose OSM lines the source leaves out on purpose
+    // (Manly's two alternative 14ths); with a card, a line for every hole on it.
+    const geo = JSON.parse(readFileSync(`course-maps/osm/${id}.geojson`, 'utf8')).features;
+    const leftOut = new Set(geo.filter(f => f.properties.golf === 'hole' && (src.ignore || {})[f.properties['@id']]).map(f => parseInt(String(f.properties.ref).match(/\d+/)[0], 10)));
+    const top = Math.max(0, ...m.holes.map(h => h.n));
+    assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: top }, (_, i) => i + 1).filter(n => !leftOut.has(n) || m.byN[n]));
     if (src.card) for (const [n] of src.card.holes) assert.ok(m.byN[n], `a line for hole ${n} on the card`);
     for (const h of m.holes) {
       const g = m.features[h.green];
@@ -354,6 +359,26 @@ test('Bexley: 18 OSM lines with mapped greens and tees; every blue, white and re
     const x = HM.mismatch(m.byN[h.n], h.tees[tee], m);
     assert.ok(x.onTee && !x.flagged, `hole ${h.n} ${tee}: card ${h.tees[tee]}, line ${Math.round(x.line)}, ${Math.round(x.teeGap)} m from a box`);
   }
+});
+
+test('the tier-A batch of 2026-10-28: every hole ends on a mapped green, numbered as the course is', () => {
+  const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /OSM data of 2026-10-28/.test(s.why || ''));
+  assert.equal(batch.length, 27);
+  const expect = { manly: 17, 'moore-park': 10, woollahra: 9, botany: 9, colonial: 9 };
+  for (const src of batch) {
+    const m = mapOf(src.id);
+    assert.equal(m.holes.length, expect[src.id] ?? 18, `${src.id}: holes`);
+    for (const h of m.holes) assert.ok(!m.features[h.green].est, `${src.id} ${h.n}: a mapped green`);
+    assert.ok(!/\(private\)/.test(src.name), `${src.id}: named as the club is`);
+  }
+  // Holes labelled "Hole 13", "1;17" and "1/10" read as 13, 1 and 1.
+  assert.ok(mapOf('elanora').byN[1] && mapOf('elanora').byN[13]);
+  assert.deepEqual(mapOf('woollahra').holes.map(h => h.n), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  // Manly's alternative 14ths are left out, not guessed; 1 and 17 share a green (OSM labels 1 "1;17").
+  assert.equal(mapOf('manly').byN[14], undefined);
+  assert.equal(mapOf('manly').byN[1].green, mapOf('manly').byN[17].green);
+  // Moore Park: OSM already has the interim ten, inside its new boundary.
+  assert.deepEqual(mapOf('moore-park').holes.map(h => h.n), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 });
 
 test('Hunter Valley: 18 OSM lines on a partial boundary, each green estimated on its own pin', () => {
