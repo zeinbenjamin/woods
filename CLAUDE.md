@@ -1166,7 +1166,16 @@ solid band; the bar is 55% paper in the feed. **The document is pinned under the
 `body.reels { position: fixed; inset: 0 }` and a `scrollTo(0, 0)`): with the
 page under the status bar, the root's safe-area padding let the document
 scroll by about the two insets, and his phone showed the whole view ~90px
-high with bare screen under the bar.
+high with bare screen under the bar. That pin changed nothing (2.30.3 on his phone): the
+gap measured the status bar's height, which is iOS's own fault with
+`black-translucent` in a home-screen app: it shifts the web view up under
+the status bar without lengthening it. **So the meta tag is gone (2.31.1)**
+and the feed starts below the status bar; the `body::before` strip and
+`body.reels` pin are harmless and stay. The only known way to a filled top
+is a document that never scrolls (`html, body { overflow: hidden }` with
+`main` as the scroller), untried and not testable here; the status-bar
+style is read at install, so any change means removing and re-adding the
+app.
 
 ## Getting to the green (2.22.0)
 

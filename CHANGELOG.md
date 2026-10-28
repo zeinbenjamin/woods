@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.31.1 — 2026-10-28
+- The bare strip under the tab bar is gone. It came from iOS itself when the app ran under the status bar, so the app no longer does; the swing feed starts below the status bar again, with everything else from 2.29.0 kept.
+
 ## 2.31.0 — 2026-10-28
 - 53 more Sydney courses have course maps. Seven are partly mapped in OpenStreetMap: Everglades, Monash, Chatswood, Macarthur Grange, Cammeray, Eastlake and Ryde Parramatta.
 - Holes OpenStreetMap hasn't drawn come from your Mark tee and Mark flag in Play, as at Lane Cove: Chatswood 3 and 9, Cammeray 6 and 9, Macarthur Grange's back nine, and all but the 1st at Eastlake and Ryde Parramatta.
