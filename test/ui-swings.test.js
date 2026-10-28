@@ -173,6 +173,9 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.match(app.text('#view'), /14 Sept 2026/);
   app.go('swings', { view: 'reels' });
   assert.equal(app.$('#reels .reelsClose').dataset.go, 'swings');
+  assert.ok(app.$('#reels .reelsClose svg'), 'the back control is a drawn chevron');
+  assert.equal(app.$$('#reels .reelsTop .chip').length, 0, 'no club chips');
+  assert.equal(app.$$('#reels .reel .reelBottom .reelsSound').length, 3, 'a speaker on every reel, above the caption');
   assert.ok(app.$('#reels .reelsSound svg') && !/🔊|🔇/.test(app.$('#reels .reelsSound').textContent), 'the sound button is a drawn speaker, not an emoji');
   assert.equal(observed.length, 3, 'every video is watched');
   // The third video scrolls into view: it plays, its neighbour gets loaded, the first pauses.
@@ -186,15 +189,14 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.equal(snd.getAttribute('aria-pressed'), 'false');
   snd.click();
   assert.ok(vids.every(v => v.muted === false), 'the tap unmutes');
-  assert.equal(app.$('#reels .reelsSound').getAttribute('aria-pressed'), 'true');
+  assert.ok(app.$$('#reels .reelsSound').every(b => b.getAttribute('aria-pressed') === 'true'), 'every reel\'s speaker shows it');
   app.$('#reels .reelsSound').click();
   assert.ok(vids.every(v => v.muted === true), 'and mutes again');
   app.$('#reels .reelsSound').click();
   assert.equal(app.E('reelsSound'), true);
-  // Narrow to the 5W.
-  app.$('#reels .reelsTop [data-go="swings:view=reels,club=5W"]').click();
+  // A club in the link still narrows it (no chips on the bar any more).
+  app.go('swings', { view: 'reels', club: '5W' });
   assert.equal(app.$$('#reels .reel').length, 1);
-  assert.equal(app.$('#reels .reelsTop .chip[aria-pressed="true"]').textContent, '5W');
   app.go('swings', { view: 'reels', club: 'D' });
   assert.match(app.text('#reels'), /No videos for the D/);
   app.$('#reels .reelsClose').click();

@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.27.2 — 2026-10-28
+- The feed is simpler: no club chips; a bare back arrow at the top that reads on light or dark video; the sound button sits above the caption on each clip.
+- A swing's card opened from the feed no longer shows a strip of content scrolling past under the Close button; the same fix applies to every sheet in the app.
+
 ## 2.27.1 — 2026-10-28
 - A heading with buttons beside it (Blocks, Swings, Bag) now has room above and below: the buttons no longer sit on the line before or the text after.
 

@@ -157,8 +157,9 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + var(--safe-b) + 14px); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: var(--r); font-size: 13px; z-index: 9; opacity: 0; transition: opacity .15s; pointer-events: none; } .toast.show { opacity: 1; }
 .hole-grid { display: grid; grid-template-columns: 36px 52px 1fr 1fr; gap: 6px 8px; align-items: center; font-size: 14px; } .hole-grid input { padding: 7px 8px; text-align: right; } .hole-grid .h { color: var(--ink-3); font-size: 12px; }
 dialog.sheet { border: 0; padding: 0; margin: 0; width: 100%; max-width: 720px; left: 50%; transform: translateX(-50%); top: auto; bottom: 0; max-height: calc(100% - 40px); background: var(--paper); color: var(--ink); border-radius: 14px 14px 0 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
-dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; }
-.sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; position: sticky; bottom: 0; background: var(--paper); padding-top: 10px; } .count { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px 0; overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; }
+/* The row is sticky at the scrollport's bottom, so it carries the sheet's bottom padding (2.27.2): on .inner, content scrolled past under the Close button in that strip. */
+.sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; position: sticky; bottom: 0; background: var(--paper); padding: 10px 0 calc(18px + env(safe-area-inset-bottom, 0px)); } .count { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
 .stencil.art .trace { stroke: #fff; stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; opacity: .95; }
 .stencil.art .ball { fill: #fff; stroke: #1B2A20; stroke-width: 1.4; vector-effect: non-scaling-stroke; } .stencil.art .ball.pen { stroke: var(--flag); stroke-width: 2.2; }
 .stencil .calline { fill: none; stroke: var(--flag); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-dasharray: 5 4; }
@@ -174,16 +175,18 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .reels { position: fixed; inset: 0; z-index: 8; background: #000; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .reel { position: relative; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; display: flex; align-items: center; justify-content: center; }
 .reel video { width: 100%; height: 100%; object-fit: contain; background: #000; }
-.reelInfo { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px calc(var(--safe-b) + 18px); background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; text-align: left; border: 0; font: inherit; cursor: pointer; }
+.reelInfo { position: relative; width: 100%; padding: 14px 16px calc(var(--safe-b) + 18px); background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; text-align: left; border: 0; font: inherit; cursor: pointer; }
 .reelInfo .t { font-weight: 600; font-size: 16px; } .reelInfo .s { font-size: 13px; opacity: .85; margin-top: 2px; } .reelInfo .fix { font-family: var(--cond); font-weight: 700; font-size: 20px; line-height: 1.15; margin: 6px 0 4px; } .reelInfo .small { opacity: .7; }
 .reelInfo .tag { background: rgba(255,255,255,.18); color: #fff; border: 0; } .reelInfo .tag.green { background: rgba(120,200,140,.35); } .reelInfo.static { position: static; background: none; }
 /* The bar is fixed over the feed, not a sticky item in the snap flow: as a 0-height
    sticky its chips overflowed above the scroll box and were clipped (2.27.0). */
-.reelsTop { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; gap: 10px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 14px; background: linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.4) 70%, transparent); }
-.reelsTop .chips { flex: 1 1 auto; min-width: 0; padding: 2px 0; }
-.reelsTop .chips { overflow-x: auto; flex-wrap: nowrap; } .reelsTop .chip { background: rgba(255,255,255,.15); color: #fff; border-color: transparent; } .reelsTop .chip[aria-pressed="true"] { background: #fff; color: #000; }
-.reelsSound { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; } .reelsSound[aria-pressed="true"] { background: #fff; color: #000; }
-.reelsClose { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.15); color: #fff; font-size: 16px; cursor: pointer; }
+.reelsTop { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px; pointer-events: none; }
+.reelsTop > * { pointer-events: auto; }
+/* 2.27.2 (he asked): no club chips; a bare back chevron, white with a dark edge so it reads on a light or dark clip; the speaker sits above the caption. */
+.reelsClose { width: 44px; height: 44px; border: 0; background: none; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.9)) drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+.reelBottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
+.reelTools { display: flex; justify-content: flex-end; padding: 0 14px 6px; }
+.reelsSound { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0,0,0,.35); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); } .reelsSound[aria-pressed="true"] { background: #fff; color: #000; }
 .swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }
 ol.fixes { margin: 4px 0 0; padding-left: 18px; } ol.fixes li { margin: 2px 0; }
 .tgrow { align-items: flex-start; } .tgfields { display: grid; grid-template-columns: 44px 1fr; gap: 4px 8px; align-items: center; flex: 1; min-width: 0; } .tgfields .chips { overflow-x: auto; }
@@ -3257,15 +3260,14 @@ function vSwings() {
 function reelSwings(club) { return swingHistory().filter(sw => sw.video && (!club || (sw.club || '') === club)); }
 function vReels() {
   const club = (S.sub && S.sub.club) || '', all = swingHistory().filter(sw => sw.video), sws = reelSwings(club);
-  const clubs = [...new Set(all.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
-  const chip = (code, label) => `<button class="chip" data-go="swings:view=reels${code ? `,club=${esc(code)}` : ''}" aria-pressed="${club === code}">${esc(label)}</button>`;
   return `<div class="reels" id="reels">
-    <div class="reelsTop"><button class="reelsClose" data-go="swings" aria-label="Close">✕</button><div class="chips">${chip('', 'All')}${clubs.map(c => chip(c, c || 'No club')).join('')}</div>${sws.length ? `<button class="reelsSound" data-act="reelsSound" aria-pressed="${reelsSound}" aria-label="${reelsSound ? 'Mute' : 'Sound on'}">${soundIcon(reelsSound)}</button>` : ''}</div>
+    <div class="reelsTop"><button class="reelsClose" data-go="swings" aria-label="Back"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
       return `<section class="reel" data-i="${i}"><video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
+        <div class="reelBottom"><div class="reelTools"><button class="reelsSound" data-act="reelsSound" aria-pressed="${reelsSound}" aria-label="${reelsSound ? 'Mute' : 'Sound on'}">${soundIcon(reelsSound)}</button></div>
         <button class="reelInfo" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
           <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>${a && a.one_thing ? `<div class="fix">${esc(a.one_thing)}</div>` : '<div class="s">not read yet</div>'}
-          <div class="small count">${i + 1} of ${sws.length}${i + 1 < sws.length ? ' · swipe up' : ''}</div></button></section>`; }).join('')
+          <div class="small count">${i + 1} of ${sws.length}${i + 1 < sws.length ? ' · swipe up' : ''}</div></button></div></section>`; }).join('')
       : `<section class="reel"><div class="reelInfo static"><div class="t">No videos${club ? ` for the ${esc(club)}` : ''}</div><div class="s">Swings keep their video when it is under ${Math.round(VIDEO_MAX / 1048576)} MB; frames-only swings can't play here.</div></div></section>`}
   </div>`;
 }
@@ -3381,8 +3383,7 @@ Object.assign(ACTIONS, {
   reelsSound() {
     reelsSound = !reelsSound;
     document.querySelectorAll('#reels video[data-reel]').forEach(v => { v.muted = !reelsSound; });
-    const b = document.querySelector('#reels .reelsSound');
-    if (b) { b.innerHTML = soundIcon(reelsSound); b.setAttribute('aria-pressed', String(reelsSound)); b.setAttribute('aria-label', reelsSound ? 'Mute' : 'Sound on'); }
+    document.querySelectorAll('#reels .reelsSound').forEach(b => { b.innerHTML = soundIcon(reelsSound); b.setAttribute('aria-pressed', String(reelsSound)); b.setAttribute('aria-label', reelsSound ? 'Mute' : 'Sound on'); });
   },
   addSwing(d) {
     const sid = d.id; let get;
