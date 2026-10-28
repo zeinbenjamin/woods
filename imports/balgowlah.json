@@ -1,0 +1,106 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.919Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_balgowlah",
+      "v": 2,
+      "created": 1793207585919,
+      "name": "Balgowlah Golf Club",
+      "state": "NSW",
+      "lat": -33.79257,
+      "lng": 151.25589,
+      "tee": "men",
+      "notes": "9 holes, par 32, 2,321 m off the men tees. Lengths in metres; tee sets: men (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Hole 1 is listed as a 327 m par 3, which looks wrong on the source; check against the club's card.",
+      "source": "Card: Golfify (men's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174199874, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 3,
+          "metres": 327,
+          "tees": {
+            "men": 327
+          },
+          "si": 5
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 96,
+          "tees": {
+            "men": 96
+          },
+          "si": 9
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 215,
+          "tees": {
+            "men": 215
+          },
+          "si": 7
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 259,
+          "tees": {
+            "men": 259
+          },
+          "si": 6
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 312,
+          "tees": {
+            "men": 312
+          },
+          "si": 2
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 411,
+          "tees": {
+            "men": 411
+          },
+          "si": 1
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 300,
+          "tees": {
+            "men": 300
+          },
+          "si": 4
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 115,
+          "tees": {
+            "men": 115
+          },
+          "si": 8
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 286,
+          "tees": {
+            "men": 286
+          },
+          "si": 3
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

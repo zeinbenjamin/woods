@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.915Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_antill_park",
+      "v": 2,
+      "created": 1793207585915,
+      "name": "Antill Park Country Golf Club",
+      "state": "NSW",
+      "lat": -34.16406,
+      "lng": 150.62884,
+      "tee": "white",
+      "notes": "18 holes, par 70, 5,675 m off the white tees. Lengths in metres; tee sets: white, yellow (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 69 / -, yellow 66 / 114. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (white and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/48622812, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 5,
+          "metres": 456,
+          "tees": {
+            "white": 456,
+            "yellow": 384
+          },
+          "si": 15
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 361,
+          "tees": {
+            "white": 361,
+            "yellow": 313
+          },
+          "si": 8
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 366,
+          "tees": {
+            "white": 366,
+            "yellow": 289
+          },
+          "si": 3
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 284,
+          "tees": {
+            "white": 284,
+            "yellow": 265
+          },
+          "si": 11
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 170,
+          "tees": {
+            "white": 170,
+            "yellow": 135
+          },
+          "si": 5
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 123,
+          "tees": {
+            "white": 123,
+            "yellow": 111
+          },
+          "si": 14
+        },
+        {
+          "n": 7,
+          "par": 5,
+          "metres": 524,
+          "tees": {
+            "white": 524,
+            "yellow": 506
+          },
+          "si": 7
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 353,
+          "tees": {
+            "white": 353,
+            "yellow": 301
+          },
+          "si": 12
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 120,
+          "tees": {
+            "white": 120,
+            "yellow": 109
+          },
+          "si": 18
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 184,
+          "tees": {
+            "white": 184,
+            "yellow": 163
+          },
+          "si": 9
+        },
+        {
+          "n": 11,
+          "par": 5,
+          "metres": 458,
+          "tees": {
+            "white": 458,
+            "yellow": 380
+          },
+          "si": 17
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 398,
+          "tees": {
+            "white": 398,
+            "yellow": 346
+          },
+          "si": 2
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 430,
+          "tees": {
+            "white": 430,
+            "yellow": 377
+          },
+          "si": 1
+        },
+        {
+          "n": 14,
+          "par": 5,
+          "metres": 450,
+          "tees": {
+            "white": 450,
+            "yellow": 419
+          },
+          "si": 16
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 190,
+          "tees": {
+            "white": 190,
+            "yellow": 114
+          },
+          "si": 6
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 164,
+          "tees": {
+            "white": 164,
+            "yellow": 129
+          },
+          "si": 10
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 338,
+          "tees": {
+            "white": 338,
+            "yellow": 267
+          },
+          "si": 4
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 306,
+          "tees": {
+            "white": 306,
+            "yellow": 265
+          },
+          "si": 13
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

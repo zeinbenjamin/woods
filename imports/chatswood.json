@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.926Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_chatswood",
+      "v": 2,
+      "created": 1793207585926,
+      "name": "Chatswood Golf Club",
+      "state": "NSW",
+      "lat": -33.79918,
+      "lng": 151.16213,
+      "tee": "black",
+      "notes": "18 holes, par 65, 4,372 m off the black tees. Lengths in metres; tee sets: black, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 63 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify numbers 18 holes (nine played twice, par 65); the hole-maps chat notes OSM's 11 and 12 may be 3 and 9.",
+      "source": "Card: Golfify (black and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/181570673, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 288,
+          "tees": {
+            "black": 288,
+            "red": 280
+          },
+          "si": 14
+        },
+        {
+          "n": 2,
+          "par": 5,
+          "metres": 458,
+          "tees": {
+            "black": 458,
+            "red": 448
+          },
+          "si": 9
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 183,
+          "tees": {
+            "black": 183,
+            "red": 170
+          },
+          "si": 3
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 208,
+          "tees": {
+            "black": 208,
+            "red": 203
+          },
+          "si": 2
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 174,
+          "tees": {
+            "black": 174,
+            "red": 168
+          },
+          "si": 7
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 137,
+          "tees": {
+            "black": 137,
+            "red": 132
+          },
+          "si": 10
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 148,
+          "tees": {
+            "black": 148,
+            "red": 145
+          },
+          "si": 13
+        },
+        {
+          "n": 8,
+          "par": 5,
+          "metres": 472,
+          "tees": {
+            "black": 472,
+            "red": 452
+          },
+          "si": 8
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 270,
+          "tees": {
+            "black": 270,
+            "red": 265
+          },
+          "si": 16
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 264,
+          "tees": {
+            "black": 264,
+            "red": 264
+          },
+          "si": 15
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 114,
+          "tees": {
+            "black": 114,
+            "red": 106
+          },
+          "si": 12
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 404,
+          "tees": {
+            "black": 404,
+            "red": 398
+          },
+          "si": 1
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 119,
+          "tees": {
+            "black": 119,
+            "red": 116
+          },
+          "si": 17
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 175,
+          "tees": {
+            "black": 175,
+            "red": 170
+          },
+          "si": 5
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 280,
+          "tees": {
+            "black": 280,
+            "red": 275
+          },
+          "si": 11
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 144,
+          "tees": {
+            "black": 144,
+            "red": 140
+          },
+          "si": 6
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 210,
+          "tees": {
+            "black": 210,
+            "red": 202
+          },
+          "si": 18
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 324,
+          "tees": {
+            "black": 324,
+            "red": 284
+          },
+          "si": 4
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

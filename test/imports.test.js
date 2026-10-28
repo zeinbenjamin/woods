@@ -45,3 +45,41 @@ test('Bexley: par 64, 4,097 m off the blue tees, three tee sets, 17 the hardest 
   assert.equal(c.ratings, undefined, 'no rating stored: none from Golf Australia was found');
   assert.equal(c.prereg, true, 'public players register on the club site first');
 });
+
+// The 2026-10-28 batch: every course map the hole-maps chat built has an
+// import, or a reason it hasn't (no card that could be trusted). Courses
+// already on the NAS before the batch are not in imports/.
+const ON_NAS = ['randwick', 'bardwell-valley', 'the-coast', 'bondi', 'massey-park', 'long-reef', 'northbridge', 'hurstville',
+  'barnwell-park', 'beverley-park', 'lane-cove', 'hunter-valley', 'bexley', 'moore-park'];
+const NO_CARD = ['brighton-lakes', 'del-rio', 'fairfield-city', 'hawkesbury-waters', 'kingdom-estate', 'kurrajong-hills',
+  'orchard-hills', 'shortees', 'sylvania-par-3'];
+
+test('every course map has an import, or is on the NAS already, or has no card worth storing', () => {
+  const maps = JSON.parse(readFileSync(new URL('../web/course-maps/index.json', import.meta.url)));
+  const missing = maps.map(m => m.id).filter(id => !ON_NAS.includes(id) && !NO_CARD.includes(id) && !files.includes(`${id}.json`));
+  assert.deepEqual(missing, []);
+  for (const id of NO_CARD) assert.ok(!files.includes(`${id}.json`), `${id}: listed as having no card but an import exists`);
+  const byId = Object.fromEntries(maps.map(m => [m.id, m]));
+  for (const f of files) {
+    const id = f.replace(/\.json$/, '');
+    if (!byId[id]) continue;
+    const c = JSON.parse(readFileSync(new URL(f, dir))).courses[0];
+    assert.equal(c.name, byId[id].name, `${f}: named as the map is`);
+    if (byId[id].holes === 18 && id !== 'kogarah') assert.equal(c.holes.length, 18, `${f}: an 18-hole map has an 18-hole card`);
+  }
+});
+
+test('the batch keeps the source honest: metres add up to the totals it states, ratings are noted but never stored, and every file says where its card came from', () => {
+  const batch = files.filter(f => !['bondi-golf-diggers.json', 'massey-park.json', 'moore-park.json', 'bexley.json'].includes(f));
+  assert.ok(batch.length >= 70, `${batch.length} in the batch`);
+  for (const f of batch) {
+    const c = JSON.parse(readFileSync(new URL(f, dir))).courses[0];
+    assert.match(c.source, /^Card: /, f);
+    assert.match(c.notes, /No handicap rating stored/, `${f}: ratings are noted, never stored, until one from Golf Australia is in hand`);
+    assert.equal(c.ratings, undefined, f);
+    for (const tee of Object.keys(c.holes[0].tees)) {
+      const m = c.notes.match(new RegExp(`(\\d[\\d,]*) m off the ${tee} tees`));
+      if (m) assert.equal(c.holes.reduce((s, h) => s + h.tees[tee], 0), +m[1].replace(/,/g, ''), `${f}: ${tee} total as stated`);
+    }
+  }
+});

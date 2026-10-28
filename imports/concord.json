@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.927Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_concord",
+      "v": 2,
+      "created": 1793207585927,
+      "name": "Concord Golf Club",
+      "state": "NSW",
+      "lat": -33.84997,
+      "lng": 151.09708,
+      "tee": "members",
+      "notes": "18 holes, par 71, 5,951 m off the members tees. Lengths in metres; tee sets: members, ladies (members is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: members 73 / 128, ladies 75 / 136. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (members' and women's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175659424, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 297,
+          "tees": {
+            "members": 297,
+            "ladies": 282
+          },
+          "si": 17
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 356,
+          "tees": {
+            "members": 356,
+            "ladies": 327
+          },
+          "si": 11
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 366,
+          "tees": {
+            "members": 366,
+            "ladies": 284
+          },
+          "si": 1
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 162,
+          "tees": {
+            "members": 162,
+            "ladies": 124
+          },
+          "si": 15
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 304,
+          "tees": {
+            "members": 304,
+            "ladies": 233
+          },
+          "si": 7
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 184,
+          "tees": {
+            "members": 184,
+            "ladies": 136
+          },
+          "si": 4
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 381,
+          "tees": {
+            "members": 381,
+            "ladies": 356
+          },
+          "si": 13
+        },
+        {
+          "n": 8,
+          "par": 5,
+          "metres": 485,
+          "tees": {
+            "members": 485,
+            "ladies": 404
+          },
+          "si": 10
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 369,
+          "tees": {
+            "members": 369,
+            "ladies": 277
+          },
+          "si": 5
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 378,
+          "tees": {
+            "members": 378,
+            "ladies": 343
+          },
+          "si": 8
+        },
+        {
+          "n": 11,
+          "par": 5,
+          "metres": 471,
+          "tees": {
+            "members": 471,
+            "ladies": 437
+          },
+          "si": 12
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 384,
+          "tees": {
+            "members": 384,
+            "ladies": 358
+          },
+          "si": 6
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 266,
+          "tees": {
+            "members": 266,
+            "ladies": 245
+          },
+          "si": 16
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 134,
+          "tees": {
+            "members": 134,
+            "ladies": 110
+          },
+          "si": 18
+        },
+        {
+          "n": 15,
+          "par": 5,
+          "metres": 480,
+          "tees": {
+            "members": 480,
+            "ladies": 432
+          },
+          "si": 9
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 156,
+          "tees": {
+            "members": 156,
+            "ladies": 121
+          },
+          "si": 14
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 404,
+          "tees": {
+            "members": 404,
+            "ladies": 380
+          },
+          "si": 2
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 374,
+          "tees": {
+            "members": 374,
+            "ladies": 336
+          },
+          "si": 3
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

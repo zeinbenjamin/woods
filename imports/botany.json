@@ -1,0 +1,115 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.923Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_botany",
+      "v": 2,
+      "created": 1793207585923,
+      "name": "Botany Golf Club",
+      "state": "NSW",
+      "lat": -33.95948,
+      "lng": 151.20883,
+      "tee": "blue",
+      "notes": "9 holes, par 33, 2,636 m off the blue tees. Lengths in metres; tee sets: blue, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 32 / 94, red 33 / 107. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2724750, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 452,
+          "tees": {
+            "blue": 452,
+            "red": 413
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 160,
+          "tees": {
+            "blue": 160,
+            "red": 146
+          },
+          "si": 5
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 144,
+          "tees": {
+            "blue": 144,
+            "red": 132
+          },
+          "si": 7
+        },
+        {
+          "n": 4,
+          "par": 5,
+          "metres": 471,
+          "tees": {
+            "blue": 471,
+            "red": 431
+          },
+          "si": 8
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 418,
+          "tees": {
+            "blue": 418,
+            "red": 382
+          },
+          "si": 2
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 107,
+          "tees": {
+            "blue": 107,
+            "red": 98
+          },
+          "si": 9
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 343,
+          "tees": {
+            "blue": 343,
+            "red": 314
+          },
+          "si": 4
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 307,
+          "tees": {
+            "blue": 307,
+            "red": 281
+          },
+          "si": 6
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 234,
+          "tees": {
+            "blue": 234,
+            "red": 214
+          },
+          "si": 3
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

@@ -1,0 +1,187 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.928Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_cronulla",
+      "v": 2,
+      "created": 1793207585928,
+      "name": "Cronulla Golf Course",
+      "state": "NSW",
+      "lat": -34.04152,
+      "lng": 151.15105,
+      "tee": "white",
+      "notes": "18 holes, par 70, 5,743 m off the white tees. Lengths in metres; tee sets: white (white is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's ladies' column is 300 m on every hole, a placeholder, so only the white set is kept.",
+      "source": "Card: Golfify (white, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23020001, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 326,
+          "tees": {
+            "white": 326
+          },
+          "si": 10
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 330,
+          "tees": {
+            "white": 330
+          },
+          "si": 12
+        },
+        {
+          "n": 3,
+          "par": 5,
+          "metres": 476,
+          "tees": {
+            "white": 476
+          },
+          "si": 8
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 387,
+          "tees": {
+            "white": 387
+          },
+          "si": 4
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 142,
+          "tees": {
+            "white": 142
+          },
+          "si": 17
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 277,
+          "tees": {
+            "white": 277
+          },
+          "si": 16
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 126,
+          "tees": {
+            "white": 126
+          },
+          "si": 18
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 375,
+          "tees": {
+            "white": 375
+          },
+          "si": 3
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 342,
+          "tees": {
+            "white": 342
+          },
+          "si": 6
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 387,
+          "tees": {
+            "white": 387
+          },
+          "si": 1
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 357,
+          "tees": {
+            "white": 357
+          },
+          "si": 11
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 353,
+          "tees": {
+            "white": 353
+          },
+          "si": 13
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 371,
+          "tees": {
+            "white": 371
+          },
+          "si": 5
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 364,
+          "tees": {
+            "white": 364
+          },
+          "si": 2
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 185,
+          "tees": {
+            "white": 185
+          },
+          "si": 9
+        },
+        {
+          "n": 16,
+          "par": 5,
+          "metres": 469,
+          "tees": {
+            "white": 469
+          },
+          "si": 15
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 327,
+          "tees": {
+            "white": 327
+          },
+          "si": 7
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 149,
+          "tees": {
+            "white": 149
+          },
+          "si": 14
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

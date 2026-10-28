@@ -1,0 +1,115 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.927Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_colonial",
+      "v": 2,
+      "created": 1793207585927,
+      "name": "Colonial Golf Course",
+      "state": "NSW",
+      "lat": -33.75439,
+      "lng": 150.76292,
+      "tee": "men",
+      "notes": "9 holes, par 29, 1,493 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/396143497, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 3,
+          "metres": 140,
+          "tees": {
+            "men": 140,
+            "ladies": 115
+          },
+          "si": 5
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 156,
+          "tees": {
+            "men": 156,
+            "ladies": 116
+          },
+          "si": 4
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 100,
+          "tees": {
+            "men": 100,
+            "ladies": 90
+          },
+          "si": 6
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 172,
+          "tees": {
+            "men": 172,
+            "ladies": 160
+          },
+          "si": 3
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 122,
+          "tees": {
+            "men": 122,
+            "ladies": 112
+          },
+          "si": 8
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 239,
+          "tees": {
+            "men": 239,
+            "ladies": 190
+          },
+          "si": 9
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 222,
+          "tees": {
+            "men": 222,
+            "ladies": 190
+          },
+          "si": 1
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 167,
+          "tees": {
+            "men": 167,
+            "ladies": 117
+          },
+          "si": 7
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 175,
+          "tees": {
+            "men": 175,
+            "ladies": 140
+          },
+          "si": 2
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

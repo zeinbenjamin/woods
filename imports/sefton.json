@@ -1,0 +1,187 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.945Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_sefton",
+      "v": 2,
+      "created": 1793207585945,
+      "name": "Sefton Golf Course",
+      "state": "NSW",
+      "lat": -33.89637,
+      "lng": 151.0099,
+      "tee": "men",
+      "notes": "18 holes, par 54, 2,539 m off the men tees. Lengths in metres; tee sets: men (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Eighteen par 3s.",
+      "source": "Card: Hole19 (men's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23646417, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 3,
+          "metres": 189,
+          "tees": {
+            "men": 189
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 139,
+          "tees": {
+            "men": 139
+          },
+          "si": 13
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 150,
+          "tees": {
+            "men": 150
+          },
+          "si": 10
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 148,
+          "tees": {
+            "men": 148
+          },
+          "si": 7
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 119,
+          "tees": {
+            "men": 119
+          },
+          "si": 15
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 151,
+          "tees": {
+            "men": 151
+          },
+          "si": 4
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 155,
+          "tees": {
+            "men": 155
+          },
+          "si": 2
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 113,
+          "tees": {
+            "men": 113
+          },
+          "si": 17
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 122,
+          "tees": {
+            "men": 122
+          },
+          "si": 14
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 171,
+          "tees": {
+            "men": 171
+          },
+          "si": 5
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 147,
+          "tees": {
+            "men": 147
+          },
+          "si": 12
+        },
+        {
+          "n": 12,
+          "par": 3,
+          "metres": 119,
+          "tees": {
+            "men": 119
+          },
+          "si": 16
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 152,
+          "tees": {
+            "men": 152
+          },
+          "si": 3
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 157,
+          "tees": {
+            "men": 157
+          },
+          "si": 8
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 141,
+          "tees": {
+            "men": 141
+          },
+          "si": 9
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 102,
+          "tees": {
+            "men": 102
+          },
+          "si": 18
+        },
+        {
+          "n": 17,
+          "par": 3,
+          "metres": 137,
+          "tees": {
+            "men": 137
+          },
+          "si": 11
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 127,
+          "tees": {
+            "men": 127
+          },
+          "si": 6
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

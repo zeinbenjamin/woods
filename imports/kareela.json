@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.933Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_kareela",
+      "v": 2,
+      "created": 1793207585933,
+      "name": "Kareela Golf Course",
+      "state": "NSW",
+      "lat": -34.01743,
+      "lng": 151.08629,
+      "tee": "blue",
+      "notes": "18 holes, par 65, 4,567 m off the blue tees. Lengths in metres; tee sets: blue, red (blue is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/259493566, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 3,
+          "metres": 162,
+          "tees": {
+            "blue": 162,
+            "red": 158
+          },
+          "si": 10
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 158,
+          "tees": {
+            "blue": 158,
+            "red": 148
+          },
+          "si": 9
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 317,
+          "tees": {
+            "blue": 317,
+            "red": 315
+          },
+          "si": 7
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 328,
+          "tees": {
+            "blue": 328,
+            "red": 322
+          },
+          "si": 4
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 351,
+          "tees": {
+            "blue": 351,
+            "red": 318
+          },
+          "si": 8
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 292,
+          "tees": {
+            "blue": 292,
+            "red": 290
+          },
+          "si": 6
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 279,
+          "tees": {
+            "blue": 279,
+            "red": 275
+          },
+          "si": 17
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 122,
+          "tees": {
+            "blue": 122,
+            "red": 122
+          },
+          "si": 15
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 125,
+          "tees": {
+            "blue": 125,
+            "red": 122
+          },
+          "si": 16
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 204,
+          "tees": {
+            "blue": 204,
+            "red": 202
+          },
+          "si": 2
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 345,
+          "tees": {
+            "blue": 345,
+            "red": 335
+          },
+          "si": 1
+        },
+        {
+          "n": 12,
+          "par": 3,
+          "metres": 161,
+          "tees": {
+            "blue": 161,
+            "red": 160
+          },
+          "si": 12
+        },
+        {
+          "n": 13,
+          "par": 5,
+          "metres": 460,
+          "tees": {
+            "blue": 460,
+            "red": 441
+          },
+          "si": 13
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 318,
+          "tees": {
+            "blue": 318,
+            "red": 331
+          },
+          "si": 14
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 301,
+          "tees": {
+            "blue": 301,
+            "red": 290
+          },
+          "si": 11
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 358,
+          "tees": {
+            "blue": 358,
+            "red": 351
+          },
+          "si": 5
+        },
+        {
+          "n": 17,
+          "par": 3,
+          "metres": 176,
+          "tees": {
+            "blue": 176,
+            "red": 162
+          },
+          "si": 3
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 110,
+          "tees": {
+            "blue": 110,
+            "red": 110
+          },
+          "si": 18
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

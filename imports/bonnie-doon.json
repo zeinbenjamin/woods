@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.921Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_bonnie_doon",
+      "v": 2,
+      "created": 1793207585921,
+      "name": "Bonnie Doon Golf Course",
+      "state": "NSW",
+      "lat": -33.9381,
+      "lng": 151.22245,
+      "tee": "men",
+      "notes": "18 holes, par 71, 5,665 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: men 71 / 129. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/605424454, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 403,
+          "tees": {
+            "men": 403,
+            "ladies": 357
+          },
+          "si": 2
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 294,
+          "tees": {
+            "men": 294,
+            "ladies": 266
+          },
+          "si": 8
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 376,
+          "tees": {
+            "men": 376,
+            "ladies": 405
+          },
+          "si": 4
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 378,
+          "tees": {
+            "men": 378,
+            "ladies": 130
+          },
+          "si": 5
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 399,
+          "tees": {
+            "men": 399,
+            "ladies": 333
+          },
+          "si": 3
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 126,
+          "tees": {
+            "men": 126,
+            "ladies": 327
+          },
+          "si": 16
+        },
+        {
+          "n": 7,
+          "par": 5,
+          "metres": 445,
+          "tees": {
+            "men": 445,
+            "ladies": 298
+          },
+          "si": 13
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 259,
+          "tees": {
+            "men": 259,
+            "ladies": 278
+          },
+          "si": 14
+        },
+        {
+          "n": 9,
+          "par": 5,
+          "metres": 424,
+          "tees": {
+            "men": 424,
+            "ladies": 410
+          },
+          "si": 17
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 399,
+          "tees": {
+            "men": 399,
+            "ladies": 394
+          },
+          "si": 1
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 144,
+          "tees": {
+            "men": 144,
+            "ladies": 135
+          },
+          "si": 11
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 284,
+          "tees": {
+            "men": 284,
+            "ladies": 257
+          },
+          "si": 18
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 159,
+          "tees": {
+            "men": 159,
+            "ladies": 153
+          },
+          "si": 10
+        },
+        {
+          "n": 14,
+          "par": 5,
+          "metres": 474,
+          "tees": {
+            "men": 474,
+            "ladies": 443
+          },
+          "si": 7
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 121,
+          "tees": {
+            "men": 121,
+            "ladies": 100
+          },
+          "si": 15
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 302,
+          "tees": {
+            "men": 302,
+            "ladies": 321
+          },
+          "si": 12
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 275,
+          "tees": {
+            "men": 275,
+            "ladies": 292
+          },
+          "si": 9
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 403,
+          "tees": {
+            "men": 403,
+            "ladies": 402
+          },
+          "si": 6
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

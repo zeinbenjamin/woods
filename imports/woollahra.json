@@ -1,0 +1,115 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.954Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_woollahra",
+      "v": 2,
+      "created": 1793207585954,
+      "name": "Woollahra Golf Club",
+      "state": "NSW",
+      "lat": -33.87639,
+      "lng": 151.26302,
+      "tee": "men",
+      "notes": "9 holes, par 34, 2,504 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Nine holes played twice; Golfify's stroke index runs 1 to 9 in hole order and looks like a placeholder.",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/315445455, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 314,
+          "tees": {
+            "men": 314,
+            "ladies": 311
+          },
+          "si": 1
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 317,
+          "tees": {
+            "men": 317,
+            "ladies": 317
+          },
+          "si": 2
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 357,
+          "tees": {
+            "men": 357,
+            "ladies": 345
+          },
+          "si": 3
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 175,
+          "tees": {
+            "men": 175,
+            "ladies": 175
+          },
+          "si": 4
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 295,
+          "tees": {
+            "men": 295,
+            "ladies": 285
+          },
+          "si": 5
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 351,
+          "tees": {
+            "men": 351,
+            "ladies": 285
+          },
+          "si": 6
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 272,
+          "tees": {
+            "men": 272,
+            "ladies": 263
+          },
+          "si": 7
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 323,
+          "tees": {
+            "men": 323,
+            "ladies": 307
+          },
+          "si": 8
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 100,
+          "tees": {
+            "men": 100,
+            "ladies": 100
+          },
+          "si": 9
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

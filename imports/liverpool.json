@@ -1,0 +1,241 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.935Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_liverpool",
+      "v": 2,
+      "created": 1793207585935,
+      "name": "Liverpool Golf Club",
+      "state": "NSW",
+      "lat": -33.90534,
+      "lng": 150.97258,
+      "tee": "blue",
+      "notes": "18 holes, par 72, 6,312 m off the blue tees. Lengths in metres; tee sets: blue, orange, red, gold (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify,: blue 72 / 139, orange 72 / 133, red 74 / 134, gold 72 / 115. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify files Liverpool Golf Club's course under its course name, Oak Point.",
+      "source": "Card: Golfify, which lists the course as Oak Point Golf Club (blue, orange, red and gold, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2874141, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 321,
+          "tees": {
+            "blue": 321,
+            "orange": 307,
+            "red": 282,
+            "gold": 200
+          },
+          "si": 13
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 420,
+          "tees": {
+            "blue": 420,
+            "orange": 395,
+            "red": 371,
+            "gold": 300
+          },
+          "si": 1
+        },
+        {
+          "n": 3,
+          "par": 5,
+          "metres": 500,
+          "tees": {
+            "blue": 500,
+            "orange": 487,
+            "red": 404,
+            "gold": 336
+          },
+          "si": 12
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 158,
+          "tees": {
+            "blue": 158,
+            "orange": 145,
+            "red": 114,
+            "gold": 114
+          },
+          "si": 9
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 351,
+          "tees": {
+            "blue": 351,
+            "orange": 334,
+            "red": 322,
+            "gold": 322
+          },
+          "si": 8
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 188,
+          "tees": {
+            "blue": 188,
+            "orange": 168,
+            "red": 153,
+            "gold": 125
+          },
+          "si": 6
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 331,
+          "tees": {
+            "blue": 331,
+            "orange": 316,
+            "red": 268,
+            "gold": 230
+          },
+          "si": 16
+        },
+        {
+          "n": 8,
+          "par": 5,
+          "metres": 454,
+          "tees": {
+            "blue": 454,
+            "orange": 454,
+            "red": 440,
+            "gold": 345
+          },
+          "si": 17
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 359,
+          "tees": {
+            "blue": 359,
+            "orange": 344,
+            "red": 301,
+            "gold": 250
+          },
+          "si": 5
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 355,
+          "tees": {
+            "blue": 355,
+            "orange": 338,
+            "red": 323,
+            "gold": 230
+          },
+          "si": 10
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 400,
+          "tees": {
+            "blue": 400,
+            "orange": 391,
+            "red": 370,
+            "gold": 225
+          },
+          "si": 3
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 374,
+          "tees": {
+            "blue": 374,
+            "orange": 359,
+            "red": 266,
+            "gold": 266
+          },
+          "si": 7
+        },
+        {
+          "n": 13,
+          "par": 5,
+          "metres": 495,
+          "tees": {
+            "blue": 495,
+            "orange": 483,
+            "red": 466,
+            "gold": 362
+          },
+          "si": 15
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 147,
+          "tees": {
+            "blue": 147,
+            "orange": 139,
+            "red": 131,
+            "gold": 132
+          },
+          "si": 14
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 405,
+          "tees": {
+            "blue": 405,
+            "orange": 390,
+            "red": 293,
+            "gold": 220
+          },
+          "si": 2
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 406,
+          "tees": {
+            "blue": 406,
+            "orange": 386,
+            "red": 382,
+            "gold": 220
+          },
+          "si": 4
+        },
+        {
+          "n": 17,
+          "par": 5,
+          "metres": 481,
+          "tees": {
+            "blue": 481,
+            "orange": 466,
+            "red": 441,
+            "gold": 330
+          },
+          "si": 18
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 167,
+          "tees": {
+            "blue": 167,
+            "orange": 153,
+            "red": 149,
+            "gold": 125
+          },
+          "si": 11
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

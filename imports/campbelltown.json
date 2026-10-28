@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.924Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_campbelltown",
+      "v": 2,
+      "created": 1793207585924,
+      "name": "Campbelltown Golf Course",
+      "state": "NSW",
+      "lat": -34.08337,
+      "lng": 150.78622,
+      "tee": "silver",
+      "notes": "18 holes, par 70, 5,059 m off the silver tees. Lengths in metres; tee sets: silver, forward (silver is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: silver 70 / 126, forward 68 / 104. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify (silver and forward, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4236345, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 285,
+          "tees": {
+            "silver": 285,
+            "forward": 275
+          },
+          "si": 9
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 351,
+          "tees": {
+            "silver": 351,
+            "forward": 350
+          },
+          "si": 3
+        },
+        {
+          "n": 3,
+          "par": 5,
+          "metres": 448,
+          "tees": {
+            "silver": 448,
+            "forward": 448
+          },
+          "si": 13
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 94,
+          "tees": {
+            "silver": 94,
+            "forward": 95
+          },
+          "si": 15
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 307,
+          "tees": {
+            "silver": 307,
+            "forward": 306
+          },
+          "si": 4
+        },
+        {
+          "n": 6,
+          "par": 3,
+          "metres": 128,
+          "tees": {
+            "silver": 128,
+            "forward": 132
+          },
+          "si": 17
+        },
+        {
+          "n": 7,
+          "par": 5,
+          "metres": 448,
+          "tees": {
+            "silver": 448,
+            "forward": 429
+          },
+          "si": 5
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 278,
+          "tees": {
+            "silver": 278,
+            "forward": 305
+          },
+          "si": 6
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 333,
+          "tees": {
+            "silver": 333,
+            "forward": 332
+          },
+          "si": 8
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 312,
+          "tees": {
+            "silver": 312,
+            "forward": 313
+          },
+          "si": 12
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 370,
+          "tees": {
+            "silver": 370,
+            "forward": 375
+          },
+          "si": 2
+        },
+        {
+          "n": 12,
+          "par": 3,
+          "metres": 125,
+          "tees": {
+            "silver": 125,
+            "forward": 124
+          },
+          "si": 11
+        },
+        {
+          "n": 13,
+          "par": 5,
+          "metres": 438,
+          "tees": {
+            "silver": 438,
+            "forward": 433
+          },
+          "si": 14
+        },
+        {
+          "n": 14,
+          "par": 3,
+          "metres": 114,
+          "tees": {
+            "silver": 114,
+            "forward": 110
+          },
+          "si": 16
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 307,
+          "tees": {
+            "silver": 307,
+            "forward": 305
+          },
+          "si": 10
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 294,
+          "tees": {
+            "silver": 294,
+            "forward": 310
+          },
+          "si": 18
+        },
+        {
+          "n": 17,
+          "par": 3,
+          "metres": 171,
+          "tees": {
+            "silver": 171,
+            "forward": 168
+          },
+          "si": 7
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 256,
+          "tees": {
+            "silver": 256,
+            "forward": 295
+          },
+          "si": 1
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.951Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_the_ridge",
+      "v": 2,
+      "created": 1793207585951,
+      "name": "The Ridge Golf Course & Driving Range",
+      "state": "NSW",
+      "lat": -34.03025,
+      "lng": 151.00012,
+      "tee": "black",
+      "notes": "18 holes, par 72, 6,231 m off the black tees. Lengths in metres; tee sets: black, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on TheGrint: black 71 / 123, red 73 / 121. Cross-check: Hole19's ladies card matches TheGrint's red set hole for hole on par and metres (5,235 against TheGrint's printed 5,237, which is its own rounding); the men's stroke index is TheGrint's. TheGrint's printed totals (6,232 and 5,237 m) are its yard totals converted; the holes add to 6,231 and 5,235.",
+      "source": "Card: TheGrint (black and red, metres read from its yard-and-metre cells), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/50875824, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 337,
+          "tees": {
+            "black": 337,
+            "red": 279
+          },
+          "si": 15
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 335,
+          "tees": {
+            "black": 335,
+            "red": 285
+          },
+          "si": 14
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 281,
+          "tees": {
+            "black": 281,
+            "red": 221
+          },
+          "si": 18
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 383,
+          "tees": {
+            "black": 383,
+            "red": 337
+          },
+          "si": 3
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 151,
+          "tees": {
+            "black": 151,
+            "red": 101
+          },
+          "si": 6
+        },
+        {
+          "n": 6,
+          "par": 5,
+          "metres": 496,
+          "tees": {
+            "black": 496,
+            "red": 435
+          },
+          "si": 7
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 368,
+          "tees": {
+            "black": 368,
+            "red": 304
+          },
+          "si": 10
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 160,
+          "tees": {
+            "black": 160,
+            "red": 116
+          },
+          "si": 12
+        },
+        {
+          "n": 9,
+          "par": 5,
+          "metres": 500,
+          "tees": {
+            "black": 500,
+            "red": 444
+          },
+          "si": 13
+        },
+        {
+          "n": 10,
+          "par": 5,
+          "metres": 528,
+          "tees": {
+            "black": 528,
+            "red": 462
+          },
+          "si": 5
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 155,
+          "tees": {
+            "black": 155,
+            "red": 119
+          },
+          "si": 11
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 305,
+          "tees": {
+            "black": 305,
+            "red": 246
+          },
+          "si": 16
+        },
+        {
+          "n": 13,
+          "par": 4,
+          "metres": 347,
+          "tees": {
+            "black": 347,
+            "red": 298
+          },
+          "si": 8
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 373,
+          "tees": {
+            "black": 373,
+            "red": 300
+          },
+          "si": 1
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 200,
+          "tees": {
+            "black": 200,
+            "red": 167
+          },
+          "si": 9
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 412,
+          "tees": {
+            "black": 412,
+            "red": 348
+          },
+          "si": 4
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 402,
+          "tees": {
+            "black": 402,
+            "red": 360
+          },
+          "si": 2
+        },
+        {
+          "n": 18,
+          "par": 5,
+          "metres": 498,
+          "tees": {
+            "black": 498,
+            "red": 413
+          },
+          "si": 17
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

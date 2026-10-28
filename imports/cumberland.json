@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.928Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_cumberland",
+      "v": 2,
+      "created": 1793207585928,
+      "name": "Cumberland Country Golf Course",
+      "state": "NSW",
+      "lat": -33.82286,
+      "lng": 150.94435,
+      "tee": "members",
+      "notes": "18 holes, par 66, 4,445 m off the members tees. Lengths in metres; tee sets: members, associates (members is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: members 69 / 110, associates 74 / 134. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. The associates' set is longer than the members' on several holes with different pars (hole 2: 429 m par 5 against 289 m par 4), so the two columns may describe different tees or layouts; pars here are the members'.",
+      "source": "Card: Golfify (members' and associates', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174770260, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 267,
+          "tees": {
+            "members": 267,
+            "associates": 251
+          },
+          "si": 13
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 289,
+          "tees": {
+            "members": 289,
+            "associates": 429
+          },
+          "si": 2
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 150,
+          "tees": {
+            "members": 150,
+            "associates": 143
+          },
+          "si": 5
+        },
+        {
+          "n": 4,
+          "par": 3,
+          "metres": 167,
+          "tees": {
+            "members": 167,
+            "associates": 465
+          },
+          "si": 4
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 147,
+          "tees": {
+            "members": 147,
+            "associates": 135
+          },
+          "si": 17
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 200,
+          "tees": {
+            "members": 200,
+            "associates": 348
+          },
+          "si": 18
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 313,
+          "tees": {
+            "members": 313,
+            "associates": 304
+          },
+          "si": 11
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 331,
+          "tees": {
+            "members": 331,
+            "associates": 237
+          },
+          "si": 9
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 166,
+          "tees": {
+            "members": 166,
+            "associates": 415
+          },
+          "si": 8
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 245,
+          "tees": {
+            "members": 245,
+            "associates": 310
+          },
+          "si": 14
+        },
+        {
+          "n": 11,
+          "par": 3,
+          "metres": 146,
+          "tees": {
+            "members": 146,
+            "associates": 133
+          },
+          "si": 7
+        },
+        {
+          "n": 12,
+          "par": 5,
+          "metres": 481,
+          "tees": {
+            "members": 481,
+            "associates": 468
+          },
+          "si": 3
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 134,
+          "tees": {
+            "members": 134,
+            "associates": 114
+          },
+          "si": 10
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 384,
+          "tees": {
+            "members": 384,
+            "associates": 378
+          },
+          "si": 1
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 335,
+          "tees": {
+            "members": 335,
+            "associates": 323
+          },
+          "si": 6
+        },
+        {
+          "n": 16,
+          "par": 3,
+          "metres": 115,
+          "tees": {
+            "members": 115,
+            "associates": 115
+          },
+          "si": 16
+        },
+        {
+          "n": 17,
+          "par": 4,
+          "metres": 266,
+          "tees": {
+            "members": 266,
+            "associates": 266
+          },
+          "si": 15
+        },
+        {
+          "n": 18,
+          "par": 4,
+          "metres": 309,
+          "tees": {
+            "members": 309,
+            "associates": 477
+          },
+          "si": 12
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

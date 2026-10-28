@@ -1,0 +1,205 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.936Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_macarthur_grange",
+      "v": 2,
+      "created": 1793207585936,
+      "name": "Macarthur Grange Country Club",
+      "state": "NSW",
+      "lat": -34.01518,
+      "lng": 150.7949,
+      "tee": "the grange",
+      "notes": "18 holes, par 70, 5,503 m off the the grange tees. Lengths in metres; tee sets: the grange, the links (the grange is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: the grange 69 / 116, the links 71 / 124. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
+      "source": "Card: Golfify ('The Grange' and 'The Links' sets, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/5519706, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 318,
+          "tees": {
+            "the grange": 318,
+            "the links": 290
+          },
+          "si": 15
+        },
+        {
+          "n": 2,
+          "par": 3,
+          "metres": 137,
+          "tees": {
+            "the grange": 137,
+            "the links": 120
+          },
+          "si": 17
+        },
+        {
+          "n": 3,
+          "par": 4,
+          "metres": 390,
+          "tees": {
+            "the grange": 390,
+            "the links": 381
+          },
+          "si": 1
+        },
+        {
+          "n": 4,
+          "par": 4,
+          "metres": 295,
+          "tees": {
+            "the grange": 295,
+            "the links": 272
+          },
+          "si": 13
+        },
+        {
+          "n": 5,
+          "par": 3,
+          "metres": 180,
+          "tees": {
+            "the grange": 180,
+            "the links": 100
+          },
+          "si": 3
+        },
+        {
+          "n": 6,
+          "par": 4,
+          "metres": 287,
+          "tees": {
+            "the grange": 287,
+            "the links": 227
+          },
+          "si": 9
+        },
+        {
+          "n": 7,
+          "par": 5,
+          "metres": 485,
+          "tees": {
+            "the grange": 485,
+            "the links": 374
+          },
+          "si": 11
+        },
+        {
+          "n": 8,
+          "par": 3,
+          "metres": 185,
+          "tees": {
+            "the grange": 185,
+            "the links": 137
+          },
+          "si": 5
+        },
+        {
+          "n": 9,
+          "par": 5,
+          "metres": 446,
+          "tees": {
+            "the grange": 446,
+            "the links": 407
+          },
+          "si": 7
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 362,
+          "tees": {
+            "the grange": 362,
+            "the links": 313
+          },
+          "si": 2
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 333,
+          "tees": {
+            "the grange": 333,
+            "the links": 273
+          },
+          "si": 6
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 325,
+          "tees": {
+            "the grange": 325,
+            "the links": 292
+          },
+          "si": 8
+        },
+        {
+          "n": 13,
+          "par": 3,
+          "metres": 177,
+          "tees": {
+            "the grange": 177,
+            "the links": 145
+          },
+          "si": 14
+        },
+        {
+          "n": 14,
+          "par": 5,
+          "metres": 457,
+          "tees": {
+            "the grange": 457,
+            "the links": 422
+          },
+          "si": 18
+        },
+        {
+          "n": 15,
+          "par": 3,
+          "metres": 142,
+          "tees": {
+            "the grange": 142,
+            "the links": 129
+          },
+          "si": 16
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 341,
+          "tees": {
+            "the grange": 341,
+            "the links": 311
+          },
+          "si": 12
+        },
+        {
+          "n": 17,
+          "par": 3,
+          "metres": 173,
+          "tees": {
+            "the grange": 173,
+            "the links": 138
+          },
+          "si": 10
+        },
+        {
+          "n": 18,
+          "par": 5,
+          "metres": 470,
+          "tees": {
+            "the grange": 470,
+            "the links": 423
+          },
+          "si": 4
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}

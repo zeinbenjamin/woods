@@ -1,0 +1,187 @@
+{
+  "format": "carry-export",
+  "version": 1,
+  "exportedAt": "2026-10-28T17:13:05.932Z",
+  "appVersion": "course-only",
+  "clubs": [],
+  "courses": [
+    {
+      "id": "c_glenmore_heritage_valley",
+      "v": 2,
+      "created": 1793207585932,
+      "name": "Glenmore Heritage Valley Golf Course",
+      "state": "NSW",
+      "lat": -33.79687,
+      "lng": 150.65373,
+      "tee": "blue",
+      "notes": "18 holes, par 72, 6,399 m off the blue tees. Lengths in metres; tee sets: blue (blue is the primary: the first men's set the card lists, the only set the source shows). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. A 27-hole club; Hole19 does not say which two nines this 18 is.",
+      "source": "Card: Hole19 (blue, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/116446565, ODbL, © OpenStreetMap contributors).",
+      "holes": [
+        {
+          "n": 1,
+          "par": 4,
+          "metres": 297,
+          "tees": {
+            "blue": 297
+          },
+          "si": 18
+        },
+        {
+          "n": 2,
+          "par": 4,
+          "metres": 338,
+          "tees": {
+            "blue": 338
+          },
+          "si": 14
+        },
+        {
+          "n": 3,
+          "par": 3,
+          "metres": 194,
+          "tees": {
+            "blue": 194
+          },
+          "si": 5
+        },
+        {
+          "n": 4,
+          "par": 5,
+          "metres": 545,
+          "tees": {
+            "blue": 545
+          },
+          "si": 11
+        },
+        {
+          "n": 5,
+          "par": 4,
+          "metres": 420,
+          "tees": {
+            "blue": 420
+          },
+          "si": 7
+        },
+        {
+          "n": 6,
+          "par": 5,
+          "metres": 589,
+          "tees": {
+            "blue": 589
+          },
+          "si": 1
+        },
+        {
+          "n": 7,
+          "par": 4,
+          "metres": 357,
+          "tees": {
+            "blue": 357
+          },
+          "si": 13
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 373,
+          "tees": {
+            "blue": 373
+          },
+          "si": 8
+        },
+        {
+          "n": 9,
+          "par": 3,
+          "metres": 153,
+          "tees": {
+            "blue": 153
+          },
+          "si": 10
+        },
+        {
+          "n": 10,
+          "par": 4,
+          "metres": 359,
+          "tees": {
+            "blue": 359
+          },
+          "si": 9
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 369,
+          "tees": {
+            "blue": 369
+          },
+          "si": 4
+        },
+        {
+          "n": 12,
+          "par": 3,
+          "metres": 160,
+          "tees": {
+            "blue": 160
+          },
+          "si": 6
+        },
+        {
+          "n": 13,
+          "par": 5,
+          "metres": 505,
+          "tees": {
+            "blue": 505
+          },
+          "si": 15
+        },
+        {
+          "n": 14,
+          "par": 4,
+          "metres": 413,
+          "tees": {
+            "blue": 413
+          },
+          "si": 3
+        },
+        {
+          "n": 15,
+          "par": 4,
+          "metres": 337,
+          "tees": {
+            "blue": 337
+          },
+          "si": 16
+        },
+        {
+          "n": 16,
+          "par": 4,
+          "metres": 363,
+          "tees": {
+            "blue": 363
+          },
+          "si": 2
+        },
+        {
+          "n": 17,
+          "par": 5,
+          "metres": 470,
+          "tees": {
+            "blue": 470
+          },
+          "si": 17
+        },
+        {
+          "n": 18,
+          "par": 3,
+          "metres": 157,
+          "tees": {
+            "blue": 157
+          },
+          "si": 12
+        }
+      ]
+    }
+  ],
+  "sessions": [],
+  "assets": {}
+}
