@@ -1040,7 +1040,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 322 tests, about 45s.
+`npm test` — 324 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1138,6 +1138,13 @@ fixture would let the reading be pinned.
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
   holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
+- `imports.test.js` (2) — every file in `imports/` is a one-course
+  carry-export whose card adds up (holes 1..n, pars, `metres` mirroring the
+  primary tee, each stroke index once, a Sydney location, a source); Bexley
+  (2026-10-28: 18 holes, par 64, 4,097 m blue; Hole19 and TheGrint agree
+  hole by hole and with GolfNSW's total; white and red from TheGrint's
+  metres; no rating stored; the club's own PDF card is on a host this
+  container can't reach, so it is noted as unchecked).
 - `housekeeping.test.js` (7) — the sign-in sheets (home address, expired
   session by redirect and by Cloudflare's 401, asked once), "Signed in as"
   and the shared-courses notes, a refused course delete saying why, request
