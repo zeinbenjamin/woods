@@ -132,3 +132,49 @@ test('editing the club in the bag keeps its cross-reading', async () => {
   await app.waitFor(() => app.E(`(S.clubs.find(c => c.code === '7i') || {}).notes`) === 'stiff shaft', { what: 'saved' });
   assert.equal(app.J(`S.clubs.find(c => c.code === '7i').crossReading.carry_forward`), 'Keep the lead wrist flat and let the body wait for it');
 });
+
+/* ---------- the feed (2.25.0) ---------- */
+test('the feed shows the swings that have a video, newest first, one to a screen, with the fix over the bottom; a club chip narrows it', async () => {
+  const vid = (await app.api.upload(Buffer.from('not really an mp4'), 'video/mp4')).id;
+  const s2 = await app.api.get('sessions', 's_oct');
+  await app.api.put('sessions', 's_oct', { ...s2, swings: s2.swings.map(sw => sw.id === 'sw_b' ? { ...sw, video: vid } : sw) });
+  const s1 = await app.api.get('sessions', 's_aug');
+  await app.api.put('sessions', 's_aug', { ...s1, swings: s1.swings.map(sw => ({ ...sw, video: vid })) });
+  const r = await app.api.get('sessions', 'r_sep');
+  await app.api.put('sessions', 'r_sep', { ...r, swings: [{ id: 'sw_d', view: 'face', club: '5W', frames: [{ asset: f1, t: 0.05 }], video: vid, addedOn: '2026-09-14' }] });
+  await app.waitFor(() => app.E(`reelSwings('').length`) === 3, { what: 'videos' });
+  app.go('range', { view: 'swings' });
+  assert.match(app.text('#view [data-go="range:view=reels"]'), /Watch: 3 videos/);
+  // A stand-in observer: jsdom has none. Record what gets observed and let the test fire it.
+  let cb = null, observed = [];
+  app.win.IntersectionObserver = class { constructor(f, o) { cb = f; this.o = o; } observe(el) { observed.push(el); } disconnect() { observed = []; } };
+  const played = [], paused = [];
+  app.win.HTMLMediaElement.prototype.play = function () { played.push(this.src); return Promise.resolve(); };
+  app.win.HTMLMediaElement.prototype.pause = function () { paused.push(this.src); };
+  app.go('range', { view: 'reels' });
+  const reels = app.$$('#reels .reel');
+  assert.equal(reels.length, 3, 'the swing without a video (sw_c) is left out');
+  assert.deepEqual(reels.map(r => r.querySelector('.reelInfo .t').textContent.replace(/\s+/g, ' ').trim()), ['19 Oct 2026 range 7i Down the line', '14 Sept 2026 course 5W Face on', '3 Aug 2026 range 7i Down the line']);
+  assert.deepEqual(reels.map(r => r.querySelector('video').getAttribute('preload')), ['auto', 'auto', 'none'], 'the first two load; the rest wait');
+  assert.ok(reels.every(r => r.querySelector('video').hasAttribute('muted') && r.querySelector('video').hasAttribute('playsinline') && r.querySelector('video').hasAttribute('loop')));
+  assert.equal(reels[0].querySelector('.reelInfo .fix').textContent, 'Hold the wrist angle longer');
+  assert.match(reels[1].textContent, /not read yet/);
+  assert.match(reels[0].querySelector('.reelInfo .count').textContent, /1 of 3 · swipe up/);
+  assert.equal(reels[1].querySelector('.reelInfo').dataset.go, 'rounds:sessionId=r_sep', 'the overlay opens where it was filmed');
+  assert.equal(app.$('#reels .reelsClose').dataset.go, 'range:view=swings');
+  assert.equal(observed.length, 3, 'every video is watched');
+  // The third video scrolls into view: it plays, its neighbour gets loaded, the first pauses.
+  const vids = reels.map(r => r.querySelector('video'));
+  cb([{ target: vids[2], intersectionRatio: 1 }, { target: vids[0], intersectionRatio: 0 }]);
+  assert.deepEqual([played, paused], [[vids[2].src], [vids[0].src]]);
+  assert.equal(vids[2].preload, 'auto'); assert.equal(vids[1].preload, 'auto');
+  // Narrow to the 5W.
+  app.$('#reels .reelsTop [data-go="range:view=reels,club=5W"]').click();
+  assert.equal(app.$$('#reels .reel').length, 1);
+  assert.equal(app.$('#reels .reelsTop .chip[aria-pressed="true"]').textContent, '5W');
+  app.go('range', { view: 'reels', club: 'D' });
+  assert.match(app.text('#reels'), /No videos for the D/);
+  app.$('#reels .reelsClose').click();
+  assert.equal(app.$('#reels'), null, 'closed, back on the history');
+  assert.ok(app.$('#swingTimeline'));
+});
