@@ -12,6 +12,10 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 - Moore Park's map is the interim ten holes, as you play it now. On your blue card, holes 3 and 7 differ from the map, so the course page flags them.
 - Manly's 14th is left off its map for now: OpenStreetMap has two different 14th holes, and your card will say which one is played.
 
+## 2.27.2 — 2026-10-28
+- The feed is simpler: no club chips; a bare back arrow at the top that reads on light or dark video; the sound button sits above the caption on each clip.
+- A swing's card opened from the feed no longer shows a strip of content scrolling past under the Close button; the same fix applies to every sheet in the app.
+
 ## 2.27.1 — 2026-10-28
 - A heading with buttons beside it (Blocks, Swings, Bag) now has room above and below: the buttons no longer sit on the line before or the text after.
 
