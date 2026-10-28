@@ -6,6 +6,10 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.20.3 — 2026-10-28
+
+- A round typed into the round form now records the lengths of the tee you picked. It used to copy the course's main tee whatever you chose (a red-tee round at Moore Park kept the blue lengths), and changing the tee now re-fills the lengths, leaving any you typed yourself. Distances were already worked out from the right tee, so nothing you've seen changes; the round's own copy of the card is now right too.
+
 ## 2.20.2 — 2026-10-27
 
 - A 10-hole round's scorecard is one table of ten with its total, not a nine plus a lonely tenth hole labelled "In". A 12-hole card shows as two sixes.

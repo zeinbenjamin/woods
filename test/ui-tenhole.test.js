@@ -87,3 +87,33 @@ test('a round there prefills 10 holes, scores as 10, and is honest about the han
   assert.equal(left && left.why, 'the scorecard has 10 holes, and only 9- and 18-hole cards are rated', 'listed as not counting, with the reason');
   assert.match(app.text('#hcpLeft'), /Moore Park Golf.*10 holes, and only 9- and 18-hole cards are rated/);
 });
+
+/* ---------- the tee's own lengths (2.20.3) ---------- */
+// Found by the monitor chat in production data: a red-tee round entered
+// through the round form stored Moore Park's blue lengths. The form filled
+// from the card's primary tee whatever tee was picked.
+test('the round form fills lengths from the tee picked, and re-fills them when the tee changes', async () => {
+  app.go('rounds');
+  app.act('newRound');
+  app.fill('courseId', 'c_moorepark'); app.$('#sheetInner [name=courseId]').dispatchEvent(new app.win.Event('change'));
+  assert.equal(app.field('m_1').value, '398', 'blue, the primary tee, to start');
+  app.fill('tee', 'red'); app.$('#sheetInner [name=tee]').dispatchEvent(new app.win.Event('change', { bubbles: true }));
+  assert.deepEqual([1, 4, 10].map(n => app.field(`m_${n}`).value), ['330', '451', '123'], 'the red lengths');
+  // A length he typed himself survives a tee change.
+  app.fill('m_2', 99);
+  app.fill('tee', 'white'); app.$('#sheetInner [name=tee]').dispatchEvent(new app.win.Event('change', { bubbles: true }));
+  assert.equal(app.field('m_1').value, '378'); assert.equal(app.field('m_2').value, '99');
+  app.fill('tee', 'red'); app.$('#sheetInner [name=tee]').dispatchEvent(new app.win.Event('change', { bubbles: true }));
+  app.fill('m_2', 125);
+  for (let i = 1; i <= 10; i++) app.fill(`s_${i}`, MP.holes[i - 1].par);
+  assert.equal(await app.save(), true);
+  await app.waitFor(() => app.E(`S.sessions.filter(s => s.courseId === 'c_moorepark').length`) === 2, { what: 'round' });
+  const r = app.J(`S.sessions.filter(s => s.courseId === 'c_moorepark').sort((a, b) => (b.created || 0) - (a.created || 0))[0]`);
+  const stored = app.J(`S.sessions.find(s => s.tee === 'red' && s.courseId === 'c_moorepark')`);
+  assert.equal(stored.tee, 'red');
+  assert.deepEqual(stored.holes.map(h => h.metres), MP.holes.map(h => h.tees.red), 'the stored card copy is the red set');
+  // Editing it again shows its own lengths; a course picked fresh with a tee already chosen fills that tee.
+  app.act('editRound', { id: stored.id });
+  assert.equal(app.field('m_4').value, '451');
+  app.click('#sheetInner [data-close]');
+});

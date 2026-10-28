@@ -457,6 +457,16 @@ Each of these cost real debugging time. Don't reintroduce them.
   (metres, blue/white men's and red women's), stroke index re-ranked 1–10 from
   the club's 18-hole order, no rating stored (only the old 18 were rated),
   location OSM relation 2253129.
+- **The round form fills lengths from the tee picked** (2.20.3, found by the
+  monitor chat in `/api/admin/data`: his red-tee Moore Park round stored the
+  blue lengths). `roundForm` and the course-change handler use `cardForTee(c,
+  tee)` (`holesForTee`), and a delegated `change` on `[name=tee]` re-fills
+  each length that still equals the previous tee's card value, leaving typed
+  ones (`prevTee` follows the course change, since the tee control is rebuilt
+  then). `holesOf` always resolved through `teeMetres(courseHole, r.tee)`, so
+  no number shown was wrong; the stored snapshot was. Older form-entered
+  rounds off a non-primary tee keep their snapshot: `holesOf` corrects it on
+  read, and nothing stored is derived from it.
 - **The import picker takes any file** (2.20.1): `accept="application/json,.json"`
   greyed out `imports/moore-park.json` on his iPhone, because a file saved
   from GitHub or Mail there is typed as plain text. The app checks the
@@ -1030,7 +1040,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 321 tests, about 45s.
+`npm test` — 322 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1111,7 +1121,8 @@ fixture would let the reading be pinned.
   the fold and its verdict thresholds, the readings' blind spots by view,
   the rules from the same constants, assumed against measured),
   `ui-tenhole` (a 10-hole card: the Moore Park import against the club's
-  card, card sizes, the forms, a round scored as ten, the handicap's reason),
+  card, card sizes, the forms, a round scored as ten, the handicap's reason,
+  the round form filling the picked tee's lengths),
   `ui-format` (a team round: not a handicap score and the reason shown,
   out of form, trend, course history and evidence, listed and labelled; set
   and cleared on the round form),
