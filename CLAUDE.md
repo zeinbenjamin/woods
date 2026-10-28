@@ -1189,7 +1189,16 @@ is a document that never scrolls (`html, body { overflow: hidden }` with
 style is read at install, so any change means removing and re-adding the
 app. **The tab bar is plain in the feed** (2.31.3, he asked: the same as
 everywhere, not translucent): `.reels` ends at `--nav-h + --safe-b`, the
-caption carries no bar padding, and the translucent rule is gone.
+caption carries no bar padding, and the translucent rule is gone. **Tap to toggle sound, a progress bar** (2.32.0, he
+asked): a click on `video[data-reel]` (delegated on `#reels` in
+`reelsLifecycle`) runs `reelsSound` and `reelFlash` shows `soundIcon` in a
+centred disc (`.reelFlash.show`, 700 ms); no corner button. `.reelBar`
+under the caption: `reelProgress` on `timeupdate` sets `.reelFill`'s width
+and `aria-valuenow`; pointer down/move on the bar seeks (`reelSeek(v,
+frac)`, pointer capture, `touch-action: none` so a drag never becomes a
+swipe). The "n of N · swipe up" `.count` line is gone. Checked in Chromium
+with a real clip: a tap unmutes all and flashes, a pointer at half the bar
+seeks to 1.08 of 2 s.
 
 ## Getting to the green (2.22.0)
 

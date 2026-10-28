@@ -155,7 +155,7 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.ok(reels.every(r => r.querySelector('video').hasAttribute('muted') && r.querySelector('video').hasAttribute('playsinline') && r.querySelector('video').hasAttribute('loop')));
   assert.equal(reels[0].querySelector('.reelInfo .fix').textContent, 'Hold the wrist angle longer');
   assert.match(reels[1].textContent, /not read yet/);
-  assert.match(reels[0].querySelector('.reelInfo .count').textContent, /1 of 3 · swipe up/);
+  assert.equal(reels[0].querySelector('.count'), null, 'no "n of N · swipe up" row (2.32.0)');
   // The caption opens the swing's card over the feed, not the whole session; one link goes on to where it was filmed.
   assert.equal(reels[1].querySelector('.reelInfo').dataset.go, undefined);
   reels[0].querySelector('.reelInfo').click();
@@ -175,29 +175,43 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.equal(app.$('#reels .reelsClose').dataset.go, 'swings');
   assert.ok(app.$('#reels .reelsClose svg'), 'the back control is a drawn chevron');
   assert.equal(app.$$('#reels .reelsTop .chip').length, 0, 'no club chips');
-  assert.equal(app.$$('#reels .reel .reelBottom .reelsSound').length, 3, 'a speaker on every reel, above the caption');
+  assert.equal(app.$$('#reels .reelsSound').length, 0, 'no speaker button: a tap on the clip toggles sound (2.32.0)');
+  assert.equal(app.$$('#reels .reel .reelFlash').length, 3, 'a centred flash on every reel');
+  assert.equal(app.$$('#reels .reel .reelBottom .reelBar .reelFill').length, 3, 'a progress bar under every caption');
   assert.ok(app.win.document.body.classList.contains('reels'), 'the body knows the feed is open (tab bar translucent, status strip hidden)');
   assert.ok(app.$('nav.tabs'), 'the tab bar stays in the page under the feed');
   assert.ok(reels.every(r => r.querySelector('.reelBg')), 'a blurred still of the middle frame fills each clip\'s bars');
   assert.ok(reels[0].querySelector('.reelBg').getAttribute('src').startsWith('/_blob/'), 'the still is a stored frame');
-  assert.ok(app.$('#reels .reelsSound svg') && !/🔊|🔇/.test(app.$('#reels .reelsSound').textContent), 'the sound button is a drawn speaker, not an emoji');
+
   assert.equal(observed.length, 3, 'every video is watched');
   // The third video scrolls into view: it plays, its neighbour gets loaded, the first pauses.
   const vids = app.$$('#reels video[data-reel]');   // re-read: the feed was rebuilt by the trip out
   cb([{ target: vids[2], intersectionRatio: 1 }, { target: vids[0], intersectionRatio: 0 }]);
   assert.deepEqual([played, paused], [[vids[2].src], [vids[0].src]]);
   assert.equal(vids[2].preload, 'auto'); assert.equal(vids[1].preload, 'auto');
-  // Sound: muted until the button is tapped, then every reel unmuted (only the one on screen plays); off again when the feed closes.
+  // Sound: muted until the clip is tapped, then every reel unmuted (only the one on screen plays), with the speaker flashing in the middle of the one tapped; off again when the feed closes.
   assert.ok(vids.every(v => v.muted === true), 'starts muted so it can autoplay');
-  const snd = app.$('#reels .reelsSound');
-  assert.equal(snd.getAttribute('aria-pressed'), 'false');
-  snd.click();
+  vids[2].click();
   assert.ok(vids.every(v => v.muted === false), 'the tap unmutes');
-  assert.ok(app.$$('#reels .reelsSound').every(b => b.getAttribute('aria-pressed') === 'true'), 'every reel\'s speaker shows it');
-  app.$('#reels .reelsSound').click();
+  const live = app.$$('#reels .reel');   // re-read as vids was: the earlier `reels` are the first build's
+  const flash = live[2].querySelector('.reelFlash');
+  assert.ok(flash.classList.contains('show') && flash.querySelector('svg'), 'the speaker flashes on the reel tapped');
+  assert.ok(!live[0].querySelector('.reelFlash').classList.contains('show'), 'not on the others');
+  vids[2].click();
   assert.ok(vids.every(v => v.muted === true), 'and mutes again');
-  app.$('#reels .reelsSound').click();
+  vids[2].click();
   assert.equal(app.E('reelsSound'), true);
+  // The bar follows the clip, and a drag seeks it.
+  const v2 = vids[2]; let ct = 0;
+  Object.defineProperty(v2, 'duration', { get: () => 8 });
+  Object.defineProperty(v2, 'currentTime', { get: () => ct, set: x => { ct = x; } });
+  ct = 2; v2.dispatchEvent(new app.win.Event('timeupdate'));
+  const bar = live[2].querySelector('.reelBar');
+  assert.equal(live[2].querySelector('.reelFill').style.width, '25%');
+  assert.equal(bar.getAttribute('aria-valuenow'), '25');
+  app.E('reelSeek(document.querySelectorAll("#reels video[data-reel]")[2], 0.75)');
+  assert.equal(ct, 6, 'seeking sets the clip\'s time from the fraction');
+  assert.equal(live[2].querySelector('.reelFill').style.width, '75%');
   // A club in the link still narrows it (no chips on the bar any more).
   app.go('swings', { view: 'reels', club: '5W' });
   assert.equal(app.$$('#reels .reel').length, 1);
