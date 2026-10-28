@@ -1,0 +1,15 @@
+{
+ "id": "north-ryde",
+ "name": "North Ryde Golf Club",
+ "osm": {
+  "course": "way/186092217",
+  "name": "North Ryde Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.7977,
+  151.11914
+ ],
+ "holes": "marks",
+ "why": "Tier C on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 978ae857). No numbered hole lines on OSM: every hole comes from his GPS marks, and flags snap to the mapped greens."
+}

@@ -37,9 +37,9 @@ test('every map credits OpenStreetMap and has a fixed origin', () => {
     // (Manly's two alternative 14ths); with a card, a line for every hole on it.
     const geo = JSON.parse(readFileSync(`course-maps/osm/${id}.geojson`, 'utf8')).features;
     const leftOut = new Set(geo.filter(f => f.properties.golf === 'hole' && (src.ignore || {})[f.properties['@id']]).map(f => parseInt(String(f.properties.ref).match(/\d+/)[0], 10)));
-    // Tier B courses have only some of their lines on OSM (their own test lists which);
-    // the rest are drawn from his marks.
-    const partial = /^Tier B on/.test(src.why || ''), top = Math.max(0, ...m.holes.map(h => h.n));
+    // Tier B and C courses have only some of their lines (or greens) on OSM (their own
+    // tests list which); the rest are drawn from his marks.
+    const partial = /^Tier [BC] on/.test(src.why || ''), top = Math.max(0, ...m.holes.map(h => h.n));
     if (!partial) assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: top }, (_, i) => i + 1).filter(n => !leftOut.has(n) || m.byN[n]));
     if (src.card) for (const [n] of src.card.holes) assert.ok(m.byN[n], `a line for hole ${n} on the card`);
     for (const h of m.holes) {
@@ -426,6 +426,47 @@ test('the B batch of 2026-10-28: the lines OSM has, estimated greens on pins, th
   const hm = HM.forHole('eastlake', 5, 300, { marks: [mark(m, 'tee', t), mark(m, 'flag', g)] });
   assert.ok(hm && hm.fromMarks && hm.fromMarks.line, 'eastlake 5 from marks');
   assert.equal(HM.forHole('eastlake', 5, 300), null, 'and nothing without them');
+});
+
+test('the C batch of 2026-10-28: six courses with every line, ten from marks over mapped shapes', () => {
+  const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /^Tier C on OSM data of 2026-10-28/.test(s.why || ''));
+  const lines = ['bayview', 'gordon', 'liverpool', 'muirfield', 'north-turramurra', 'pennant-hills'];
+  assert.equal(batch.length, 16);
+  for (const src of batch) {
+    const m = mapOf(src.id);
+    if (lines.includes(src.id)) { assert.equal(src.holes, 'osm'); assert.deepEqual(m.holes.map(h => h.n), Array.from({ length: 18 }, (_, i) => i + 1), src.id); }
+    else { assert.equal(src.holes, 'marks'); assert.deepEqual(m.holes, [], `${src.id}: no lines (Macquarie Links' have no numbers)`); }
+  }
+  for (const id of ['north-turramurra', 'pennant-hills']) assert.ok(mapOf(id).holes.every(h => !mapOf(id).features[h.green].est), `${id}: every green mapped`);
+  assert.ok(mapOf('cabramatta').features.filter(f => f.k === 'green').length >= 18, 'the marks courses keep their mapped greens');
+});
+
+test('a flag marked on a mapped green takes that green: the line to its middle, a green lie, front and back', () => {
+  const m = mapOf('cabramatta'), before = JSON.stringify(m.features);
+  const gi = m.features.findIndex(f => f.k === 'green' && !f.est), g = m.features[gi], c = centroid(g.r[0]);
+  // A tee 250-350 m away, inside the course.
+  let t = null;
+  for (let a = 0; a < 360 && !t; a += 5) for (const d of [300, 250, 350]) { const q = [c[0] + d * Math.cos(a * Math.PI / 180), c[1] + d * Math.sin(a * Math.PI / 180)]; if (HM.geom.inRings(q, m.boundary)) { t = q; break; } }
+  const off = (p, dx) => [p[0] + dx, p[1]];
+  const hm = HM.forHole('cabramatta', 3, 300, { marks: [mark(m, 'tee', t), mark(m, 'flag', off(c, 3)), mark(m, 'flag', off(c, -2))] });
+  assert.equal(hm.hole.green, gi, 'the mapped green, not an estimate');
+  assert.ok(dist(hm.green, c) < 0.2, 'measured to its middle, as an OSM line is');
+  assert.ok(hm.fromMarks.snapped && hm.fromMarks.line);
+  assert.equal(hm.map.features[gi].h, 3, 'the green is this hole\'s');
+  assert.equal(HM.lieAt(hm.map, c), 'green');
+  const gd = HM.greenDistances(hm, t);
+  assert.ok(gd.front < gd.middle && gd.middle < gd.back, 'front and back from the shape');
+  assert.ok(HM.legendKinds(hm, { par: 4 }).includes('green') && !HM.legendKinds(hm, { par: 4 }).includes('greenMarks'));
+  assert.equal(JSON.stringify(m.features), before, 'the map itself is untouched');
+  // Just off the edge still snaps; well clear of every green it is an estimate on the flags, as before.
+  const edge = g.r[0].reduce((a, q) => q[0] > a[0] ? q : a);
+  assert.equal(HM.forHole('cabramatta', 4, 300, { marks: [mark(m, 'tee', t), mark(m, 'flag', off(edge, 8))] }).hole.green, gi, '8 m off the edge still snaps');
+  const greens = m.features.filter(f => f.k === 'green' && !f.est);
+  const clear = q => greens.every(f => !HM.geom.inRings(q, f.r) && Math.min(...f.r[0].map(v => dist(v, q))) > 40);
+  const far = inside(m).find(q => clear(q) && dist(q, t) > 150);
+  const est = HM.forHole('cabramatta', 5, 300, { marks: [mark(m, 'tee', t), mark(m, 'flag', far)] });
+  assert.ok(est.map.features[est.hole.green].est && !est.fromMarks.snapped, 'no green near: an estimate on the flags');
+  assert.ok(dist(est.green, far) < 0.2);
 });
 
 test('Hunter Valley: 18 OSM lines on a partial boundary, each green estimated on its own pin', () => {

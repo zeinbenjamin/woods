@@ -7,9 +7,11 @@ Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
 ## 2.31.0 — 2026-10-28
-- Seven more Sydney courses have course maps, partly mapped in OpenStreetMap: Everglades, Monash, Chatswood, Macarthur Grange, Cammeray, Eastlake and Ryde Parramatta.
+- 23 more Sydney courses have course maps. Seven are partly mapped in OpenStreetMap: Everglades, Monash, Chatswood, Macarthur Grange, Cammeray, Eastlake and Ryde Parramatta.
 - Holes OpenStreetMap hasn't drawn come from your Mark tee and Mark flag in Play, as at Lane Cove: Chatswood 3 and 9, Cammeray 6 and 9, Macarthur Grange's back nine, and all but the 1st at Eastlake and Ryde Parramatta.
 - Where OpenStreetMap has no green (all of Everglades and Macarthur Grange, most of Monash), the green is an estimate on its pin: the middle distance only, and you pick the lie there.
+- The other sixteen: Bayview, Gordon, Liverpool, Muirfield, North Turramurra and Pennant Hills with all 18 holes; Cabramatta, Castle Cove, Cronulla, Leonay, Macquarie Links, Marrickville, North Ryde, Roseville, Wakehurst and Warringah with every hole from your marks, over the greens, bunkers and trees OpenStreetMap has.
+- A flag you mark on a mapped green now takes that green: distances to its front, middle and back, and a green lie when your ball lands on it, instead of a dashed estimate.
 
 ## 2.30.1 — 2026-10-28
 - The swing feed no longer slides sideways: the blurred backdrop behind a clip is clipped to the screen, so a clip can't be pushed off to one side.

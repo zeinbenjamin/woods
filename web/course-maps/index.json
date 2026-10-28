@@ -36,6 +36,12 @@
   "holes": 0
  },
  {
+  "id": "bayview",
+  "name": "Bayview Golf Club",
+  "osmName": "Bayview Golf Club",
+  "holes": 18
+ },
+ {
   "id": "beverley-park",
   "name": "Beverley Park Golf Club",
   "osmName": "Beverley Park Golf Club",
@@ -72,10 +78,22 @@
   "holes": 18
  },
  {
+  "id": "cabramatta",
+  "name": "Cabramatta Golf Course",
+  "osmName": "Cabramatta Golf Course",
+  "holes": 0
+ },
+ {
   "id": "cammeray",
   "name": "Cammeray Golf Course",
   "osmName": "Cammeray Golf Course",
   "holes": 7
+ },
+ {
+  "id": "castle-cove",
+  "name": "Castle Cove Golf Club",
+  "osmName": "Castle Cove Golf Club",
+  "holes": 0
  },
  {
   "id": "chatswood",
@@ -88,6 +106,12 @@
   "name": "Colonial Golf Course",
   "osmName": "Colonial Golf Course",
   "holes": 9
+ },
+ {
+  "id": "cronulla",
+  "name": "Cronulla Golf Course",
+  "osmName": "Cronulla Golf Course",
+  "holes": 0
  },
  {
   "id": "dunheved",
@@ -126,6 +150,12 @@
   "holes": 18
  },
  {
+  "id": "gordon",
+  "name": "Gordon Golf Club",
+  "osmName": "Gordon Golf Club",
+  "holes": 18
+ },
+ {
   "id": "hunter-valley",
   "name": "Hunter Valley Golf Club",
   "osmName": "an unnamed course at Lovedale",
@@ -156,6 +186,18 @@
   "holes": 0
  },
  {
+  "id": "leonay",
+  "name": "Leonay Golf Course",
+  "osmName": "Leonay Golf Course",
+  "holes": 0
+ },
+ {
+  "id": "liverpool",
+  "name": "Liverpool Golf Club",
+  "osmName": "Liverpool Golf Club",
+  "holes": 18
+ },
+ {
   "id": "long-reef",
   "name": "Long Reef Golf Club",
   "osmName": "Long Reef Golf Course",
@@ -174,10 +216,22 @@
   "holes": 9
  },
  {
+  "id": "macquarie-links",
+  "name": "Macquarie Links",
+  "osmName": "Macquarie Links",
+  "holes": 0
+ },
+ {
   "id": "manly",
   "name": "Manly Golf Club",
   "osmName": "Manly Golf Club",
   "holes": 17
+ },
+ {
+  "id": "marrickville",
+  "name": "Marrickville Golf Club",
+  "osmName": "Marrickville Golf Club",
+  "holes": 0
  },
  {
   "id": "massey-park",
@@ -204,6 +258,24 @@
   "holes": 10
  },
  {
+  "id": "muirfield",
+  "name": "Muirfield Golf Course",
+  "osmName": "Muirfield Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "north-ryde",
+  "name": "North Ryde Golf Club",
+  "osmName": "North Ryde Golf Club",
+  "holes": 0
+ },
+ {
+  "id": "north-turramurra",
+  "name": "North Turramurra Golf Course",
+  "osmName": "North Turramurra Golf Course",
+  "holes": 18
+ },
+ {
   "id": "northbridge",
   "name": "Northbridge Golf Club",
   "osmName": "Northbridge Golf Club",
@@ -219,6 +291,12 @@
   "id": "oatlands",
   "name": "Oatlands Golf Course",
   "osmName": "Oatlands Golf Course",
+  "holes": 18
+ },
+ {
+  "id": "pennant-hills",
+  "name": "Pennant Hills Golf Course",
+  "osmName": "Pennant Hills Golf Course",
   "holes": 18
  },
  {
@@ -244,6 +322,12 @@
   "name": "Richmond Golf Club",
   "osmName": "Richmond Golf Club",
   "holes": 18
+ },
+ {
+  "id": "roseville",
+  "name": "Roseville Golf Course",
+  "osmName": "Roseville Golf Course",
+  "holes": 0
  },
  {
   "id": "royal-sydney",
@@ -316,6 +400,18 @@
   "name": "Twin Creeks Golf Club",
   "osmName": "Twin Creeks Golf Club",
   "holes": 18
+ },
+ {
+  "id": "wakehurst",
+  "name": "Wakehurst Golf Course",
+  "osmName": "Wakehurst Golf Course",
+  "holes": 0
+ },
+ {
+  "id": "warringah",
+  "name": "Warringah Golf Club",
+  "osmName": "Warringah Golf Club",
+  "holes": 0
  },
  {
   "id": "woollahra",

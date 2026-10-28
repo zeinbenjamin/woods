@@ -289,8 +289,22 @@
      tee marks for the tee played, and the card still sets every length.
      A set of marks has to agree: those within MARK_NEAR of the set's median
      count, and if they aren't a majority the hole isn't drawn, because a
-     flag marked on the wrong hole would move the green. */
-  const MARK_ACC = 10, MARK_NEAR = 20, MARK_OFF = 30, MARK_GREEN_MOVE = 40;
+     flag marked on the wrong hole would move the green.
+     Where the course has mapped greens but no line for the hole (the C
+     courses), flags on a mapped green, or within MARK_SNAP of its edge, take
+     that green: the line runs to its middle, and it gives a green lie and
+     front and back, as on any mapped hole. */
+  const MARK_ACC = 10, MARK_NEAR = 20, MARK_OFF = 30, MARK_GREEN_MOVE = 40, MARK_SNAP = 10;
+  function snapGreen(features, p) {
+    const edge = r => Math.min(...r.map((q, k) => k ? segDist(p, r[k - 1], q).d : Infinity));
+    let best = -1, bd = Infinity;
+    features.forEach((f, i) => {
+      if (f.k !== 'green' || f.est || !f.r) return;
+      const d = inRings(p, f.r) ? 0 : edge(f.r[0]);
+      if (d <= MARK_SNAP && d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
   function agree(pts) {
     if (!pts.length) return null;
     const med = i => { const v = pts.map(p => p[i]).sort((a, b) => a - b), k = v.length >> 1; return v.length % 2 ? v[k] : (v[k - 1] + v[k]) / 2; };
@@ -332,10 +346,13 @@
     } else {
       // No line at all: the tee played (else the set nearest the card) to the flags.
       const want = String(tee || '').toLowerCase();
-      const t = tees.find(x => x.tee === want) || tees.slice().sort((a, b) => metres > 0 ? Math.abs(dist(a.a.p, flag.p) - metres) - Math.abs(dist(b.a.p, flag.p) - metres) : 0)[0];
-      hole = { n, line: [t.a.p, flag.p], green: add(green), tees: teeIx };
+      const snap = snapGreen(features, flag.p);
+      if (snap >= 0) features[snap] = { ...features[snap], h: n };
+      const end = snap >= 0 ? centroid(features[snap].r[0]).map(f1) : flag.p;
+      const t = tees.find(x => x.tee === want) || tees.slice().sort((a, b) => metres > 0 ? Math.abs(dist(a.a.p, end) - metres) - Math.abs(dist(b.a.p, end) - metres) : 0)[0];
+      hole = { n, line: [t.a.p, end], green: snap >= 0 ? snap : add(green), tees: teeIx };
     }
-    hole.fromMarks = { flags: flag.n, flagsOf: flag.of, tees: tees.reduce((s, t) => s + t.a.n, 0), line: !old };
+    hole.fromMarks = { flags: flag.n, flagsOf: flag.of, tees: tees.reduce((s, t) => s + t.a.n, 0), line: !old, ...(hole.green !== undefined && !features[hole.green].est ? { snapped: true } : {}) };
     return { map: { ...map, features, byN: { ...map.byN, [n]: hole } }, hole };
   }
 
@@ -550,7 +567,7 @@
     projection, fromLatLng, toLatLng, offCourse, greenDistances, mapToView, lieAt, toGreen, playLine, mismatch, stripFor, fromArt,
     set onLoad(f) { onLoad = typeof f === 'function' ? f : () => {}; },
     geom: { dist, lineLen, pointAt, sub, segDist, lineDist, inRings, centroid, bbox },
-    FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH, MARK_ACC, MARK_NEAR, MARK_OFF, MARK_GREEN_MOVE,
+    FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH, MARK_ACC, MARK_NEAR, MARK_OFF, MARK_GREEN_MOVE, MARK_SNAP,
     // Tests put a map in directly; the app always goes through get().
     _put(id, m) { files[id] = m ? prepare(m) : null; },
   };
