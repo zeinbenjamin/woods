@@ -58,7 +58,6 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: 
 .signinBar { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 12px; right: 12px; z-index: 9; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.25); } .signinBar button { margin-left: auto; flex: 0 0 auto; }
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + var(--safe-b) + 32px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: var(--safe-b); }
-body.reels nav.tabs { background: color-mix(in srgb, var(--paper) 55%, transparent); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); border-top-color: color-mix(in srgb, var(--rule) 50%, transparent); }
 nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
 /* Overview is the home tab, in the middle and marked out (2.27.0, he asked): a green pill, brighter when it's the page. */
 nav.tabs li { display: flex; align-items: center; justify-content: center; }
@@ -184,7 +183,8 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .quick { margin-top: 8px; } .qrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .qrow .qn { font-family: var(--cond); font-weight: 700; font-size: 17px; min-width: 44px; } .qrow .qn small { display: block; font: 400 10px var(--body); color: var(--ink-3); }
 .qrow .chips { flex-wrap: nowrap; overflow-x: auto; }
-.reels { position: fixed; inset: 0; z-index: 4; background: #000; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+/* The feed ends at the tab bar (2.31.3, he asked: the bar the same as everywhere, not translucent). */
+.reels { position: fixed; top: 0; left: 0; right: 0; bottom: calc(var(--nav-h) + var(--safe-b)); z-index: 4; background: #000; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .reel { position: relative; height: 100%; overflow: hidden; scroll-snap-align: start; scroll-snap-stop: always; display: flex; align-items: center; justify-content: center; }   /* clips the scaled backdrop: unclipped it widened the feed and let it slide sideways (2.29.1) */
 .reel video { position: relative; width: 100%; height: 100%; object-fit: contain; }
 .reelBg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) brightness(.55) saturate(1.1); transform: scale(1.2); pointer-events: none; }
@@ -198,7 +198,7 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 /* 2.27.2 (he asked): no club chips; a bare back chevron, white with a dark edge so it reads on a light or dark clip; the speaker sits above the caption. */
 .reelsClose { width: 44px; height: 44px; border: 0; background: none; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.9)) drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
 /* The caption's gradient ends at the tab bar (2.30.2): run under it, it put a near-black band behind the translucent bar instead of the clip. */
-.reelBottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; padding-bottom: calc(var(--nav-h) + var(--safe-b)); }
+.reelBottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
 .reelTools { display: flex; justify-content: flex-end; padding: 0 14px 6px; }
 .reelsSound { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0,0,0,.35); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); } .reelsSound[aria-pressed="true"] { background: #fff; color: #000; }
 .swrow { display: flex; gap: 10px; align-items: flex-start; } .swrow .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; background: var(--paper-2); flex: 0 0 auto; } .swrow .thumb.none { display: block; } .swrow .swbody { min-width: 0; flex: 1; }

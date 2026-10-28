@@ -1187,7 +1187,9 @@ and the feed starts below the status bar; the `body::before` strip and
 is a document that never scrolls (`html, body { overflow: hidden }` with
 `main` as the scroller), untried and not testable here; the status-bar
 style is read at install, so any change means removing and re-adding the
-app.
+app. **The tab bar is plain in the feed** (2.31.3, he asked: the same as
+everywhere, not translucent): `.reels` ends at `--nav-h + --safe-b`, the
+caption carries no bar padding, and the translucent rule is gone.
 
 ## Getting to the green (2.22.0)
 

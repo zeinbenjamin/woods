@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.31.3 — 2026-10-28
+- In the swing feed the tab bar is the same solid bar as everywhere else; the clip ends at the bar instead of running under it.
+
 ## 2.31.2 — 2026-10-28
 - Being signed out no longer puts a sheet over the screen. One refused check is ignored, then the app signs in again silently in the background; only if that fails does a small banner appear at the top with a Sign in again button, and what's on screen stays. A toast says when you're back in.
 
