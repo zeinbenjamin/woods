@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Carry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,6 +36,11 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 html, body { height: 100%; }
 *, *::before, *::after { box-sizing: inherit; }
+/* The status bar is translucent (2.28.0, so the swing feed can run under it like
+   Instagram); everywhere else a fixed paper strip sits behind the clock and
+   battery, hidden while the feed is open. */
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--paper); z-index: 6; }
+body.reels::before { display: none; } body.reels .top { visibility: hidden; }   /* the header sits above the feed's layer; the bar below it is the one that shows */
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; font-variant-numeric: tabular-nums; -webkit-text-size-adjust: 100%; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 
@@ -47,6 +53,7 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; cursor: 
 .status { font-size: 12px; color: var(--ink-3); } .status.err { color: var(--flag); }
 main { max-width: 720px; margin: 0 auto; padding: 16px 16px calc(var(--nav-h) + var(--safe-b) + 32px); }
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--paper); border-top: 1px solid var(--rule); padding-bottom: var(--safe-b); }
+body.reels nav.tabs { background: color-mix(in srgb, var(--paper) 70%, transparent); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); border-top-color: color-mix(in srgb, var(--rule) 50%, transparent); }
 nav.tabs ul { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
 /* Overview is the home tab, in the middle and marked out (2.27.0, he asked): a green pill, brighter when it's the page. */
 nav.tabs li { display: flex; align-items: center; justify-content: center; }
@@ -172,10 +179,11 @@ dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inne
 .quick { margin-top: 8px; } .qrow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .qrow .qn { font-family: var(--cond); font-weight: 700; font-size: 17px; min-width: 44px; } .qrow .qn small { display: block; font: 400 10px var(--body); color: var(--ink-3); }
 .qrow .chips { flex-wrap: nowrap; overflow-x: auto; }
-.reels { position: fixed; inset: 0; z-index: 8; background: #000; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.reels { position: fixed; inset: 0; z-index: 4; background: #000; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .reel { position: relative; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; display: flex; align-items: center; justify-content: center; }
-.reel video { width: 100%; height: 100%; object-fit: contain; background: #000; }
-.reelInfo { position: relative; width: 100%; padding: 14px 16px calc(var(--safe-b) + 18px); background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; text-align: left; border: 0; font: inherit; cursor: pointer; }
+.reel video { position: relative; width: 100%; height: 100%; object-fit: contain; }
+.reelBg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(28px) brightness(.55) saturate(1.1); transform: scale(1.2); pointer-events: none; }
+.reelInfo { position: relative; width: 100%; padding: 14px 16px calc(var(--nav-h) + var(--safe-b) + 14px); background: linear-gradient(transparent, rgba(0,0,0,.75)); color: #fff; text-align: left; border: 0; font: inherit; cursor: pointer; }
 .reelInfo .t { font-weight: 600; font-size: 16px; } .reelInfo .s { font-size: 13px; opacity: .85; margin-top: 2px; } .reelInfo .fix { font-family: var(--cond); font-weight: 700; font-size: 20px; line-height: 1.15; margin: 6px 0 4px; } .reelInfo .small { opacity: .7; }
 .reelInfo .tag { background: rgba(255,255,255,.18); color: #fff; border: 0; } .reelInfo .tag.green { background: rgba(120,200,140,.35); } .reelInfo.static { position: static; background: none; }
 /* The bar is fixed over the feed, not a sticky item in the snap flow: as a 0-height
@@ -3263,7 +3271,8 @@ function vReels() {
   return `<div class="reels" id="reels">
     <div class="reelsTop"><button class="reelsClose" data-go="swings" aria-label="Back"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
-      return `<section class="reel" data-i="${i}"><video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
+      const bg = swingFrame(sw);
+      return `<section class="reel" data-i="${i}">${bg ? `<img class="reelBg" src="/_blob/${bg.asset}" alt="" aria-hidden="true" loading="lazy">` : ''}<video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
         <div class="reelBottom"><div class="reelTools"><button class="reelsSound" data-act="reelsSound" aria-pressed="${reelsSound}" aria-label="${reelsSound ? 'Mute' : 'Sound on'}">${soundIcon(reelsSound)}</button></div>
         <button class="reelInfo" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
           <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>${a && a.one_thing ? `<div class="fix">${esc(a.one_thing)}</div>` : '<div class="s">not read yet</div>'}
@@ -3279,6 +3288,7 @@ let reelsObs = null;
 let reelsSound = false;
 function reelsLifecycle() {
   const root = document.getElementById('reels');
+  document.body.classList.toggle('reels', !!root);   // the bar goes translucent and the status-bar strip hides
   if (reelsObs) { reelsObs.disconnect(); reelsObs = null; }
   if (!root) reelsSound = false;
   if (!root || typeof IntersectionObserver !== 'function') return;

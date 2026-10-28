@@ -920,7 +920,7 @@ scorecard sets every length.
   and 16, Lynwood 15. Map names are OSM's, less "(private)". The queue he
   set after this: A- (8), B and B- (7), C (17, marks with flags snapping to
   mapped greens), D (about 30), then a Melbourne tiering.
-  **A- batch** (2.29.0, 7 courses): his export of 2026-10-28 (`ebf649b3`).
+  **A- batch** (2.30.0, 7 courses): his export of 2026-10-28 (`ebf649b3`).
   Avondale, Brighton Lakes, Kogarah, Mona Vale, NSW, St Michael's, The Lakes,
   18 holes each, every green mapped. Fresher than the tiering's mirror data:
   Brighton Lakes is now one 18-hole relation (the tiering had an 11 and a 7
@@ -1104,7 +1104,18 @@ white with a dark drop-shadow edge, no disc; each reel has its own
 all). **A sheet's bottom strip** (`.sheet-actions`): the row is sticky at
 the scrollport's bottom, so it carries the sheet's bottom padding; with the
 padding on `.inner`, content scrolled past under Close in that strip (seen
-on the feed's card; every sheet had it).
+on the feed's card; every sheet had it). **Under the status bar, over the tab bar** (2.29.0, he
+asked for Instagram's layout): `apple-mobile-web-app-status-bar-style` is
+`black-translucent`, so the page runs under the status bar everywhere; a
+fixed `body::before` strip of paper, `env(safe-area-inset-top)` tall, sits
+behind the clock on every page and hides under `body.reels` (set by
+`reelsLifecycle`), which also hides `.top` and makes `nav.tabs`
+translucent with a backdrop blur. `.reels` is `z-index: 4`, under the bar
+(5); the caption's bottom padding clears `--nav-h + --safe-b`. Each reel
+has a `.reelBg`: the swing's middle frame (`swingFrame`) blurred and
+darkened behind the clip, so a clip that doesn't fill the screen has no
+black bars; a still, not a second decoding video, so a phone plays one
+clip at a time as before.
 
 ## Getting to the green (2.22.0)
 

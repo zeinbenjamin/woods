@@ -151,7 +151,7 @@ database document. Metres on a local plane: x east, y north, from `origin`.
                                         // tees: the hole's mapped tee boxes (on its line, or named by hand)
 ```
 
-- `share` (2.29.0, optional on a hole): the number of another hole whose line
+- `share` (2.30.0, optional on a hole): the number of another hole whose line
   it plays (Kogarah's OSM "1/16": hole 16 has `"share": 1`). Same `line` and
   `green`; the shapes stay `h` of the first hole in the file, and
   `HoleMap.forHole` lends them to the sharing hole, so its fairway, hazards and
