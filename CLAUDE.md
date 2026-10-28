@@ -460,8 +460,12 @@ Each of these cost real debugging time. Don't reintroduce them.
   28px above. The bag is `.bagrow` rows (who / three `.bagnum` numbers / Edit),
   not a table: five columns never fit a phone. Subtitles join their parts
   with `filter(Boolean).join(' · ')`, so an empty suburb or par can't leave a
-  stray comma or full stop. Check a new section at phone width before
-  shipping; the sweep screenshots are how these were found.
+  stray comma or full stop. A heading with buttons beside it
+  (`.spread:has(> h2)`, 2.27.1) carries the heading's margins itself and
+  zeroes the h2's: the buttons are taller than the heading, so margins on
+  the h2 alone left them touching the text above and below. Check a new
+  section at phone width before shipping; the sweep screenshots are how
+  these were found.
 - **No double-tap zoom, and inputs are 16px** (2.11.2): `html { touch-action:
   manipulation }` stops the double-tap zoom while keeping pinch, and iOS zooms
   into any input under 16px on focus, so the 15px fields zoomed the page.

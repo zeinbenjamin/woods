@@ -199,7 +199,10 @@ details.sec > summary { cursor: pointer; }
 details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > summary b { font-family: var(--cond); font-size: 15px; }
 .steps { margin: 6px 0 0; padding-left: 20px; font-size: 14px; } .steps li { margin: 10px 0; }
 .sec { display: block; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--rule); clear: both; }
-.sec > .spread > h2 { margin-top: 0; }
+/* A heading with buttons beside it (2.27.1, his screenshot of Blocks): the row carries the
+   heading's margins, not the h2, or the taller buttons sit on the text above and below. */
+.spread:has(> h2) { margin: 24px 0 10px; } .spread:has(> h2) > h2 { margin: 0; }
+.sec > .spread:has(> h2), .spread:has(> h2):first-child { margin-top: 0; }
 .filmstrip .frame { position: relative; padding: 0; border: 0; background: none; border-radius: 4px; flex: 0 0 auto; cursor: pointer; }
 .filmstrip .frame span { position: absolute; left: 3px; bottom: 3px; font: 600 10px var(--cond); background: rgba(0,0,0,.55); color: #fff; border-radius: 3px; padding: 0 4px; }
 .filmstrip .frame:hover img { outline: 2px solid var(--flag); }
