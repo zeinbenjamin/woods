@@ -1,0 +1,15 @@
+{
+ "id": "botany",
+ "name": "Botany Golf Club",
+ "osm": {
+  "course": "relation/2724750",
+  "name": "Botany Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.95948,
+  151.20883
+ ],
+ "holes": "osm",
+ "why": "Tier A on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 344015ef). No card in the source: the course page checks the NAS card once the course is imported."
+}

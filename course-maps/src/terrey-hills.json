@@ -1,0 +1,15 @@
+{
+ "id": "terrey-hills",
+ "name": "Terrey Hills Golf & Country Club",
+ "osm": {
+  "course": "way/176608598",
+  "name": "Terrey Hills Golf & Country Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.66908,
+  151.19634
+ ],
+ "holes": "osm",
+ "why": "Tier A on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 344015ef). No card in the source: the course page checks the NAS card once the course is imported."
+}

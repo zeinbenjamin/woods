@@ -1,0 +1,15 @@
+{
+ "id": "pymble",
+ "name": "Pymble Golf Club",
+ "osm": {
+  "course": "way/174930441",
+  "name": "Pymble Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.72948,
+  151.15214
+ ],
+ "holes": "osm",
+ "why": "Tier A on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 344015ef). No card in the source: the course page checks the NAS card once the course is imported."
+}

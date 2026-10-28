@@ -6,6 +6,12 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.28.0 — 2026-10-28
+- 27 more Sydney courses have course maps ready, every one fully mapped in OpenStreetMap with real greens, tees, bunkers and water: Asquith, Auburn, Bankstown, Bonnie Doon, Botany, Colonial, Dunheved, Elanora, Georges River, Glenmore Heritage Valley, Lakeside Camden, Lynwood, Manly, Moore Park, Oatlands, Penrith, Pymble, Richmond, Royal Sydney, Shortees, Stonecutters Ridge, Strathfield, Terrey Hills, The Australian, The Ridge, Twin Creeks and Woollahra.
+- To use one, add the course with its card, then link its map on the course page; the card check compares the two.
+- Moore Park's map is the interim ten holes, as you play it now. On your blue card, holes 3 and 7 differ from the map, so the course page flags them.
+- Manly's 14th is left off its map for now: OpenStreetMap has two different 14th holes, and your card will say which one is played.
+
 ## 2.27.0 — 2026-10-28
 - Five tabs: Swings · Range · Overview · Rounds · Courses, with Overview in the middle as a green pill. Swings is the swing history, with Watch one tap in; it is no longer a link inside Range.
 - The feed's club chips are no longer clipped at the top, the video sits centred with even black above and below instead of a band under the chips, and the sound button is a drawn speaker (waves on, a cross off) rather than an emoji.

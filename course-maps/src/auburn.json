@@ -1,0 +1,15 @@
+{
+ "id": "auburn",
+ "name": "Auburn Golf Course",
+ "osm": {
+  "course": "way/176410946",
+  "name": "Auburn Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.86709,
+  151.01551
+ ],
+ "holes": "osm",
+ "why": "Tier A on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 344015ef). No card in the source: the course page checks the NAS card once the course is imported."
+}
