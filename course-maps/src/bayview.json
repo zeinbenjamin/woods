@@ -1,0 +1,15 @@
+{
+ "id": "bayview",
+ "name": "Bayview Golf Club",
+ "osm": {
+  "course": "relation/2981993",
+  "name": "Bayview Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.66883,
+  151.29591
+ ],
+ "holes": "osm",
+ "why": "Tier C on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 978ae857). No card in the source: the course page checks the NAS card once the course is imported."
+}

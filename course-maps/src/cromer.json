@@ -1,0 +1,15 @@
+{
+ "id": "cromer",
+ "name": "Cromer Golf Course",
+ "osm": {
+  "course": "relation/5633065",
+  "name": "Cromer Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.72604,
+  151.27272
+ ],
+ "holes": "osm",
+ "why": "Tier D on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, e46bab2f). No card in the source: the course page checks the NAS card once the course is imported."
+}

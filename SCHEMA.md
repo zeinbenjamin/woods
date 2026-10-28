@@ -168,7 +168,10 @@ database document. Metres on a local plane: x east, y north, from `origin`.
   agreement (within 20 m of their set's median, a majority, else nothing is
   drawn). On an OSM line with an estimated green, flags within 40 m of the
   line's end move the green and the line's end there. A mapped green ignores
-  marks.
+  marks. Where there is no line but the flags' mean is on a mapped green or
+  within 10 m of its edge (`MARK_SNAP`, 2.31.0), the hole takes that green:
+  the line runs to its middle, it is `h` = this hole in the built map, and
+  `fromMarks.snapped` is true (a green lie, front and back).
 - The **tee rule**: the tee a round was played from sits `teeMetres(hole, tee)`
   from the end of `line`, along it (forward of the mapped tee if the card is
   shorter, straight back behind it if longer). Worked out on every draw.

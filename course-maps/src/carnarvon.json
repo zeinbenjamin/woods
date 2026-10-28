@@ -1,0 +1,15 @@
+{
+ "id": "carnarvon",
+ "name": "Carnarvon Golf Course",
+ "osm": {
+  "course": "way/175969800",
+  "name": "Carnarvon Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.87949,
+  151.03874
+ ],
+ "holes": "osm",
+ "why": "Tier D on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, e46bab2f). No card in the source: the course page checks the NAS card once the course is imported."
+}

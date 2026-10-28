@@ -1,0 +1,15 @@
+{
+ "id": "cronulla",
+ "name": "Cronulla Golf Course",
+ "osm": {
+  "course": "way/23020001",
+  "name": "Cronulla Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -34.04152,
+  151.15105
+ ],
+ "holes": "marks",
+ "why": "Tier C on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 978ae857). No numbered hole lines on OSM: every hole comes from his GPS marks, and flags snap to the mapped greens."
+}

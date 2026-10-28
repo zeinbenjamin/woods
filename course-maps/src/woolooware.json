@@ -1,0 +1,16 @@
+{
+ "id": "woolooware",
+ "name": "Woolooware Golf Course",
+ "osm": {
+  "course": "way/8015171",
+  "name": "Woolooware Golf Course",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -34.04265,
+  151.13823
+ ],
+ "holes": "osm",
+ "minInside": 0.8,
+ "why": "Tier D on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, e46bab2f). No card in the source: the course page checks the NAS card once the course is imported. Hole 5 runs partly outside OSM's boundary (84% inside), so minInside is 0.8; Cronulla next door has no hole lines to pull in."
+}

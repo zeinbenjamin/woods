@@ -1,0 +1,15 @@
+{
+ "id": "castle-cove",
+ "name": "Castle Cove Golf Club",
+ "osm": {
+  "course": "relation/6168035",
+  "name": "Castle Cove Golf Club",
+  "exported": "2026-10-28"
+ },
+ "origin": [
+  -33.78464,
+  151.2079
+ ],
+ "holes": "marks",
+ "why": "Tier C on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, 978ae857). No numbered hole lines on OSM: every hole comes from his GPS marks, and flags snap to the mapped greens."
+}
