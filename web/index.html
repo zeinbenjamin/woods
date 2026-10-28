@@ -3179,6 +3179,52 @@ const swingFrame = sw => (sw.frames || [])[Math.floor(((sw.frames || []).length 
 function swingHistory() {
   return allSwings().slice().sort((a, b) => swingDate(b).localeCompare(swingDate(a)) || String(b.addedOn || '').localeCompare(String(a.addedOn || '')));
 }
+/* Themes in the readings (2.33.0, he asked: the reading-by-reading list was
+   repetitive; show trends and progression instead). A fix is filed under the
+   first theme whose words it uses, specific ones first; a fix none match is
+   "other". Judgement in the word lists, not in the data: nothing is stored. */
+const SWING_THEMES = [
+  ['wrist', 'Wrist', /\bwrists?\b|cupp|\bhinge|\bflat at the top|\blag\b/i],
+  ['face', 'Clubface', /club ?face|\bface (square|open|closed)|\bsquare\b/i],
+  ['head', 'Head and posture', /\bhead\b|\bposture|\bspine|stay down|stand(ing)? up|early extension|\bheight\b/i],
+  ['path', 'Swing path', /\bpath\b|over the top|\binside\b|\boutside\b|\bplane\b|\bsteep|\bshallow/i],
+  ['setup', 'Setup and grip', /\bset ?up\b|\baddress\b|ball position|\bgrip\b|\bstance\b|\balignment|\baim\b/i],
+  ['tempo', 'Tempo', /\btempo|\brhythm|\brush|too (fast|quick)|\bslow(er)?\b|\bpace\b|\btiming\b/i],
+  ['hands', 'Hands and arms', /\bhands?\b|\barms?\b|\belbow|\bclubhead\b|\brelease|\bextension through|\bfinish the swing/i],
+  ['body', 'Body turn', /\bbody\b|\bhips?\b|\bchest\b|\bshoulders?\b|\bturn|\brotat|\bsway|\bweight\b|\bpivot/i],
+];
+const swingTheme = fix => (SWING_THEMES.find(([, , re]) => re.test(fix || '')) || ['other', 'Other'])[0];
+const themeName = key => (SWING_THEMES.find(([k]) => k === key) || [, 'Other'])[1];
+function swingThemes(fixes) {
+  const by = new Map();
+  fixes.forEach((f, i) => { const k = swingTheme(f.fix); if (!by.has(k)) by.set(k, { key: k, name: themeName(k), n: 0, agrees: 0, contradicts: 0, first: f.date, last: f.date, idx: [] }); const t = by.get(k); t.n++; if (f.agrees === true) t.agrees++; if (f.agrees === false) t.contradicts++; t.last = f.date; t.idx.push(i); });
+  const last = fixes.length - 1;
+  return [...by.values()].map(t => ({ ...t, latest: t.idx.includes(last), recurring: t.n >= 2 && daysBetween(t.first, t.last) > 60, newest: t.n === 1 && t.idx[0] === last && fixes.length > 1 })).sort((a, b) => b.n - a.n || b.last.localeCompare(a.last));
+}
+// What the readings have been pointing at, by period: a year when they span
+// years, else a month; each period's themes in the order they first came up.
+function swingProgression(fixes) {
+  if (!fixes.length) return [];
+  const years = new Set(fixes.map(f => f.date.slice(0, 4)));
+  const period = d => years.size > 1 ? d.slice(0, 4) : d.slice(0, 7);
+  const out = [];
+  for (const f of fixes) { const pd = period(f.date); let p = out[out.length - 1]; if (!p || p.period !== pd) { p = { period: pd, label: years.size > 1 ? pd : dateLabel(f.date + (f.date.length === 7 ? '-01' : '')).replace(/^\d+ /, ''), themes: [], n: 0 }; out.push(p); } p.n++; const k = swingTheme(f.fix); if (!p.themes.includes(k)) p.themes.push(k); }
+  return out;
+}
+function swingPattern(c) {
+  const t = c.themes; if (!t.length) return '';
+  const lines = [];
+  const top = t[0], latestFix = c.fixes[c.fixes.length - 1], latestKey = swingTheme(latestFix.fix);
+  if (t.length === 1) lines.push(`Every reading has been about the ${top.name.toLowerCase()}${top.recurring ? `, from ${dateLabel(top.first)} to ${dateLabel(top.last)}: it has not been cleared yet` : ''}.`);
+  else {
+    lines.push(`${top.name} comes up most: ${top.n} of ${c.fixes.length} readings${top.recurring ? `, across ${dateLabel(top.first)} to ${dateLabel(top.last)}` : ''}${top.latest ? ', the latest included' : `, but not since ${dateLabel(top.last)}`}.`);
+    const nt = t.find(x => x.newest); if (nt) lines.push(`The latest reading (${dateLabel(latestFix.date)}) is the first about the ${nt.name.toLowerCase()}.`);
+    else if (latestKey !== top.key) lines.push(`The latest reading is about the ${themeName(latestKey).toLowerCase()}.`);
+    const gone = t.filter(x => !x.latest && x.n >= 2 && daysBetween(x.last, c.last) > 60); if (gone.length) lines.push(`Not seen since ${gone.map(x => `${dateLabel(x.last)} (${x.name.toLowerCase()})`).join(', ')}: either moved on or just not looked at.`);
+  }
+  const contra = t.filter(x => x.contradicts >= x.agrees && x.contradicts); if (contra.length) lines.push(`The ball data contradicted the ${contra.map(x => x.name.toLowerCase()).join(' and ')} readings as often as it agreed: weigh them less.`);
+  return lines.join(' ');
+}
 function swingClubSummary(club, swings) {
   const sws = swings.filter(sw => (sw.club || '') === club).slice().sort((a, b) => swingDate(a).localeCompare(swingDate(b)));
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing);
@@ -3187,7 +3233,8 @@ function swingClubSummary(club, swings) {
   const latest = fixes[fixes.length - 1] || null;
   const cantTell = [...new Set(read.flatMap(sw => sw.analysis.cannot_tell || []).map(t => String(t).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()))].length;
   const views = [...new Set(sws.map(sw => sw.view))];
-  return { club, n: sws.length, read: read.length, first: dates[0] || null, last: dates[dates.length - 1] || null, views, fixes, latest, agrees: fixes.filter(f => f.agrees === true).length, contradicts: fixes.filter(f => f.agrees === false).length, cantTell };
+  const themes = swingThemes(fixes);
+  return { club, n: sws.length, read: read.length, first: dates[0] || null, last: dates[dates.length - 1] || null, views, fixes, latest, agrees: fixes.filter(f => f.agrees === true).length, contradicts: fixes.filter(f => f.agrees === false).length, cantTell, themes, progression: swingProgression(fixes) };
 }
 /* ---------- a reading across the readings (2.24.0) ----------
    On the club's fold, a button sends that club's readings (text only, no
@@ -3275,9 +3322,10 @@ function vSwings() {
     const c = swingClubSummary(club, sws), name = club || 'No club';
     const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
     const body = `<p class="small">${plural(c.n, 'swing')} (${c.views.map(v => VIEWS[v] || 'other').join(', ')})${c.first ? `, ${c.first === c.last ? dateLabel(c.first) : `${dateLabel(c.first)} to ${dateLabel(c.last)}`}` : ''}; ${plural(c.read, 'reading')}${c.read ? `, ${c.agrees} agreeing with the ball data${c.contradicts ? `, ${c.contradicts} contradicting it` : ''}` : ''}.</p>` +
-      (c.fixes.length ? `<div class="small" style="margin-top:6px"><b>The fix, reading by reading:</b></div><ol class="small fixes">${c.fixes.map(f => `<li><span class="muted">${dateLabel(f.date)}, ${esc(VIEWS[f.view] || 'other')}:</span> ${esc(f.fix)}${f.agrees === true ? ' <span class="tag green">ball data agrees</span>' : f.agrees === false ? ' <span class="tag">contradicts ball data</span>' : ''}</li>`).join('')}</ol>` : '') +
+      (c.themes.length ? `<div class="small" style="margin-top:6px"><b>What the readings keep pointing at:</b></div><ul class="small themes">${c.themes.map(t => `<li><b>${esc(t.name)}</b> ${plural(t.n, 'reading')}${t.recurring ? `, recurring ${dateLabel(t.first)} to ${dateLabel(t.last)}` : t.n > 1 ? `, ${t.first === t.last ? dateLabel(t.first) : `${dateLabel(t.first)} to ${dateLabel(t.last)}`}` : `, ${dateLabel(t.first)}`}${t.newest ? ' <span class="tag green">new</span>' : t.latest ? ' <span class="tag">latest</span>' : ''}${t.contradicts ? ` <span class="muted">· ${t.contradicts} contradicted by the ball data</span>` : ''}</li>`).join('')}</ul>` : '') +
+      (c.progression.length > 1 ? `<div class="small" style="margin-top:6px"><b>Progression:</b> ${c.progression.map(p => `${esc(p.label)}: ${p.themes.map(k => themeName(k).toLowerCase()).join(', ')}`).join(' → ')}</div>` : '') +
+      (c.fixes.length ? `<p class="small" style="margin-top:6px" id="swpat_${esc(club)}">${esc(swingPattern(c))} Latest fix (${dateLabel(c.latest.date)}): <b>${esc(c.latest.fix)}</b>.</p>` : '') +
       (c.latest && c.latest.wrist && (c.latest.wrist.top || c.latest.wrist.lead_arm_parallel) ? `<div class="small" style="margin-top:6px"><b>Wrist, latest reading:</b> ${esc(c.latest.wrist.top || 'cannot tell')} at the top; ${esc(c.latest.wrist.lead_arm_parallel || 'cannot tell')} with the lead arm parallel.</div>` : '') +
-      (c.fixes.length >= 2 ? `<p class="small muted" style="margin-top:6px">${c.fixes.every(f => f.fix === c.fixes[0].fix) ? 'The same fix every time: it has not been cleared yet.' : 'The fix has changed between readings: either the swing moved on, or the readings disagree. The ball data decides which.'}</p>` : '') +
       (c.cantTell ? `<p class="small muted" style="margin-top:6px">${plural(c.cantTell, 'thing')} the readings said they couldn't see; the Range list's "What the readings couldn't see" lists them.</p>` : '') +
       crossSection(club, c);
     return fold('swc_' + club.replace(/[^A-Za-z0-9]/g, '_'), esc(name), teaser, body);
@@ -3285,7 +3333,7 @@ function vSwings() {
   h += `<h2>Timeline</h2><div class="list" id="swingTimeline">` + sws.map(sw => {
     const w = swingWhere(sw), fr = swingFrame(sw), a = sw.analysis;
     const go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
-    return `<button class="item swrow" data-go="${go}">${fr ? `<img class="thumb" src="/_blob/${fr.asset}" alt="" loading="lazy">` : '<span class="thumb none"></span>'}<div class="swbody">
+    return `<button class="item swrow" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}">${fr ? `<img class="thumb" src="/_blob/${fr.asset}" alt="" loading="lazy">` : '<span class="thumb none"></span>'}<div class="swbody">
       <div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="muted small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
       <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>
       <div class="s">${a && a.one_thing ? `<b>${esc(a.one_thing)}</b>${a.ball_data === 'agrees' ? ' · ball data agrees' : a.ball_data === 'contradicts' ? ' · contradicts ball data' : ''}` : a ? esc((a.observations || [])[0]?.what || 'read') : 'not read yet'}</div></div></button>`;

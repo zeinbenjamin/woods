@@ -1139,6 +1139,21 @@ club are `swc_<code>`, in bag order (`clubOrder`). `ui-swings` works a
 hand-made set: two 7i readings months apart with different fixes, an
 unread 5W swing on a round, and the empty state.
 
+**Themes, not the list** (2.33.0, he found reading-by-reading redundant and
+asked for trends and progression): `SWING_THEMES` files each fix under the
+first theme whose words it uses (wrist, clubface, head and posture, swing
+path, setup and grip, tempo, hands and arms, body turn; else other),
+specific ones first. `swingThemes(fixes)` counts per theme with first/last
+date, ball-data agreement, `latest`, `newest` (first seen in the latest
+reading) and `recurring` (2+ over more than 60 days); `swingProgression`
+lists each period's themes (years when they span years, else months);
+`swingPattern(c)` writes the line: the top theme and whether the latest is
+in it, a theme new in the latest reading, themes not seen for 60+ days, and
+themes the ball data contradicted as often as agreed. All from the readings'
+wording, derived on every draw, nothing stored; the cross-reading stays the
+real read across them. The timeline's rows open the swing's card
+(`reelCard`), as the feed's caption does, with one link on to the session.
+
 **A reading across the readings** (2.24.0, he asked for the cross-reading
 button): `crossSection(club)` on the club's fold, `crossRead(club)` →
 `crossPrompt` (the club's readings as text, oldest first: fix, why, feel,
