@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.34.0 — 2026-10-29
+- Scores are marked the way a scorer marks a card: a circle for a birdie, a double circle for an eagle or better, a square for a bogey, a double square for a double bogey or worse; par stays plain. The colours are unchanged. On the scorecard, the hole strips and the key.
+
+## 2.33.0 — 2026-10-28
+- Swings: tapping a swing in the timeline opens its reading card (the same card the feed's caption opens), with one link on to the session or round.
+- Swings, by club: instead of listing every reading again, each club now shows what the readings keep pointing at (wrist, hands and arms, body turn, head and posture, clubface, path, setup, tempo), how often and over what span, which theme is new or recurring, the progression period by period, and a short pattern line; the latest fix stays. "Read across these readings" is still the full reading across them.
+
 ## 2.32.1 — 2026-10-28
 - Swings feed: the thin progress bar now sits right on the tab bar, with the caption directly above it and no gap between the three.
 - The bar fills smoothly as the clip plays (every frame, not in steps), and dragging it scrubs without the stutter: the bar follows your finger at once and the clip catches up once a frame.

@@ -31,7 +31,14 @@ test('the timeline lists every swing newest first, flagged range or course, with
   const rows = app.$$('#swingTimeline .swrow');
   assert.equal(rows.length, 4);
   assert.deepEqual(rows.map(r => r.querySelector('.t').textContent.replace(/\s+/g, ' ').trim()), ['19 Oct 2026 range 7i Down the line', '19 Oct 2026 range 7i Face on', '14 Sept 2026 course 5W Face on', '3 Aug 2026 range 7i Down the line']);
-  assert.deepEqual(rows.map(r => r.dataset.go), ['range:sessionId=s_oct', 'range:sessionId=s_oct', 'rounds:sessionId=r_sep', 'range:sessionId=s_aug'], 'each opens where it was filmed');
+  assert.deepEqual(rows.map(r => [r.dataset.act, r.dataset.sid, r.dataset.wid]), [['reelCard', 's_oct', 'sw_b'], ['reelCard', 's_oct', 'sw_c'], ['reelCard', 'r_sep', 'sw_d'], ['reelCard', 's_aug', 'sw_a']], 'each opens the swing\'s card (2.33.0), as the feed\'s caption does');
+  rows[3].click();
+  assert.ok(app.sheetOpen(), 'the card sheet');
+  assert.match(app.text('#sheetInner'), /3 Aug 2026[\s\S]*Rotate through the ball[\s\S]*a reading, not a measurement/);
+  assert.equal(app.$('#sheetInner [data-act="reelOpen"]').dataset.goSession, 'range:sessionId=s_aug', 'one link on to where it was filmed');
+  app.$('#sheetInner [data-act="reelOpen"]').click();
+  assert.ok(!app.sheetOpen() && app.E('S.sub.sessionId') === 's_aug', 'which opens the session');
+  app.go('swings');
   assert.match(rows[0].textContent, /Moore Park range[\s\S]*Hold the wrist angle longer · ball data agrees/);
   assert.match(rows[2].textContent, /Test GC[\s\S]*not read yet/);
   assert.match(rows[3].textContent, /hooking[\s\S]*Rotate through the ball · contradicts ball data/);
@@ -53,8 +60,13 @@ test('a summary per club is put together from the readings: count, span, the fix
   assert.match(app.text('#swc_5W summary'), /5W 1 swing, none read yet/);
   assert.match(app.text('#swc_7i summary'), /7i 3 readings · latest: Hold the wrist angle longer/);
   assert.match(app.text('#swc_7i'), /3 swings \(Down the line, Face on\), 3 Aug 2026 to 19 Oct 2026; 3 readings, 2 agreeing with the ball data, 1 contradicting it\./);
-  assert.deepEqual(app.$$('#swc_7i ol.fixes li').map(li => li.textContent.replace(/\s+/g, ' ').trim()), ['3 Aug 2026, Down the line: Rotate through the ball contradicts ball data', '19 Oct 2026, Down the line: Hold the wrist angle longer ball data agrees', '19 Oct 2026, Face on: Hold the wrist angle longer ball data agrees']);
-  assert.match(app.text('#swc_7i'), /The fix has changed between readings/);
+  // Themes, not the list (2.33.0): wrist twice (the latest), body turn once and contradicted.
+  assert.deepEqual(c.themes.map(t => [t.key, t.n, t.latest, t.newest, t.recurring, t.contradicts]), [['wrist', 2, true, false, false, 0], ['body', 1, false, false, false, 1]]);
+  assert.deepEqual(c.progression.map(p => [p.label, p.themes]), [['Aug 2026', ['body']], ['Oct 2026', ['wrist']]]);
+  assert.equal(app.$$('#swc_7i ol.fixes').length, 0, 'no reading-by-reading list');
+  assert.deepEqual(app.$$('#swc_7i ul.themes li').map(li => li.textContent.replace(/\s+/g, ' ').trim()), ['Wrist 2 readings, 19 Oct 2026 latest', 'Body turn 1 reading, 3 Aug 2026 · 1 contradicted by the ball data']);
+  assert.match(app.text('#swc_7i'), /Progression: Aug 2026: body turn → Oct 2026: wrist/);
+  assert.match(app.text('#swpat_7i'), /Wrist comes up most: 2 of 3 readings, the latest included\. The ball data contradicted the body turn readings as often as it agreed: weigh them less\. Latest fix \(19 Oct 2026\): Hold the wrist angle longer\./);
   assert.match(app.text('#swc_7i'), /1 thing the readings said they couldn't see/);
   assert.doesNotMatch(app.text('#swc_7i'), /Wrist, latest/, 'no wrist line when the latest reading has none');
 });

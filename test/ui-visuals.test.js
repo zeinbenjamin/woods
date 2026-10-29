@@ -60,7 +60,13 @@ test('a round reads as a scorecard: par, score coloured against par, putts, pena
   assert.deepEqual(app.$$('#scorecard .cs .sc').map(x => x.className.replace('sc ', '')), ['par', 'b2', 'under', 'b1', 'par', 'b3', 'par', 'b1', 'unscored']);
   assert.match(app.text('#view'), /Totals count the holes with a score\./);
   assert.equal(app.$('#scorecard .ch th[data-go]').dataset.go, 'rounds:sessionId=rCard,hole=1', 'a hole opens from the card');
-  assert.match(app.text('#view .card-key'), /under par.*par.*bogey.*double.*worse/, 'the colours say what they mean');
+  assert.match(app.text('#view .card-key'), /eagle.*birdie.*par.*bogey.*double.*worse/, 'the key names the scorer\'s marks (2.34.0)');
+  // The scorer's notation: a circle for under par, two for an eagle; squares for bogey and worse.
+  assert.equal(app.E(`scoreClass({ strokes: 3, par: 5 })`), 'under eagle');
+  assert.equal(app.E(`scoreClass({ strokes: 4, par: 5 })`), 'under');
+  const css = app.doc.querySelector('style').textContent;
+  assert.match(css, /\.sc\.under \{[^}]*border-radius: 50%/); assert.match(css, /\.sc\.under\.eagle \{[^}]*box-shadow/);
+  assert.match(css, /\.sq\.b1, \.sq\.b2, \.sq\.b3 \{ border-radius: 0; \}/); assert.match(css, /\.sc\.b2 \{[^}]*box-shadow/);
 });
 
 test('a tap on a dot on the course hole page shows that shot: when, which, the club, how far and where it finished', async () => {
