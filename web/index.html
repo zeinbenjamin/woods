@@ -3998,23 +3998,40 @@ Object.assign(ACTIONS, {
       });
   },
   importData() {
+    // Any number of files at once (2.38.0, he asked, with 77 course imports
+    // to load): each is checked, one question covers them all, and a file
+    // that isn't an export is named and skipped, never silently.
     openSheet(`<h2>Import a backup</h2>
-      <p class="small muted">Restores from a Carry export. Anything with the same id is overwritten; everything else is left alone. Images are re-uploaded and their references rewritten.</p>
-      <label>Export file<input type="file" name="file"></label>
+      <p class="small muted">Restores from Carry export files; pick as many as you like. Anything with the same id is overwritten; everything else is left alone. Images are re-uploaded and their references rewritten.</p>
+      <label>Export files<input type="file" name="file" multiple></label>
       <p class="small muted">Any file can be picked; it's checked when you import. (A file saved from GitHub or Mail on an iPhone is often typed as plain text, which a JSON-only picker greys out.)</p>
       <div class="count" id="imProg"></div>`,
       async root => {
-        const f = root.querySelector('[name=file]').files[0];
-        if (!f) { toast('Pick a file first'); return false; }
+        const files = [...(root.querySelector('[name=file]').files || [])];
+        if (!files.length) { toast('Pick a file first'); return false; }
         const p = $('#imProg', root);
-        let data; try { data = JSON.parse(await f.text()); } catch (e) { toast("That file isn't valid JSON"); return false; }
-        if (data.format !== 'carry-export') { toast('Not a Carry export file'); return false; }
-        const n = (data.sessions || []).length, imgs = Object.keys(data.assets || {}).length;
-        if (!await confirmAsk(`Import ${plural((data.courses || []).length, 'course')}, ${plural(n, 'session')} and ${plural(imgs, 'image')}? Matching records are overwritten.`, 'Import')) return false;
-        try {
-          const c = await applyImport(data, { onProgress: (what, i, tot) => p.textContent = `Restoring ${what} ${i} of ${tot}…` });
-          toast(`Imported ${c.courses} courses, ${c.sessions} sessions`); render(); return true;
-        } catch (e) { toast(e.message || 'Import failed'); return false; }
+        const good = [], bad = [];
+        for (const f of files) {
+          let data; try { data = JSON.parse(await f.text()); } catch (e) { bad.push(`${f.name}: not valid JSON`); continue; }
+          if (!data || data.format !== 'carry-export') { bad.push(`${f.name}: not a Carry export`); continue; }
+          good.push({ name: f.name, data });
+        }
+        if (!good.length) {
+          toast(files.length > 1 ? 'None of those are Carry export files' : /JSON/.test(bad[0]) ? "That file isn't valid JSON" : 'Not a Carry export file');
+          p.textContent = files.length > 1 ? bad.join(' · ') : ''; return false;
+        }
+        const sum = k => good.reduce((n, g) => n + (g.data[k] || []).length, 0), imgs = good.reduce((n, g) => n + Object.keys(g.data.assets || {}).length, 0);
+        const skipped = bad.length ? ` ${plural(bad.length, 'file')} skipped: ${bad.join('; ')}.` : '';
+        if (!await confirmAsk(`Import ${plural(sum('courses'), 'course')}, ${plural(sum('sessions'), 'session')} and ${plural(imgs, 'image')} from ${plural(good.length, 'file')}? Matching records are overwritten.${skipped}`, 'Import')) return false;
+        const tot = { courses: 0, sessions: 0 }; const failed = [];
+        for (let i = 0; i < good.length; i++) {
+          try {
+            const c = await applyImport(good[i].data, { onProgress: (what, j, n) => p.textContent = `${good.length > 1 ? `File ${i + 1} of ${good.length}: ` : ''}restoring ${what} ${j} of ${n}…` });
+            tot.courses += c.courses; tot.sessions += c.sessions;
+          } catch (e) { failed.push(`${good[i].name}: ${e.message || 'failed'}`); }
+        }
+        if (failed.length) { p.textContent = `Not imported: ${failed.join('; ')}`; toast(`Imported ${tot.courses} courses, ${tot.sessions} sessions; ${plural(failed.length, 'file')} failed`); render(); return false; }
+        toast(`Imported ${tot.courses} courses, ${tot.sessions} sessions${bad.length ? `; ${plural(bad.length, 'file')} skipped` : ''}`); render(); return true;
       });
   },
 });

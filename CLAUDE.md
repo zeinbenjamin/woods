@@ -510,6 +510,13 @@ Each of these cost real debugging time. Don't reintroduce them.
   greyed out `imports/moore-park.json` on his iPhone, because a file saved
   from GitHub or Mail there is typed as plain text. The app checks the
   contents itself, so there is no `accept` at all.
+- **Import a backup takes many files** (2.38.0, he asked with 77 course
+  imports to load one at a time): the picker is `multiple`; every file is
+  parsed and checked first, one `confirmAsk` sums courses, sessions and images
+  across the good ones and names each skipped file with why (not JSON, not an
+  export); then `applyImport` runs per file with "File i of n" progress, and a
+  file that fails part-way is named and the sheet stays open. `ui-import-many`
+  covers three courses and a stray, and only wrong files refused.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -1461,7 +1468,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 354 tests, about 45s.
+`npm test` — 356 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1548,6 +1555,8 @@ fixture would let the reading be pinned.
   course, the per-club summary from the readings, the empty state, the
   cross-reading button end to end against a stubbed analysis call, the
   video feed with a stand-in observer),
+  `ui-import-many` (Import a backup with many files: one question, a stray
+  named and skipped, only wrong files refused),
   `ui-theme` (Appearance: System, Light, Dark; the root attribute, the
   stored copy, a setting from another phone),
   `ui-sg` (strokes gained: the table and allowance by hand, a hole adding

@@ -1,3 +1,6 @@
+## 2.38.0 — 2026-10-29
+- Import a backup takes any number of files at once: pick them all, answer one question, and each is restored in turn. A file that isn't a Carry export is named and skipped, never silently.
+
 ## 2.37.0 — 2026-10-29
 - Settings has an Appearance section: System, Light or Dark. System follows your phone, as before; a choice is remembered and the app opens straight into it.
 
