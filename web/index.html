@@ -17,7 +17,7 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
   padding-bottom: env(safe-area-inset-bottom, 0px);
   --paper: #F7F8F5; --paper-2: #ECEFE9; --ink: #1B2A20; --ink-2: #4A5A4F; --ink-3: #7E8B82;
   --rule: #D3DAD1; --green: #2E6B3F; --green-2: #1F4F2E; --green-soft: #D6E6DA; --fw: #4E9A62; --rough: #B9D3BF;
-  --flag: #C8432A; --flag-soft: #F7DED8; --score-e: #4E9B76; --score-b: #8DBB9D; --score-1: #D7B66D; --score-2: #D88A69; --score-3: #C96A6A; --sand: #E3D6A9; --sand-2: #CDB36A; --water: #8FBEDD; --focus: #2E6B3F;
+  --flag: #C96A6A; --flag-soft: #F3E2E2; --score-e: #4E9B76; --score-b: #8DBB9D; --score-1: #D7B66D; --score-2: #D88A69; --score-3: #C96A6A; --sand: #E3D6A9; --sand-2: #D7B66D; --water: #8FBEDD; --focus: #2E6B3F;
   --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
   --r: 8px; --nav-h: 56px;
@@ -28,11 +28,11 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #10170F; --paper-2: #182119; --ink: #E6ECE5; --ink-2: #AAB6AC; --ink-3: #77857A; --rule: #29352C;
   --green: #6DB37F; --green-2: #9BD3A8; --green-soft: #1E3A27; --fw: #3E7A4E; --rough: #24402C;
-  --flag: #E5674C; --flag-soft: #46231C; --score-e: #4E9B76; --score-b: #8DBB9D; --score-1: #D7B66D; --score-2: #D88A69; --score-3: #C96A6A; --sand: #7A6B3A; --sand-2: #A88F4A; --water: #3E6E8C; --focus: #6DB37F; } }
+  --flag: #C96A6A; --flag-soft: #3A2626; --score-e: #4E9B76; --score-b: #8DBB9D; --score-1: #D7B66D; --score-2: #D88A69; --score-3: #C96A6A; --sand: #7A6B3A; --sand-2: #D7B66D; --water: #3E6E8C; --focus: #6DB37F; } }
 :root[data-theme="dark"] {
   --paper: #10170F; --paper-2: #182119; --ink: #E6ECE5; --ink-2: #AAB6AC; --ink-3: #77857A; --rule: #29352C;
   --green: #6DB37F; --green-2: #9BD3A8; --green-soft: #1E3A27; --fw: #3E7A4E; --rough: #24402C;
-  --flag: #E5674C; --flag-soft: #46231C; --score-e: #4E9B76; --score-b: #8DBB9D; --score-1: #D7B66D; --score-2: #D88A69; --score-3: #C96A6A; --sand: #7A6B3A; --sand-2: #A88F4A; --water: #3E6E8C; --focus: #6DB37F; }
+  --flag: #C96A6A; --flag-soft: #3A2626; --score-e: #4E9B76; --score-b: #8DBB9D; --score-1: #D7B66D; --score-2: #D88A69; --score-3: #C96A6A; --sand: #7A6B3A; --sand-2: #D7B66D; --water: #3E6E8C; --focus: #6DB37F; }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 html, body { height: 100%; }
 *, *::before, *::after { box-sizing: inherit; }
@@ -137,7 +137,10 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 /* The scorer's notation (2.34.0, he asked): a circle for a birdie, two for an eagle or better,
    a square for a bogey, two for a double or worse; par plain. The palette is his (2.36.0): the
    softer of the two sets he sent, eagle and birdie their own greens, bogey a sand, double a
-   terracotta, worse a muted red; the same in both modes. */
+   terracotta, worse a muted red; the same in both modes. The app's warning colour (--flag:
+   practice-card edges, lost-stroke bars, tags, danger buttons) is the same muted red and the
+   caution accent (--sand-2: short game and strike cards, the runner segment) the same sand,
+   so one palette runs through the whole app. */
 .sq.under { border-radius: 50%; } .sq.under.eagle { box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 4px rgba(255,255,255,.85); }
 .sq.b1, .sq.b2, .sq.b3 { border-radius: 0; } .sq.b2, .sq.b3 { box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px rgba(255,255,255,.85); }
 .scorestrip.mini .sq.under { border-radius: 4px; box-shadow: none; } .scorestrip.mini .sq.b1, .scorestrip.mini .sq.b2, .scorestrip.mini .sq.b3 { border-radius: 0; box-shadow: none; }
@@ -359,6 +362,16 @@ const S = {
   tab: 'overview', sub: null,                 // sub: {sessionId, blockId, courseId}
 };
 try { const t = localStorage.getItem('carry.tab'); if (['overview','swings','range','rounds','courses','settings'].includes(t)) S.tab = t; else if (t === 'bag') S.tab = 'settings'; } catch (e) {}
+// Appearance (2.37.0, he asked): light, dark, or the system's. The setting lives in
+// the settings document; a copy in localStorage applies it before the server
+// answers, so the page doesn't open in the wrong mode and switch.
+const THEMES = ['system', 'light', 'dark'];
+function applyTheme(t) {
+  t = THEMES.includes(t) ? t : 'system';
+  if (t === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('carry.theme', t); } catch (e) {}
+}
+try { applyTheme(localStorage.getItem('carry.theme')); } catch (e) {}
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -710,6 +723,7 @@ function parseGo(str) {
   const j = rest.indexOf(':'); return [tab, { [rest.slice(0, j)]: rest.slice(j + 1) }];
 }
 function render() {
+  if (S.settings) applyTheme(settings().theme);
   if (window.HoleMap) HoleMap.onLoad = mapArrived;
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
   const views = { overview: vOverview, swings: vSwingsTab, range: vRange, rounds: vRounds, courses: vCourses, settings: vSettings };
@@ -1374,7 +1388,8 @@ function vSettings() {
         <button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></div>`; };
     h += `<div class="bag" id="bagList">${S.clubs.map(row).join('')}</div>`;
   }
-  h += `</section><section class="sec" id="rangeNumbers"><h2>Range numbers</h2><p class="small muted">Which range shots count towards stock carry, gapping and the practice list.</p>${rangeFilter()}</section>`;
+  h += `</section><section class="sec" id="appearance"><h2>Appearance</h2><p class="small muted">System follows your phone's setting.</p><label>Theme</label>${themePicker()}</section>`;
+  h += `<section class="sec" id="rangeNumbers"><h2>Range numbers</h2><p class="small muted">Which range shots count towards stock carry, gapping and the practice list.</p>${rangeFilter()}</section>`;
   h += `<section class="sec" id="strokesGainedRef"><h2>Strokes gained</h2><p class="small muted">Which golfer your shots are measured against. Nearest your estimated handicap unless you pin one; the numbers are an estimate against a published table and change nothing else.</p><label>Against</label>${sgPicker()}</section>`;
   h += `<section class="sec" id="location"><h2>Your location</h2><p class="small muted">${home() ? `Distances to courses are from ${esc(home().label || 'your location')}, as the crow flies.` : 'Set it to see how far each course is.'}</p><div class="row-actions"><button data-act="setHome">${home() ? 'Change' : 'Set your location'}</button></div></section>`;
   h += `<section class="sec" id="yourData"><h2>Your data</h2>
@@ -3983,23 +3998,40 @@ Object.assign(ACTIONS, {
       });
   },
   importData() {
+    // Any number of files at once (2.38.0, he asked, with 77 course imports
+    // to load): each is checked, one question covers them all, and a file
+    // that isn't an export is named and skipped, never silently.
     openSheet(`<h2>Import a backup</h2>
-      <p class="small muted">Restores from a Carry export. Anything with the same id is overwritten; everything else is left alone. Images are re-uploaded and their references rewritten.</p>
-      <label>Export file<input type="file" name="file"></label>
+      <p class="small muted">Restores from Carry export files; pick as many as you like. Anything with the same id is overwritten; everything else is left alone. Images are re-uploaded and their references rewritten.</p>
+      <label>Export files<input type="file" name="file" multiple></label>
       <p class="small muted">Any file can be picked; it's checked when you import. (A file saved from GitHub or Mail on an iPhone is often typed as plain text, which a JSON-only picker greys out.)</p>
       <div class="count" id="imProg"></div>`,
       async root => {
-        const f = root.querySelector('[name=file]').files[0];
-        if (!f) { toast('Pick a file first'); return false; }
+        const files = [...(root.querySelector('[name=file]').files || [])];
+        if (!files.length) { toast('Pick a file first'); return false; }
         const p = $('#imProg', root);
-        let data; try { data = JSON.parse(await f.text()); } catch (e) { toast("That file isn't valid JSON"); return false; }
-        if (data.format !== 'carry-export') { toast('Not a Carry export file'); return false; }
-        const n = (data.sessions || []).length, imgs = Object.keys(data.assets || {}).length;
-        if (!await confirmAsk(`Import ${plural((data.courses || []).length, 'course')}, ${plural(n, 'session')} and ${plural(imgs, 'image')}? Matching records are overwritten.`, 'Import')) return false;
-        try {
-          const c = await applyImport(data, { onProgress: (what, i, tot) => p.textContent = `Restoring ${what} ${i} of ${tot}…` });
-          toast(`Imported ${c.courses} courses, ${c.sessions} sessions`); render(); return true;
-        } catch (e) { toast(e.message || 'Import failed'); return false; }
+        const good = [], bad = [];
+        for (const f of files) {
+          let data; try { data = JSON.parse(await f.text()); } catch (e) { bad.push(`${f.name}: not valid JSON`); continue; }
+          if (!data || data.format !== 'carry-export') { bad.push(`${f.name}: not a Carry export`); continue; }
+          good.push({ name: f.name, data });
+        }
+        if (!good.length) {
+          toast(files.length > 1 ? 'None of those are Carry export files' : /JSON/.test(bad[0]) ? "That file isn't valid JSON" : 'Not a Carry export file');
+          p.textContent = files.length > 1 ? bad.join(' · ') : ''; return false;
+        }
+        const sum = k => good.reduce((n, g) => n + (g.data[k] || []).length, 0), imgs = good.reduce((n, g) => n + Object.keys(g.data.assets || {}).length, 0);
+        const skipped = bad.length ? ` ${plural(bad.length, 'file')} skipped: ${bad.join('; ')}.` : '';
+        if (!await confirmAsk(`Import ${plural(sum('courses'), 'course')}, ${plural(sum('sessions'), 'session')} and ${plural(imgs, 'image')} from ${plural(good.length, 'file')}? Matching records are overwritten.${skipped}`, 'Import')) return false;
+        const tot = { courses: 0, sessions: 0 }; const failed = [];
+        for (let i = 0; i < good.length; i++) {
+          try {
+            const c = await applyImport(good[i].data, { onProgress: (what, j, n) => p.textContent = `${good.length > 1 ? `File ${i + 1} of ${good.length}: ` : ''}restoring ${what} ${j} of ${n}…` });
+            tot.courses += c.courses; tot.sessions += c.sessions;
+          } catch (e) { failed.push(`${good[i].name}: ${e.message || 'failed'}`); }
+        }
+        if (failed.length) { p.textContent = `Not imported: ${failed.join('; ')}`; toast(`Imported ${tot.courses} courses, ${tot.sessions} sessions; ${plural(failed.length, 'file')} failed`); render(); return false; }
+        toast(`Imported ${tot.courses} courses, ${tot.sessions} sessions${bad.length ? `; ${plural(bad.length, 'file')} skipped` : ''}`); render(); return true;
       });
   },
 });
@@ -4370,6 +4402,8 @@ function sgPhrase(it) {
   return `<div class="small muted sg">Losing about ${Math.abs(c.gained).toFixed(1)} a round here against a ${x.lvl.level}-handicap (an estimate; see the Overview).</div>`;
 }
 const sgPicker = () => `<div class="chips" style="margin:6px 0">${[['auto', 'Nearest my handicap'], ...SG_LEVELS.map(l => [String(l), l === 0 ? 'Scratch' : `${l}`])].map(([v, l]) => `<button class="chip" data-act="setSgLevel" data-v="${v}" aria-pressed="${String(settings().sgLevel ?? 'auto') === v}">${l}</button>`).join('')}</div>`;
+const themePicker = () => `<div class="chips" style="margin:6px 0">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button class="chip" data-act="setTheme" data-v="${v}" aria-pressed="${(THEMES.includes(settings().theme) ? settings().theme : 'system') === v}">${l}</button>`).join('')}</div>`;
+ACTIONS.setTheme = async function (d) { applyTheme(d.v); await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, theme: THEMES.includes(d.v) ? d.v : 'system' }); render(); };
 ACTIONS.setSgLevel = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, sgLevel: d.v === 'auto' ? 'auto' : +d.v }); render(); };
 function toGreenSection(r) {
   const holes = holesOf(r).filter(h => h.strokes != null); if (!holes.length) return '';

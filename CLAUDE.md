@@ -510,8 +510,29 @@ Each of these cost real debugging time. Don't reintroduce them.
   greyed out `imports/moore-park.json` on his iPhone, because a file saved
   from GitHub or Mail there is typed as plain text. The app checks the
   contents itself, so there is no `accept` at all.
+- **Import a backup takes many files** (2.38.0, he asked with 77 course
+  imports to load one at a time): the picker is `multiple`; every file is
+  parsed and checked first, one `confirmAsk` sums courses, sessions and images
+  across the good ones and names each skipped file with why (not JSON, not an
+  export); then `applyImport` runs per file with "File i of n" progress, and a
+  file that fails part-way is named and the sheet stays open. `ui-import-many`
+  covers three courses and a stray, and only wrong files refused.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
+
+## Appearance (2.37.0)
+
+He asked for a toggle: System, Light, Dark. `settings.theme` (SCHEMA.md;
+unset or anything unknown = system). `applyTheme(t)` sets or removes
+`data-theme` on the root, which the CSS has honoured since 1.0
+(`:root[data-theme="dark"]`, `:root:not([data-theme="light"])` under the
+media query), and copies it to `localStorage` `carry.theme`, applied at
+startup before the first render so the page doesn't open in the wrong mode
+and switch when the server answers. `render()` re-applies from settings, so
+a choice made on another phone lands on the next poll. `themePicker()` /
+`ACTIONS.setTheme` in Settings' *Appearance* section (`#appearance`, after
+the bag). `ui-theme` covers the default, each choice, the stored copy, the
+server's copy arriving, and nonsense reading as System.
 
 ## The Overview
 
@@ -1406,6 +1427,15 @@ is the hole-maps chat's.
   #4E9B76, `--score-b` birdie #8DBB9D, `--score-1` bogey #D7B66D, `--score-2`
   double #D88A69, `--score-3` worse #C96A6A, par as it was, the same values in
   dark mode. Dark text on birdie and bogey, white on the rest.
+  **One palette through the app** (2.36.1, he asked, with the range cards as
+  the example): `--flag` (29 uses: card edges, lost-stroke bars, tags, the
+  missing tile, danger buttons, penalty markers) is now the same muted red as
+  `--score-3`, `--flag-soft` a tint of it, and `--sand-2` (short-game and
+  strike cards, the runner segment, bunker fill) the same sand as `--score-1`,
+  both modes. `--green` stays the interface green. `--water` (swing cards)
+  and the yellow tee dots on the stencil are markers, not the palette, and
+  stay. Light-mode text in `--flag` is about 3.3:1 on paper (the old red was
+  4.9): acceptable for the few places it carries small text.
   Unscored holes stay empty and the totals say they count the holes scored.
   The strips stay in lists and course history.
 - **Round by round** (`goalHistory`) on a finding's page: a column per
@@ -1438,7 +1468,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 351 tests, about 45s.
+`npm test` — 356 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1525,6 +1555,10 @@ fixture would let the reading be pinned.
   course, the per-club summary from the readings, the empty state, the
   cross-reading button end to end against a stubbed analysis call, the
   video feed with a stand-in observer),
+  `ui-import-many` (Import a backup with many files: one question, a stray
+  named and skipped, only wrong files refused),
+  `ui-theme` (Appearance: System, Light, Dark; the root attribute, the
+  stored copy, a setting from another phone),
   `ui-sg` (strokes gained: the table and allowance by hand, a hole adding
   up to expected minus strokes, pooling without a first putt, the level
   rules, the fold, nothing stored),
