@@ -50,13 +50,14 @@ test('the page is called Overview: the answer first, the detail folded behind on
   assert.deepEqual(app.$$('#view h2').map(x => x.textContent), ['Current form', 'Next practice', 'Gapping', 'Scoring trend', 'The detail', 'Recent']);
   // 2.5.0: the specialised analysis is still all here, folded, each row showing its one number.
   const folds = app.$$('#view .folds > details');
-  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovCalibration', 'ovEvidence']);
+  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovCalibration', 'ovStrokesGained', 'ovEvidence']);
   assert.ok(folds.every(d => !d.open), 'closed until tapped');
   assert.deepEqual(folds.map(d => d.querySelector('summary').textContent.trim()), [
     'Where your game is being tested Approach: 67% missed the green',
     'Approach distances most often 140–159m',
     'Putting 2.06 a hole · 2 three-putts',
     'Range vs course PW −50m on the course',
+    'Strokes gained needs 3 fully traced rounds, you have 1',
     'Evidence 18 holes of shot data, 33 range shots, 2 scorecard-only rounds (not used)',
   ]);
   assert.ok(app.$('#rangeFilterLine [data-go="settings"]'), 'the range filter is one line by the numbers it filters, with the controls in Settings');

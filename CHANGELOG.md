@@ -6,6 +6,13 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.35.0 — 2026-10-29
+- Strokes gained: a round page now has a "Strokes gained" fold under "Getting to the green", scoring every traced shot against a published table of expected strokes to hole out (by lie and distance) at a reference handicap, and summing where strokes went: off the tee, approaches, around the green, sand, recovery, putting. The two biggest losses are the teaser.
+- The Overview's detail has the same across your recent fully traced rounds, per 18 holes, recent rounds weighted more; it needs three.
+- A practice card for tee shots, approaches, the short game or putting says what that is costing a round, as a read-only estimate.
+- Settings: which golfer you are measured against, nearest your estimated handicap unless you pin one (scratch to 30).
+- It is an estimate against a published table, worked out on every draw and never stored, and it changes nothing about the practice list, the plan or the armed club.
+
 ## 2.34.1 — 2026-10-29
 - Score colours: a double bogey is the lighter orange-red and worse a Ferrari red (the dark maroon is gone), on the scorecard, the hole strips and the key.
 
