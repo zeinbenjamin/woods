@@ -513,6 +513,20 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
+## Appearance (2.37.0)
+
+He asked for a toggle: System, Light, Dark. `settings.theme` (SCHEMA.md;
+unset or anything unknown = system). `applyTheme(t)` sets or removes
+`data-theme` on the root, which the CSS has honoured since 1.0
+(`:root[data-theme="dark"]`, `:root:not([data-theme="light"])` under the
+media query), and copies it to `localStorage` `carry.theme`, applied at
+startup before the first render so the page doesn't open in the wrong mode
+and switch when the server answers. `render()` re-applies from settings, so
+a choice made on another phone lands on the next poll. `themePicker()` /
+`ACTIONS.setTheme` in Settings' *Appearance* section (`#appearance`, after
+the bag). `ui-theme` covers the default, each choice, the stored copy, the
+server's copy arriving, and nonsense reading as System.
+
 ## The Overview
 
 **Five tabs and a gear** (2.27.0, he asked, breaking 2.13.0's four: the
@@ -1447,7 +1461,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 351 tests, about 45s.
+`npm test` — 354 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1534,6 +1548,8 @@ fixture would let the reading be pinned.
   course, the per-club summary from the readings, the empty state, the
   cross-reading button end to end against a stubbed analysis call, the
   video feed with a stand-in observer),
+  `ui-theme` (Appearance: System, Light, Dark; the root attribute, the
+  stored copy, a setting from another phone),
   `ui-sg` (strokes gained: the table and allowance by hand, a hole adding
   up to expected minus strokes, pooling without a first putt, the level
   rules, the fold, nothing stored),

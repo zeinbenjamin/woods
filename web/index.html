@@ -362,6 +362,16 @@ const S = {
   tab: 'overview', sub: null,                 // sub: {sessionId, blockId, courseId}
 };
 try { const t = localStorage.getItem('carry.tab'); if (['overview','swings','range','rounds','courses','settings'].includes(t)) S.tab = t; else if (t === 'bag') S.tab = 'settings'; } catch (e) {}
+// Appearance (2.37.0, he asked): light, dark, or the system's. The setting lives in
+// the settings document; a copy in localStorage applies it before the server
+// answers, so the page doesn't open in the wrong mode and switch.
+const THEMES = ['system', 'light', 'dark'];
+function applyTheme(t) {
+  t = THEMES.includes(t) ? t : 'system';
+  if (t === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('carry.theme', t); } catch (e) {}
+}
+try { applyTheme(localStorage.getItem('carry.theme')); } catch (e) {}
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -713,6 +723,7 @@ function parseGo(str) {
   const j = rest.indexOf(':'); return [tab, { [rest.slice(0, j)]: rest.slice(j + 1) }];
 }
 function render() {
+  if (S.settings) applyTheme(settings().theme);
   if (window.HoleMap) HoleMap.onLoad = mapArrived;
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === S.tab ? 'page' : 'false'));
   const views = { overview: vOverview, swings: vSwingsTab, range: vRange, rounds: vRounds, courses: vCourses, settings: vSettings };
@@ -1377,7 +1388,8 @@ function vSettings() {
         <button class="quiet" data-act="editClub" data-id="${c.code}">Edit</button></div>`; };
     h += `<div class="bag" id="bagList">${S.clubs.map(row).join('')}</div>`;
   }
-  h += `</section><section class="sec" id="rangeNumbers"><h2>Range numbers</h2><p class="small muted">Which range shots count towards stock carry, gapping and the practice list.</p>${rangeFilter()}</section>`;
+  h += `</section><section class="sec" id="appearance"><h2>Appearance</h2><p class="small muted">System follows your phone's setting.</p><label>Theme</label>${themePicker()}</section>`;
+  h += `<section class="sec" id="rangeNumbers"><h2>Range numbers</h2><p class="small muted">Which range shots count towards stock carry, gapping and the practice list.</p>${rangeFilter()}</section>`;
   h += `<section class="sec" id="strokesGainedRef"><h2>Strokes gained</h2><p class="small muted">Which golfer your shots are measured against. Nearest your estimated handicap unless you pin one; the numbers are an estimate against a published table and change nothing else.</p><label>Against</label>${sgPicker()}</section>`;
   h += `<section class="sec" id="location"><h2>Your location</h2><p class="small muted">${home() ? `Distances to courses are from ${esc(home().label || 'your location')}, as the crow flies.` : 'Set it to see how far each course is.'}</p><div class="row-actions"><button data-act="setHome">${home() ? 'Change' : 'Set your location'}</button></div></section>`;
   h += `<section class="sec" id="yourData"><h2>Your data</h2>
@@ -4373,6 +4385,8 @@ function sgPhrase(it) {
   return `<div class="small muted sg">Losing about ${Math.abs(c.gained).toFixed(1)} a round here against a ${x.lvl.level}-handicap (an estimate; see the Overview).</div>`;
 }
 const sgPicker = () => `<div class="chips" style="margin:6px 0">${[['auto', 'Nearest my handicap'], ...SG_LEVELS.map(l => [String(l), l === 0 ? 'Scratch' : `${l}`])].map(([v, l]) => `<button class="chip" data-act="setSgLevel" data-v="${v}" aria-pressed="${String(settings().sgLevel ?? 'auto') === v}">${l}</button>`).join('')}</div>`;
+const themePicker = () => `<div class="chips" style="margin:6px 0">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button class="chip" data-act="setTheme" data-v="${v}" aria-pressed="${(THEMES.includes(settings().theme) ? settings().theme : 'system') === v}">${l}</button>`).join('')}</div>`;
+ACTIONS.setTheme = async function (d) { applyTheme(d.v); await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, theme: THEMES.includes(d.v) ? d.v : 'system' }); render(); };
 ACTIONS.setSgLevel = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, sgLevel: d.v === 'auto' ? 'auto' : +d.v }); render(); };
 function toGreenSection(r) {
   const holes = holesOf(r).filter(h => h.strokes != null); if (!holes.length) return '';
