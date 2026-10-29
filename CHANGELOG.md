@@ -6,6 +6,9 @@ when you tap the title.
 Format: each version is a `## <version> — <YYYY-MM-DD>` heading followed by
 `- ` bullet lines. The app parses exactly that, so keep to it.
 
+## 2.34.1 — 2026-10-29
+- Score colours: a double bogey is now a bright red and worse a dark red (they were the other way round), on the scorecard, the hole strips and the key.
+
 ## 2.34.0 — 2026-10-29
 - Scores are marked the way a scorer marks a card: a circle for a birdie, a double circle for an eagle or better, a square for a bogey, a double square for a double bogey or worse; par stays plain. The colours are unchanged. On the scorecard, the hole strips and the key.
 

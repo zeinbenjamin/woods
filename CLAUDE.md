@@ -1346,6 +1346,9 @@ is the hole-maps chat's.
   `box-shadow`, `b1` a plain square (`border-radius: 0`), `b2` and `b3` a
   double square by the same ring; par plain. The 8px mini strips keep only
   the circle/square shapes (no rings: they don't fit). Checked in Chromium.
+  **Reds the right way round** (2.34.1, he asked): `--score-2` (a bright
+  Ferrari red) for a double, `--score-3` (dark red) for worse; their own
+  tokens, since `--flag` is the app's warning colour everywhere else.
   Unscored holes stay empty and the totals say they count the holes scored.
   The strips stay in lists and course history.
 - **Round by round** (`goalHistory`) on a finding's page: a column per
