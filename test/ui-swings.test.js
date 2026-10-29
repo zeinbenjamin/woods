@@ -235,6 +235,13 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   delete bar.dataset.drag;
   v2.dispatchEvent(new app.win.Event('timeupdate'));
   assert.equal(live[2].querySelector('.reelFill').style.width, '50%');
+  // Swiping away and back replays the clip from the start (2.36.0, he asked): leaving resets it and the bar.
+  cb([{ target: v2, intersectionRatio: 0 }, { target: vids[1], intersectionRatio: 1 }]);
+  assert.equal(ct, 0, 'the clip is wound back when it leaves the screen');
+  assert.equal(live[2].querySelector('.reelFill').style.width, '0%');
+  assert.equal(paused.at(-1), v2.src);
+  cb([{ target: v2, intersectionRatio: 1 }, { target: vids[1], intersectionRatio: 0 }]);
+  assert.equal(played.at(-1), v2.src, 'and plays again from 0 when it comes back');
   const css = app.doc.querySelector('style').textContent;
   assert.match(css, /\.reelBar \{ position: relative; height: 2px;/, 'the bar is the 2px track itself, flush on the tab bar, no padding');
   assert.match(css, /\.reelInfo \{ [^}]*padding: 14px 16px 6px;/, 'the caption keeps no gap above the bar');
