@@ -1406,6 +1406,15 @@ is the hole-maps chat's.
   #4E9B76, `--score-b` birdie #8DBB9D, `--score-1` bogey #D7B66D, `--score-2`
   double #D88A69, `--score-3` worse #C96A6A, par as it was, the same values in
   dark mode. Dark text on birdie and bogey, white on the rest.
+  **One palette through the app** (2.36.1, he asked, with the range cards as
+  the example): `--flag` (29 uses: card edges, lost-stroke bars, tags, the
+  missing tile, danger buttons, penalty markers) is now the same muted red as
+  `--score-3`, `--flag-soft` a tint of it, and `--sand-2` (short-game and
+  strike cards, the runner segment, bunker fill) the same sand as `--score-1`,
+  both modes. `--green` stays the interface green. `--water` (swing cards)
+  and the yellow tee dots on the stencil are markers, not the palette, and
+  stay. Light-mode text in `--flag` is about 3.3:1 on paper (the old red was
+  4.9): acceptable for the few places it carries small text.
   Unscored holes stay empty and the totals say they count the holes scored.
   The strips stay in lists and course history.
 - **Round by round** (`goalHistory`) on a finding's page: a column per

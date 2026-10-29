@@ -1,3 +1,6 @@
+## 2.36.1 — 2026-10-29
+- The rest of the app now uses the same palette as the scores: the red edges on tee and penalty practice cards, the lost-stroke bars, warning tags, penalty markers and Delete buttons are the scorecard's muted red, and the sand on short-game and strike cards is the scorecard's bogey sand.
+
 ## 2.36.0 — 2026-10-29
 - Scores wear a new palette: eagle a deep green, birdie a soft green, bogey sand, double bogey terracotta, worse a muted red; par unchanged. The circles and squares stay.
 - In the swing feed, a clip you swipe away from and come back to plays again from the start.
