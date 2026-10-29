@@ -67,6 +67,11 @@ test('a round reads as a scorecard: par, score coloured against par, putts, pena
   const css = app.doc.querySelector('style').textContent;
   assert.match(css, /\.sc\.under \{[^}]*border-radius: 50%/); assert.match(css, /\.sc\.under\.eagle \{[^}]*box-shadow/);
   assert.match(css, /\.sq\.b1, \.sq\.b2, \.sq\.b3 \{ border-radius: 0; \}/); assert.match(css, /\.sc\.b2 \{[^}]*box-shadow/);
+  // His palette (2.36.0): each kind its own token, eagle a deeper green than birdie, the same values in dark mode.
+  const tok = '--score-e: #4E9B76; --score-b: #8DBB9D; --score-1: #D7B66D; --score-2: #D88A69; --score-3: #C96A6A;';
+  assert.equal(css.split(tok).length - 1, 3, 'light root and both dark blocks');
+  assert.match(css, /\.sc\.under \{[^}]*var\(--score-b\)/); assert.match(css, /\.sc\.under\.eagle \{[^}]*var\(--score-e\)/);
+  assert.match(css, /\.sc\.b1 \{[^}]*var\(--score-1\)/); assert.match(css, /\.sq\.under\.eagle \{[^}]*var\(--score-e\)/);
 });
 
 test('a tap on a dot on the course hole page shows that shot: when, which, the club, how far and where it finished', async () => {

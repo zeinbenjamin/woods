@@ -1260,7 +1260,10 @@ padding is 6px, and the fill is driven by `requestAnimationFrame` while the
 clip plays (`timeupdate` fires about 4 Hz, which read as steps). A drag paints
 the fill under the finger at once (`reelFill`) and seeks at most once a frame
 (`fastSeek` where the browser has it); `reelProgress` leaves the fill alone
-while `data-drag` is set, so the clip can't fight the finger.
+while `data-drag` is set, so the clip can't fight the finger. **A clip left
+replays from the start** (2.36.0, he asked): the observer's pause branch winds
+`currentTime` to 0 and zeroes the fill, so swiping back plays it from the
+beginning rather than where it was.
 
 ## Strokes gained (2.35.0)
 
@@ -1398,6 +1401,11 @@ is the hole-maps chat's.
   cut): `--score-2` for a double is the lighter orange-red `--flag` used to
   give, `--score-3` for worse a Ferrari red; the dark maroon is gone. Their
   own tokens, since `--flag` is the app's warning colour everywhere else.
+  **His palette** (2.36.0): he sent two sets and left the choice; the softer one
+  was taken as the match for the paper-and-sand app: `--score-e` eagle
+  #4E9B76, `--score-b` birdie #8DBB9D, `--score-1` bogey #D7B66D, `--score-2`
+  double #D88A69, `--score-3` worse #C96A6A, par as it was, the same values in
+  dark mode. Dark text on birdie and bogey, white on the rest.
   Unscored holes stay empty and the totals say they count the holes scored.
   The strips stay in lists and course history.
 - **Round by round** (`goalHistory`) on a finding's page: a column per

@@ -1,3 +1,7 @@
+## 2.36.0 — 2026-10-29
+- Scores wear a new palette: eagle a deep green, birdie a soft green, bogey sand, double bogey terracotta, worse a muted red; par unchanged. The circles and squares stay.
+- In the swing feed, a clip you swipe away from and come back to plays again from the start.
+
 # Changelog
 
 What changed in each version, newest first. The app shows this list
