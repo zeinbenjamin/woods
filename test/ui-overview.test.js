@@ -57,6 +57,7 @@ test('the page is called Overview: the answer first, the detail folded behind on
     'Approach distances most often 140–159m',
     'Putting 2.06 a hole · 2 three-putts',
     'Range vs course PW −50m on the course',
+    'Strokes gained needs 3 fully traced rounds, you have 1',
     'Evidence 18 holes of shot data, 33 range shots, 2 scorecard-only rounds (not used)',
   ]);
   assert.ok(app.$('#rangeFilterLine [data-go="settings"]'), 'the range filter is one line by the numbers it filters, with the controls in Settings');
