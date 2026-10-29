@@ -1340,6 +1340,12 @@ is the hole-maps chat's.
 - **The round as a scorecard** (`scorecard`): a table per nine (Hole, Par,
   Score coloured as the strips, Putts and Pen. only when logged; Out/In, or
   Tot for a 9-hole card), each hole tappable, a key for the colours.
+  **The scorer's marks** (2.34.0, he asked for the traditional notation on
+  top of the colours): `scoreClass` returns `under eagle` at two or more
+  under; `.sc.under`/`.sq.under` are circles, `.eagle` a second ring by
+  `box-shadow`, `b1` a plain square (`border-radius: 0`), `b2` and `b3` a
+  double square by the same ring; par plain. The 8px mini strips keep only
+  the circle/square shapes (no rings: they don't fit). Checked in Chromium.
   Unscored holes stay empty and the totals say they count the holes scored.
   The strips stay in lists and course history.
 - **Round by round** (`goalHistory`) on a finding's page: a column per

@@ -134,6 +134,11 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .sq small { font: 400 9px var(--body); color: var(--ink-3); margin-top: 2px; } .sq.tiny { font-size: 11px; border-radius: 3px; }
 .sq.under { background: var(--green); color: #fff; } .sq.under small { color: rgba(255,255,255,.75); }
 .sq.par { background: var(--green-soft); } .sq.b1 { background: var(--sand); } .sq.b2 { background: var(--flag-soft); } .sq.b3 { background: var(--flag); color: #fff; } .sq.b3 small { color: rgba(255,255,255,.75); }
+/* The scorer's notation (2.34.0, he asked): a circle for a birdie, two for an eagle or better,
+   a square for a bogey, two for a double or worse; par plain. The colours stay. */
+.sq.under { border-radius: 50%; } .sq.under.eagle { box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 4px rgba(255,255,255,.85); }
+.sq.b1, .sq.b2, .sq.b3 { border-radius: 0; } .sq.b2 { box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink-3); } .sq.b3 { box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px rgba(255,255,255,.85); }
+.scorestrip.mini .sq.under { border-radius: 4px; box-shadow: none; } .scorestrip.mini .sq.b1, .scorestrip.mini .sq.b2, .scorestrip.mini .sq.b3 { border-radius: 0; box-shadow: none; }
 /* Not "empty": that's the empty-state box, whose 22px padding swelled these squares. */
 .sq.unscored { background: var(--paper-2); color: var(--ink-3); border: 1px dashed var(--rule); }
 .scorestrip.mini { grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 2px; margin: 6px 0 0; } .scorestrip.mini .sq { border-radius: 2px; font-size: 0; min-height: 8px; aspect-ratio: auto; height: 8px; }
@@ -276,8 +281,11 @@ details.filters { margin: 4px 0 8px; padding-top: 8px; } details.filters label {
 .cards table.card { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 6px 0; font-size: 13px; font-variant-numeric: tabular-nums; } .cards th, .cards td { text-align: center; padding: 4px 0; border-bottom: 1px solid var(--rule); }
 .cards th:first-child { text-align: left; width: 44px; color: var(--ink-3); font-weight: 500; font-size: 11px; } .cards tr > :last-child { width: 34px; color: var(--ink-2); } .cards .ch th { color: var(--ink-3); font-weight: 500; font-size: 11px; }
 .cards [data-go] { cursor: pointer; } .cards .cp td { color: var(--ink-3); }
-.sc { display: inline-block; min-width: 22px; line-height: 22px; border-radius: 4px; font-weight: 600; } .sc.under { background: var(--green); color: var(--paper); border-radius: 50%; } .sc.par { background: transparent; } .sc.b1 { background: var(--sand); color: var(--ink); } .sc.b2 { background: var(--flag-soft); color: var(--ink); } .sc.b3 { background: var(--flag); color: #fff; }
-.card-key i.sc { min-width: 12px; width: 12px; height: 12px; line-height: 12px; vertical-align: -1px; } .card-key i.sc.par { border: 1px solid var(--ink-3); box-sizing: border-box; }
+.sc { display: inline-block; min-width: 22px; height: 22px; line-height: 22px; border-radius: 0; font-weight: 600; box-sizing: border-box; }
+.sc.under { background: var(--green); color: var(--paper); border-radius: 50%; } .sc.under.eagle { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--green); }
+.sc.par { background: transparent; } .sc.b1 { background: var(--sand); color: var(--ink); } .sc.b2 { background: var(--flag-soft); color: var(--ink); box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--flag-soft); } .sc.b3 { background: var(--flag); color: #fff; box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--flag); }
+tr.cs td { padding-top: 5px; padding-bottom: 5px; }
+.card-key i.sc { min-width: 12px; width: 12px; height: 12px; line-height: 12px; vertical-align: -1px; margin-right: 2px; } .card-key i.sc.par { border: 1px solid var(--ink-3); } .card-key i.sc.eagle, .card-key i.sc.b2, .card-key i.sc.b3 { margin-left: 3px; margin-right: 5px; } .card-key i.sc.eagle { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--green); } .card-key i.sc.b2 { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--flag-soft); } .card-key i.sc.b3 { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--flag); }
 .holemap .hit { fill: transparent; cursor: pointer; } .holemap .hit.on { fill: none; stroke: var(--hm-flag, #c8432a); stroke-width: 2; }
 .shotinfo { text-align: center; margin: 8px 0 4px; min-height: 2.6em; }
 .ghist { width: 100%; height: auto; display: block; margin: 4px 0; } .ghist .col { fill: var(--green); } .ghist .gx { stroke: var(--rule); stroke-width: 1; } .ghist .rg { stroke: var(--ink-2); stroke-width: 1.5; }
@@ -1907,7 +1915,7 @@ function stencilGrid(holes, opts = {}) {
       <div class="lab"><b>${h.n}</b><span>par ${h.par ?? '–'}</span><span>${sub}</span></div></button>`;
   }).join('') + `</div>`;
 }
-function scoreClass(h) { if (h.strokes == null || h.par == null) return 'unscored'; const o = h.strokes - h.par; return o < 0 ? 'under' : o === 0 ? 'par' : o === 1 ? 'b1' : o === 2 ? 'b2' : 'b3'; }
+function scoreClass(h) { if (h.strokes == null || h.par == null) return 'unscored'; const o = h.strokes - h.par; return o <= -2 ? 'under eagle' : o < 0 ? 'under' : o === 0 ? 'par' : o === 1 ? 'b1' : o === 2 ? 'b2' : 'b3'; }
 
 /* ---------- hole editor (shape) ---------- */
 function openHoleEditor(courseId, n) {
@@ -4290,7 +4298,7 @@ function scorecard(r, holes = holesOf(r)) {
       ${showPen ? `<tr class="cn"><th>Pen.</th>${hs.map(h => `<td>${pens(h) || ''}</td>`).join('')}<td>${total(hs, h => pens(h) || null)}</td></tr>` : ''}
     </tbody></table>`; };
   return `<div class="cards" id="scorecard">${nines.map(table).join('')}</div>` + (partial ? `<p class="small muted" style="margin-top:2px">Totals count the holes with a score.</p>` : '') +
-    `<div class="legend card-key"><span><i class="sc under"></i>under par</span><span><i class="sc par"></i>par</span><span><i class="sc b1"></i>bogey</span><span><i class="sc b2"></i>double</span><span><i class="sc b3"></i>worse</span></div>`;
+    `<div class="legend card-key"><span><i class="sc under eagle"></i>eagle</span><span><i class="sc under"></i>birdie</span><span><i class="sc par"></i>par</span><span><i class="sc b1"></i>bogey</span><span><i class="sc b2"></i>double</span><span><i class="sc b3"></i>worse</span></div>`;
 }
 // One-tap scores for holes he isn't tracing.
 function quickScoreSection(r) {
