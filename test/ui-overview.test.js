@@ -50,7 +50,7 @@ test('the page is called Overview: the answer first, the detail folded behind on
   assert.deepEqual(app.$$('#view h2').map(x => x.textContent), ['Current form', 'Next practice', 'Gapping', 'Scoring trend', 'The detail', 'Recent']);
   // 2.5.0: the specialised analysis is still all here, folded, each row showing its one number.
   const folds = app.$$('#view .folds > details');
-  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovCalibration', 'ovEvidence']);
+  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovCalibration', 'ovStrokesGained', 'ovEvidence']);
   assert.ok(folds.every(d => !d.open), 'closed until tapped');
   assert.deepEqual(folds.map(d => d.querySelector('summary').textContent.trim()), [
     'Where your game is being tested Approach: 67% missed the green',

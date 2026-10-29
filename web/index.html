@@ -954,6 +954,7 @@ function overviewMore() {
     fold('ovApproaches', 'Approach distances', most ? `most often ${most.from}–${most.from + 19}m` : '', unhead(overviewApproaches())),
     fold('ovPutting', 'Putting', pt ? `${pt.perHole.toFixed(2)} a hole · ${plural(pt.threes, 'three-putt')}` : '', unhead(overviewPutting())),
     fold('ovCalibration', 'Range vs course', calibrationTeaser(), unhead(calibrationSection())),
+    fold('ovStrokesGained', 'Strokes gained', sgTeaser(), strokesGainedOverview()),
     fold('ovEvidence', 'Evidence', esc(b.text.replace(/^Built from /, '').replace(/\.$/, '')), unhead(overviewEvidence())),
   ].join('');
   return parts ? `<h2>The detail</h2><div class="folds">${parts}</div>` : '';
@@ -1231,6 +1232,7 @@ function vRound() {
   if (r.date === today() && holesOf(r).some(x => !holeDone(x))) h += `<div class="row-actions"><button class="primary" data-go="rounds:sessionId=${r.id},play=1,hole=${playHole(r)}">Play: hole ${playHole(r)} →</button></div>`;
   h += scorecard(r, holes) + `<p class="small muted" style="margin-top:8px">Tap a hole to trace shots on it.</p>`;
   h += toGreenSection(r);
+  h += strokesGainedSection(r);
   h += roundFindingsSection(r);
   h += quickScoreSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
@@ -1371,6 +1373,7 @@ function vSettings() {
     h += `<div class="bag" id="bagList">${S.clubs.map(row).join('')}</div>`;
   }
   h += `</section><section class="sec" id="rangeNumbers"><h2>Range numbers</h2><p class="small muted">Which range shots count towards stock carry, gapping and the practice list.</p>${rangeFilter()}</section>`;
+  h += `<section class="sec" id="strokesGainedRef"><h2>Strokes gained</h2><p class="small muted">Which golfer your shots are measured against. Nearest your estimated handicap unless you pin one; the numbers are an estimate against a published table and change nothing else.</p><label>Against</label>${sgPicker()}</section>`;
   h += `<section class="sec" id="location"><h2>Your location</h2><p class="small muted">${home() ? `Distances to courses are from ${esc(home().label || 'your location')}, as the crow flies.` : 'Set it to see how far each course is.'}</p><div class="row-actions"><button data-act="setHome">${home() ? 'Change' : 'Set your location'}</button></div></section>`;
   h += `<section class="sec" id="yourData"><h2>Your data</h2>
     <p class="small muted">Everything lives on your server. Export before anything you can't undo, and to move it somewhere else.</p>
@@ -2657,7 +2660,7 @@ function practiceCard(it, i) {
   const sup = (it.support || [])[0];
   return `<div class="pcard k-${it.kind}">
     <div class="spread"><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span><span class="tag ${it.n >= 12 ? 'green' : ''}">${it.video ? 'read from video' : confidence(it.n) + ', n=' + it.n}</span></div>
-    <div class="pt">${esc(it.title)}</div>${freshLine(it)}
+    <div class="pt">${esc(it.title)}</div>${freshLine(it)}${sgPhrase(it)}
     ${b ? `<div class="do"><span class="tag green">${esc(b.club)} · ${b.swing}${b.target ? ' · ' + b.target + 'm' : ''}</span> ${esc(b.intent)}</div>` : it.practice ? `<div class="do">${esc(it.practice)}</div>` : ''}
     ${sup ? `<div class="small muted sup"><span class="tag">video${sup.agrees ? ' agrees' : ''}</span> ${esc(String(sup.title).split(': ').slice(1).join(': ') || sup.title)}</div>` : ''}
     ${goalProgress(it) ? `<div class="small progress" style="margin-top:6px">${esc(progressText(it))}</div>` : ''}
@@ -4246,6 +4249,126 @@ function holeBreakdown(h) {
   const putts = h.putts ?? null, chips = h.chips ?? null, sand = h.sand ?? null, known = putts != null;
   return { long: known ? h.strokes - putts - (chips || 0) - (sand || 0) - pens : null, chips, sand, putts, pens, derived: false, known };
 }
+/* ---------- strokes gained (2.35.0) ----------
+   Every traced shot scored against a baseline of expected strokes to hole
+   out from where it started and where it finished: gained = B(start) −
+   B(end) − 1 − penalty. Summed by category (tee, approach, short game, sand,
+   recovery, putting) a round says where strokes went against a reference
+   golfer. An estimate against a published table, derived on every draw,
+   never stored; read-only: it ranks nothing and prefills nothing.
+   The table is the PGA Tour baseline (Broadie, Every Shot Counts, 2014;
+   the fairway column checked against PinFlag's published copy, Oct 2026),
+   yards in, strokes out; the green in feet. The handicap columns follow the
+   model PinFlag writes out: a level-H golfer uses H + 1 strokes more than
+   the table's 71, split 65% over 14 long shots (tee shots and anything
+   from 100 yards out), 20% over 7 short shots inside 100 yards and 15%
+   over 30 putts, each spread evenly per shot. Beyond a column's last row
+   the last row is used. Trees are the table's recovery lie: rough + 0.5.
+   A judgement, shown in the fold, like the practice list's costs. */
+const SG_PGA = {
+  tee: [[100, 2.92], [120, 2.99], [140, 2.97], [160, 2.99], [180, 3.05], [200, 3.12], [220, 3.17], [240, 3.25], [260, 3.45], [280, 3.65], [300, 3.71], [320, 3.79], [340, 3.86], [360, 3.92], [380, 3.96], [400, 3.99], [420, 4.02], [440, 4.08], [460, 4.17], [480, 4.28], [500, 4.41], [520, 4.54], [540, 4.65], [560, 4.74], [580, 4.79], [600, 4.82]],
+  fairway: [[20, 2.40], [40, 2.60], [60, 2.70], [80, 2.75], [100, 2.80], [120, 2.85], [140, 2.91], [160, 2.98], [180, 3.08], [200, 3.19], [220, 3.32], [240, 3.42], [260, 3.53], [280, 3.62], [300, 3.71]],
+  rough: [[20, 2.59], [40, 2.78], [60, 2.91], [80, 2.96], [100, 3.02], [120, 3.08], [140, 3.15], [160, 3.23], [180, 3.31], [200, 3.42], [220, 3.53], [240, 3.64], [260, 3.74], [280, 3.83], [300, 3.90], [320, 3.95]],
+  sand: [[20, 2.53], [40, 2.82], [60, 3.15], [80, 3.24], [100, 3.23], [120, 3.21], [140, 3.22], [160, 3.28], [180, 3.40], [200, 3.55]],
+  green: [[1, 1.001], [2, 1.009], [3, 1.053], [4, 1.147], [5, 1.256], [6, 1.357], [7, 1.443], [8, 1.515], [9, 1.575], [10, 1.626], [15, 1.784], [20, 1.878], [30, 1.984], [40, 2.058], [50, 2.135], [60, 2.219], [90, 2.440]],
+};
+const SG_LEVELS = [0, 5, 10, 15, 20, 25, 30], SG_SPLIT = { long: [0.65, 14], short: [0.20, 7], putt: [0.15, 30] }, SG_MIN_ROUNDS = 3;
+const SG_LIE = { tee: 'tee', fairway: 'fairway', green: 'green', rough: 'rough', bunker: 'sand', trees: 'recovery', water: 'rough', trouble: 'recovery', unknown: 'rough' };
+const SG_CAT = { tee: 'Off the tee', approach: 'Approaches', short: 'Around the green', sand: 'Sand', recovery: 'Recovery', putting: 'Putting', pen: 'Penalties not tied to a shot' };
+function sgInterp(rows, x) {
+  if (x <= rows[0][0]) return rows[0][1];
+  for (let i = 1; i < rows.length; i++) if (x <= rows[i][0]) { const [x0, y0] = rows[i - 1], [x1, y1] = rows[i]; return y0 + (y1 - y0) * (x - x0) / (x1 - x0); }
+  return rows[rows.length - 1][1];
+}
+// The reference level: pinned in Settings, else the nearest to the estimated handicap, else 20.
+function sgLevel() {
+  const pin = settings().sgLevel; if (pin != null && pin !== 'auto') return { level: +pin, how: 'pinned in Settings' };
+  const hc = handicap(); if (hc.index == null) return { level: 20, how: 'no handicap estimate yet, so 20' };
+  const level = SG_LEVELS.reduce((a, b) => Math.abs(b - hc.index) < Math.abs(a - hc.index) ? b : a);
+  return { level, how: `nearest your estimated ${fmt(hc.index, 1)}` };
+}
+// Expected strokes to hole out from a lie and distance (metres), at a level. Green distances in metres too.
+function sgBaseline(lie, metres, level) {
+  const extra = level + 1, add = k => extra * SG_SPLIT[k][0] / SG_SPLIT[k][1];
+  const yards = metres * 1.09361;
+  if (lie === 'green') return sgInterp(SG_PGA.green, metres * 3.28084) + add('putt');
+  const kind = lie === 'tee' || metres >= 91.44 ? 'long' : 'short';   // 100 yards, compared in metres so 91.44 m is long
+  if (lie === 'recovery') return sgInterp(SG_PGA.rough, yards) + 0.5 + add(kind);
+  return sgInterp(SG_PGA[lie] || SG_PGA.rough, yards) + add(kind);
+}
+// One hole's shots scored. Needs every shot placeable and the putts recorded; with no first-putt
+// distance the last shot and the putts can't be split, so their gain is pooled on the last shot
+// and the hole is counted as "putting not separable".
+function sgHole(r, h, level) {
+  const shots = h.shots || []; if (!shots.length || h.putts == null) return null;
+  const strokes = holeStrokes(h);
+  const recs = shotRecords().filter(x => x.r.id === r.id && x.h.n === h.n);
+  if (recs.length !== shots.length) return null;
+  const out = { n: h.n, cats: {}, total: 0, pooled: false, counterPens: holePens(h) - shots.filter(s => s.penalty).length };
+  const addTo = (cat, g) => { const c = out.cats[cat] || (out.cats[cat] = { n: 0, gained: 0 }); c.n++; c.gained += g; out.total += g; };
+  const fp = h.firstPutt != null ? h.firstPutt : null;
+  recs.forEach((x, i) => {
+    const start = sgBaseline(SG_LIE[x.fromLie] || 'rough', x.from, level);
+    const last = i === recs.length - 1;
+    const pen = x.s.penalty ? 1 : 0;
+    const cat = x.fromLie === 'bunker' ? 'sand' : x.kind === 'tee' ? 'tee' : x.kind === 'recovery' ? 'recovery' : x.kind === 'short' ? 'short' : 'approach';
+    if (!last) { const nx = recs[i + 1]; addTo(cat, start - sgBaseline(SG_LIE[nx.fromLie] || 'rough', nx.from, level) - 1 - pen); return; }
+    if (fp != null) { const g = sgBaseline('green', fp, level); addTo(cat, start - g - 1 - pen); addTo('putting', g - h.putts); }
+    else { addTo(cat, start - 1 - pen - h.putts); out.pooled = true; }
+  });
+  if (out.counterPens > 0) addTo('pen', -out.counterPens);
+  out.expected = sgBaseline('tee', h.metres || 0, level);
+  return out;
+}
+function sgRound(r, level) {
+  const holes = holesOf(r), done = [], left = [];
+  for (const h of holes) { if (h.strokes == null && !(h.shots || []).length) continue; const x = sgHole(r, h, level); if (x) { x.strokes = holeStrokes(h); done.push(x); } else left.push(h.n); }
+  const cats = {}; let total = 0;
+  for (const x of done) { total += x.total; for (const [k, v] of Object.entries(x.cats)) { const c = cats[k] || (cats[k] = { n: 0, gained: 0 }); c.n += v.n; c.gained += v.gained; } }
+  return { holes: done, left, cats, total, pooled: done.filter(x => x.pooled).length, expected: sum(done.map(x => x.expected)), strokes: sum(done.map(x => x.strokes)) };
+}
+const sgNum = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
+const sgCatRows = (cats, perShot = true) => Object.entries(cats).sort((a, b) => a[1].gained - b[1].gained).map(([k, c]) => `<tr><td>${SG_CAT[k]}</td><td>${c.n}</td><td><b>${sgNum(c.gained)}</b></td>${perShot ? `<td class="muted">${k === 'pen' ? '' : sgNum(c.gained / c.n)}</td>` : ''}</tr>`).join('');
+const sgLimits = (lvl) => `<p class="small muted" style="margin-top:6px">An estimate against a published table, not an official number: expected strokes are Broadie's PGA Tour baseline with a ${lvl.level}-handicap allowance added the way PinFlag models it (${esc(lvl.how)}; change it in Settings). Distances are to the green's middle, not the hole; lies are as recorded; beyond the table's last row the last row is used. Not strokes gained as the Tour publishes it, and not a prediction. Worked out on every draw; nothing is stored, and it changes nothing about the plan or the armed club.</p>`;
+function strokesGainedSection(r) {
+  const lvl = sgLevel(), sg = sgRound(r, lvl.level);
+  if (!sg.holes.length) return '';
+  const worst = Object.entries(sg.cats).filter(([k]) => k !== 'pen').sort((a, b) => a[1].gained - b[1].gained).slice(0, 2);
+  const teaser = `${worst.map(([k, c]) => `${sgNum(c.gained)} ${SG_CAT[k].toLowerCase()}`).join(', ')} vs a ${lvl.level}-handicap`;
+  const body = `<p class="small">Over ${plural(sg.holes.length, 'traced hole')}: ${sg.strokes} strokes against ${sg.expected.toFixed(1)} expected of a ${lvl.level}-handicap from the same tees, <b>${sgNum(sg.total)}</b> in all.${sg.left.length ? ` Left out, not traced through or no putts recorded: hole${sg.left.length > 1 ? 's' : ''} ${sg.left.join(', ')}.` : ''}${sg.pooled ? ` On ${plural(sg.pooled, 'hole')} with no first-putt distance the last shot and the putts are pooled on the shot.` : ''}</p>
+    <div class="scroll"><table class="tg" id="sgTable"><thead><tr><th>Where</th><th>Shots</th><th>Gained</th><th>A shot</th></tr></thead><tbody>${sgCatRows(sg.cats)}</tbody></table></div>` + sgLimits(lvl);
+  return `<div class="folds">${fold('strokesGained', 'Strokes gained', teaser, body)}</div>`;
+}
+// Across recent rounds (the Overview): per 18 holes, each hole weighted by recency like the practice list.
+function strokesGainedRecent() {
+  const lvl = sgLevel(), rounds = soloRounds().filter(r => r.date);
+  const full = rounds.map(r => ({ r, sg: sgRound(r, lvl.level) })).filter(x => x.sg.holes.length && !x.sg.left.length);
+  if (full.length < SG_MIN_ROUNDS) return { lvl, rounds: full.length, cats: null };
+  const cats = {}; let wHoles = 0, wTotal = 0;
+  for (const { r, sg } of full) {
+    const w = Math.pow(0.5, daysAgo(r.date) / PRACTICE_HALF_LIFE);
+    wHoles += w * sg.holes.length; wTotal += w * sg.total;
+    for (const [k, v] of Object.entries(sg.cats)) { const c = cats[k] || (cats[k] = { n: 0, gained: 0 }); c.n += w * v.n; c.gained += w * v.gained; }
+  }
+  const per18 = {}; for (const [k, c] of Object.entries(cats)) per18[k] = { n: Math.round(c.n / wHoles * 18), gained: c.gained / wHoles * 18 };
+  return { lvl, rounds: full.length, cats: per18, total: wTotal / wHoles * 18 };
+}
+function sgTeaser() { const x = strokesGainedRecent(); if (!x.cats) return `needs ${SG_MIN_ROUNDS} fully traced rounds, you have ${x.rounds}`; const w = Object.entries(x.cats).filter(([k]) => k !== 'pen').sort((a, b) => a[1].gained - b[1].gained)[0]; return `${sgNum(x.total)} a round, most in ${SG_CAT[w[0]].toLowerCase()} (${sgNum(w[1].gained)})`; }
+function strokesGainedOverview() {
+  const x = strokesGainedRecent();
+  if (!x.cats) return `<p class="small muted">Needs ${SG_MIN_ROUNDS} rounds traced on every scored hole with putts recorded; you have ${x.rounds}.</p>`;
+  return `<p class="small">Per 18 holes over ${plural(x.rounds, 'fully traced round')}, recent rounds weighted more (halved every ${PRACTICE_HALF_LIFE} days): <b>${sgNum(x.total)}</b> against a ${x.lvl.level}-handicap.</p>
+    <div class="scroll"><table class="tg" id="sgRecent"><thead><tr><th>Where</th><th>Shots</th><th>Gained</th></tr></thead><tbody>${sgCatRows(x.cats, false)}</tbody></table></div>` + sgLimits(x.lvl);
+}
+// One read-only phrase for a practice card whose item maps to a category (2.35.0).
+function sgPhrase(it) {
+  const cat = it.kind === 'tee' ? 'tee' : it.kind === 'approach' ? 'approach' : it.kind === 'short' ? 'short' : it.kind === 'putting' ? 'putting' : null;
+  if (!cat) return '';
+  const x = strokesGainedRecent(); const c = x.cats && x.cats[cat]; if (!c || c.gained >= 0) return '';
+  return `<div class="small muted sg">Losing about ${Math.abs(c.gained).toFixed(1)} a round here against a ${x.lvl.level}-handicap (an estimate; see the Overview).</div>`;
+}
+const sgPicker = () => `<div class="chips" style="margin:6px 0">${[['auto', 'Nearest my handicap'], ...SG_LEVELS.map(l => [String(l), l === 0 ? 'Scratch' : `${l}`])].map(([v, l]) => `<button class="chip" data-act="setSgLevel" data-v="${v}" aria-pressed="${String(settings().sgLevel ?? 'auto') === v}">${l}</button>`).join('')}</div>`;
+ACTIONS.setSgLevel = async function (d) { await save('settings', SETTINGS_ID, { ...settings(), id: SETTINGS_ID, sgLevel: d.v === 'auto' ? 'auto' : +d.v }); render(); };
 function toGreenSection(r) {
   const holes = holesOf(r).filter(h => h.strokes != null); if (!holes.length) return '';
   const rows = holes.map(h => ({ h, b: holeBreakdown(h) })), known = rows.filter(x => x.b.known);

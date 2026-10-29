@@ -1262,6 +1262,54 @@ the fill under the finger at once (`reelFill`) and seeks at most once a frame
 (`fastSeek` where the browser has it); `reelProgress` leaves the fill alone
 while `data-drag` is set, so the clip can't fight the finger.
 
+## Strokes gained (2.35.0)
+
+Asked for 2026-10-29, after the monitor chat's "shots saved" replay of his
+Bexley round and the choice between the two: strokes gained with a
+handicap-level baseline, read-only (he decided: nearest-handicap by default,
+no effect on the practice list until a future release).
+
+- **The table** (`SG_PGA`): Broadie's PGA Tour baseline (Every Shot Counts,
+  2014), yards → expected strokes to hole out for tee, fairway, rough, sand,
+  and feet for the green; the fairway column checked against PinFlag's
+  published copy (Oct 2026). Linear between rows (`sgInterp`); beyond a
+  column's last row the last row holds (sand stops at 200 yd, rough 320,
+  fairway 300: the limits I could vouch for). Trees are the recovery lie:
+  rough + 0.5. Water and unknown read as rough (the next shot is from a drop).
+- **The level** (`sgLevel`): `settings.sgLevel` pinned in Settings
+  (`sgPicker`, `setSgLevel`), else the `SG_LEVELS` entry nearest
+  `handicap().index`, else 20. The handicap allowance is PinFlag's written-out
+  model, not a measured amateur table: a level-H golfer uses H + 1 strokes
+  more than the table's 71, split 65% over 14 long shots (tee, or 100 yards
+  out: compared in metres, `>= 91.44`, because 91.44 × 1.09361 lands a hair
+  under 100), 20% over 7 short shots, 15% over 30 putts, each a constant per
+  shot (`SG_SPLIT`). Measured amateur tables (Shot Scope's) weren't published
+  in a form I could cite; swap the model for one when there is.
+- **The arithmetic** (`sgHole`, `sgRound`): per traced shot from
+  `shotRecords`, `B(start) − B(end) − 1 − penalty`; the last shot ends on the
+  green at `firstPutt`, and putting is `B(green, firstPutt) − putts`. No
+  first-putt distance: the last shot and the putts are pooled on the shot and
+  the hole counted `pooled`. Hole-counter penalties are their own row (`pen`).
+  So a hole's rows add to `B(tee, metres) − holeStrokes(h)` exactly, which the
+  test checks. A hole needs every shot placeable (its records match its
+  shots) and `putts`; otherwise it is in `left`, named on the fold, never
+  treated as clean. Categories by the record's `kind` (tee, approach, short,
+  recovery) with a bunker start as sand; a par 3's tee shot is an approach.
+- **Where:** the round page (`strokesGainedSection`, fold `#strokesGained`
+  under *Getting to the green*: the two biggest losses as the teaser, a
+  category table worst first, the left-out holes, the limits); the Overview's
+  detail (`strokesGainedRecent`, fold `#ovStrokesGained`: per 18 over rounds
+  traced on every scored hole, weighted `0.5^(age / PRACTICE_HALF_LIFE)`,
+  `SG_MIN_ROUNDS` 3 or it says how many); a practice card (`sgPhrase`, kinds
+  tee/approach/short/putting, only when the recent figure is a loss).
+- **Honesty:** every fold says it is an estimate against a published table,
+  distances to the green's middle, lies as recorded, not the Tour's number,
+  not a prediction, nothing stored, and that it changes nothing about the plan
+  or the armed club. `ui-sg` works a 300-yard par 4 at scratch by hand
+  (−0.09 tee, +0.22 approach, −0.37 putting), a par 3 with a shot penalty and
+  no first putt (pooled), the level rules, the fold, and that nothing lands
+  on the documents.
+
 ## Getting to the green (2.22.0)
 
 Asked for 2026-10-28, from the Moore Park scorecard ("a drop down tab
@@ -1382,7 +1430,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 346 tests, about 45s.
+`npm test` — 351 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1469,6 +1517,9 @@ fixture would let the reading be pinned.
   course, the per-club summary from the readings, the empty state, the
   cross-reading button end to end against a stubbed analysis call, the
   video feed with a stand-in observer),
+  `ui-sg` (strokes gained: the table and allowance by hand, a hole adding
+  up to expected minus strokes, pooling without a first putt, the level
+  rules, the fold, nothing stored),
   `ui-togreen` (Getting to the green: a traced hole from its shots,
   scores-only holes tapped in, the table, teaser and story, the over-count
   and a traced hole refused),
@@ -1542,9 +1593,10 @@ tested by actually running as 568 against a 568-owned dataset.
 
 In rough order of value:
 
-1. **Strokes gained.** First-putt distances are now being captured, which
-   was the missing input. Needs a baseline table next. This is the single
-   biggest analytical upgrade available.
+1. **Strokes gained** shipped in 2.35.0 against a published table (see
+   *Strokes gained*). Next: a measured amateur baseline in place of the
+   modelled handicap allowance, and letting the practice list use it (he
+   asked for read-only first).
 2. **Pose estimation on swing frames**, server-side. Turns swing analysis
    from a reading into measured angles tracked over time — impossible in
    the artifact, straightforward here. This is the real payoff of the port.

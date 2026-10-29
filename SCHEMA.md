@@ -338,7 +338,8 @@ still come back blank.
   "window": "all|365|180|90",        // recency window on range-derived numbers
   "weighting": "recent|equal",       // default recent: a shot counts half after DISTANCE_HALF_LIFE (60) days
   "balls": "all|range|better",       // which ball types count; better = premium + own. No ballType counts only under all
-  "courseSort": "near|recent|az"     // Courses list order; unset = near when home and a course have coordinates, else recent
+  "courseSort": "near|recent|az",    // Courses list order; unset = near when home and a course have coordinates, else recent
+  "sgLevel": "auto|0|5|10|15|20|25|30" // 2.35.0: the strokes-gained reference; unset or auto = nearest the estimated handicap
 }
 ```
 
