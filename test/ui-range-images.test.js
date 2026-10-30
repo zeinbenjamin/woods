@@ -143,11 +143,18 @@ test('fixes made in the sheet are what gets saved, with the screenshots kept alo
   assert.equal(app.E(`clubStats('7i').n`), 3, 'the new shots feed the analytics');
 });
 
-test('the block page says where its numbers came from and shows the screenshots', async () => {
+test('the block page keeps where its numbers came from in a closed fold at the foot', async () => {
+  // 2.51.1, he asked: the screenshots and "Read from" took the card's room. Kept, folded.
   const b = (await session()).blocks[0];
   app.go('range', { blockId: b.id });
-  assert.match(app.text('#view'), /Read from 2 screenshots on .*, then checked before saving/);
-  assert.equal(app.$$('#view .shotimgs img').length, 2);
+  const src = app.$('#blockSource');
+  assert.ok(src && !src.open, 'closed');
+  assert.match(app.text('#blockSource summary'), /Source screenshots · 2/);
+  assert.match(src.textContent, /Read from 2 screenshots on .*, then checked before saving/);
+  assert.equal(app.$$('#blockSource .shotimgs img').length, 2);
+  assert.equal(app.$$('#view .shotimgs img').length, 2, 'nowhere else on the page');
+  const order = [...app.$('#view').querySelectorAll('.stat, #shotTable, #blockSource, [data-act="deleteBlock"]')].map(e => e.id || e.dataset.act || 'stat');
+  assert.deepEqual(order.filter((x, i) => x !== order[i - 1]), ['stat', 'shotTable', 'blockSource', 'deleteBlock']);
 });
 
 test('screenshots in yards are converted and the sheet says so; unknown units are flagged', async () => {

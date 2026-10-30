@@ -1,3 +1,6 @@
+## 2.51.1 — 2026-10-31
+- A range block's page no longer shows its screenshots and "Read from…" lines between the numbers. They're kept, folded under *Source screenshots* at the foot of the page, below the shot table.
+
 ## 2.51.0 — 2026-10-31
 - Range screenshots now read more than carry and total: carry side and total side (left or right of the target, in metres), ball speed, club path and face angle, when the shot list shows them. Turn those columns on in the range app before taking the screenshots.
 - The review shows those numbers under the shots, with a box to leave them out. They stay with the shot they were read with: change a shot's carry or total and it keeps none of them.

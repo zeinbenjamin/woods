@@ -144,7 +144,7 @@ test('shots Carry already has are filled in, not added twice: same block, carry 
   assert.equal(await (await app.api.blob(b.filledFrom[0].assets[0])).text(), 'tm-old');
   assert.deepEqual(s.blocks[1].shots, [{ carry: 110, total: 131 }]);
   app.go('range', { blockId: 'b_5w' });
-  assert.match(app.text('#view'), /5 shots filled in from 1 screenshot on .*matched to these shots by carry and total/);
+  assert.match(app.text('#blockSource'), /5 shots filled in from 1 screenshot on .*matched to these shots by carry and total/);
   assert.ok(app.J('collectAssetIds()').includes(b.filledFrom[0].assets[0]), 'travels in exports');
 });
 

@@ -1906,6 +1906,11 @@ a session share link was asked about, not yet seen. `ui-shot-extras` works his
 five 5W shots of 2026-10-31. **Not yet**: the shot patterns screens (mockups:
 https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh). He said to leave them until later
 (2026-10-31): 2.51.0 only reads and stores the numbers; nothing draws or uses them yet.
+**The block page's source is folded** (2.51.1, he found the screenshots and
+"Read from…" lines wasted the card's room, and the shot patterns will want it):
+`fromImages` and `filledFrom` show only inside `#blockSource` (*Source screenshots
+· n*, closed, styled like *Shot table*, below it, above Delete). Still stored,
+exported and deleted with the block; never shown on the card.
 
 Range shots come from screenshots of the bay's shot list, not typing:
 Range → a session → *From screenshots*. Claude reads them into blocks
