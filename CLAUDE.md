@@ -805,7 +805,10 @@ import, signed in. Courses stays a tab because a course page is history
 (`calibrationSection`) is a fold under *The detail* on the Overview with
 `calibrationTeaser()` as its one number; the Overview's Gapping shows the
 filter as one line (`rangeFilterLine`, `#rangeFilterLine`) that opens
-Settings. A saved tab of `bag` opens Settings.
+Settings. A saved tab of `bag` opens Settings. The gear is an inline line SVG (2.49.1, he
+asked, as the feed's sound icon went in 2.27.0): eight teeth and a hollow
+centre in `currentColor`, stroke 1.6, never the ⚙ emoji, which drew as a
+cartoon in some fonts.
 
 The home screen (`vOverview`). 2.5.0 reorganised it from a review he
 brought (a UI/UX write-up, Release 1 "Reduce the noise": the answer first,
@@ -977,8 +980,11 @@ A–Z, and the list says so.
 the location link (`#homeLink`, `margin-left: auto`) are one `.courseBar`, which
 wraps on a phone with the location on its own line, still on the right.
 **The map** (`vCourseMap`, `courses:view=map`): a pin per course with
-`lat`/`lng`, coloured by `access(c)` (green public, `--ink-3` members, `--flag`
-closed, paper not known), home as a square, the courses with no location
+`lat`/`lng`, coloured by `access(c)` through `CM_COLOUR`/`cmFill` (2.49.1, his
+colours, after the first set faded into the yardage-book map: public
+`--score-1` sand D7B66D, members `--cm-members` lavender AA96BD (its own token, both
+themes; he first picked the eagle green 4E9B76, then this), closed `--score-3` red
+C96A6A, not known `--ink-3` grey; legend, GL pins and the Leaflet fallback alike), home as a square, the courses with no location
 counted under it (`#cmMissing`); a pin's popup (`cmPopup`) has the name,
 suburb, distance, access tag and *Open course*. Leaflet 1.9.4 is vendored in
 `web/vendor/leaflet/` (BSD-2, its LICENSE beside it) and loaded only when the
