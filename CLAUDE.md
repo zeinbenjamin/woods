@@ -953,12 +953,14 @@ closed, paper not known), home as a square, the courses with no location
 counted under it (`#cmMissing`); a pin's popup (`cmPopup`) has the name,
 suburb, distance, access tag and *Open course*. Leaflet 1.9.4 is vendored in
 `web/vendor/leaflet/` (BSD-2, its LICENSE beside it) and loaded only when the
-map opens (`cmLoad`); tiles are CARTO's light or dark basemap of OSM data
-(`cmTiles`, following the theme), so opening the map asks
-`basemaps.cartocdn.com` for the tiles of the area shown (nothing of his, and
-nothing else, is sent; the free tier covers personal use). This container
-can't reach CARTO, so the tiles were never seen loading here: the first open on
-the phone is the test. **The map is one element kept across redraws** (`cm.el`,
+map opens (`cmLoad`). **Tiles are OpenStreetMap's own** (`CM_TILES`,
+`tile.openstreetmap.org`, no key; one person's map is light use under its tile
+policy, attribution shown): opening the map asks it for the tiles of the area
+shown, nothing of his. Dark mode inverts the tile pane (`#cmMap.dark`, set by
+`cmTiles` from the theme), never the pins. 2.44.0 used CARTO's basemap, which
+answered every tile on his phone with an "API key required" watermark
+(2.44.1). This container reaches neither, so tiles have only been seen on the
+phone. **The map is one element kept across redraws** (`cm.el`,
 put back into the page's `#cmMap` slot by `courseMapLifecycle()` after every
 render, `invalidateSize`), so a poll can't reset where he panned or close a pin;
 pins redraw only when the courses, home or theme change (`cm.key`). Leaflet
@@ -1744,7 +1746,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 394 tests, about 45s.
+`npm test` — 395 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
