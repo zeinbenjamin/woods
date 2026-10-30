@@ -226,6 +226,11 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
                                         // round is listed and labelled, and left out of
                                         // the handicap, averages and evidence
   "notes": "…",
+  "fromImages": {                      // 2.48.0: only on a round read from screenshots (Rounds →
+    "assets": ["…"],                   // Add past rounds from screenshots): the screenshots it was
+    "readOn": "2026-10-30",            // read from, in order, the day it was read and checked, and
+    "app": "18Birdies"                 // the app the screen named, if any. Scores come from the
+  },                                   // images; pars and metres from the course's card in Carry
   "holes": [
     {
       "n": 1, "par": 4, "metres": 297,   // snapshot at logging time

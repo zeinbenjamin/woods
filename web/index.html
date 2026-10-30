@@ -1299,7 +1299,7 @@ function vRounds() {
   const list = S.sessions.filter(s => s.type === 'round');
   const pens = penaltyReport();
   return `<div class="spread"><h1>Rounds</h1><div class="row-actions" style="margin:0"><button data-act="newRound">New round</button><button class="primary" data-act="startPlay">Start round</button></div></div>` +
-    (pens.total ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" data-go="rounds:view=penalties">Penalty report: ${plural(pens.total, 'penalty stroke')} →</button></div>` : '') +
+    `<div class="row-actions" style="margin:0 0 8px">${pens.total ? `<button class="quiet" data-go="rounds:view=penalties">Penalty report: ${plural(pens.total, 'penalty stroke')} →</button>` : ''}<button class="quiet" id="roundsFromImages" data-act="roundsFromImages">Add past rounds from screenshots</button></div>` +
     (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a round by scorecard, then tap any hole to trace your shots on its stencil.</p><button class="primary" data-act="newRound">New round</button></div>`);
 }
 function vRound() {
@@ -1317,6 +1317,7 @@ function vRound() {
   h += strokesGainedSection(r);
   h += roundFindingsSection(r);
   h += quickScoreSection(r);
+  h += roundSourceSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
   h += `<h2>Strokes lost by par</h2>` + st.byPar.map(p => `<div class="hbar"><span>Par ${p.par} <span class="muted">×${p.n}</span></span><i class="${p.over / p.n >= 2.5 ? 'flag' : p.over / p.n >= 1.5 ? 'sand' : ''}" style="width:${pct(p.over, mxo)}%"></i><small>+${p.over}</small></div>`).join('');
   h += `<h2>Holes</h2>` + stencilGrid(holes, { act: 'logHole', id: r.id, courseId: r.courseId, scores: true });
@@ -4158,7 +4159,7 @@ function openShotReview(sid, read, images) {
 
 // Assets a block or a whole session points at, and letting them go.
 const blockAssets = b => (b && b.fromImages && b.fromImages.assets) || [];
-const sessionAssets = s => [...(s.blocks || []).flatMap(blockAssets), ...(s.swings || []).flatMap(sw => [...(sw.frames || []).map(f => f.asset), ...(sw.video ? [sw.video] : [])])];
+const sessionAssets = s => [...((s.fromImages && s.fromImages.assets) || []), ...(s.blocks || []).flatMap(blockAssets), ...(s.swings || []).flatMap(sw => [...(sw.frames || []).map(f => f.asset), ...(sw.video ? [sw.video] : [])])];
 async function releaseAssets(ids) { if (!S.assets) return; for (const id of ids || []) { try { await S.assets.delete(id); } catch (e) {} } }
 
 ACTIONS.shotsFromImages = function (d) {
@@ -4181,6 +4182,241 @@ ACTIONS.shotsFromImages = function (d) {
       return false;
     });
 };
+
+/* ---------- rounds from screenshots (2.48.0) ----------
+   Past rounds from 18Birdies (or any scorecard app) screenshots, read the way
+   range shots are: Claude reads each screenshot on its own (one call each, a
+   few at a time), the reading is cleaned here, every round is shown beside its
+   images to check, and nothing is stored until he saves. A summary screen
+   gives the date, course, tee and each hole's score; a full scorecard after it
+   (same day, same course) adds putts. Pars and lengths come from the course's
+   own card in Carry, never from the screenshot. The screenshots are kept on
+   the round as `fromImages`, so every number traces back to an image. */
+const ROUND_IMAGES_MAX = 60, ROUND_READ_PARALLEL = 3;
+function roundImagePrompt() {
+  return `This image is a screenshot from a golf scoring app (18Birdies or similar) showing one golfer's round: either the round's summary (date, course, tee, a score per hole) or its full scorecard.
+
+Answer as JSON with exactly these keys:
+{
+  "kind": "summary" | "scorecard" | "other",
+  "app": "the app's name if the screen shows it, or null",
+  "date": "the round's date exactly as shown, or null",
+  "club": "the club or venue name as shown, or null",
+  "course": "the course name as shown, or null",
+  "tee": "the tee as shown (for example Blue), or null",
+  "teeLength": number or null, "teeUnits": "m" | "yd" | null,
+  "coursePar": number or null,
+  "gross": number or null,
+  "nineTotals": [ the score total printed at the end of each row of holes, in order ],
+  "player": "the name of the golfer whose scores you read, or null",
+  "holes": [ { "n": hole number, "score": number, "putts": number or null, "par": number or null, "unclear": true or false } ],
+  "notes": "one sentence on anything that affects how these numbers should be read, or empty",
+  "unreadable": ["things you could see but could not read"]
+}
+
+Rules:
+- Copy everything exactly as displayed. Never estimate, add up, or fill in a missing value. Do not reformat the date.
+- "score" is the strokes shown for that hole. Rings and squares around a number are decoration showing birdie or bogey; read the number inside.
+- If several golfers are listed, read only the first golfer's scores (the account's own), and give that name in "player". Ignore the others' scores and totals.
+- "putts" only where the screen labels a row or value as putts; "par" only where it shows each hole's par. Otherwise null.
+- Leave out a hole whose score isn't shown. Mark a hard-to-read score "unclear": true.
+- "kind" is "other" if the screen isn't a round's summary or scorecard (a handicap chart, a stats page, a photo).
+- Ignore written summaries, highlights, weather and handicap figures.`;
+}
+// D/M/Y as 18Birdies shows it on an Australian phone (14/05/2026), or ISO.
+function roundDateFrom(s) {
+  const t = String(s || '').trim(); let d, m, y, x;
+  if ((x = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t))) [y, m, d] = [x[1], x[2], x[3]];
+  else if ((x = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(t))) [d, m, y] = [x[1], x[2], x[3]];
+  else return null;
+  const dt = new Date(Number(y), Number(m) - 1, Number(d));
+  return dt.getFullYear() === Number(y) && dt.getMonth() === Number(m) - 1 && dt.getDate() === Number(d) ? localDay(dt) : null;
+}
+// The course a screenshot names: its club or course name against Carry's, golf words ignored.
+function matchCourse(...names) {
+  const want = names.map(plainName).filter(n => n.length >= 3); if (!want.length) return null;
+  const exact = S.courses.filter(c => want.includes(plainName(c.name)));
+  if (exact.length === 1) return exact[0];
+  const near = S.courses.filter(c => { const p = plainName(c.name); return p.length >= 4 && want.some(w => w.includes(p) || p.includes(w)); });
+  return near.length === 1 ? near[0] : null;
+}
+const teeOn = (c, t) => (t ? teeNames(c).find(x => x.toLowerCase() === String(t).toLowerCase()) : null) || null;
+const cardPar = (c, ns) => sum((c.holes || []).filter(h => !ns || ns.includes(h.n)).map(h => h.par || 0));
+// One screenshot's reading → a round candidate (or a scorecard to join one). No I/O.
+function normaliseRoundRead(raw) {
+  const num = v => (typeof v === 'number' && isFinite(v)) ? v : (typeof v === 'string' && v.trim() !== '' && isFinite(Number(v)) ? Number(v) : null);
+  const kind = ['summary', 'scorecard'].includes(raw && raw.kind) ? raw.kind : 'other';
+  const warnings = [], holes = [], seen = new Set();
+  for (const h of Array.isArray(raw && raw.holes) ? raw.holes : []) {
+    const n = num(h && h.n), score = num(h && h.score), putts = num(h && h.putts);
+    if (!Number.isInteger(n) || n < 1 || n > 18 || seen.has(n)) continue;
+    if (!Number.isInteger(score) || score < 1 || score > 15) { warnings.push(`Hole ${n} left out: ${score == null ? 'no score could be read' : `${score} isn't a plausible score`}.`); continue; }
+    seen.add(n);
+    const o = { n, score }; if (Number.isInteger(putts) && putts >= 0 && putts <= score) o.putts = putts;
+    const par = num(h && h.par); if (Number.isInteger(par) && par >= 3 && par <= 6) o.par = par;
+    holes.push(o);
+    if (h.unclear) warnings.push(`Hole ${n}'s score (${score}) was hard to read.`);
+  }
+  holes.sort((a, b) => a.n - b.n);
+  const date = roundDateFrom(raw && raw.date);
+  if (!date && kind !== 'other') warnings.push(raw && raw.date ? `The date "${raw.date}" couldn't be read as a day; set it.` : 'No date could be read; set it.');
+  if (date && date > today()) warnings.push(`${dateLabel(date)} is in the future; check the date.`);
+  const gross = num(raw && raw.gross), total = sum(holes.map(h => h.score));
+  if (gross != null && holes.length && gross !== total) warnings.push(`The holes read add to ${total}, the screen's total says ${gross}; check them against the image.`);
+  const nines = (Array.isArray(raw && raw.nineTotals) ? raw.nineTotals : []).map(num).filter(v => v != null);
+  const rows = [holes.filter(h => h.n <= 9), holes.filter(h => h.n >= 10)].filter(r => r.length);
+  if (nines.length === rows.length) rows.forEach((r, i) => { const t = sum(r.map(h => h.score)); if (t !== nines[i]) warnings.push(`Holes ${r[0].n}–${r[r.length - 1].n} add to ${t}, the screen's row total says ${nines[i]}.`); });
+  const str = v => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  const c = matchCourse(str(raw && raw.club), str(raw && raw.course), [str(raw && raw.club), str(raw && raw.course)].filter(Boolean).join(' '));
+  const teeShown = str(raw && raw.tee), tee = c ? (teeOn(c, teeShown) || primaryTee(c)) : (teeShown || '');
+  if (c && teeShown && !teeOn(c, teeShown)) warnings.push(`The screen says the ${teeShown} tee; ${esc(c.name)}'s card has ${teeNames(c).join(', ') || 'one set'}, so it's set to ${tee}.`);
+  if (c) {
+    const missing = holes.filter(h => !(c.holes || []).some(x => x.n === h.n)).map(h => h.n);
+    if (missing.length) warnings.push(`Hole ${missing.join(', ')} ${missing.length > 1 ? "aren't" : "isn't"} on ${esc(c.name)}'s card in Carry.`);
+    const coursePar = num(raw && raw.coursePar), mine = cardPar(c);
+    if (coursePar != null && mine && coursePar !== mine) warnings.push(`The screen gives the course par as ${coursePar}; Carry's card says ${mine}. Check it's the same course and layout.`);
+    const parOff = holes.filter(h => h.par != null && (c.holes || []).some(x => x.n === h.n && x.par && x.par !== h.par)).map(h => h.n);
+    if (parOff.length) warnings.push(`The screen's par differs from Carry's card on hole ${parOff.join(', ')}; Carry's card is used.`);
+  } else if (kind !== 'other') warnings.push(`No course in Carry matches "${[str(raw && raw.club), str(raw && raw.course)].filter(Boolean).join(' / ') || 'nothing read'}"; pick it, or add the course first.`);
+  return { kind, app: str(raw && raw.app), date, dateShown: str(raw && raw.date), clubShown: str(raw && raw.club), courseShown: str(raw && raw.course), courseId: c ? c.id : '', tee, teeShown,
+    gross, player: str(raw && raw.player), holes, warnings, notes: str(raw && raw.notes) || '', unreadable: Array.isArray(raw && raw.unreadable) ? raw.unreadable.map(String) : [] };
+}
+// A scorecard joins the summary for the same day and course (its putts, and any hole the summary missed); else it is its own round.
+function mergeRoundReads(items) {
+  const rounds = [], skipped = [];
+  for (const it of items) {
+    if (it.error || !it.read || it.read.kind === 'other' || !it.read.holes.length) { skipped.push({ name: it.name, why: it.error ? (SHOT_READ_ERRORS[it.error] || `reading failed (${it.error})`) : it.read.kind === 'other' ? 'not a round summary or scorecard' : 'no hole scores could be read' }); continue; }
+    const r = it.read, same = rounds.find(x => x.date && x.date === r.date && x.courseId && x.courseId === r.courseId);
+    if (same && (r.kind === 'scorecard' || same.kind === 'scorecard')) {
+      for (const h of r.holes) {
+        const o = same.holes.find(x => x.n === h.n);
+        if (!o) same.holes.push(h);
+        else { if (o.score !== h.score) same.warnings.push(`Hole ${h.n}: ${o.score} on one screenshot, ${h.score} on the other; check it.`); if (o.putts == null && h.putts != null) o.putts = h.putts; }
+      }
+      same.holes.sort((a, b) => a.n - b.n); same.images.push(it.img); same.names.push(it.name); same.warnings.push(...r.warnings.filter(w => !same.warnings.includes(w)));
+      continue;
+    }
+    rounds.push({ ...r, images: [it.img], names: [it.name], warnings: r.warnings.slice() });
+  }
+  for (const r of rounds) {
+    const twin = rounds.filter(x => x !== r && x.date && x.date === r.date && x.courseId === r.courseId);
+    if (twin.length) r.warnings.push('Another screenshot reads as a round at the same course on the same day.');
+    if (r.courseId && r.date && S.sessions.some(s => s.type === 'round' && s.courseId === r.courseId && s.date === r.date)) { r.dupe = true; r.warnings.push('You already have a round here on this day in Carry, so this one is unticked.'); }
+  }
+  return { rounds, skipped };
+}
+// "1-9: 5 5 3 …" lines, a dash for a hole not played.
+const scoreLines = (holes, key) => [[1, 9], [10, 18]].map(([a, b]) => { const hs = holes.filter(h => h.n >= a && h.n <= b); if (!hs.length) return ''; const lo = hs[0].n, hi = hs[hs.length - 1].n; return `${lo}-${hi}: ` + Array.from({ length: hi - lo + 1 }, (_, i) => { const h = hs.find(x => x.n === lo + i); return h && h[key] != null ? h[key] : '-'; }).join(' '); }).filter(Boolean).join('\n');
+function parseScoreLines(text) {
+  const out = {}, bad = [];
+  for (const line of String(text || '').split('\n').map(l => l.trim()).filter(Boolean)) {
+    const x = /^(\d{1,2})\s*[-–]\s*(\d{1,2})\s*:\s*(.*)$/.exec(line); if (!x) { bad.push(line); continue; }
+    const lo = Number(x[1]), hi = Number(x[2]), vs = x[3].split(/[\s,]+/).filter(Boolean);
+    if (hi < lo || vs.length !== hi - lo + 1) { bad.push(line); continue; }
+    vs.forEach((v, i) => { if (v !== '-') { const n = Number(v); if (Number.isInteger(n) && n >= 0 && n <= 15) out[lo + i] = n; else bad.push(`${lo + i}: ${v}`); } });
+  }
+  return { values: out, bad };
+}
+async function readRoundImages(files, onProgress) {
+  const sample = await claude.use('sample');
+  if (!sample) return { error: 'unavailable' };
+  const items = files.map(f => ({ name: f.name || 'screenshot', file: f })); let done = 0, next = 0;
+  const work = async () => {
+    while (next < items.length) {
+      const it = items[next++];
+      it.img = await shrinkImage(it.file);
+      try { it.read = normaliseRoundRead(await sample.json(roundImagePrompt(), { images: [it.img], maxTokens: 3000 })); }
+      catch (e) { it.error = (e && e.code) || 'failed'; }
+      onProgress && onProgress(++done, items.length);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(ROUND_READ_PARALLEL, items.length) }, work));
+  if (items.every(it => it.error === 'unavailable')) return { error: 'unavailable' };
+  return mergeRoundReads(items);
+}
+ACTIONS.roundsFromImages = function () {
+  openSheet(`<h2>Rounds from screenshots</h2>
+    <p class="small muted">Screenshots of past rounds from 18Birdies or another scoring app, up to ${ROUND_IMAGES_MAX} at a time: each round's summary (date, course, tee, the hole scores), and its full scorecard after it if you want putts too. Claude reads each one; you check every round beside its screenshots before anything is saved. Pars and lengths come from the course's card in Carry, so add any missing course first.</p>
+    <label>Screenshots<input type="file" accept="image/*" multiple name="imgs"></label>
+    <div class="count" id="readNote"></div>`,
+    async root => {
+      const files = [...(root.querySelector('[name=imgs]').files || [])];
+      const note = $('#readNote', root);
+      if (!files.length) { toast('Pick at least one screenshot'); return false; }
+      if (files.length > ROUND_IMAGES_MAX) { toast(`Up to ${ROUND_IMAGES_MAX} at a time`); return false; }
+      note.textContent = `Reading ${plural(files.length, 'screenshot')}…`;
+      const res = await readRoundImages(files, (d, n) => { note.textContent = `Read ${d} of ${n}…`; });
+      if (res.error) { note.textContent = SHOT_READ_ERRORS[res.error] || `Reading failed (${res.error}).`; return false; }
+      if (!res.rounds.length) { note.textContent = `No rounds could be read. ${res.skipped.map(s => `${s.name}: ${s.why}`).join('; ')}`; return false; }
+      sheet.close();
+      openRoundReview(res);
+      return false;
+    });
+};
+function openRoundReview({ rounds, skipped }) {
+  const courses = [['', '— pick a course —']].concat([...S.courses].sort((a, b) => a.name.localeCompare(b.name)).map(c => [c.id, c.name]));
+  const previews = rounds.map(r => r.images.map(b => URL.createObjectURL(b)));
+  openSheet(`<h2>Check the rounds</h2>
+    <div class="notice">${plural(rounds.length, 'round')} read from screenshots by Claude: a reading, not a measurement. Check each against its screenshots; fix any number here, or untick a round to leave it out. Nothing is saved until you do.</div>
+    ${skipped.length ? `<p class="small" id="roundSkipped" style="color:var(--flag)">Left out: ${skipped.map(s => `${esc(s.name)} (${esc(s.why)})`).join('; ')}.</p>` : ''}
+    ${rounds.map((r, i) => `<div class="readblock readround" data-round="${i}">
+      ${checkF(`<b>Round ${i + 1}</b> <span class="muted small">${esc([r.clubShown, r.courseShown].filter(Boolean).join(' · '))}${r.dateShown ? ` · ${esc(r.dateShown)}` : ''}</span>`, `keep_${i}`, !r.dupe && !!r.courseId && !!r.date)}
+      <div class="shotimgs">${previews[i].map((u, k) => `<img src="${u}" alt="screenshot ${k + 1} of round ${i + 1}">`).join('')}</div>
+      ${selectF('Course', `course_${i}`, courses, r.courseId)}
+      <div class="grid2">${field('Date', `date_${i}`, 'date', r.date || '')}${field('Tee', `tee_${i}`, 'text', r.tee || '')}</div>
+      <label>Scores<textarea name="scores_${i}" rows="2" spellcheck="false">${esc(scoreLines(r.holes, 'score'))}</textarea></label>
+      ${r.holes.some(h => h.putts != null) ? `<label>Putts<textarea name="putts_${i}" rows="2" spellcheck="false">${esc(scoreLines(r.holes, 'putts'))}</textarea></label>` : ''}
+      <div class="count" data-rcount="${i}"></div>
+      ${r.warnings.length ? `<ul class="warnlist">${r.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+    </div>`).join('')}
+    <p class="small muted">Scores are one line per nine, a dash for a hole not played. They're saved as scorecard rounds: they count for the handicap, scoring trend and course history, but have no shots on the map.</p>`,
+    async root => {
+      const docs = [];
+      for (let i = 0; i < rounds.length; i++) {
+        if (!val(root, `keep_${i}`)) continue;
+        const c = course(val(root, `course_${i}`)); if (!c) { toast(`Pick a course for round ${i + 1}, or untick it`); return false; }
+        const date = val(root, `date_${i}`); if (!date) { toast(`Set the date for round ${i + 1}`); return false; }
+        const sc = parseScoreLines(val(root, `scores_${i}`)), pt = parseScoreLines(val(root, `putts_${i}`));
+        if (sc.bad.length || pt.bad.length) { toast(`Round ${i + 1}: can't read "${[...sc.bad, ...pt.bad][0]}"`); return false; }
+        const ns = Object.keys(sc.values).map(Number);
+        if (!ns.length) { toast(`Round ${i + 1} has no scores`); return false; }
+        const off = ns.filter(n => !(c.holes || []).some(h => h.n === n)); if (off.length) { toast(`Round ${i + 1}: hole ${off.join(', ')} isn't on ${c.name}'s card`); return false; }
+        const tee = teeOn(c, val(root, `tee_${i}`)) || val(root, `tee_${i}`) || primaryTee(c);
+        const holes = holesForTee(c, tee).map(h => ({ n: h.n, par: h.par, metres: h.metres, ...(sc.values[h.n] ? { strokes: sc.values[h.n] } : {}), ...(sc.values[h.n] && pt.values[h.n] != null ? { putts: pt.values[h.n] } : {}) }));
+        docs.push({ i, doc: { id: uid('r'), type: 'round', created: Date.now(), v: SCHEMA_VERSION, date, courseId: c.id, courseName: c.name, tee, detail: 'score_only', holes } });
+      }
+      if (!docs.length) { toast('Nothing ticked to save'); return false; }
+      if (!S.assets) { toast('Saving needs write access to this page'); return false; }
+      let saved = 0;
+      for (const { i, doc } of docs) {
+        toast(`Saving round ${++saved} of ${docs.length}…`, 4000);
+        const assets = [];
+        for (const img of rounds[i].images) {
+          try { assets.push((await S.assets.upload(img, { type: img.type || 'image/jpeg' })).id); }
+          catch (e) { releaseAssets(assets); toast(`Storing round ${saved}'s screenshots failed; ${saved - 1} saved`); return false; }
+        }
+        const app = rounds[i].app;
+        if (!await save('sessions', doc.id, { ...doc, fromImages: { assets, readOn: today(), ...(app ? { app } : {}) } })) { releaseAssets(assets); return false; }
+      }
+      previews.flat().forEach(u => URL.revokeObjectURL(u));
+      toast(`${plural(docs.length, 'round')} added`);
+      go('rounds');
+      return true;
+    });
+  const upd = () => rounds.forEach((_, i) => {
+    const out = sheetInner.querySelector(`[data-rcount="${i}"]`); if (!out) return;
+    const sc = parseScoreLines(sheetInner.querySelector(`[name=scores_${i}]`).value), c = course(sheetInner.querySelector(`[name=course_${i}]`).value);
+    const ns = Object.keys(sc.values).map(Number), tot = sum(Object.values(sc.values)), par = c ? cardPar(c, ns) : null;
+    out.textContent = sc.bad.length ? `Can't read: ${sc.bad.join('; ')}` : ns.length ? `${plural(ns.length, 'hole')}, ${tot} strokes${rounds[i].gross != null ? ` (the screen says ${rounds[i].gross})` : ''}${par ? `, ${tot - par >= 0 ? '+' : ''}${tot - par} on Carry's par ${par}` : ''}` : 'No scores.';
+  });
+  sheetInner.addEventListener('input', upd); sheetInner.addEventListener('change', upd);
+  upd();
+}
+// Where a round came from, when it was read from screenshots.
+function roundSourceSection(r) {
+  const fi = r.fromImages; if (!fi) return '';
+  return `<section class="sec" id="roundSource"><h2>From screenshots</h2><p class="small muted">Read from ${plural((fi.assets || []).length, 'screenshot')}${fi.app ? ` of ${esc(fi.app)}` : ''} on ${dateLabel(fi.readOn)}, then checked before saving. Pars and lengths are the course's card in Carry.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}</section>`;
+}
 
 /* ============================================================
    v1 additions
@@ -4387,7 +4623,8 @@ async function applyImport(data, { onProgress } = {}) {
   const remap = id => map[id] || id;
   const courses = (data.courses || []).map(c => ({ ...c, holes: (c.holes || []).map(h => h.art && h.art.asset ? { ...h, art: { ...h.art, asset: remap(h.art.asset) } } : h) }));
   const sessions = (data.sessions || []).map(s => ({ ...s, swings: (s.swings || []).map(sw => ({ ...sw, frames: (sw.frames || []).map(f => ({ ...f, asset: remap(f.asset) })), video: sw.video ? remap(sw.video) : null })),
-    ...(s.blocks ? { blocks: s.blocks.map(b => b.fromImages ? { ...b, fromImages: { ...b.fromImages, assets: (b.fromImages.assets || []).map(remap) } } : b) } : {}) }));
+    ...(s.blocks ? { blocks: s.blocks.map(b => b.fromImages ? { ...b, fromImages: { ...b.fromImages, assets: (b.fromImages.assets || []).map(remap) } } : b) } : {}),
+    ...(s.fromImages ? { fromImages: { ...s.fromImages, assets: (s.fromImages.assets || []).map(remap) } } : {}) }));
   const counts = { clubs: 0, courses: 0, sessions: 0 };
   for (const c of (data.clubs || [])) { if (await save('clubs', c.code, c)) counts.clubs++; onProgress && onProgress('clubs', counts.clubs, (data.clubs || []).length); }
   for (const c of courses) { if (await save('courses', c.id, c)) counts.courses++; onProgress && onProgress('courses', counts.courses, courses.length); }
