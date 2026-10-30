@@ -1,6 +1,6 @@
 {
  "id": "chatswood",
- "name": "Chatswood Golf Club",
+ "name": "Newgreens Chatswood",
  "osm": {
   "course": "way/181570673",
   "name": "Chatswood Golf Club",
@@ -10,6 +10,7 @@
   -33.79918,
   151.16213
  ],
- "holes": "osm",
- "why": "Tier B on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ff675c61). No card in the source: the course page checks the NAS card once the course is imported."
+ "holes": "marks",
+ "shapes": false,
+ "why": "Tier B on OSM data of 2026-10-28 (his overpass turbo export of 2026-10-28, ff675c61), but OSM's holes are the old 18-hole Chatswood Golf Club. The course reopened in May 2026 as Newgreens Chatswood, 12 holes (imports/chatswood.json, par 44, 2,871 m): OSM's lines differ in par on 4, 8 and 11 and in length on 2, 4, 5, 11 and 12, and its greens and bunkers are the old ones. So the map is the boundary only (shapes: false) and every hole comes from his marks. Rebuild from OSM once it has the new layout."
 }
