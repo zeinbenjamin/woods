@@ -305,6 +305,9 @@ table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mi
 .fold > summary::after { content: '›'; font-size: 18px; color: var(--ink-3); transition: transform .15s; } .fold[open] > summary::after { transform: rotate(90deg); } .fold[open] > summary { margin-bottom: 10px; }
 .folds { border-bottom: 1px solid var(--rule); } .fold .warn { color: var(--flag); }
 details.sec + .folds, .pcard + .folds, p + .folds, p + details.fold, .row-actions + .folds, .row-actions + details.fold { margin-top: 16px; }
+/* A fold after a whole section (the course page's map section, ending in Use this map): .fold's margin: 0 also cleared the 30px a
+   section gets, so the fold's rule sat on the button (2.41.1, he sent a screenshot). */
+section.sec + details.fold { margin-top: 24px; }
 .row-actions:has(> .danger:only-child) { margin-top: 28px; } .folds + .row-actions, details.sec + .row-actions { margin-top: 16px; }
 .folds + h2, details.sec + h2, .row-actions + h2 { margin-top: 28px; }
 .ftile .tp { font-size: .55em; color: var(--ink-3); margin-left: 6px; font-weight: 600; }

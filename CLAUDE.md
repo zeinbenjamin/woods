@@ -486,7 +486,10 @@ Each of these cost real debugging time. Don't reintroduce them.
   stray comma or full stop. A heading with buttons beside it
   (`.spread:has(> h2)`, 2.27.1) carries the heading's margins itself and
   zeroes the h2's: the buttons are taller than the heading, so margins on
-  the h2 alone left them touching the text above and below. Check a new
+  the h2 alone left them touching the text above and below. A fold that follows a whole
+  section (`section.sec + details.fold`, 24px, 2.41.1, he sent a screenshot of the
+  course page's *Use this map* button on *Course information*'s rule): `.fold`'s
+  `margin: 0` also cleared the 30px a `.sec` gets. Check a new
   section at phone width before shipping; the sweep screenshots are how
   these were found.
 - **No double-tap zoom, and inputs are 16px** (2.11.2): `html { touch-action:
@@ -638,7 +641,7 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   re-reads a club's page only if Carry's copy is over `TEETIMES_FRESH_MS`
   (1 min) old, so taps can't hammer a club. Checked in Chromium at 390 px,
   light and dark: no sideways scroll.
-- **His first search** (2.41.1, Sun 1 Nov, 05:00–10:00, 4 players, 18
+- **His first search** (2.41.2, Sun 1 Nov, 05:00–10:00, 4 players, 18
   holes, 20 km): 2 of 21 courses had times, and 17 rows said "No times left
   that match", which buried them and said nothing. Now the courses with
   nothing (and those that couldn't be read) are one fold, `#ttRest`
@@ -1605,7 +1608,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 379 tests, about 45s.
+`npm test` — 380 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
