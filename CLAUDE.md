@@ -654,9 +654,11 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   is Oak Point (merged with Kogarah) and books on `oakpoint.miclub.com.au`
   (3000000, seen in search results), so `imports/liverpool.json` carries that.
   *Find a tee time* moved beside *Add course* on the heading's row.
-  **Worth knowing:** MiClub runs **TeeNet** (`clubshare.miclub.com.au/teenet`),
-  its own listing of public times across its clubs; not looked at yet, but
-  it may be one page to read instead of one per club.
+  **TeeNet is no shortcut** (checked 2026-10-30, he asked): MiClub's own
+  listing (`clubshare.miclub.com.au/teenet`) shows only clubs that opted in,
+  and its full list, served with the page, has three: Huntingdale and
+  Keysborough (VIC), The Vines (WA). No NSW club at all, and a search near
+  Sydney finds none. Reading each club's own calendar stays the way.
 - **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
