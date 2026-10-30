@@ -1,3 +1,8 @@
+## 2.49.0 — 2026-10-30
+- Courses on a map is now drawn like a yardage book: parchment ground with fine hatching, an inked coastline, water with waves, parks stippled and golf courses in fairway green, in the same colours as the hole maps, light or dark.
+- Far less clutter: no buildings, boundaries, shops or road numbers; main roads appear only as you zoom in, minor streets never, and only suburb and city names.
+- Pins, colours and tapping a pin for its course work as before. On a browser that can't draw it, the map falls back to the plain street map.
+
 ## 2.48.0 — 2026-10-30
 - Rounds → Add past rounds from screenshots: pick screenshots of past rounds from 18Birdies (or another scoring app), as many as 60 at a time. Claude reads each one's date, course, tee and hole scores, and a full scorecard screenshot after a round's summary adds its putts.
 - Every round is shown beside its screenshots to check before anything is saved: fix any number, pick the course if Carry couldn't match it, or untick a round. A round you already have for that course and day comes unticked.

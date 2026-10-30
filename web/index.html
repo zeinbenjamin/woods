@@ -89,6 +89,11 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .check { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 15px; color: var(--ink); } .check input { width: 18px; height: 18px; margin: 0; }
 .courseBar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; } .courseBar #homeLink { margin-left: auto; margin-right: -8px; } .courseBar .seg button, #cmOpen { height: 36px; } #cmOpen { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; } #cmOpen .short { display: none; }
 @media (max-width: 480px) { #cmOpen .long { display: none; } #cmOpen .short { display: inline; } }
+.cmHome { width: 14px; height: 14px; border-radius: 3px; background: var(--ink); border: 2px solid var(--paper); box-sizing: content-box; }
+#cmMap .maplibregl-popup-content { background: var(--paper); color: var(--ink); border-radius: var(--r); padding: 12px 14px; font: 400 14px var(--body); box-shadow: 0 2px 10px rgba(0,0,0,.25); } #cmMap .maplibregl-popup-content .t { font-weight: 600; } #cmMap .maplibregl-popup-content button[data-go] { margin-top: 8px; } #cmMap .maplibregl-popup-close-button { color: var(--ink-3); font-size: 18px; padding: 2px 6px; }
+#cmMap .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--paper); } #cmMap .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--paper); } #cmMap .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--paper); } #cmMap .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--paper); }
+#cmMap .maplibregl-ctrl-group { background: var(--paper); border: 1px solid var(--rule); box-shadow: none; } #cmMap .maplibregl-ctrl-group button + button { border-top-color: var(--rule); } #cmMap.dark .maplibregl-ctrl-icon { filter: invert(1); }
+#cmMap .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--paper) 85%, transparent); color: var(--ink-2); } #cmMap .maplibregl-ctrl-attrib a { color: var(--green); } #cmMap.dark .maplibregl-ctrl-attrib-button { filter: invert(1); }
 #cmMap.dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6); }
 #cmMap .leaflet-bar a { background: var(--paper); color: var(--ink); border-color: var(--rule); } #cmMap .leaflet-control-attribution { background: color-mix(in srgb, var(--paper) 85%, transparent); color: var(--ink-2); } #cmMap .leaflet-control-attribution a { color: var(--green); }
 #cmMap { height: min(62vh, 560px); min-height: 340px; border: 1px solid var(--rule); border-radius: var(--r); background: var(--paper-2); z-index: 0; }
@@ -4442,15 +4447,20 @@ function distanceTo(c) {
 }
 const distanceLabel = c => { const d = distanceTo(c); return d == null ? '' : d < 10 ? `${d.toFixed(1)} km` : `${Math.round(d)} km`; };
 
-/* ---------- courses on a map (2.44.0) ----------
-   Every course with a location as a pin on OpenStreetMap's tiles (darkened
-   in dark mode), coloured by who can play, and
-   home. Leaflet is served from Carry itself (web/vendor/leaflet) and loaded
-   only when the map is opened. The map lives in one element kept across
-   redraws (render() replaces the page; the element is put back), so a poll
-   doesn't reset where he has panned or close a pin he opened. Nothing stored. */
+/* ---------- courses on a map (2.44.0; drawn as a yardage book, 2.49.0) ----------
+   Every course with a location as a pin, coloured by who can play, and home.
+   2.49.0 draws the ground itself: OpenFreeMap's vector tiles (OpenStreetMap
+   data, no key) through MapLibre, styled by `cmStyle()` in the hole maps'
+   --hm-* palette (parchment and hatching, inked coastline, waved water,
+   stippled parks, golf courses in fairway green), with buildings, boundaries,
+   points of interest, minor streets and most names left out. Where the browser
+   has no WebGL, Leaflet over OpenStreetMap's own tiles as before. Both are
+   served from Carry itself (web/vendor/) and loaded only when the map opens.
+   The map lives in one element kept across redraws (render() replaces the
+   page; the element is put back), so a poll doesn't reset where he has panned
+   or close a pin he opened. Nothing stored. */
 const CM_COLOUR = { public: '--green', private: '--ink-3', closed: '--flag' };
-const cm = { el: null, map: null, layer: null, tiles: null, dark: null, key: null, loading: null };
+const cm = { el: null, map: null, layer: null, tiles: null, dark: null, key: null, loading: null, kind: null, home: null, glLoading: null };
 function vCourseMap() {
   const placed = S.courses.filter(hasCoords), missing = S.courses.length - placed.length;
   const key = [['public', 'Public'], ['private', 'Members'], ['closed', 'Closed'], [null, 'Not known']];
@@ -4506,18 +4516,130 @@ function cmTiles(L) {
   cm.el.classList.toggle('dark', dark);
   cm.tiles = L.tileLayer(CM_TILES, { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(cm.map);
 }
+/* The yardage-book map (2.49.0). OpenFreeMap serves OpenMapTiles-schema
+   vector tiles of OpenStreetMap at tiles.openfreemap.org (TileJSON at /planet,
+   tiles to zoom 14, fonts at /fonts) with no key; a custom style is allowed as
+   long as it's our own JSON, which this is, built here so it follows the theme.
+   Read from its TileJSON and Positron style on 2026-10-30 (this container can't
+   reach it; the first open on his phone is the test). */
+const CM_GL_SRC = 'https://tiles.openfreemap.org/planet', CM_GLYPHS = 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf';
+const CM_GL_ATTR = '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+function cmWebGL() { try { const c = document.createElement('canvas'); return !!(c.getContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { return false; } }
+function cmGeo() {
+  return { type: 'FeatureCollection', features: S.courses.filter(hasCoords).map(c => { const a = access(c);
+    return { type: 'Feature', properties: { id: c.id, fill: a ? cmVar(CM_COLOUR[a]) : cmVar('--paper-2') }, geometry: { type: 'Point', coordinates: [c.lng, c.lat] } }; }) };
+}
+// The style, from the palette (`v` reads a CSS token; the theme decides which). Pure but for `v`.
+function cmStyle(v = cmVar, dark = cmDark(), geo = { type: 'FeatureCollection', features: [] }) {
+  const P = n => `cm-${dark ? 'd' : 'l'}-${n}`, src = { source: 'ofm' };
+  const zw = (z0, w0, z1, w1) => ['interpolate', ['linear'], ['zoom'], z0, w0, z1, w1];
+  const road = (id, classes, minzoom, w) => ({ id, type: 'line', ...src, 'source-layer': 'transportation', minzoom, filter: ['match', ['get', 'class'], classes, true, false],
+    layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': v('--hm-path'), 'line-width': w, 'line-opacity': 0.85 } });
+  const label = (id, classes, minzoom, maxzoom, size) => ({ id, type: 'symbol', ...src, 'source-layer': 'place', minzoom, maxzoom, filter: ['match', ['get', 'class'], classes, true, false],
+    layout: { 'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': size, 'text-transform': 'uppercase', 'text-letter-spacing': 0.12, 'text-max-width': 8 },
+    paint: { 'text-color': v('--hm-ink'), 'text-opacity': 0.75, 'text-halo-color': v('--hm-bg'), 'text-halo-width': 1.6 } });
+  return { version: 8, glyphs: CM_GLYPHS,
+    sources: { ofm: { type: 'vector', url: CM_GL_SRC, attribution: CM_GL_ATTR }, courses: { type: 'geojson', data: geo } },
+    layers: [
+      { id: 'cm-ground', type: 'background', paint: { 'background-pattern': P('hatch'), 'background-color': v('--hm-bg') } },
+      { id: 'cm-wood', type: 'fill', ...src, 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': v('--hm-can'), 'fill-opacity': 0.5 } },
+      { id: 'cm-park', type: 'fill', ...src, 'source-layer': 'park', paint: { 'fill-pattern': P('stipple'), 'fill-opacity': 0.9 } },
+      { id: 'cm-grass', type: 'fill', ...src, 'source-layer': 'landcover', filter: ['all', ['==', ['get', 'class'], 'grass'], ['!=', ['get', 'subclass'], 'golf_course']], paint: { 'fill-pattern': P('stipple'), 'fill-opacity': 0.8 } },
+      { id: 'cm-sand', type: 'fill', ...src, 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'sand'], paint: { 'fill-color': v('--hm-sand') } },
+      { id: 'cm-golf', type: 'fill', ...src, 'source-layer': 'landcover', filter: ['==', ['get', 'subclass'], 'golf_course'], paint: { 'fill-color': v('--hm-fw'), 'fill-opacity': 0.9 } },
+      { id: 'cm-golf-edge', type: 'line', ...src, 'source-layer': 'landcover', minzoom: 11, filter: ['==', ['get', 'subclass'], 'golf_course'], paint: { 'line-color': v('--hm-ink'), 'line-width': 0.6, 'line-opacity': 0.6 } },
+      { id: 'cm-water', type: 'fill', ...src, 'source-layer': 'water', paint: { 'fill-pattern': P('wave') } },
+      { id: 'cm-shore', type: 'line', ...src, 'source-layer': 'water', paint: { 'line-color': v('--hm-ink'), 'line-width': zw(6, 0.4, 14, 1.2), 'line-opacity': 0.8 } },
+      { id: 'cm-river', type: 'line', ...src, 'source-layer': 'waterway', minzoom: 10, filter: ['==', ['get', 'class'], 'river'], paint: { 'line-color': v('--hm-wave'), 'line-width': zw(10, 0.6, 14, 2) } },
+      road('cm-road-minor', ['tertiary'], 13, zw(13, 0.4, 16, 1.2)),
+      road('cm-road-main', ['primary', 'secondary'], 11, zw(11, 0.4, 16, 2)),
+      road('cm-road-motor', ['motorway', 'trunk'], 8, zw(8, 0.5, 16, 2.6)),
+      label('cm-name-suburb', ['suburb', 'town', 'village'], 12, 24, 10),
+      label('cm-name-city', ['city'], 0, 11, 12),
+      { id: 'cm-courses', type: 'circle', source: 'courses', paint: { 'circle-radius': zw(8, 6, 14, 8), 'circle-color': ['get', 'fill'], 'circle-stroke-color': v('--paper'), 'circle-stroke-width': 2 } },
+    ] };
+}
+// The style's textures, drawn once per theme in the palette: hatching for the
+// ground off the courses, stipple for parks, waves for water. None without a canvas.
+function cmPattern(name, dark) {
+  const r = 2, n = { hatch: 10, stipple: 8, wave: 9 }[name], cv = document.createElement('canvas'), cx = cv.getContext && cv.getContext('2d'); if (!n || !cx) return null;
+  cv.width = cv.height = n * r; cx.scale(r, r);
+  const fill = { hatch: '--hm-bg', stipple: '--hm-rough', wave: '--hm-water' }[name];
+  cx.fillStyle = cmVar(fill); cx.fillRect(0, 0, n, n);
+  if (name === 'hatch') { cx.strokeStyle = cmVar('--hm-hatch'); cx.globalAlpha = dark ? 0.55 : 0.45; cx.lineWidth = 0.6; cx.beginPath(); for (const o of [-n, 0, n]) { cx.moveTo(o, n); cx.lineTo(o + n, 0); } cx.stroke(); }
+  if (name === 'stipple') { cx.fillStyle = cmVar('--hm-stip'); for (const [x, y] of [[1.5, 2], [5.5, 6]]) { cx.beginPath(); cx.arc(x, y, 0.5, 0, Math.PI * 2); cx.fill(); } }
+  if (name === 'wave') { cx.strokeStyle = cmVar('--hm-wave'); cx.globalAlpha = 0.55; cx.lineWidth = 0.5; cx.beginPath(); cx.moveTo(0, 4.5); cx.quadraticCurveTo(2.25, 3, 4.5, 4.5); cx.quadraticCurveTo(6.75, 6, 9, 4.5); cx.stroke(); }
+  return { width: cv.width, height: cv.height, data: new Uint8Array(cx.getImageData(0, 0, cv.width, cv.height).data.buffer), pixelRatio: r };
+}
+function cmLoadGl() {
+  if (window.maplibregl) return Promise.resolve(window.maplibregl);
+  if (cm.glLoading) return cm.glLoading;
+  return cm.glLoading = new Promise((ok, bad) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'vendor/maplibre/maplibre-gl.css'; document.head.appendChild(css);
+    const js = document.createElement('script'); js.src = 'vendor/maplibre/maplibre-gl.js'; js.onload = () => (window.maplibregl ? ok(window.maplibregl) : bad(new Error('map'))); js.onerror = () => { cm.glLoading = null; bad(new Error('map')); };
+    document.head.appendChild(js);
+  });
+}
+function cmGlSync(gl) {
+  const h = home(), dark = cmDark(), key = JSON.stringify([S.courses.filter(hasCoords).map(c => [c.id, c.lat, c.lng, access(c)]), h && hasCoords(h) ? [h.lat, h.lng, h.label] : null, dark]);
+  if (key === cm.key) return;
+  // Another theme: the map is made again where it was, so its textures are there before any tile is drawn.
+  if (cm.dark !== dark) { const at = { center: cm.map.getCenter(), zoom: cm.map.getZoom() }; cm.map.remove(); cm.map = cmMakeGl(gl, cm.el, at); }
+  else { const src = cm.map.getSource('courses'); if (src) src.setData(cmGeo()); }
+  cm.key = key;
+  if (cm.home) { cm.home.remove(); cm.home = null; }
+  const pts = S.courses.filter(hasCoords).map(c => [c.lng, c.lat]);
+  if (h && hasCoords(h)) {
+    const el = document.createElement('div'); el.className = 'cmHome'; el.title = h.label || 'Home'; el.setAttribute('aria-label', h.label || 'Home');
+    cm.home = new gl.Marker({ element: el }).setLngLat([h.lng, h.lat]).addTo(cm.map); pts.push([h.lng, h.lat]);
+  }
+  if (!cm.fitted && pts.length) {
+    cm.fitted = true;
+    if (pts.length === 1) cm.map.jumpTo({ center: pts[0], zoom: 12 });
+    else cm.map.fitBounds([[Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1]))], [Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))]], { padding: 28, maxZoom: 13, duration: 0 });
+  }
+}
+function cmMakeGl(gl, el, at = { center: [151.1, -33.87], zoom: 9.5 }) {
+  const dark = cmDark(); cm.dark = dark; el.classList.toggle('dark', dark);
+  const map = new gl.Map({ container: el, style: cmStyle(cmVar, dark, cmGeo()), ...at, maxZoom: 16, attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false, touchPitch: false });
+  // The textures go in at once, in this theme's colours: a patterned fill drawn before its
+  // image arrives stays blank on that tile, and a background never asks for one.
+  for (const n of ['hatch', 'stipple', 'wave']) { const img = cmPattern(n, dark); if (img) map.addImage(`cm-${dark ? 'd' : 'l'}-${n}`, img, { pixelRatio: img.pixelRatio }); }
+  map.addControl(new gl.NavigationControl({ showCompass: false }), 'top-left');
+  if (map.touchZoomRotate) map.touchZoomRotate.disableRotation();
+  map.on('click', 'cm-courses', e => {
+    const f = e.features && e.features[0], c = f && course(f.properties.id); if (!c) return;
+    const pop = new gl.Popup({ closeButton: true, maxWidth: '260px', offset: 10 }).setLngLat(f.geometry.coordinates).setHTML(cmPopup(c)).addTo(map);
+    const b = pop.getElement().querySelector('[data-go]'); if (b) b.onclick = () => { const [tab, sub] = parseGo(b.dataset.go); go(tab, sub); };
+  });
+  map.on('mouseenter', 'cm-courses', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'cm-courses', () => { map.getCanvas().style.cursor = ''; });
+  return map;
+}
+function cmFailed() { const now = document.getElementById('cmMap'); if (now) now.innerHTML = `<div class="empty"><p>The map couldn't be loaded. Check the connection and open it again.</p></div>`; }
 function courseMapLifecycle() {
   const slot = document.getElementById('cmMap');
   if (!slot) return;
-  if (cm.el) { slot.replaceWith(cm.el); cm.map.invalidateSize(); cmTiles(window.L); cmPins(window.L); return; }
-  cmLoad().then(L => {
+  if (cm.el) {
+    slot.replaceWith(cm.el);
+    if (cm.kind === 'gl') { cm.map.resize(); cmGlSync(window.maplibregl); } else { cm.map.invalidateSize(); cmTiles(window.L); cmPins(window.L); }
+    return;
+  }
+  const leaflet = () => cmLoad().then(L => {
     const now = document.getElementById('cmMap'); if (!now || cm.el) return courseMapLifecycle();
-    cm.el = now;
+    cm.el = now; cm.kind = 'leaflet';
     cm.map = L.map(now, { zoomControl: true, attributionControl: true }).setView([-33.87, 151.1], 10);
     // A pin's button: Leaflet keeps clicks inside a popup to itself, so the page's own handler doesn't see them.
     cm.map.on('popupopen', e => { const b = e.popup.getElement().querySelector('[data-go]'); if (b) b.onclick = () => { const [tab, sub] = parseGo(b.dataset.go); go(tab, sub); }; });
     cmTiles(L); cmPins(L);
-  }, () => { const now = document.getElementById('cmMap'); if (now) now.innerHTML = `<div class="empty"><p>The map couldn't be loaded. Check the connection and open it again.</p></div>`; });
+  }, cmFailed);
+  if (!cmWebGL()) return leaflet();
+  cmLoadGl().then(gl => {
+    const now = document.getElementById('cmMap'); if (!now || cm.el) return courseMapLifecycle();
+    try { cm.map = cmMakeGl(gl, now); } catch (e) { console.error(e); return leaflet(); }
+    cm.el = now; cm.kind = 'gl'; cm.key = null;
+    cmGlSync(gl);
+  }, leaflet);
 }
 
 // Tee times (see vTeeTimes).
