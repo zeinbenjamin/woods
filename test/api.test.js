@@ -353,6 +353,10 @@ test('analysis sends images then prompt upstream, and caps the output length it 
 test('serves the app itself', async () => {
   const html = await (await fetch(`${base}/`)).text();
   assert.ok(html.includes('platform.js'), 'shim is loaded');
+  // 2.47.1: the page's scripts carry the build, so no cache can pair an old holemap.js with a new page.
+  assert.match(html, /<script src="platform\.js\?v=\d+\.\d+\.\d+-[^"]+"><\/script>/);
+  assert.match(html, /<script src="holemap\.js\?v=\d+\.\d+\.\d+-[^"]+"><\/script>/);
+  assert.ok(!html.includes('__APP_BUILD__'), 'every placeholder filled');
   assert.ok(html.includes("claude.use('db')") || html.includes('claude.use("db")'), 'app still asks for the db capability');
 });
 

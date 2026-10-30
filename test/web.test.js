@@ -24,8 +24,8 @@ before(async () => {
   // loader is slow and unnecessary here. A browser loads it by src.
   const shim = readFileSync('web/platform.js', 'utf8'), holemap = readFileSync('web/holemap.js', 'utf8');
   const html = readFileSync('web/index.html', 'utf8')
-    .replace('<script src="platform.js"></script>', () => `<script>${shim}</script>`)
-    .replace('<script src="holemap.js"></script>', () => `<script>${holemap}</script>`);
+    .replace('<script src="platform.js?v=__APP_BUILD__"></script>', () => `<script>${shim}</script>`)
+    .replace('<script src="holemap.js?v=__APP_BUILD__"></script>', () => `<script>${holemap}</script>`);
   dom = new JSDOM(html, {
     url: base + '/', runScripts: 'dangerously', pretendToBeVisual: true,
     beforeParse(w) {
