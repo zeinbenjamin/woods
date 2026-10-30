@@ -192,13 +192,13 @@ test('an image with no readable shots says so instead of opening an empty review
   app.click('#sheetInner [data-close]');
 });
 
-test('more than six screenshots at once is refused before anything is sent', async () => {
+test('more than twelve screenshots at once is refused before anything is sent', async () => {
   seen = null; reply = { units: 'm', blocks: [] };
   app.go('range', { sessionId: 's_img' });
   app.click('#view [data-act="shotsFromImages"]');
-  Object.defineProperty(app.field('imgs'), 'files', { value: Array.from({ length: 7 }, (_, i) => png(`p${i}`, `${i}.png`)) });
+  Object.defineProperty(app.field('imgs'), 'files', { value: Array.from({ length: 13 }, (_, i) => png(`p${i}`, `${i}.png`)) });
   assert.equal(await app.save(), false);
-  assert.match(app.toast(), /Up to 6 at a time/);
+  assert.match(app.toast(), /Up to 12 at a time/);
   assert.equal(seen, null);
   app.click('#sheetInner [data-close]');
 });

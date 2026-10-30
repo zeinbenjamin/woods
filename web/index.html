@@ -1286,13 +1286,15 @@ function vBlock() {
   if (shots.length && full) h += dotStrip(shots, shots.map((_, i) => profOf(i)), b.target, Math.max(...all.map(x => x.carry))) + `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>avg club speed mph</small></span>` : ''}</div>`;
   if (b.fromImages) { const fi = b.fromImages; h += `<p class="small muted" style="margin-top:10px">Read from ${plural((fi.assets || []).length, 'screenshot')} on ${dateLabel(fi.readOn)}${fi.converted ? ', converted from yards' : ''}${fi.units === 'unknown' ? ', units not shown on the screen' : ''}, then checked before saving.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`; }
+  for (const f of b.filledFrom || []) h += `<p class="small muted" style="margin-top:10px">${f.shots ? `${plural(f.shots, 'shot')} filled in` : 'Filled in'} from ${plural((f.assets || []).length, 'screenshot')} on ${dateLabel(f.readOn)} (side, speeds, path and face, matched to these shots by carry and total).</p>${(f.assets || []).length ? `<div class="shotimgs">${f.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`;
   const cmp = compareBlock(b, s);
   if (cmp) h += `<p class="small" id="blockCompare">${esc(compareText(b, cmp))}</p>`;
   if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
   const gs = (b.goals || []).length ? blockGoals(b) : [];
   if (gs.length) h += `<div id="blockGoals" class="small">For: ${gs.map(g => `<button class="quiet" style="padding:2px 6px" data-go="range:goal=${esc(g.key)}">${esc(goalName(g))} →</button>`).join('')}</div>`;
-  if (shots.length) h += `<details id="shotTable"><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Club speed</th><th></th></tr></thead><tbody>` +
-    shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td><td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
+  const xk = SHOT_EXTRAS.filter(k => shots.some(sh => sh[k] != null));
+  if (shots.length) h += `<details id="shotTable"><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Club speed</th>${xk.map(k => `<th>${EXTRA_LABEL[k]}</th>`).join('')}<th></th></tr></thead><tbody>` +
+    shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td>${xk.map(k => `<td>${extraText(k, sh[k])}</td>`).join('')}<td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
   else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}.${b.reason ? ` Why: ${esc(b.reason)}.` : ''} After you hit it, tap Edit and paste the shots.</div>`;
   else h += `<p class="muted small">Summary only. Edit the block to paste shots.</p>`;
   h += `<div class="row-actions"><button class="danger" data-act="deleteBlock" data-sid="${s.id}" data-bid="${b.id}">Delete block</button></div>`;
@@ -2013,7 +2015,7 @@ const ACTIONS = {
   editRange(d) { const s = session(d.id); openSheet(rangeForm(s), async root => saveRange(root, s)); },
   newBlock(d) { const s = session(d.id); openSheet(blockForm(), async root => saveBlock(root, s, { id: uid('b'), seq: (s.blocks || []).length + 1 })); wireShotCount(sheetInner); },
   editBlock(d) { const s = session(d.sid), b = s.blocks.find(x => x.id === d.bid); openSheet(blockForm(b), async root => saveBlock(root, s, b)); wireShotCount(sheetInner); },
-  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const gone = s.blocks.find(b => b.id === d.bid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { releaseAssets(blockAssets(gone)); toast('Block deleted'); go('range', { sessionId: s.id }); } },
+  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const gone = s.blocks.find(b => b.id === d.bid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { const left = new Set(sessionAssets(doc)); releaseAssets(blockAssets(gone).filter(id => !left.has(id))); toast('Block deleted'); go('range', { sessionId: s.id }); } },
   async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
   newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
@@ -2098,7 +2100,7 @@ async function saveRange(root, s) {
   const ok = await save('sessions', doc.id, doc); if (ok && !s.venue) go('range', { sessionId: doc.id }); return ok;
 }
 async function saveBlock(root, s, b) {
-  const shots = parseShots(val(root, 'shots') || '');
+  const shots = keepExtras(parseShots(val(root, 'shots') || ''), b.shots);
   const nb = { ...b, club: val(root, 'club'), swing: val(root, 'swing') || 'full', target: val(root, 'target'), drill: val(root, 'drill'), intent: val(root, 'intent'), outcome: val(root, 'outcome'), shots };
   if (!nb.club) { toast('Pick a club'); return false; }
   const sm = {}; for (const k of ['n', 'avgCarry', 'avgTotal', 'fromPinCarry', 'fromPinTotal', 'hitsC']) { const v = val(root, 'sm_' + k); if (v != null) sm[k] = v; }
@@ -4007,8 +4009,50 @@ function swingItems() {
        is listed as a warning next to the block
      - a club that isn't clearly one of his is left unpicked
    ============================================================ */
-const SHOT_IMAGES_MAX = 6;
+const SHOT_IMAGES_MAX = 12;
 const YD_TO_M = 0.9144;
+/* The bay's other numbers per shot (2.51.0, from his Trackman shot list): side in
+   metres, minus left of the target line and plus right (the screen's "6.2L" is
+   -6.2); ball speed in mph; club path and face angle in degrees with the bay's own
+   sign. Each one optional, stored as shown, never worked out: missing means the
+   bay didn't measure it. */
+const SHOT_EXTRAS = ['carrySide', 'totalSide', 'ballSpeed', 'clubPath', 'faceAngle'];
+const EXTRA_LABEL = { carrySide: 'Carry side', totalSide: 'Total side', ballSpeed: 'Ball speed', clubPath: 'Club path', faceAngle: 'Face angle' };
+const sideText = v => v == null ? '–' : v === 0 ? '0.0' : `${fmt(Math.abs(v), 1)}${v < 0 ? 'L' : 'R'}`;
+const extraText = (k, v) => k === 'carrySide' || k === 'totalSide' ? sideText(v) : fmt(v, 1);
+/* The same shot on two lists: carry and total agree to the 0.1 m the bay shows.
+   Pairs in order, each shot used once, so a list read from screenshots finds
+   the shots Carry already has (typed or read before) without guessing. */
+const sameShot = (a, b) => a && b && a.carry != null && b.carry != null && Math.abs(a.carry - b.carry) < 0.051 && Math.abs(a.total - b.total) < 0.051;
+function matchShots(read, have) {
+  const pairs = []; let j = 0;
+  read.forEach((r, i) => { for (let k = j; k < have.length; k++) if (sameShot(r, have[k])) { pairs.push([i, k]); j = k + 1; return; } });
+  return pairs;
+}
+const extrasOf = sh => { const o = {}; for (const k of SHOT_EXTRAS) if (sh && sh[k] != null) o[k] = sh[k]; return o; };
+// Shots rebuilt from text keep the other numbers of the shot they still are.
+function keepExtras(shots, from) {
+  const out = shots.map(x => ({ ...x }));
+  for (const [i, k] of matchShots(out, from || [])) Object.assign(out[i], extrasOf(from[k]));
+  return out;
+}
+// A hit block here for the same club and swing whose shots these are: filled in, never added twice.
+function fillTarget(s, club, swing, shots) {
+  let best = null;
+  for (const b of (s && s.blocks) || []) {
+    if (b.plan || b.club !== club || (b.swing || 'full') !== (swing || 'full') || !(b.shots || []).length) continue;
+    const pairs = matchShots(shots, b.shots);
+    if (pairs.length && pairs.length * 2 >= shots.length && (!best || pairs.length > best.pairs.length)) best = { block: b, pairs };
+  }
+  return best;
+}
+// What a fill would add to each matched shot: the other numbers, and club speed where it was missing.
+function fillAdds(fill, shots) {
+  return fill.pairs.map(([i, k]) => { const old = fill.block.shots[k], add = {};
+    for (const [key, v] of Object.entries(extrasOf(shots[i]))) if (old[key] == null) add[key] = v;
+    if (old.speed == null && shots[i].speed != null) add.speed = shots[i].speed;
+    return [k, add]; }).filter(([, add]) => Object.keys(add).length);
+}
 
 // Large photos are shrunk to the API's working size; screenshots that are
 // already small enough go as they are. Anything the page can't decode
@@ -4038,7 +4082,9 @@ Read every shot you can see and answer as JSON with exactly these keys:
       "club": "a code from the bag list below, or null",
       "clubAsShown": "the club exactly as the screen shows it, or null",
       "target": number or null,
-      "shots": [ { "carry": number, "total": number or null, "clubSpeedMph": number or null, "unclear": true or false } ],
+      "shots": [ { "carry": number, "total": number or null, "clubSpeedMph": number or null, "ballSpeedMph": number or null,
+                   "carrySide": "as shown, e.g. \"6.2L\", \"12.1R\" or -3.4", "totalSide": "as shown", "clubPathDeg": number or null, "faceAngleDeg": number or null,
+                   "unclear": true or false } ],
       "summary": { "n": number, "avgCarry": number, "avgTotal": number, "fromPinCarry": number, "fromPinTotal": number } or null
     }
   ],
@@ -4051,13 +4097,25 @@ Rules:
 - If a value is cut off, blurred or covered, give your best reading with "unclear": true, or leave the shot out and say so in "unreadable".
 - "units" is what the screen itself says (m, metres, yd, yds, yards). If it doesn't say, use "unknown" — do not guess from the size of the numbers.
 - carry and total are distances. Do not confuse them with ball speed, height, apex, launch angle, curve, side or offline.
-- clubSpeedMph only when the screen labels a value as club speed in mph. Ball speed is not club speed.
+- clubSpeedMph only when the screen labels a value as club speed in mph. Ball speed is not club speed. ballSpeedMph only when labelled ball speed in mph.
+- carrySide and totalSide are the columns labelled "Carry side" and "Total side" (or "Side", "Offline": put a single side column in carrySide only when it says carry, else totalSide). Copy them exactly as shown, with the L or R or the sign; null when the screen has no such column.
+- clubPathDeg and faceAngleDeg only from columns labelled club path and face angle, with their sign as shown. Never work one out from another column (face to path, launch direction, spin axis).
+- A column cut off at the edge: read it by its unit and place only if that is certain, else leave it null and say so in "unreadable".
 - One block per club (and per target, if the screen groups shots by target). Shots that appear in two screenshots because of scrolling overlap are listed once.
 - The golfer's bag: ${bag || 'not recorded'}. Set "club" only when the screen's club is clearly one of these; otherwise null, with "clubAsShown" saying what the screen showed.
 - "summary" only when the screen shows averages or from-pin figures; include only the fields it shows.
 - Keep shots in the order the screen lists them.`;
 }
 
+// "6.2L" → -6.2, "12.1R" → 12.1, "-3.4" → -3.4 (minus is left); anything else null.
+function sideOf(v) {
+  if (typeof v === 'number') return isFinite(v) ? v : null;
+  if (typeof v !== 'string') return null;
+  const m = v.trim().replace(/\u2212/g, '-').match(/^([+-]?)\s*(\d+(?:[.,]\d+)?)\s*(?:m\b)?\s*([LR])?$/i);
+  if (!m) return null;
+  const n = Number(m[2].replace(',', '.'));
+  return m[3] ? (/l/i.test(m[3]) ? -n : n) : m[1] === '-' ? -n : n;
+}
 // Claude's reading → blocks the review sheet can show. Pure: no I/O.
 function normaliseShotRead(raw) {
   const units = ['m', 'yd'].includes(raw && raw.units) ? raw.units : 'unknown';
@@ -4072,8 +4130,21 @@ function normaliseShotRead(raw) {
       if (carry == null || total == null) { warnings.push(`Shot ${i + 1} left out: ${carry == null ? 'no carry' : 'no total'} could be read.`); return; }
       if (carry <= 0 || carry > 350 || total > 400) { warnings.push(`Shot ${i + 1} left out: ${fmt(carry, 1)} / ${fmt(total, 1)}m isn't a plausible range shot.`); return; }
       const out = { carry, total }; const sp = num(sh.clubSpeedMph); if (sp != null && sp > 0 && sp < 160) out.speed = sp;
+      const n = shots.length + 1, drop = [];
+      for (const [key, from] of [['carrySide', 'carrySide'], ['totalSide', 'totalSide']]) {
+        const v = sh[from]; if (v == null || v === '') continue;
+        const d = sideOf(v); if (d == null) { drop.push(`${EXTRA_LABEL[key].toLowerCase()} "${v}" couldn't be read`); continue; }
+        const m = Math.round(d * k * 10) / 10 || 0;
+        if (Math.abs(m) > 100) { drop.push(`${EXTRA_LABEL[key].toLowerCase()} ${sideText(m)} isn't plausible`); continue; }
+        out[key] = m;
+      }
+      for (const [key, from, lim, unit] of [['ballSpeed', 'ballSpeedMph', [10, 220], ' mph'], ['clubPath', 'clubPathDeg', [-30, 30], '°'], ['faceAngle', 'faceAngleDeg', [-30, 30], '°']]) {
+        const v = num(sh[from]); if (v == null) continue;
+        if (v < lim[0] || v > lim[1]) { drop.push(`${EXTRA_LABEL[key].toLowerCase()} ${v}${unit} isn't plausible`); continue; }
+        out[key] = v;
+      }
+      if (drop.length) warnings.push(`Shot ${n}: ${drop.join('; ')}; left out of that shot.`);
       shots.push(out);
-      const n = shots.length;
       if (sh.unclear) warnings.push(`Shot ${n} (${fmt(carry, 1)} / ${fmt(total, 1)}) was hard to read.`);
       if (total < carry) warnings.push(`Shot ${n}: total ${fmt(total, 1)} is less than carry ${fmt(carry, 1)}.`);
     });
@@ -4107,6 +4178,13 @@ const SHOT_READ_ERRORS = {
   invalid_json: 'Claude replied, but not in the expected format. Try again.',
 };
 
+// The other numbers the bay showed, as read, under the editable carry and total.
+function extrasTable(shots, i) {
+  const keys = SHOT_EXTRAS.filter(k => shots.some(sh => sh[k] != null)); if (!keys.length) return '';
+  return `<div class="extras">${checkF(`Keep the other numbers: ${keys.map(k => EXTRA_LABEL[k].toLowerCase()).join(', ')}`, `extras_${i}`, true)}
+    <div class="scroll"><table class="small"><thead><tr><th>#</th><th>Carry</th><th>Total</th>${keys.map(k => `<th>${EXTRA_LABEL[k]}</th>`).join('')}</tr></thead><tbody>${shots.map((sh, n) => `<tr><td>${n + 1}</td><td>${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td>${keys.map(k => `<td>${extraText(k, sh[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="small muted">These go with the shot whose carry and total they were read with. Change a shot's carry or total above and it keeps none of them.</p></div>`;
+}
 function openShotReview(sid, read, images) {
   const clubs = [['', '— pick a club —']].concat(activeClubs().filter(c => c.category !== 'putter').map(c => [c.code, c.code + '  ' + c.name]));
   const previews = images.map(b => URL.createObjectURL(b));
@@ -4123,24 +4201,28 @@ function openShotReview(sid, read, images) {
       <div class="grid3">${selectF('Club', `club_${i}`, clubs, b.club || '')}${selectF('Swing', `swing_${i}`, [['full', 'Full'], ['part', 'Part'], ['chip', 'Chip']], 'full')}${field('Target m', `target_${i}`, 'number', b.target, 'inputmode="decimal"')}</div>
       <label>Shots — carry, total, club speed<textarea name="shots_${i}" spellcheck="false">${esc(shotsText(b.shots))}</textarea></label>
       <div class="count" data-count="${i}"></div>
+      ${extrasTable(b.shots, i)}
+      <div class="notice" data-fill="${i}" hidden></div>
       ${b.summary ? `<div class="grid3">${field('Shots', `sm_n_${i}`, 'number', b.summary.n)}${smF(i, 'fromPinCarry', 'From pin (carry)', b.summary.fromPinCarry)}${smF(i, 'fromPinTotal', 'From pin (total)', b.summary.fromPinTotal)}</div><div class="grid2">${smF(i, 'avgCarry', 'Avg carry', b.summary.avgCarry)}${smF(i, 'avgTotal', 'Avg total', b.summary.avgTotal)}</div>` : ''}
       ${b.warnings.length ? `<ul class="warnlist">${b.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
     </div>`).join('')}`,
     async root => {
       const s = session(sid); if (!s) { toast('Session not found'); return false; }
-      const nb = [];
+      const nb = [], fills = [];
       for (let i = 0; i < read.blocks.length; i++) {
         if (!val(root, `keep_${i}`)) continue;
         const club = val(root, `club_${i}`);
         if (!club) { toast(`Pick a club for block ${i + 1}, or untick it`); return false; }
-        const shots = parseShots(val(root, `shots_${i}`) || '');
+        const shots = reviewShots(root, i);
         const sm = {}; for (const key of ['n', 'avgCarry', 'avgTotal', 'fromPinCarry', 'fromPinTotal']) { const v = val(root, `sm_${key}_${i}`); if (v != null) sm[key] = v; }
         if (shots.length) { delete sm.n; delete sm.avgCarry; delete sm.avgTotal; }   // derived from shots
         const summary = Object.keys(sm).length ? sm : null;
         if (!shots.length && !summary) { toast(`Block ${i + 1} has no shots left — untick it or add them`); return false; }
-        nb.push({ club, swing: val(root, `swing_${i}`) || 'full', target: val(root, `target_${i}`), shots, summary });
+        const swing = val(root, `swing_${i}`) || 'full', fill = shots.length ? fillTarget(s, club, swing, shots) : null;
+        if (fill) { fills.push({ fill, adds: fillAdds(fill, shots) }); continue; }
+        nb.push({ club, swing, target: val(root, `target_${i}`), shots, summary });
       }
-      if (!nb.length) { toast('Nothing ticked to save'); return false; }
+      if (!nb.length && !fills.some(f => f.adds.length)) { toast(fills.length ? 'These shots are already in Carry with nothing new to add' : 'Nothing ticked to save'); return false; }
       if (!S.assets) { toast('Saving needs write access to this page'); return false; }
       const assets = [];
       for (const img of images) {
@@ -4151,6 +4233,14 @@ function openShotReview(sid, read, images) {
       // A block for the same club and swing as one planned here fills that plan (keeping why it
       // was planned and what it's for), so the session shows it done; anything else is added.
       let blocks = (s.blocks || []).slice(), seq = blocks.reduce((m, b) => Math.max(m, b.seq || 0), 0);
+      // Shots Carry already has (typed, or read before) gain the numbers they lacked; nothing else
+      // on the block changes, and these screenshots are kept beside it as where they came from.
+      for (const { fill, adds } of fills) {
+        if (!adds.length) continue;
+        const i = blocks.findIndex(x => x.id === fill.block.id), by = new Map(adds), old = blocks[i];
+        blocks[i] = { ...old, shots: old.shots.map((sh, k) => by.has(k) ? { ...sh, ...by.get(k) } : sh),
+          filledFrom: [...(old.filledFrom || []), { ...fromImages, shots: adds.length }] };
+      }
       for (const b of nb) {
         const i = blocks.findIndex(x => x.plan && x.club === b.club && (x.swing || 'full') === (b.swing || 'full'));
         if (i >= 0) { const { plan: _, ...pb } = blocks[i]; blocks[i] = { ...pb, ...b, target: b.target ?? pb.target, fromImages }; }
@@ -4162,13 +4252,25 @@ function openShotReview(sid, read, images) {
       go('range', { sessionId: s.id });
       return true;
     });
-  const upd = () => read.blocks.forEach((_, i) => { const ta = sheetInner.querySelector(`[name=shots_${i}]`), out = sheetInner.querySelector(`[data-count="${i}"]`); const p = parseShots(ta.value); out.textContent = p.length ? `${plural(p.length, 'shot')}, avg carry ${fmt(mean(p.map(x => x.carry)), 1)}m, avg total ${fmt(mean(p.map(x => x.total)), 1)}m` : 'No shots.'; });
-  sheetInner.addEventListener('input', e => { if (/^shots_/.test(e.target.name || '')) upd(); });
+  const reviewShots = (root, i) => { const p = parseShots(val(root, `shots_${i}`) || ''); return val(root, `extras_${i}`) ? keepExtras(p, read.blocks[i].shots) : p; };
+  const upd = () => read.blocks.forEach((_, i) => {
+    const out = sheetInner.querySelector(`[data-count="${i}"]`), note = sheetInner.querySelector(`[data-fill="${i}"]`); const p = reviewShots(sheetInner, i);
+    const withSide = p.filter(x => x.carrySide != null || x.totalSide != null).length;
+    out.textContent = p.length ? `${plural(p.length, 'shot')}, avg carry ${fmt(mean(p.map(x => x.carry)), 1)}m, avg total ${fmt(mean(p.map(x => x.total)), 1)}m${withSide ? `, side for ${withSide}` : ''}` : 'No shots.';
+    const club = val(sheetInner, `club_${i}`), fill = club && p.length ? fillTarget(session(sid), club, val(sheetInner, `swing_${i}`) || 'full', p) : null;
+    note.hidden = !fill;
+    if (fill) { const adds = fillAdds(fill, p), miss = p.length - fill.pairs.length;
+      note.textContent = `These are shots Carry already has: ${fill.pairs.length} of ${p.length} match your ${club} block${fill.block.target ? ` to ${fill.block.target}m` : ''} by carry and total. ` +
+        (adds.length ? `Saving fills in what ${adds.length === 1 ? 'that shot lacks' : `those ${adds.length} shots lack`}; nothing else on the block changes.` : 'They add nothing new, so this block is skipped.') +
+        (miss ? ` ${plural(miss, 'shot')} here match${miss === 1 ? 'es' : ''} none of its shots and ${miss === 1 ? 'is' : 'are'} left out.` : ''); }
+  });
+  sheetInner.addEventListener('input', e => { if (/^(shots|extras)_/.test(e.target.name || '')) upd(); });
+  sheetInner.addEventListener('change', e => { if (/^(club|swing|extras|keep)_/.test(e.target.name || '')) upd(); });
   upd();
 }
 
 // Assets a block or a whole session points at, and letting them go.
-const blockAssets = b => (b && b.fromImages && b.fromImages.assets) || [];
+const blockAssets = b => [...((b && b.fromImages && b.fromImages.assets) || []), ...((b && b.filledFrom) || []).flatMap(f => f.assets || [])];
 const sessionAssets = s => [...((s.fromImages && s.fromImages.assets) || []), ...(s.blocks || []).flatMap(blockAssets), ...(s.swings || []).flatMap(sw => [...(sw.frames || []).map(f => f.asset), ...(sw.video ? [sw.video] : [])])];
 async function releaseAssets(ids) { if (!S.assets) return; for (const id of ids || []) { try { await S.assets.delete(id); } catch (e) {} } }
 
@@ -4759,7 +4861,7 @@ async function applyImport(data, { onProgress } = {}) {
   const remap = id => map[id] || id;
   const courses = (data.courses || []).map(c => ({ ...c, holes: (c.holes || []).map(h => h.art && h.art.asset ? { ...h, art: { ...h.art, asset: remap(h.art.asset) } } : h) }));
   const sessions = (data.sessions || []).map(s => ({ ...s, swings: (s.swings || []).map(sw => ({ ...sw, frames: (sw.frames || []).map(f => ({ ...f, asset: remap(f.asset) })), video: sw.video ? remap(sw.video) : null })),
-    ...(s.blocks ? { blocks: s.blocks.map(b => b.fromImages ? { ...b, fromImages: { ...b.fromImages, assets: (b.fromImages.assets || []).map(remap) } } : b) } : {}),
+    ...(s.blocks ? { blocks: s.blocks.map(b => ({ ...b, ...(b.fromImages ? { fromImages: { ...b.fromImages, assets: (b.fromImages.assets || []).map(remap) } } : {}), ...(b.filledFrom ? { filledFrom: b.filledFrom.map(f => ({ ...f, assets: (f.assets || []).map(remap) })) } : {}) })) } : {}),
     ...(s.fromImages ? { fromImages: { ...s.fromImages, assets: (s.fromImages.assets || []).map(remap) } } : {}) }));
   const counts = { clubs: 0, courses: 0, sessions: 0 };
   for (const c of (data.clubs || [])) { if (await save('clubs', c.code, c)) counts.clubs++; onProgress && onProgress('clubs', counts.clubs, (data.clubs || []).length); }

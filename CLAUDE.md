@@ -1884,6 +1884,29 @@ is the hole-maps chat's.
 
 ## Range data from screenshots
 
+**The bay's other numbers** (2.51.0, he sent his Trackman Golf shot list and
+asked to start on shot patterns): each shot can carry `carrySide`, `totalSide`
+(metres, minus left: the screen's "6.2L" is -6.2, `sideOf`), `ballSpeed` (mph),
+`clubPath`, `faceAngle` (degrees, the bay's sign), all optional
+(`SHOT_EXTRAS`); `speed` stays club speed. Read only from labelled columns,
+never worked out from another; a number that can't be one (side over 100 m,
+path or face over 30°, ball speed outside 10–220 mph) is left out of that shot
+and said. The review shows them in a table (`extrasTable`) with a keep box
+(`extras_i`); they ride on the shot whose carry and total they were read with
+(`keepExtras`, `matchShots`: equal to 0.1 m, in order, each once), so an edited
+carry drops them, and the block form keeps them the same way. **Filling in**:
+a read block whose shots are mostly (at least half) a hit block's here, same
+club and swing (`fillTarget`), adds only what those shots lack (`fillAdds`,
+club speed included) and records `filledFrom` (SCHEMA.md); never a second copy.
+The note `[data-fill=i]` says so before saving; unmatched read shots are named
+and left out; nothing new means the block is skipped. Trackman has no public
+API for the consumer app (checked 2026-10-31: CSV only from TPS on a bay's PC;
+unofficial tools use a browser login token), so screenshots stay the way in;
+a session share link was asked about, not yet seen. `ui-shot-extras` works his
+five 5W shots of 2026-10-31. **Not yet**: the shot patterns screens (mockups:
+https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh). He said to leave them until later
+(2026-10-31): 2.51.0 only reads and stores the numbers; nothing draws or uses them yet.
+
 Range shots come from screenshots of the bay's shot list, not typing:
 Range → a session → *From screenshots*. Claude reads them into blocks
 (prompt: `shotImagePrompt`), `normaliseShotRead` cleans the reading, and a
@@ -1902,7 +1925,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 409 tests, about 45s.
+`npm test` — 419 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1954,6 +1977,10 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `ui-shot-extras.test.js` (10) — the bay's other numbers: his Trackman screen read
+  as signed metres, mph and degrees; yards and implausible numbers; kept on their
+  shot through edits; existing shots filled in by carry and total, never added
+  twice; re-linked on import; shared screenshots kept until the last block goes.
 - `ui-*.test.js` (~100) — the app's own UI suites, rebuilt here. The
   originals from the artifact sandbox were never recovered, so these are
   new tests covering the same ground, driven through the real forms and
