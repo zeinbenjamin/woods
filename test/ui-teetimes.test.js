@@ -183,6 +183,23 @@ test('an open date picker or filter is not redrawn away while answers arrive', a
   app.go('courses', { view: 'teetimes', date: TOMORROW }); await settled('back to tomorrow');
 });
 
+test('on a computer a click opens the calendar, and another day keeps the page where it is', async () => {
+  // 2.44.0: on a PC the invisible date box only took typing, and every redraw
+  // put the day chips back at the start of their row.
+  let opened = 0; const pick = app.$('#ttPick'); pick.showPicker = () => { opened++; };
+  app.click(pick);
+  assert.equal(opened, 1, 'the calendar is asked to open');
+  let toTop = 0; const real = app.win.scrollTo; app.win.scrollTo = () => { toTop++; };
+  try {
+    pick.value = day(9); pick.dispatchEvent(new app.win.Event('change', { bubbles: true }));
+    assert.equal(app.J('S.sub').date, day(9));
+    app.click(`#ttDays [data-v="${TOMORROW}"]`);
+    assert.equal(app.J('S.sub').date, TOMORROW);
+    assert.equal(toTop, 0, 'no jump to the top of the page');
+  } finally { app.win.scrollTo = real; }
+  await settled('back to tomorrow');
+});
+
 test('a wider distance adds courses; another day asks again; check again re-reads', async () => {
   { const e = app.$('select[data-ttpref="within"]'); e.value = '0'; e.dispatchEvent(new app.win.Event('change', { bubbles: true })); }
   await settled('far course checked');

@@ -780,8 +780,10 @@ function render() {
   const gear = document.getElementById('settingsBtn'); if (gear) gear.setAttribute('aria-current', S.tab === 'settings' ? 'page' : 'false');
   // Every save redraws the view; panels he opened stay open (matched by id).
   const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
+  const days = document.getElementById('ttDays'), daysX = days ? days.scrollLeft : 0;
   $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
   for (const id of open) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
+  ttDaysScroll(daysX);
   if (resumed && !resumed.done && S.sessions.length + S.clubs.length) {
     resumed.done = true;
     for (const id of resumed.open || []) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
@@ -1465,6 +1467,22 @@ function ttRedraw() {
   if (tt.redraw) return;
   tt.redraw = setTimeout(() => { tt.redraw = null; if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') bgRender(); }, 50);
 }
+// Another day keeps the page where it is (2.44.0): the day chips scroll
+// sideways, and every redraw rebuilt them at the start, so a day picked at the
+// end of the row slid out of sight. render() puts the row back where it was,
+// and when the day was just changed, brings the pressed day into view.
+function ttSetDay(date) { S.sub = { ...(S.sub || {}), view: 'teetimes', date }; tt.showDay = true; render(); }
+function ttDaysScroll(x) {
+  const row = document.getElementById('ttDays'); if (!row) return;
+  row.scrollLeft = x;
+  if (!tt.showDay) return; tt.showDay = false;
+  const on = row.querySelector('[aria-pressed="true"]'); if (!on) return;
+  const l = on.offsetLeft - row.offsetLeft, r = l + on.offsetWidth;
+  if (l < row.scrollLeft) row.scrollLeft = l; else if (r > row.scrollLeft + row.clientWidth) row.scrollLeft = r - row.clientWidth;
+}
+// On a computer, a click on a date box selects its typed fields instead of
+// opening the calendar, and this box is invisible: open the calendar outright.
+document.addEventListener('click', e => { if (e.target.id === 'ttPick' && e.target.showPicker) { try { e.target.showPicker(); } catch (err) {} } });
 function ttLifecycle() { if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') ttWant(ttDate(), ttCourses(ttPrefs()).read); }
 // The answer's times that suit the filters; today, only times still ahead.
 // A time's price is its own first fee, else its rate's (as the list shows
@@ -1556,7 +1574,7 @@ function vTeeTimes() {
 document.addEventListener('change', e => {
   const s = e.target.closest && e.target.closest('select[data-ttpref]');
   if (s) { ttSetPref(s.dataset.ttpref, s.value === '' ? null : s.dataset.num ? Number(s.value) : s.value); render(); return; }
-  if (e.target.id === 'ttPick' && e.target.value && e.target.value !== ttDate()) go('courses', { view: 'teetimes', date: e.target.value });
+  if (e.target.id === 'ttPick' && e.target.value && e.target.value !== ttDate()) ttSetDay(e.target.value);
 });
 
 /* ---------- course map (OpenStreetMap) ----------
@@ -4179,7 +4197,7 @@ function courseMapLifecycle() {
 }
 
 // Tee times (see vTeeTimes).
-ACTIONS.ttDay = d => go('courses', { view: 'teetimes', date: d.v });
+ACTIONS.ttDay = d => ttSetDay(d.v);
 ACTIONS.ttPref = d => { ttSetPref(d.k, d.v === '' ? null : Number(d.v)); render(); };
 ACTIONS.ttRefresh = () => { const date = ttDate(); for (const k of Object.keys(tt.res)) if (k.endsWith('|' + date) && !tt.res[k].loading) delete tt.res[k]; tt.fresh = true; render(); tt.fresh = false; };
 
