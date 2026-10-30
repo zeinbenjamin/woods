@@ -696,7 +696,13 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   app's buttons (2.43.1, he asked: "consistent with the design of the app", not
   2.42.0's 16px of their own): 500 14px, 38px tall. A select can't be under
   16px or iOS zooms into it, so each is a `.ttsel` label showing the choice,
-  with the real 16px select laid invisibly over it, as `#ttPick` is. Measured in Chromium at 390px,
+  with the real 16px select laid invisibly over it, as `#ttPick` is.
+  **An open picker isn't redrawn away** (2.43.2, he found *Pick a date* shut a
+  second after opening): each answer arriving redrew the page, replacing the
+  date box and closing the phone's calendar. Background redraws (answers,
+  polls) go through `bgRender()`, which waits while `#ttPick` or a filter
+  select has focus (`pickerOpen()`, retried every 250 ms); a change to the day
+  already shown (iOS fills in today on opening) is not a new search. Measured in Chromium at 390px,
   light and dark: two rows, one size, no sideways scroll.
 - **TeeItUp, read at his decision** (2.43.0, 2026-10-30: "build the GolfNow
   reader anyway, since it's for personal and non-commercial use"; told first
@@ -1686,7 +1692,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 388 tests, about 45s.
+`npm test` — 389 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1703,7 +1709,7 @@ fixture would let the reading be pinned.
   `/api/version`, the stamped page, and `/api/analyse` against a fake
   Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
   Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
-- `ui-teetimes.test.js` (10) — the search screen against a stand-in MiClub
+- `ui-teetimes.test.js` (11) — the search screen against a stand-in MiClub
   serving Bexley's pages: which courses are asked (near, public, readable),
   a course's rates and time chips linking to the club's timesheet, why a
   course shows nothing and the order, filters working without asking any

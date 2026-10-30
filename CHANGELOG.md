@@ -1,3 +1,6 @@
+## 2.43.2 — 2026-10-30
+- *Pick a date* on Find a tee time no longer closes its calendar a second after opening it. The page was redrawing as each course's times came in; it now waits while a date picker or filter is open.
+
 ## 2.43.1 — 2026-10-30
 - Tee times: the filters now use the same size and weight as the app's other buttons, instead of a larger size of their own. Tapping a menu still opens your phone's picker without zooming the page.
 
