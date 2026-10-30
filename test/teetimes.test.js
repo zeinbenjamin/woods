@@ -18,6 +18,10 @@ test('which booking links are MiClub, and the course id behind each', () => {
   assert.equal(miclubSource('https://moorepark.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3050007').resource, '3050007');
   assert.equal(miclubSource('https://coast.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=').guessed, true, 'an empty id is a guess');
   assert.deepEqual(miclubSource('https://masseypark.miclub.com.au/cms/public-bookings/'), { origin: 'https://masseypark.miclub.com.au', resource: '3000000', guessed: true });
+  // Gordon's and Richmond's links, on their own domains: their calendar is at the usual address (read 2026-10-30).
+  assert.deepEqual(miclubSource('https://www.gordongolfcourse.com.au/guests/ListBookingEvents.msp?booking_resource_id=187'), { origin: 'https://www.gordongolfcourse.com.au', resource: '187', guessed: false });
+  assert.equal(miclubSource('https://www.richmondgolfclub.com.au/guests/ListBookingEvents.msp?booking_resource_id=3000000').resource, '3000000');
+  assert.equal(miclubSource('https://example.com/guests/'), null, 'a /guests/ path alone is not MiClub');
   for (const u of ['https://lanecove.quick18.com/teetimes/searchmatrix', 'https://www.golfnow.com.au/tee-times/facility/17227-avalon-golf-course/search',
     'https://hurstvillegolf.com.au/book/', 'javascript:alert(1)', 'not a url', '', undefined]) assert.equal(miclubSource(u), null, String(u));
   const src = miclubSource('https://www.bexleygolf.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000');

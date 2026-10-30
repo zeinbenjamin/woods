@@ -659,6 +659,25 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   and its full list, served with the page, has three: Huntingdale and
   Keysborough (VIC), The Vines (WA). No NSW club at all, and a search near
   Sydney finds none. Reading each club's own calendar stays the way.
+- **GolfNow is not read, on purpose** (2026-10-30). Its facility pages
+  fill in times by script, so a reader would call its API, and its Terms of
+  Service (golfnow.com.au, effective 12 Jan 2026, s.2) say "You may also not
+  use any software robots, spider, crawlers, or other data gathering or
+  extraction tools, whether automated or manual, to access, acquire, copy,
+  monitor, scrape or aggregate Content", and limit use to "personal and
+  non-commercial use". MiClub's public calendars carry no such terms, as far
+  as was seen. GolfNow's 7 courses stay under *Booked another way*, linked.
+  Put to him before building anything.
+- **Gordon and Richmond** (2.41.3): their links are MiClub's
+  `/guests/ListBookingEvents.msp` on the club's own domain, which
+  `miclubSource` and `ttReadable` didn't recognise; both now take any
+  `/guests/<Page>.msp` (`MICLUB_PATH`). Their standard calendars read normally
+  (Gordon 187: 18 and 10 holes; Richmond 3000000). **Long Reef, Northbridge
+  and The Coast** are MiClub too, but their NAS records (no import file) have
+  no `bookingUrl`, so they aren't searched until one is added in the app;
+  each calendar reads at `<club>.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000`
+  (`longreef`, `northbridge`, `coast`; The Coast shows "Timesheets open 7 days
+  prior" further out).
 - **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
