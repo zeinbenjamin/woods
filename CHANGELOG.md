@@ -1,3 +1,6 @@
+## 2.47.0 — 2026-10-30
+- Courses: each course in the list now has a small picture of the whole course at the left, drawn from its map: the outline, fairways, water and greens, north up. A course without a linked map shows its initials in the same tile.
+
 ## 2.46.0 — 2026-10-30
 - Every course map now comes with a small picture of the whole course, its outline, fairways, water and greens, ready for the Courses list. It appears there once the list is updated to show it.
 

@@ -987,6 +987,17 @@ keeps clicks inside a popup to itself, so *Open course* gets its own handler on
 the escaped popup, the same element and zoom after a redraw, a pin opening its
 course, and no button without a placed course.
 
+**Course pictures** (2.47.0, the hole-maps chat's note after its 2.46.0
+`icons.json`): each list row is a `.crow` with `courseIcon(c)` at the left,
+`HoleMap.iconTile(id, name, {size: 56})`: the map's picture when the course has
+a map link (`c.map.id`), else its initials in the same tile (also while
+`icons.json` loads, or for an id it doesn't have). `vCourses` calls
+`HoleMap.icons()` to start the file; its arrival fires `onLoad('__icons')`,
+which `mapArrived` already redraws on. The tile's colours are the `--hmi-*`
+tokens holemap.js injects, light and dark. Checked at 390px both modes: no
+sideways scroll. `ui-courseicons` against the real `icons.json`. A larger one
+at the top of a course page was offered as optional; not built.
+
 ## Estimated handicap
 
 `handicap()` (memoised, never stored) replays every round in date order under
@@ -1780,7 +1791,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 400 tests, about 45s.
+`npm test` — 401 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1887,6 +1898,7 @@ fixture would let the reading be pinned.
   video feed with a stand-in observer),
   `ui-import-many` (Import a backup with many files: one question, a stray
   named and skipped, only wrong files refused),
+  `ui-courseicons` (a linked course's picture in the list, initials otherwise),
   `ui-coursemap` (Courses on a map: the one row, pins by who can play, home,
   the map kept across a redraw, a pin opening its course),
   `ui-theme` (Appearance: System, Light, Dark; the root attribute, the
