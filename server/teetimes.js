@@ -65,8 +65,10 @@ export function parseCalendar(html) {
     const cls = classes(open);
     const id = (/data-feeid="(\d+)"/.exec(open) || [])[1];
     const name = text((/<h3>([\s\S]*?)<\/h3>/.exec(b) || [, ''])[1]);
-    const holes = cls.includes('nineHole') || cls.includes('nineHoles') ? 9 : cls.includes('eighteenHoles') ? 18
-      : /\b9\b/.test(name) ? 9 : /\b18\b/.test(name) ? 18 : null;
+    // The name first: MiClub classes every rate that isn't 18 holes as
+    // `nineHole`, so Moore Park's "12-Holes" carried it (2.40.1).
+    const named = /\b(9|10|12|18)\s*-?\s*holes?\b/i.exec(name);
+    const holes = named ? Number(named[1]) : cls.includes('eighteenHoles') ? 18 : cls.includes('nineHole') || cls.includes('nineHoles') ? 9 : null;
     const days = {};
     for (const m of b.matchAll(/<div\b([^>]*\bclass="[^"]*\bcell\b[^"]*"[^>]*)>([\s\S]*?)<\/div>/g)) {
       const date = (/redirectToTimesheet\('\d+'\s*,\s*'(\d{4}-\d{2}-\d{2})'\)/.exec(m[1]) || [])[1];
@@ -157,7 +159,14 @@ export async function teeTimes(course, date, filters = {}) {
       const times = sheet.filter(t => suits(t, r, filters));
       rates.push({ name: r.name, holes: r.holes, price: r.days[date].price, special: r.days[date].special, url, times, listed: sheet.length });
     }
-    return { status: 'ok', source: 'MiClub', date, calendar, rates, fetchedAt: new Date().toISOString() };
+    // Nothing to show is said, never left as a bare empty list (2.40.1): a
+    // calendar with no rates at all (Massey Park's shows times only to
+    // registered public members) reads differently from a day with none.
+    const note = rates.length ? null
+      : !cal.length ? `The club's public calendar lists no rates at all: its times may only show after signing up on its site${src.guessed ? `, or the course id Carry assumed (${src.resource}) is not this course's` : ''}.`
+      : !cal.some(r => r.days[date]) ? 'Nothing is open to the public on this day (often a members\' competition).'
+      : 'No rate on this day matches the holes asked for.';
+    return { status: 'ok', source: 'MiClub', date, calendar, rates, ...(note ? { note } : {}), fetchedAt: new Date().toISOString() };
   } catch (e) {
     return { status: e.code === 'unreachable' ? 'unreachable' : 'unreadable', calendar, message: e.message };
   }
@@ -168,5 +177,5 @@ export function readFilters(q) {
   const hhmm = v => (/^\d{2}:\d{2}$/.test(v || '') ? v : null);
   const n = v => (/^\d+$/.test(v || '') ? Number(v) : null);
   const holes = n(q.holes);
-  return { from: hhmm(q.from), to: hhmm(q.to), holes: holes === 9 || holes === 18 ? holes : null, players: Math.min(4, n(q.players) || 0) || null };
+  return { from: hhmm(q.from), to: hhmm(q.to), holes: [9, 10, 12, 18].includes(holes) ? holes : null, players: Math.min(4, n(q.players) || 0) || null };
 }

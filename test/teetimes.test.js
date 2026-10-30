@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { miclubSource, calendarUrl, timesheetUrl, parseCalendar, parseTimesheet, clock, suits, readFilters } from '../server/teetimes.js';
 
 const fixture = f => readFileSync(new URL(`fixtures/${f}`, import.meta.url), 'utf8');
-const CAL = fixture('miclub-calendar.html'), SHEET = fixture('miclub-timesheet.html');
+const CAL = fixture('miclub-calendar.html'), SHEET = fixture('miclub-timesheet.html'), EMPTY = fixture('miclub-calendar-empty.html');
 
 test('which booking links are MiClub, and the course id behind each', () => {
   assert.deepEqual(miclubSource('https://www.bexleygolf.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000'),
@@ -33,6 +33,10 @@ test('the calendar: each rate, its holes, and its price on the days it is offere
   assert.deepEqual(cal[1].days['2026-10-31'], { price: 25, special: true });
   assert.deepEqual(Object.keys(cal[2].days), ['2026-10-30', '2026-11-02'], '"Not Available" on Saturday is left out');
   assert.equal(parseCalendar('<html><body>Please log in</body></html>'), null, 'a page that is not a calendar is unreadable, not empty');
+  // Moore Park's 12-hole rate carries MiClub's nineHole class (seen live 2026-10-30): the name wins.
+  const twelve = CAL.replace('<h3>9 Holes</h3>', '<h3>12-Holes</h3>');
+  assert.equal(parseCalendar(twelve)[2].holes, 12);
+  assert.deepEqual(parseCalendar(EMPTY), [], 'Massey Park\'s calendar: a calendar, with no rates');
 });
 
 test('the timesheet: every tee time in 24-hour time with its free spots', () => {
@@ -54,6 +58,7 @@ test('filters: time window, holes and players; a full time never suits', () => {
   assert.equal(suits(t('09:00', 4), r18, { holes: 9 }), false);
   assert.equal(suits(t('09:00', 0), r18, {}), false);
   assert.deepEqual(readFilters({ from: '07:00', to: '7pm', holes: '27', players: '9' }), { from: '07:00', to: null, holes: null, players: 4 }, 'nonsense is dropped, players capped at a four');
+  assert.equal(readFilters({ holes: '12' }).holes, 12, 'a 12-hole course can be asked for');
 });
 
 /* ---------- end to end ---------- */
@@ -69,15 +74,17 @@ before(async () => {
     seen.push(req.url + ' ' + req.headers['user-agent']);
     if (broken) { res.writeHead(503); return res.end('down'); }
     res.writeHead(200, { 'content-type': 'text/html' });
-    res.end(/ViewPublicCalendar/.test(req.url) ? CAL : /ViewPublicTimesheet/.test(req.url) ? SHEET : 'nope');
+    res.end(/ViewPublicCalendar/.test(req.url) ? (/resource_id=5\b/.test(req.url) || /^localhost:/.test(req.headers.host) ? EMPTY : CAL) : /ViewPublicTimesheet/.test(req.url) ? SHEET : 'nope');
   });
-  await new Promise(r => fake.listen(0, '127.0.0.1', r));
+  await new Promise(r => fake.listen(0, r));
   proc = spawn('node', ['server/index.js'], { env: { ...process.env, PORT: String(PORT), DATA_DIR: DATA, DEV_USER: 'me@example.com', ANTHROPIC_API_KEY: '', TEETIMES_TTL_MS: '1500' } });
   for (let i = 0; i < 80; i++) { try { if ((await fetch(`${base}/healthz`)).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   const put = (id, doc) => fetch(`${base}/api/courses/${id}`, { method: 'PUT', headers: hdr, body: JSON.stringify({ id, v: 2, name: id, holes: [], ...doc }) });
   await put('c_mi', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000` });
   await put('c_q18', { bookingUrl: 'https://lanecove.quick18.com/teetimes/searchmatrix' });
   await put('c_none', {});
+  await put('c_empty', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=5` });
+  await put('c_guess', { bookingUrl: `http://localhost:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp` });   // no id in the link (as Massey Park's), an empty calendar
   await put('c_down', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=4` });
 });
 after(() => { proc && proc.kill(); fake && fake.close(); rmSync(DATA, { recursive: true, force: true }); });
@@ -107,6 +114,16 @@ test('filters reach the club only as its own pages: holes picks the rates, the r
   await new Promise(r => setTimeout(r, 1600));
   await get('/api/teetimes/c_mi?date=2026-10-30&holes=9');
   assert.equal(seen.length, 4, 'and asked again once the memory is older than its few minutes (1.5 s here)');
+});
+
+test('an empty answer says why: nothing that day, a calendar with no rates, a holes filter', async () => {
+  const day = await get('/api/teetimes/c_mi?date=2026-11-07');
+  assert.deepEqual(day.body.rates, []); assert.match(day.body.note, /Nothing is open to the public on this day/, 'Bexley on Saturday 7 Nov');
+  const none = await get('/api/teetimes/c_empty?date=2026-11-07');
+  assert.match(none.body.note, /lists no rates at all/); assert.doesNotMatch(none.body.note, /assumed/, 'the id was in the link');
+  assert.match((await get('/api/teetimes/c_guess?date=2026-11-07')).body.note, /assumed \(3000000\)/, 'Massey Park: the id was assumed');
+  assert.match((await get('/api/teetimes/c_mi?date=2026-10-31&holes=9')).body.note, /matches the holes/);
+  assert.equal((await get('/api/teetimes/c_mi?date=2026-10-31')).body.note, undefined, 'no note when there are rates');
 });
 
 test('what can\'t be read says so, and is never "no times"', async () => {

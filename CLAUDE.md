@@ -596,6 +596,18 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   first search on the NAS is the test. If MiClub refuses a server (bot
   protection, a captcha: the calendar page carries an invisible reCAPTCHA,
   apparently for the login), it shows as unreachable or unreadable.
+- **First live run** (2.40.1, his phone on the NAS, 2026-10-30, for Sat 7 Nov):
+  Moore Park read end to end (one 12-hole rate, 48 times, free spots right,
+  the twilight fee per time after 17:00), so a server is not refused. Two
+  fixes: the holes come from the rate's **name** first (MiClub classes every
+  non-18 rate `nineHole`; Moore Park's "12-Holes" read as 9), and `holes`
+  accepts 9, 10, 12, 18; an empty `rates` always carries a `note`. Bexley was
+  right to be empty (every rate "Not Available" that Saturday: "Nothing is
+  open to the public on this day"). Massey Park's id 3000000 is the one its
+  own *View tee times* button uses, and that calendar has no rates at all
+  (registered public members only, it seems): "lists no rates at all… may
+  only show after signing up", plus "or the course id Carry assumed" when
+  the link had none. `test/fixtures/miclub-calendar-empty.html` is that page.
 - **Next:** the search screen (Courses → *Tee times*: day, time window, 9/18,
   players, distance from `home`, one request per course so results fill in
   as they come), then GolfNow (8 courses).
@@ -1548,7 +1560,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 371 tests, about 45s.
+`npm test` — 372 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1565,7 +1577,7 @@ fixture would let the reading be pinned.
   `/api/version`, the stamped page, and `/api/analyse` against a fake
   Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
   Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
-- `teetimes.test.js` (8) — the MiClub reader against Bexley's real calendar
+- `teetimes.test.js` (9) — the MiClub reader against Bexley's real calendar
   and timesheet (`test/fixtures/`), which links are MiClub, the filters, and
   the route against a stand-in MiClub: rates, times, the cache expiring,
   unsupported, unreachable, a bad date, sign-in.
