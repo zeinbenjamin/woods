@@ -305,14 +305,24 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
                                      // block is hit (screenshots fill the planned block)
       "summary": { "n": 20, "avgCarry": 46, "avgTotal": 51,
                    "fromPinCarry": 11.5, "fromPinTotal": 9.6, "hitsC": 4 },
-      "shots": [ { "carry": 147.5, "total": 178.2, "speed": 82.2,
-                   "hitC": false, "hitT": true } ],
+      "shots": [ { "carry": 147.5, "total": 178.2, "speed": 82.2,   // speed: CLUB speed, mph
+                   "hitC": false, "hitT": true,
+                   // 2.51.0, each optional, stored as the bay showed it (missing = not measured):
+                   "carrySide": -6.2, "totalSide": -6.0,  // metres; minus left, plus right ("6.2L" = -6.2)
+                   "ballSpeed": 122.7,                    // mph
+                   "clubPath": -2.1, "faceAngle": -4.8    // degrees, the bay's own sign
+                 } ],
       "fromImages": {                // only when the shots were read from screenshots
         "assets": ["<asset id>"],    // the screenshots themselves, kept as evidence
         "readOn": "2026-09-26",
         "units": "m|yd|unknown",     // what the screen said
         "converted": false           // true when yards were converted to metres
-      }
+      },
+      "filledFrom": [                // 2.51.0: screenshots that added numbers to shots already here,
+        { "assets": ["<asset id>"],  // matched by carry and total (to 0.1 m); carry and total never change
+          "readOn": "2026-10-31", "units": "m", "converted": false,
+          "shots": 5 }               // how many shots gained a number
+      ]
     }
   ]
 }

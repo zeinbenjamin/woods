@@ -1,3 +1,11 @@
+## 2.51.0 — 2026-10-31
+- Range screenshots now read more than carry and total: carry side and total side (left or right of the target, in metres), ball speed, club path and face angle, when the shot list shows them. Turn those columns on in the range app before taking the screenshots.
+- The review shows those numbers under the shots, with a box to leave them out. They stay with the shot they were read with: change a shot's carry or total and it keeps none of them.
+- Screenshots of a session that's already in Carry fill in the numbers its shots are missing instead of adding the shots twice. Shots are matched by carry and total; nothing else on the block changes, and the screenshots are kept with it. Shots that match nothing are named and left out.
+- A block's shot table shows the new columns, with a dash where the bay didn't measure one.
+- Up to 12 screenshots at a time, up from 6, since a list with more columns shows fewer shots per screen.
+- Deleting one of two blocks read from the same screenshots no longer deletes the screenshots the other block still shows.
+
 ## 2.50.0 — 2026-10-31
 - Courses: the top is two rows now. *Find a tee time* is the one button beside the heading, with *Add course* as a small + next to it. The sort says *Newest* instead of *Recently added*, the map is a pin icon, and *From Home ›* sits at the end of the same row.
 - Rounds: *Play* starts a round with GPS (it was *Start round*). *Add past round* replaces *New round* and the screenshots link: it asks whether to type the round in or read it from screenshots.
