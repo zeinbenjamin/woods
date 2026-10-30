@@ -297,6 +297,7 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .filmstrip { display: flex; gap: 4px; overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
 .filmstrip img { height: 132px; width: auto; border-radius: 4px; flex: 0 0 auto; background: var(--paper-2); }
 .analysis { border-left: 3px solid var(--green); padding: 8px 10px; margin: 8px 0 0; background: var(--paper-2); border-radius: 0 var(--r) var(--r) 0; }
+.swshot { margin: 4px 0 8px; } .swshot button.quiet { padding: 2px 6px; }
 .analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
 .analysis .one.long { font: 500 14px/1.35 var(--body); }
 .analysis .obs { font-size: 13px; margin: 3px 0; }
@@ -1552,9 +1553,9 @@ function vBlock() {
   if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
   const gs = (b.goals || []).length ? blockGoals(b) : [];
   if (gs.length) h += `<div id="blockGoals" class="small">For: ${gs.map(g => `<button class="quiet" style="padding:2px 6px" data-go="range:goal=${esc(g.key)}">${esc(goalName(g))} →</button>`).join('')}</div>`;
-  const xk = SHOT_EXTRAS.filter(k => shots.some(sh => sh[k] != null));
+  const xk = SHOT_EXTRAS.filter(k => shots.some(sh => sh[k] != null)), filmed = filmedShots(s);
   if (shots.length) h += `<details id="shotTable"><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Club speed</th>${xk.map(k => `<th>${EXTRA_LABEL[k]}</th>`).join('')}<th></th></tr></thead><tbody>` +
-    shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td>${xk.map(k => `<td>${extraText(k, sh[k])}</td>`).join('')}<td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
+    shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td>${xk.map(k => `<td>${extraText(k, sh[k])}</td>`).join('')}<td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}${filmed.has(`${b.id}:${i}`) ? ' ' + FILMED : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
   else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}.${b.reason ? ` Why: ${esc(b.reason)}.` : ''} After you hit it, tap Edit and paste the shots.</div>`;
   else h += `<p class="muted small">Summary only. Edit the block to paste shots.</p>`;
   const nSrc = blockAssets(b).length;
@@ -2597,7 +2598,8 @@ function vHoleLog() {
     <div class="spread" style="margin-top:14px"><span class="stat" style="margin:0"><b>${shots.length ? strokes : (hole.strokes ?? '–')}</b><small>${shots.length ? 'strokes (shots + putts + penalties)' : 'strokes, from scorecard'}</small></span>
     <div class="row-actions" style="margin:0"><button data-act="undoShot">Undo shot</button><button class="danger" data-act="clearHole">Clear hole</button></div></div>`;
   if (onGreen && hole.putts != null && n < all.length) html += `<div class="row-actions" style="margin-top:12px"><button class="primary" data-go="rounds:sessionId=${r.id},hole=${n + 1}">Hole ${n + 1} →</button><span class="small muted">${holeStrokes(hole)} on this hole</span></div>`;
-  if (shots.length) html += `<h2>Shots</h2><div class="shotlist">` + shots.map((s, i) => { const from = i ? toGreen(h, shots[i - 1]) : hole.metres, len = shotLen(h, i); return `<button class="shotrow" data-act="editShot" data-sid="${r.id}" data-n="${n}" data-i="${i}"><span>${i + 1}. ${esc(s.club || '?')}${from == null ? '' : ` from ${Math.round(from)}m`}${s.approx ? ' <span class="tag">approx.</span>' : ''}${s.penalty ? ' <span class="tag flag">penalty</span>' : ''}${s.verified ? ' <span class="tag green">real</span>' : ''}</span><span class="muted">${len == null ? 'not measurable' : Math.round(len) + 'm'}, ${lieOf(h, s)} ›</span></button>`; }).join('') + `</div><p class="small muted">Tap a shot to change its club or lie, move it, or delete it.</p>`;
+  const filmed = shots.length ? filmedShots(r) : new Set();
+  if (shots.length) html += `<h2>Shots</h2><div class="shotlist">` + shots.map((s, i) => { const from = i ? toGreen(h, shots[i - 1]) : hole.metres, len = shotLen(h, i); return `<button class="shotrow" data-act="editShot" data-sid="${r.id}" data-n="${n}" data-i="${i}"><span>${i + 1}. ${esc(s.club || '?')}${from == null ? '' : ` from ${Math.round(from)}m`}${filmed.has(`${n}:${i}`) ? ' ' + FILMED : ''}${s.approx ? ' <span class="tag">approx.</span>' : ''}${s.penalty ? ' <span class="tag flag">penalty</span>' : ''}${s.verified ? ' <span class="tag green">real</span>' : ''}</span><span class="muted">${len == null ? 'not measurable' : Math.round(len) + 'm'}, ${lieOf(h, s)} ›</span></button>`; }).join('') + `</div><p class="small muted">Tap a shot to change its club or lie, move it, or delete it.</p>`;
   return html;
 }
 // One write per round at a time, each applied to the latest copy: two quick
@@ -2618,7 +2620,8 @@ async function applyHoleUpdate(r, n, fn) {
     return nh;
   });
   const detail = holes.some(h => (h.shots || []).length) ? 'shot_level' : 'score_only';
-  return save('sessions', r.id, { ...r, holes, detail });
+  const swings = retagSwings(r.swings, n, (r.holes.find(h => h.n === n) || {}).shots || [], (holes.find(h => h.n === n) || {}).shots || []);
+  return save('sessions', r.id, { ...r, holes, detail, ...(swings ? { swings } : {}) });
 }
 document.addEventListener('click', async e => {
   if (!(S.tab === 'rounds' && S.sub && S.sub.hole)) return;
@@ -3492,6 +3495,8 @@ function vGoal() {
   const ev = [it.detail ? `<p class="small">${esc(it.detail)}</p>` : '', it.range ? `<p class="small muted">${esc(it.range)}</p>` : '', it.advice ? `<p class="small"><b>On course:</b> ${esc(it.advice)}</p>` : '',
     ...sup.map(v => `<p class="small"><span class="tag">read from video</span> ${esc(v.title)}${v.agrees ? ' <span class="muted">Agrees with the ball data.</span>' : ''}${v.practice ? `<br><span class="muted">Drill: ${esc(v.practice)}</span>` : ''}</p>`)].join('');
   if (ev) h += `<h2>The evidence</h2><div id="goalEvidence">${ev}</div>`;
+  const filmed = goalSwings(it);
+  if (filmed.length) h += `<h2>Filmed</h2><div class="list" id="goalFilmed">` + filmed.map(({ sw, x }) => `<button class="item" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}"><div class="t">${dateLabel(swingDate(sw))} · ${esc(sw.club || x.sh.club || x.b && x.b.club || '')} <span class="muted small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div><div class="s">${esc(swingShotText(x))}</div>${sw.analysis && sw.analysis.one_thing ? `<div class="s"><b>${esc(sw.analysis.one_thing)}</b></div>` : ''}</button>`).join('') + `</div><p class="small muted">Swings tied to shots that are evidence for this: what the miss looked like.</p>`;
   // The range sessions that hit its club and swing, newest first.
   const hits = S.sessions.filter(s => s.type === 'range').flatMap(s => (s.blocks || []).filter(x => blockHit(x) && b && x.club === b.club && (x.swing || 'full') === (b.swing || 'full')).map(x => ({ s, x })))
     .sort((m, n) => (n.s.date || '').localeCompare(m.s.date || '')).slice(0, 6);
@@ -3711,6 +3716,7 @@ WRIST ANGLE (this view can show it): first find the frame nearest the top of the
 CAMERA VIEW: ${VIEW_BRIEF[sw.view] || VIEW_BRIEF.other}
 ${wrist}
 CLUB AND BALL DATA: ${ballContextFor(sw.club)}
+${swingShotContext(sw, session)}
 ${poseContext(sw)}
 ${focus}
 ${sw.note ? `The player's own note on this swing: "${sw.note}"` : ''}
@@ -3733,7 +3739,7 @@ Answer as JSON with exactly these keys, keeping to the word limits:
   "cannot_tell": ["up to three short things this camera angle or frame spacing cannot answer"]
 }
 
-At most three observations, the one behind the fix first. "ball_data" is "agrees" only when what you see would produce the strike mix above. Be restrained: only claim what the frames support; put anything you are unsure of at low confidence or in cannot_tell. Do not invent measurements or angles. Prefer "I cannot see that from here" over a guess.`;
+At most three observations, the one behind the fix first. "ball_data" is "agrees" only when what you see would produce ${swingShotContext(sw, session) ? "this swing's own shot first, and the strike mix above second" : 'the strike mix above'}. Be restrained: only claim what the frames support; put anything you are unsure of at low confidence or in cannot_tell. Do not invent measurements or angles. Prefer "I cannot see that from here" over a guess.`;
 }
 async function analyseSwing(sessionId, swingId, onText) {
   const s = session(sessionId), sw = swingsOf(s).find(x => x.id === swingId);
@@ -3914,7 +3920,7 @@ function poseTrend(club, swings) {
       .sort((a, b) => (swingDate(a.sw) || '').localeCompare(swingDate(b.sw) || ''));
     if (!ms.length) continue;
     for (const d of POSE_MEASURES[view]) {
-      const pts = ms.map(x => ({ date: swingDate(x.sw), v: (poseValues(x.m).find(y => y.k === d.k) || {}).v })).filter(p => p.v != null);
+      const pts = ms.map(x => ({ date: swingDate(x.sw), course: !!x.sw.session && x.sw.session.type === 'round', v: (poseValues(x.m).find(y => y.k === d.k) || {}).v })).filter(p => p.v != null);
       if (pts.length) out.push({ view, ...d, pts });
     }
   }
@@ -3922,7 +3928,7 @@ function poseTrend(club, swings) {
 }
 function poseTrendHtml(club, swings) {
   const tr = poseTrend(club, swings); if (!tr.length) return '';
-  return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing:</b></div><ul class="trend" id="ptrend_${esc(club)}">${tr.map(t => `<li><div class="row"><b>${esc(t.name)}</b><span class="muted">${esc(VIEWS[t.view])}</span></div><div class="vals">${t.pts.slice(-6).map(p => `${dateLabel(p.date)} <strong>${fmt(p.v)}${t.unit.startsWith('°') ? '°' : '%'}</strong>`).join(' · ')}</div><div class="s">${esc(t.unit)}</div></li>`).join('')}</ul>`;
+  return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing:</b></div><ul class="trend" id="ptrend_${esc(club)}">${tr.map(t => `<li><div class="row"><b>${esc(t.name)}</b><span class="muted">${esc(VIEWS[t.view])}</span></div><div class="vals">${t.pts.slice(-6).map(p => `${dateLabel(p.date)}${p.course ? ' (course)' : ''} <strong>${fmt(p.v)}${t.unit.startsWith('°') ? '°' : '%'}</strong>`).join(' · ')}</div><div class="s">${esc(t.unit)}</div></li>`).join('')}</ul>`;
 }
 async function measureAndSave(sid, wid, onFrame) {
   const s = session(sid), sw = s && swingsOf(s).find(x => x.id === wid); if (!sw) return { error: 'gone' };
@@ -3959,6 +3965,7 @@ function swingCard(sw, s, opts = {}) {
     <div class="spread"><div><b>${esc(VIEWS[sw.view] || 'Swing')}</b>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}${a ? ' <span class="tag green">analysed</span>' : ''}</div>
       <span class="small muted">${sw.frames.length} frames${sw.impact != null ? `, packed around impact at ${sw.impact.toFixed(1)} s` : frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
+    ${swingShotSection(sw, s)}
     <div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
     ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}
     ${poseSection(sw, s)}
@@ -3978,6 +3985,122 @@ function swingSection(s) {
     (sws.length ? sws.map(sw => swingCard(sw, s)).join('')
       : `<p class="small muted">${S.assets ? 'Add a video and the app pulls frames out of it — a couple per session is plenty.' : 'Adding swings needs write access to this page.'}</p>`) + `</section>`;
 }
+
+/* ---------- this swing's own shot (2.56.0) ----------
+   He asked (2026-10-31): tie a swing to the ball it hit, on the course or at the
+   range, so its reading is checked against that shot and not only the club's
+   averages. Stored as `swing.shot` (SCHEMA.md), a reference only: {hole, i} on a
+   round, {block, i, carry, total} at the range. What the shot did is read from the
+   shot itself on every draw. A round's tags follow its shots when one is deleted
+   (`retagSwings`, in the same write); a range tag finds its shot by carry and total,
+   so a re-pasted block keeps it. A tag whose shot has gone says so, never guesses. */
+const PROF_WORD = { pure: 'a pure strike', runner: 'a low runner', short: 'short of a pure strike', top: 'topped' };
+function swingShot(sw, s, hs) {
+  const t = sw && sw.shot; if (!t || !s) return null;
+  if (s.type === 'round') {
+    const h = (hs || holesOf(s)).find(x => x.n === Number(t.hole)), shots = (h && h.shots) || [], i = Number(t.i), sh = shots[i];
+    if (!sh) return { gone: true };
+    const from = i ? toGreen(h, shots[i - 1]) : h.metres || null, fromLie = i ? lieOf(h, shots[i - 1]) : 'tee';
+    const kind = i === 0 && h.par >= 4 ? 'tee' : ['trees', 'bunker', 'water'].includes(fromLie) ? 'recovery' : from != null && from < 60 ? 'short' : 'approach';
+    return { where: 'course', h, i, sh, from, len: shotLen(h, i), left: toGreen(h, sh), lie: lieOf(h, sh), kind };
+  }
+  const b = (s.blocks || []).find(x => x.id === t.block); if (!b) return { gone: true };
+  const shots = b.shots || [];
+  let i = sameShot(shots[t.i], t) ? Number(t.i) : -1;
+  if (i < 0) { const js = shots.map((x, j) => sameShot(x, t) ? j : -1).filter(j => j >= 0); if (js.length === 1) i = js[0]; }
+  if (i < 0) return { gone: true };
+  let prof = '';
+  if ((b.swing || 'full') === 'full') { const all = shotsWithSession(b.club, s), k = all.findIndex(x => x.blockId === b.id && x.idx === i); if (k >= 0) prof = classify(all)[k]; }
+  return { where: 'range', b, i, sh: shots[i], n: shots.length, prof };
+}
+function swingShotText(x) {
+  if (x.where === 'course') {
+    const sh = x.sh;
+    return `Hole ${x.h.n}, shot ${x.i + 1} (${SHOT_KIND[x.kind].toLowerCase()}): ${sh.club || 'no club logged'}${x.from != null ? ` from ${fmt(x.from)} m` : ''}` +
+      (x.len == null ? ', distance not measurable' : `, went ${fmt(x.len)} m`) +
+      (x.lie === 'unknown' ? '' : x.lie === 'green' ? ', finished on the green' : `, finished in the ${x.lie}`) +
+      (x.left != null && x.lie !== 'green' && x.len != null ? `, ${fmt(x.left)} m left` : '') + (sh.penalty ? ', cost a penalty' : '') + '.';
+  }
+  const sh = x.sh, bits = [`carry ${fmt(sh.carry, 1)} m`, `total ${fmt(sh.total, 1)} m`];
+  if (sh.carrySide != null) bits.push(sh.carrySide === 0 ? 'on line' : `${fmt(Math.abs(sh.carrySide), 1)} m ${sh.carrySide < 0 ? 'left' : 'right'}`);
+  const more = [];
+  if (sh.faceAngle != null && sh.clubPath != null) more.push(`face ${degLabel(sh.faceAngle)}, path ${degLabel(sh.clubPath)}`);
+  if (sh.ballSpeed != null && sh.speed) more.push(`smash ${(sh.ballSpeed / sh.speed).toFixed(2)}`);
+  if (x.prof) more.push(PROF_WORD[x.prof]);
+  return `Shot ${x.i + 1} of ${x.n} in the ${x.b.club} block: ${bits.join(', ')}${more.length ? '; ' + more.join('; ') : ''}.`;
+}
+const shotClubNote = (sw, x) => x && !x.gone && x.where === 'course' && sw.club && x.sh.club && x.sh.club !== sw.club ? `The shot is logged as ${x.sh.club}, the swing as ${sw.club}.` : '';
+// What the reading is told: the shot, and for a course shot the club's range total beside it.
+function swingShotContext(sw, s) {
+  const x = swingShot(sw, s); if (!x || x.gone) return '';
+  const club = x.where === 'course' ? x.sh.club : x.b.club, tot = club && x.where === 'course' ? totalRef(club) : null;
+  return `THIS SWING'S OWN SHOT (measured: the ball these frames hit): ${swingShotText(x)}${tot && tot.measured && x.len != null ? ` His range stock total for the ${club} is ${fmt(tot.v)} m.` : ''}${shotClubNote(sw, x) ? ' ' + shotClubNote(sw, x) : ''}`;
+}
+const swingTaggable = s => s.type === 'round' ? (s.holes || []).some(h => (h.shots || []).length) : (s.blocks || []).some(b => (b.shots || []).length);
+function swingShotSection(sw, s) {
+  const x = swingShot(sw, s), can = swingTaggable(s);
+  if (!x && !can) return '';
+  const btn = label => `<button class="quiet" data-act="tagSwingShot" data-sid="${s.id}" data-wid="${sw.id}">${label}</button>`;
+  if (!x) return `<div class="swshot small" id="ws_${sw.id}">${btn('Which shot was this? →')} <span class="muted">Tie it to the ball it hit, and the reading is checked against that shot.</span></div>`;
+  if (x.gone) return `<div class="swshot small" id="ws_${sw.id}"><span class="muted">The shot this swing was tied to is no longer in this ${s.type === 'round' ? 'round' : 'session'}.</span> ${can ? btn('Tie it again') : ''}</div>`;
+  const note = shotClubNote(sw, x);
+  return `<div class="swshot small" id="ws_${sw.id}"><b>This swing's shot:</b> ${esc(swingShotText(x))}${note ? ` <span class="muted">${esc(note)}</span>` : ''} ${btn('Change')}</div>`;
+}
+// A round's shots were edited: tags follow their shot, and go when it does.
+function retagSwings(swings, n, before, after) {
+  if (!swings || !swings.some(sw => sw.shot && Number(sw.shot.hole) === n)) return swings;
+  return swings.map(sw => {
+    if (!sw.shot || Number(sw.shot.hole) !== n) return sw;
+    const j = after.indexOf(before[sw.shot.i]);
+    if (j >= 0) return j === sw.shot.i ? sw : { ...sw, shot: { ...sw.shot, i: j } };
+    if (after.length >= before.length && after[sw.shot.i]) return sw;   // edited or moved in place
+    const { shot, ...rest } = sw; return rest;
+  });
+}
+// The shots on this session that have a swing tied to them, as "hole:i" or "block:i".
+function filmedShots(s) {
+  const hs = s.type === 'round' ? holesOf(s) : null, out = new Set();
+  for (const sw of swingsOf(s)) { const x = swingShot(sw, s, hs); if (x && !x.gone) out.add(x.where === 'course' ? `${x.h.n}:${x.i}` : `${x.b.id}:${x.i}`); }
+  return out;
+}
+const FILMED = '<span class="tag green">filmed</span>';
+// Swings tied to a shot that is evidence for a finding: what the miss looked like.
+function goalSwings(it) {
+  const out = [];
+  for (const sw of allSwings()) {
+    if (!sw.shot) continue;
+    const x = swingShot(sw, sw.session); if (!x || x.gone) continue;
+    const hit = x.where === 'course'
+      ? (it.recs || []).some(r => r.r && r.r.id === sw.session.id && r.h && r.h.n === x.h.n && (r.i == null ? it.kind === 'penalty' && !!x.sh.penalty : r.i === x.i && (it.kind !== 'tee' || r.lie !== 'fairway')))
+      : it.kind === 'strike' && it.key === 'strike:' + x.b.club && ['runner', 'top'].includes(x.prof);
+    if (hit) out.push({ sw, x });
+  }
+  return out.sort((a, b) => swingDate(b.sw).localeCompare(swingDate(a.sw)));
+}
+ACTIONS.tagSwingShot = function (d) {
+  const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid); if (!sw) return;
+  const opts = [], cur = swingShot(sw, s), hs = s.type === 'round' ? holesOf(s) : null;
+  const curKey = cur && !cur.gone ? (cur.where === 'course' ? `h${cur.h.n}_${cur.i}` : `b${cur.b.id}_${cur.i}`) : '';
+  if (hs) for (const h of hs) (h.shots || []).forEach((sh, i) => opts.push({ club: sh.club, key: `h${h.n}_${i}`, attrs: `data-hole="${h.n}" data-i="${i}"`, x: swingShot({ shot: { hole: h.n, i } }, s, hs) }));
+  else for (const b of s.blocks || []) (b.shots || []).forEach((sh, i) => opts.push({ club: b.club, key: `b${b.id}_${i}`, attrs: `data-block="${esc(b.id)}" data-i="${i}"`, x: swingShot({ shot: { block: b.id, i, carry: sh.carry, total: sh.total } }, s) }));
+  const btn = o => `<button class="choice" data-act="setSwingShot" data-sid="${s.id}" data-wid="${sw.id}" ${o.attrs} aria-pressed="${o.key === curKey}">${o.key === curKey ? '<b>Tied to this shot</b>' : ''}<span class="small">${esc(swingShotText(o.x))}</span></button>`;
+  const mine = sw.club ? opts.filter(o => o.club === sw.club) : opts, rest = sw.club ? opts.filter(o => o.club !== sw.club) : [];
+  const where = s.type === 'round' ? 'round' : 'session';
+  openSheet(`<h2>Which shot was this?</h2>
+    <p class="small muted">${sw.club ? `The ${esc(sw.club)} shots in this ${where} first.` : `Every shot in this ${where}.`} The reading is then given what this ball did, and the shot is marked filmed.</p>
+    <div class="choices" id="tagShots">${mine.length ? mine.map(btn).join('') : `<p class="small muted">No ${esc(sw.club)} shots logged here.</p>`}</div>
+    ${rest.length ? `<details class="fold" id="tagOther"><summary>Other clubs · ${rest.length}</summary><div class="choices">${rest.map(btn).join('')}</div></details>` : ''}
+    ${sw.shot ? `<div class="row-actions"><button class="danger" data-act="setSwingShot" data-sid="${s.id}" data-wid="${sw.id}" data-clear="1">Not tied to a shot</button></div>` : ''}`);
+};
+ACTIONS.setSwingShot = async function (d) {
+  const s = session(d.sid); if (!s || !swingsOf(s).some(w => w.id === d.wid)) return;
+  let shot = null;
+  if (d.clear) shot = null;
+  else if (d.block != null) { const b = (s.blocks || []).find(x => x.id === d.block), sh = b && (b.shots || [])[Number(d.i)]; if (!sh) return; shot = { block: b.id, i: Number(d.i), carry: sh.carry, total: sh.total }; }
+  else shot = { hole: Number(d.hole), i: Number(d.i) };
+  const ok = await queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => { if (w.id !== d.wid) return w; const { shot: _, ...rest } = w; return shot ? { ...rest, shot } : rest; }) }); });
+  if (ok) { sheet.close(); toast(shot ? 'Tied to the shot' : 'No longer tied to a shot'); render(); }
+};
 
 /* ---------- swing history (2.23.0) ----------
    Every swing on file, newest first, wherever it was filmed (a range
@@ -4157,7 +4280,7 @@ function vSwings() {
     const go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
     return `<button class="item swrow" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}">${fr ? `<img class="thumb" src="/_blob/${fr.asset}" alt="" loading="lazy">` : '<span class="thumb none"></span>'}<div class="swbody">
       <div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="muted small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
-      <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>
+      <div class="s">${esc(w.label)}${(() => { const x = swingShot(sw, sw.session); return x && !x.gone ? ` · ${x.where === 'course' ? `hole ${x.h.n}, ${SHOT_KIND[x.kind].toLowerCase()}` : `shot ${x.i + 1}, carry ${fmt(x.sh.carry)} m`}` : ''; })()}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>
       <div class="s">${a && a.one_thing ? `<b>${esc(a.one_thing)}</b>${a.ball_data === 'agrees' ? ' · ball data agrees' : a.ball_data === 'contradicts' ? ' · contradicts ball data' : ''}` : a ? esc((a.observations || [])[0]?.what || 'read') : 'not read yet'}</div></div></button>`;
   }).join('') + `</div>`;
   return h + `<p class="small muted" id="swingCaveat">Readings are interpretations, not measurements. The summaries are put together from them; nothing new is read.</p>`;
@@ -4333,6 +4456,7 @@ function reelCardHtml(sw, s) {
   const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
   return `<h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>
     <p class="muted small">${[esc(w.label), esc(VIEWS[sw.view] || 'Other angle'), sw.note ? esc(sw.note) : ''].filter(Boolean).join(' · ')}</p>
+    ${(() => { const x = swingShot(sw, s); return x && !x.gone ? `<p class="small" id="reelShot"><b>This swing's shot:</b> ${esc(swingShotText(x))}</p>` : ''; })()}
     <div class="swing" id="reelCard">${a ? swingReading(sw, s, a) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
     <div class="row-actions"><button data-act="reelOpen" data-go-session="${go}">Open the ${s.type === 'round' ? 'round' : 'session'} →</button></div>`;
 }
