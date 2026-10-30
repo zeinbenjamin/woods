@@ -1388,7 +1388,7 @@ const tt = { res: {}, queue: [], running: 0, redraw: null, fresh: false };   // 
 // The same test the server makes (miclubSource): a MiClub host, or MiClub's
 // /guests/bookings/ path on a club's own domain.
 function ttReadable(c) {
-  try { const u = new URL(c.bookingUrl); return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/bookings\//i.test(u.pathname)); } catch (e) { return false; }
+  try { const u = new URL(c.bookingUrl); return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/(bookings\/|\w+\.msp$)/i.test(u.pathname)); } catch (e) { return false; }
 }
 function ttPrefs() {
   let p = {}; try { p = JSON.parse(localStorage.getItem(TT_KEY) || '{}') || {}; } catch (e) {}

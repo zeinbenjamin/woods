@@ -26,13 +26,16 @@ const cache = new Map();      // url → { at, ttl, value | error }, or a pendin
 /* ---------- which site ---------- */
 
 // The MiClub site behind a course's booking link, or null. MiClub runs on
-// <club>.miclub.com.au and on clubs' own domains under /guests/bookings/.
+// <club>.miclub.com.au and on clubs' own domains under /guests/bookings/, or
+// as /guests/<Page>.msp (Gordon's and Richmond's ListBookingEvents.msp links,
+// 2.41.3: their standard calendar is there too, read 2026-10-30).
+export const MICLUB_PATH = /\/guests\/(bookings\/|\w+\.msp$)/i;
 export function miclubSource(bookingUrl) {
   let u;
   try { u = new URL(bookingUrl); } catch { return null; }
   if (!/^https?:$/.test(u.protocol)) return null;
   const onMiclub = /(^|\.)miclub\.com\.au$/i.test(u.hostname);
-  if (!onMiclub && !/\/guests\/bookings\//i.test(u.pathname)) return null;
+  if (!onMiclub && !MICLUB_PATH.test(u.pathname)) return null;
   const given = u.searchParams.get('booking_resource_id') || u.searchParams.get('bookingResourceId');
   const resource = /^\d+$/.test(given || '') ? given : DEFAULT_RESOURCE;
   return { origin: u.origin, resource, guessed: resource !== given };

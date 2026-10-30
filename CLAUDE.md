@@ -654,9 +654,35 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   is Oak Point (merged with Kogarah) and books on `oakpoint.miclub.com.au`
   (3000000, seen in search results), so `imports/liverpool.json` carries that.
   *Find a tee time* moved beside *Add course* on the heading's row.
-  **Worth knowing:** MiClub runs **TeeNet** (`clubshare.miclub.com.au/teenet`),
-  its own listing of public times across its clubs; not looked at yet, but
-  it may be one page to read instead of one per club.
+  **TeeNet is no shortcut** (checked 2026-10-30, he asked): MiClub's own
+  listing (`clubshare.miclub.com.au/teenet`) shows only clubs that opted in,
+  and its full list, served with the page, has three: Huntingdale and
+  Keysborough (VIC), The Vines (WA). No NSW club at all, and a search near
+  Sydney finds none. Reading each club's own calendar stays the way.
+- **GolfNow is not read, on purpose** (2026-10-30). Its facility pages
+  fill in times by script, so a reader would call its API, and its Terms of
+  Service (golfnow.com.au, effective 12 Jan 2026, s.2) say "You may also not
+  use any software robots, spider, crawlers, or other data gathering or
+  extraction tools, whether automated or manual, to access, acquire, copy,
+  monitor, scrape or aggregate Content", and limit use to "personal and
+  non-commercial use". MiClub's public calendars carry no such terms, as far
+  as was seen. GolfNow's 7 courses stay under *Booked another way*, linked.
+  Put to him before building anything.
+- **Gordon and Richmond** (2.41.3): their links are MiClub's
+  `/guests/ListBookingEvents.msp` on the club's own domain, which
+  `miclubSource` and `ttReadable` didn't recognise; both now take any
+  `/guests/<Page>.msp` (`MICLUB_PATH`). Their standard calendars read normally
+  (Gordon 187: 18 and 10 holes; Richmond 3000000). **Long Reef, Northbridge
+  and The Coast** are MiClub too, but their NAS records (no import file) have
+  no `bookingUrl`, so they aren't searched until one is added in the app;
+  each calendar reads at `<club>.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000`
+  (`longreef`, `northbridge`, `coast`; The Coast shows "Timesheets open 7 days
+  prior" further out).
+  **The Ridge is phone only** (2026-10-30): the audit filed it under
+  GolfNow, but its own page says to call the pro shop, and its MiClub
+  calendars (on its domain and `theridge.miclub.com.au`) carry only lesson
+  bookings, so no MiClub link: `imports/the-ridge.json` now has the club's
+  tee-times page, a phone `bookingNote` and its listed green fees.
 - **Filters, two lines and any day** (2.42.0, he asked): the seven day chips
   are followed by *Pick a date* (`#ttPick`, a `type=date` input laid invisibly
   over a chip so the native picker opens), from today to `TT_AHEAD` (365) days;
