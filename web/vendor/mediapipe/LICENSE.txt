@@ -1,0 +1,16 @@
+MediaPipe Tasks Vision 0.10.35 (@mediapipe/tasks-vision, npm), copied unchanged:
+vision_bundle.mjs and wasm/vision_wasm_internal.{js,wasm}. The package is
+licensed Apache-2.0 (its package.json), the licence of the MediaPipe project:
+https://github.com/google-ai-edge/mediapipe/blob/master/LICENSE
+http://www.apache.org/licenses/LICENSE-2.0
+
+pose_landmarker_lite.task: Google's MediaPipe Pose Landmarker (lite, float16,
+version 1), downloaded from
+https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
+on 2026-10-31 and copied unchanged. It is published under the terms of its
+model card (BlazePose GHUM 3D), linked from
+https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker
+Used here on one person's server; read the model card before sharing it further.
+
+The SIMD build only: browsers without WebAssembly SIMD (iOS before 16.4) can't
+run it, and Carry says so instead of measuring.
