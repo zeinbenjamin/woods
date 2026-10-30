@@ -130,7 +130,10 @@ test('the Overview\'s Patterns by club: every club from one tee, the counted ses
   assert.match(app.text('#ovPatterns summary'), /Patterns by club.*5W \d+ m wide/);
   assert.equal(app.$$('#ovPatterns .pt-oval').length, 1, '5W has ten shots; 7i three');
   assert.equal(app.$$('#ovPatterns .pt-tee').length, 1);
-  assert.deepEqual(app.$$('#patternTable tbody tr td:first-child').map(td => td.textContent), ['5W']);
+  assert.equal(app.$$('#ovPatterns .pt-shot').length, 0, 'with no club picked, only the ovals (2.54.0)');
+  const cells = app.$$('#patternTable tbody tr').map(tr => [...tr.children].map(td => td.textContent));
+  assert.deepEqual([cells[0][0], cells[0][5]], ['5W', '10']);
+  assert.deepEqual(cells[1], ['7i', '–', '–', '–', '–', '3 of 5'], 'a club short of five is listed too, so it can be picked');
   assert.match(app.text('#patternFew'), /Not enough shots with carry side yet: 7i 3 of 5\./);
   // Recency: each shot weighs 0.5^(days/60); the lean is the weighted mean side.
   const wOct = Math.pow(0.5, app.E(`daysAgo('2026-10-25')`) / 60), wSep = Math.pow(0.5, app.E(`daysAgo('2026-09-28')`) / 60);
@@ -152,4 +155,30 @@ test('the Overview\'s Patterns by club: every club from one tee, the counted ses
 test('nothing derived is stored', async () => {
   app.go('overview'); app.go('range', { blockId: 'b_5w' });
   for (const s of SEED.sessions) assert.deepEqual(JSON.parse(JSON.stringify(await app.api.get('sessions', s.id))), JSON.parse(JSON.stringify(s)));
+});
+
+test('tapping a club\'s row shows its shots, the other ovals faint; tapping it again shows every club', () => {
+  app.win.localStorage.removeItem('carry.patternClub');
+  app.go('overview'); app.$('#ovPatterns').open = true;
+  assert.match(app.text('#patternHint'), /Tap a club to see its shots/);
+  app.click('#patternTable tr[data-v="5W"]');
+  assert.equal(app.win.localStorage.getItem('carry.patternClub'), '5W');
+  assert.equal(app.$('#patternTable tr[data-v="5W"]').getAttribute('aria-pressed'), 'true');
+  assert.ok(app.$('#patternTable tr[data-v="5W"]').classList.contains('sel'));
+  assert.equal(app.$$('#ovPatterns .pt-shot.picked').length, 10, 'his five and the five from September');
+  assert.equal(app.$$('#ovPatterns .pt-oval.picked').length, 1);
+  assert.match(app.text('#patternHint'), /^5W's shots, the other clubs faint/);
+  // A club short of five: its dots alone, the 5W oval faint behind, no labels but its own.
+  app.click('#patternTable tr[data-v="7i"]');
+  assert.equal(app.$$('#ovPatterns .pt-shot.picked.few').length, 3);
+  assert.equal(app.$$('#ovPatterns .pt-oval.ghost').length, 1);
+  assert.deepEqual(app.$$('#ovPatterns .pt-lab').map(t => t.textContent), ['7i']);
+  // Enter on a focused row works like a tap; the same club again clears it.
+  app.$('#patternTable tr[data-v="7i"]').dispatchEvent(new app.win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  assert.equal(app.win.localStorage.getItem('carry.patternClub'), null);
+  assert.equal(app.$$('#ovPatterns .pt-shot').length, 0);
+  // A remembered club that has no pattern data any more is simply ignored.
+  app.win.localStorage.setItem('carry.patternClub', 'D'); app.go('overview');
+  assert.equal(app.$$('#ovPatterns .pt-oval').length, 1); assert.equal(app.$$('#ovPatterns .pt-shot').length, 0);
+  app.win.localStorage.removeItem('carry.patternClub');
 });

@@ -212,6 +212,10 @@ const INDEX_HTML = readFileSync(join(here, '..', 'web', 'index.html'), 'utf8')
 const revalidate = res => res.set('Cache-Control', 'no-cache');
 const sendIndex = (_req, res) => { revalidate(res); res.type('html').send(INDEX_HTML); };
 app.get(['/', '/index.html'], sendIndex);           // before express.static, or the unstamped file wins
+// The service worker (2.54.0) names its copy of the page after the build, so it is
+// stamped like the page and revalidated on every load: a new build installs a new worker.
+const SW_JS = readFileSync(join(here, '..', 'web', 'sw.js'), 'utf8').replaceAll('__APP_BUILD__', encodeURIComponent(`${VERSION}-${COMMIT}`));
+app.get('/sw.js', (_req, res) => { revalidate(res); res.type('application/javascript').send(SW_JS); });
 app.use(express.static(join(here, '..', 'web'), {
   index: false, maxAge: '1h',
   // Course maps are revalidated too: a rebuilt map must reach the phone with the page that reads it.

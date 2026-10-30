@@ -1,3 +1,7 @@
+## 2.54.0 — 2026-10-31
+- Carry opens without signal. The page, your data and the course maps you've opened are kept on the phone as they last arrived, and used only when the network can't be reached. The status line says "No signal: showing this phone's copy from …", saves wait on the phone as before, and everything goes back to normal when the signal returns. After updating, open Carry once with signal. Swing videos, photos, map tiles, tee times and swing readings still need signal.
+- Patterns by club on the Overview is calmer: it shows each club's oval without the dots. Tap a club's row to see just that club's shots, with the other ovals faint behind; tap it again to see every club. Clubs without enough shots yet are listed too, so you can see their dots.
+
 ## 2.53.0 — 2026-10-31
 - Face, path and strike. A range block with the bay's club data now shows a *Face, path and strike* section: each shot's club path against its face angle (coloured by whether it finished left or right), the average face, path and smash factor, and a few plain sentences. Where the face was against the path, which one moved more shot to shot, and which one where the shots finished followed.
 - Smash factor (ball speed ÷ club speed) is compared with your own pure strikes. If the low runners lose ball speed, it says so, as a measured sign they're struck off the middle rather than just launched low.

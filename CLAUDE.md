@@ -61,7 +61,8 @@ Every change that ships to the app gets a new version. Docs-only changes don't.
    `- ` bullets. The server parses exactly that format for the in-app history.
    Write the bullets for the user, not for a developer: what's different when
    using the app.
-3. There's no service worker, so there's no cache name to bump.
+3. Nothing to bump for the service worker (2.54.0): `web/sw.js` is served by the
+   server with the build stamped in, and its page cache is named after the build.
 
 How the version reaches the device: the server reads the version from
 `package.json`, the commit from `APP_COMMIT` (set by the Actions build;
@@ -788,6 +789,34 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## Opening without signal (2.54.0)
+
+He asked (2026-10-31) for Play mode's last gap: the app itself opening with no
+signal. `web/sw.js`, served by `GET /sw.js` (registered before the static files,
+stamped with `__APP_BUILD__` like the page, `no-cache`, so a new build installs a
+new worker), registered from the page only where the browser allows (`isSecureContext`:
+https through Cloudflare, or localhost; jsdom has none). **Network first for
+everything**, the kept copy only when `fetch` throws: so a reachable server always
+wins, a sign-in redirect (`opaqueredirect`) passes through untouched and is never
+kept, and an error answer goes to the app as an error. Kept: the page under `/`
+and its build's scripts in `carry-shell-<build>` (filled at install; a redirect
+there fails the install, tried again next load; older builds' shells deleted on
+activate), the four data collections in `carry-data`, course maps, libraries and
+icons in `carry-files`, as last fetched. Never kept: `/api/stamps`, tee times,
+`/api/admin`, `/api/me`, `/_blob/` files, writes, `/sw.js`, other sites (map
+tiles). A kept answer carries `x-carry-offline` (when it was kept); the shim's
+`noteOffline` fires `carry:offline` once and `carry:online` when the server answers
+again, and the status line says "No signal: showing this phone's copy from HH:MM".
+On `controllerchange` the page asks for every collection again
+(`window.carryRefetch`), so one open with signal is enough to have a copy. Saves
+without signal are the outbox's, as before. **Known limits:** the data copy is
+per phone, not per person (a friend opening Carry on his phone without signal
+would see his copy); swing videos and photos aren't kept. `sw.test.js` (9) runs the
+worker in a `vm` against stand-in caches and network, plus the server's stamped copy
+and the status line; checked in Chromium against a local server: opened once with
+signal, offline reload showed his session and the note, a save waited, back online
+it reached the server and the note cleared.
+
 ## Page headings (2.50.0)
 
 He found the tops of Courses, Rounds and Swings crowded on his phone and the
@@ -1493,7 +1522,8 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   and on the browser's `online` event. A newer save that gets through
   drops a waiting older one; a set waits for a send in progress. The status
   line says "n changes saved on this phone, waiting for signal". Limit: no
-  service worker, so a closed app can't reopen without signal.
+  service worker until 2.54.0, so a closed app couldn't reopen without signal (see
+  *Opening without signal*).
 - **GPS marks** (2.3.0, asked by the hole-maps chat and agreed with him):
   on a hole the map can't draw (`wantsMarks`: `hm === null`, or the
   hole's green shape has `est`: the note said `hm.green.est`, but `hm.green`
@@ -1927,7 +1957,12 @@ earlier session's block with a pattern) and on the Overview under Gapping
 (`patternsFold`, fold `#ovPatterns`: `clubPattern(code, view)`, memoised, over
 `fullShots` with `shotWeight`, so the range filter and recency apply; one
 `patternSvg` from the tee, `#patternTable`, `#patternFew` for clubs short of 5).
-`patternSvg` draws one scale both ways. Nothing stored. `ui-patterns` (10): the
+`patternSvg` draws one scale both ways. **One club at a time** (2.54.0, he found every
+club's dots too busy): with no club picked the fold draws only the ovals; a row of
+`#patternTable` (`tr.patRow`, `setPatternClub`, Enter or Space too, the per-phone
+`carry.patternClub`) shows that club's shots with the other ovals faint (`ghost`),
+again clears it; clubs short of 5 are rows too ("3 of 5"), so their dots can be
+seen. Nothing stored. `ui-patterns` (11): the
 oval by hand, tops, sides missing, total, wild misses, weights, his five 5W shots
 on the block page, the switch, the comparison, few shots, the fold with recency,
 equal weighting and an excluded session, nothing stored; 13 mutations caught.
@@ -1973,7 +2008,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 436 tests, about 45s.
+`npm test` — 446 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2025,6 +2060,9 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `sw.test.js` (9) — opening without signal: the service worker against stand-in
+  caches and network (install, activate, the page, data, what is never kept, course
+  maps), the server's stamped copy, the status line and the shim's notice.
 - `ui-delivery.test.js` (7) — face, path and strike: his five 5W shots by hand,
   smash against his own pure strikes, few shots, the block section, the Overview fold,
   the swing reading's context, nothing stored.
@@ -2186,9 +2224,16 @@ In rough order of value:
    *Strokes gained*). Next: a measured amateur baseline in place of the
    modelled handicap allowance, and letting the practice list use it (he
    asked for read-only first).
-2. **Pose estimation on swing frames**, server-side. Turns swing analysis
-   from a reading into measured angles tracked over time — impossible in
-   the artifact, straightforward here. This is the real payoff of the port.
+2. **Pose estimation on swing frames.** Turns swing analysis from a reading
+   into measured angles tracked over time. He wants it **before** stage 2 of
+   the shot patterns (2026-10-31), mockup first: https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK
+   (a skeleton on each frame, a chart per measure across the 16 frames, faults
+   session by session; one camera is 2D, so face-on measures sway and head
+   drift, down-the-line early extension, neither turn in degrees or the club).
+   The mockup proposes MediaPipe Pose Landmarker in the browser (Apache-2.0,
+   the model vendored on the NAS) and the joints stored on the swing as a
+   measurement of each frame; his calls on views, first measures and the
+   practice list are open. Not built.
 3. **More course maps** (see *Course maps*). Barnwell Park, Beverley
    Park and Lane Cove are drawn from his GPS marks as he plays them. Hunter
    Valley has its map (hole-maps 2.16.0) and its art rounds move onto it
@@ -2220,9 +2265,8 @@ in scope since 2.0.0 (he asked, 2026-10-19); anything beyond "friends on
 one NAS" (accounts, roles, invitations in the app) is not: who gets in is
 the Access policy.
 
-Play mode shipped in 2.1.0 (see *Play mode*). Next for it, once he's used
-it on a course: a service worker so the app itself opens without signal
-(today only saves survive no signal; the page needs the network to load).
+Play mode shipped in 2.1.0 (see *Play mode*); it opens without signal since
+2.54.0 (*Opening without signal*).
 **Not wanted: working out the hole from GPS** (he decided 2026-10-19). On
 public courses the next tee is often beside the last green, so a fix there
 puts him on the wrong hole; he moves holes himself (‹ ›, *Hole n →*).
