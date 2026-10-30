@@ -678,6 +678,11 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   each calendar reads at `<club>.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000`
   (`longreef`, `northbridge`, `coast`; The Coast shows "Timesheets open 7 days
   prior" further out).
+  **The Ridge is phone only** (2026-10-30): the audit filed it under
+  GolfNow, but its own page says to call the pro shop, and its MiClub
+  calendars (on its domain and `theridge.miclub.com.au`) carry only lesson
+  bookings, so no MiClub link: `imports/the-ridge.json` now has the club's
+  tee-times page, a phone `bookingNote` and its listed green fees.
 - **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
