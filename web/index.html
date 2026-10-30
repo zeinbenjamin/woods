@@ -97,8 +97,8 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .8; vector-effect: non-scaling-stroke; }
 .ptrace { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 8px; align-items: center; margin: 4px 0; } .ptrace .lab { font-size: 11.5px; color: var(--ink-3); line-height: 1.25; } .ptrace .lab b { display: block; font: 600 13px var(--cond); color: var(--ink); }
 .ptrace svg { display: block; width: 100%; height: auto; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-mlab { font: 500 9.5px var(--body); fill: var(--ink-3); }
-ul.trend { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 6px; } ul.trend li { background: var(--paper-2); border-radius: var(--r); padding: 8px 10px; }
-ul.trend .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; } ul.trend .vals { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); } ul.trend .s { font-size: 11.5px; color: var(--ink-3); }
+ul.ptrend { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 6px; } ul.ptrend li { background: var(--paper-2); border-radius: var(--r); padding: 8px 10px; }
+ul.ptrend .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; } ul.ptrend .vals { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); } ul.ptrend .s { font-size: 11.5px; color: var(--ink-3); }
 svg.dplane { display: block; width: 100%; max-width: 280px; height: auto; margin: 4px auto 6px; }
 .dp-box { fill: var(--paper-2); stroke: var(--rule); } .dp-axis { stroke: var(--rule); stroke-width: 1; } .dp-diag { stroke: var(--ink-3); stroke-dasharray: 4 4; }
 .dp-lab { font: 500 10px var(--body); fill: var(--ink-3); } .dp-ax { font: 500 10px var(--body); fill: var(--ink-3); }
@@ -3775,6 +3775,7 @@ async function analyseSwing(sessionId, swingId, onText) {
 const POSE_BY = 'mediapipe-0.10.35-lite';
 const POSE_BASE = '/vendor/mediapipe/';
 const POSE_VIS = 0.5, POSE_MIN_SHARE = 0.75;
+const POSE_SQUARE = 0.2;   // face-on: hip and shoulder width at address, each at least this share of the torso's length
 const PJ = { nose: 0, lSh: 11, rSh: 12, lEl: 13, rEl: 14, lWr: 15, rWr: 16, lHip: 23, rHip: 24, lKn: 25, rKn: 26, lAn: 27, rAn: 28 };
 const POSE_BONES = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28]];
 let poseLoad = null;
@@ -3837,6 +3838,12 @@ function poseMeasures(sw) {
   if (sw.view === 'face') {
     const dir = Math.sign(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]) || 1;            // the lead shoulder's side is the target's
     const hipW = Math.abs(P(A, PJ.lHip)[0] - P(A, PJ.rHip)[0]), shW = Math.abs(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]), noseA = P(A, PJ.nose);
+    // Square on, the hips are about 0.4 of the torso's length apart and the shoulders 0.7. Filmed from
+    // an angle (or down the line) they close up, and a shift divided by a width near nothing read as
+    // -394% of hip width on his phone (2.56.1). Under POSE_SQUARE: not measurable, said so.
+    const torsoA = Math.hypot(shA[0] - hipA[0], shA[1] - hipA[1]);
+    out.square = torsoA > 0 && hipW / torsoA >= POSE_SQUARE && shW / torsoA >= POSE_SQUARE;
+    if (!out.square) return out;
     series.hip = fr.map(f => { const h = body(f) && midP(P(f, PJ.lHip), P(f, PJ.rHip)); return h && hipW ? 100 * (h[0] - hipA[0]) * dir / hipW : null; });
     series.head = fr.map(f => { const n = P(f, PJ.nose); return n && noseA && shW ? 100 * (n[0] - noseA[0]) * dir / shW : null; });
     series.arm = fr.map(f => angAt(P(f, PJ.lSh), P(f, PJ.lEl), P(f, PJ.lWr)));
@@ -3900,11 +3907,15 @@ function poseSection(sw, s) {
   let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
   h += `<div class="posePos">${POSE_POS.map(([k, label]) => { const i = m.keys && m.keys[k]; const f = i == null ? null : m.frames[i]; return f ? `<figure><div class="pf"><img src="/_blob/${f.asset}" alt="${label}" loading="lazy">${poseFrameSvg(f)}</div><figcaption>${label}</figcaption></figure>` : ''; }).join('')}</div>`;
   const sayV = x => x.v == null ? 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
-  if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}</li>`).join('')}</ul>`;
+  // No body on any frame says so; a view the measures don't cover says that, never both.
+  if (!m.found) h += `<p class="small muted" id="poseNone_${sw.id}">No body was found on these frames. Film with the whole body in the picture, then measure again.</p>`;
+  else if (m.square === false) h += `<p class="small muted" id="poseSquare_${sw.id}">Not measured: at address the hips and shoulders are almost in line, so the camera wasn't square on to the chest. Face-on measures need the camera facing you; a clip filmed from behind or down the line can't give them.</p>`;
+  else if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}</li>`).join('')}</ul>`;
   else h += `<p class="small muted">The skeleton is drawn, but measures need a face-on or down-the-line view: this one is "${esc(VIEWS[sw.view] || 'other')}".</p>`;
   const tr = m.keys ? poseTraces(m) : '';
   if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}</details>`;
-  h += `<p class="small muted">Measured from the frames by a pose model on this phone, in 2D: ${m.impFrom === 'marked' ? 'impact as you marked it' : 'top and impact found from the hands'}. A measurement of where the joints were, not a reading of the swing; unsure joints are left out.</p></div>`;
+  if (m.found) h += `<p class="small muted">Measured from the frames by a pose model on this phone, in 2D: ${m.impFrom === 'marked' ? 'impact as you marked it' : 'top and impact found from the hands'}. A measurement of where the joints were, not a reading of the swing; unsure joints are left out.</p>`;
+  h += `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
   return h;
 }
 // Measures for the reading's prompt, when the swing has been measured.
@@ -3928,7 +3939,7 @@ function poseTrend(club, swings) {
 }
 function poseTrendHtml(club, swings) {
   const tr = poseTrend(club, swings); if (!tr.length) return '';
-  return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing:</b></div><ul class="trend" id="ptrend_${esc(club)}">${tr.map(t => `<li><div class="row"><b>${esc(t.name)}</b><span class="muted">${esc(VIEWS[t.view])}</span></div><div class="vals">${t.pts.slice(-6).map(p => `${dateLabel(p.date)}${p.course ? ' (course)' : ''} <strong>${fmt(p.v)}${t.unit.startsWith('°') ? '°' : '%'}</strong>`).join(' · ')}</div><div class="s">${esc(t.unit)}</div></li>`).join('')}</ul>`;
+  return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing:</b></div><ul class="ptrend" id="ptrend_${esc(club)}">${tr.map(t => `<li><div class="row"><b>${esc(t.name)}</b><span class="muted">${esc(VIEWS[t.view])}</span></div><div class="vals">${t.pts.slice(-6).map(p => `${dateLabel(p.date)}${p.course ? ' (course)' : ''} <strong>${fmt(p.v)}${t.unit.startsWith('°') ? '°' : '%'}</strong>`).join(' · ')}</div><div class="s">${esc(t.unit)}</div></li>`).join('')}</ul>`;
 }
 async function measureAndSave(sid, wid, onFrame) {
   const s = session(sid), sw = s && swingsOf(s).find(x => x.id === wid); if (!sw) return { error: 'gone' };

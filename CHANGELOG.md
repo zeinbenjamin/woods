@@ -1,3 +1,10 @@
+## 2.56.1 — 2026-10-31
+- A swing where the pose model found no one now says so, and asks you to film the whole body. It used to tell a face-on swing it needed a face-on view.
+- A measured swing has *Measure again*, so a clip that measured badly isn't stuck.
+- On the Swings page, each club's *Measured, swing by swing* list no longer draws over the page below it.
+- A face-on swing filmed from an angle (hips and shoulders almost in line) is no longer measured. It said things like −394% of hip width; now the card says the camera wasn't square on.
+- Server libraries updated for two security fixes (in Express's request reading).
+
 ## 2.56.0 — 2026-10-31
 - A swing can be tied to the shot it hit. On a swing card, *Which shot was this?* lists that round's or session's shots, the swing's club first. Pick one and the card says what that ball did: the hole, the club, how far it went, where it finished. A range shot also shows its carry, total, side, face, path, smash and strike.
 - A swing reading is told what its own shot did, and judges the swing against that ball first and the club's averages second.
