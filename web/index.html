@@ -4459,7 +4459,10 @@ const distanceLabel = c => { const d = distanceTo(c); return d == null ? '' : d 
    The map lives in one element kept across redraws (render() replaces the
    page; the element is put back), so a poll doesn't reset where he has panned
    or close a pin he opened. Nothing stored. */
-const CM_COLOUR = { public: '--green', private: '--ink-3', closed: '--flag' };
+// The pins' colours (2.49.1, his choice: the first set faded into the map): the score
+// palette's sand, eagle green and red, and the grey for not known; the same in both themes.
+const CM_COLOUR = { public: '--score-1', private: '--score-e', closed: '--score-3', unknown: '--ink-3' };
+const cmFill = c => cmVar(CM_COLOUR[access(c) || 'unknown']);
 const cm = { el: null, map: null, layer: null, tiles: null, dark: null, key: null, loading: null, kind: null, home: null, glLoading: null };
 function vCourseMap() {
   const placed = S.courses.filter(hasCoords), missing = S.courses.length - placed.length;
@@ -4468,7 +4471,7 @@ function vCourseMap() {
   <h1>Courses on a map</h1>
   <p class="small muted" id="cmCount">${plural(placed.length, 'course')}${home() && hasCoords(home()) ? `, and ${esc(home().label || 'your location')}` : ''}. Tap a pin for the course.</p>
   <div id="cmMap" role="region" aria-label="Map of the courses"></div>
-  <div class="cmKey small">${key.map(([a, l]) => `<span><i style="background:${a ? `var(${CM_COLOUR[a]})` : 'var(--paper-2)'}"></i>${l}</span>`).join('')}${home() && hasCoords(home()) ? `<span><i style="background:var(--ink);border-radius:2px"></i>${esc(home().label || 'Home')}</span>` : ''}</div>
+  <div class="cmKey small">${key.map(([a, l]) => `<span><i style="background:var(${CM_COLOUR[a || 'unknown']})"></i>${l}</span>`).join('')}${home() && hasCoords(home()) ? `<span><i style="background:var(--ink);border-radius:2px"></i>${esc(home().label || 'Home')}</span>` : ''}</div>
   ${missing ? `<p class="small muted" id="cmMissing">${plural(missing, 'course')} with no location on ${missing === 1 ? 'its' : 'their'} card ${missing === 1 ? "isn't" : "aren't"} on the map. Add a latitude and longitude on the course to place ${missing === 1 ? 'it' : 'them'}.</p>` : ''}`;
 }
 function cmLoad() {
@@ -4492,8 +4495,7 @@ function cmPins(L) {
   cm.layer = L.layerGroup().addTo(cm.map);
   const pts = [];
   for (const c of S.courses.filter(hasCoords)) {
-    const a = access(c);
-    L.circleMarker([c.lat, c.lng], { radius: 8, weight: 2, color: cmVar('--paper'), fillColor: a ? cmVar(CM_COLOUR[a]) : cmVar('--paper-2'), fillOpacity: 1 })
+    L.circleMarker([c.lat, c.lng], { radius: 8, weight: 2, color: cmVar('--paper'), fillColor: cmFill(c), fillOpacity: 1 })
       .bindPopup(cmPopup(c), { closeButton: true }).bindTooltip(esc(c.name), { direction: 'top', offset: [0, -8] }).addTo(cm.layer);
     pts.push([c.lat, c.lng]);
   }
@@ -4526,8 +4528,8 @@ const CM_GL_SRC = 'https://tiles.openfreemap.org/planet', CM_GLYPHS = 'https://t
 const CM_GL_ATTR = '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 function cmWebGL() { try { const c = document.createElement('canvas'); return !!(c.getContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch (e) { return false; } }
 function cmGeo() {
-  return { type: 'FeatureCollection', features: S.courses.filter(hasCoords).map(c => { const a = access(c);
-    return { type: 'Feature', properties: { id: c.id, fill: a ? cmVar(CM_COLOUR[a]) : cmVar('--paper-2') }, geometry: { type: 'Point', coordinates: [c.lng, c.lat] } }; }) };
+  return { type: 'FeatureCollection', features: S.courses.filter(hasCoords).map(c =>
+    ({ type: 'Feature', properties: { id: c.id, fill: cmFill(c) }, geometry: { type: 'Point', coordinates: [c.lng, c.lat] } })) };
 }
 // The style, from the palette (`v` reads a CSS token; the theme decides which). Pure but for `v`.
 function cmStyle(v = cmVar, dark = cmDark(), geo = { type: 'FeatureCollection', features: [] }) {

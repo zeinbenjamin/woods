@@ -1,3 +1,6 @@
+## 2.49.1 — 2026-10-30
+- Courses on a map: the pins stand out from the map now. Public courses are sand, members' courses green, closed courses red, and courses whose access isn't known grey. The legend matches.
+
 ## 2.49.0 — 2026-10-30
 - Courses on a map is now drawn like a yardage book: parchment ground with fine hatching, an inked coastline, water with waves, parks stippled and golf courses in fairway green, in the same colours as the hole maps, light or dark.
 - Far less clutter: no buildings, boundaries, shops or road numbers; main roads appear only as you zoom in, minor streets never, and only suburb and city names.

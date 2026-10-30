@@ -66,7 +66,7 @@ test('the map: made with the style, pins as data, home a marker, a pin opening i
     assert.equal(m.o.dragRotate, false, 'north stays up, as on the hole maps');
     const pins = m.o.style.sources.courses.data.features;
     assert.deepEqual(plain(pins.map(f => f.properties.id).sort()), ['c_priv', 'c_pub']);
-    assert.equal(pins.find(f => f.properties.id === 'c_pub').properties.fill, app.E(`cmVar('--green')`));
+    assert.equal(pins.find(f => f.properties.id === 'c_pub').properties.fill, app.E(`cmVar('--score-1')`), 'public in sand');
     assert.deepEqual(plain(made.markers[0].at), [151.13, -33.93], 'home');
     assert.ok(m.fitted, 'fitted to the courses and home');
     m.handlers['click:cm-courses']({ features: [{ properties: { id: 'c_pub' }, geometry: { coordinates: [151.12, -33.95] } }] });
