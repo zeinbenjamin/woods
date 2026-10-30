@@ -90,6 +90,12 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .courseBar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; } .courseBar #homeLink { margin-left: auto; margin-right: -8px; } .courseBar .seg button { height: 36px; }
 .choices { display: grid; gap: 8px; margin: 4px 0 8px; } .choice { display: grid; gap: 2px; text-align: left; padding: 12px 14px; } .choice b { font-weight: 600; }
 #reelsOpen { display: inline-flex; align-items: center; gap: 6px; }
+svg.dplane { display: block; width: 100%; max-width: 280px; height: auto; margin: 4px auto 6px; }
+.dp-box { fill: var(--paper-2); stroke: var(--rule); } .dp-axis { stroke: var(--rule); stroke-width: 1; } .dp-diag { stroke: var(--ink-3); stroke-dasharray: 4 4; }
+.dp-lab { font: 500 10px var(--body); fill: var(--ink-3); } .dp-ax { font: 500 10px var(--body); fill: var(--ink-3); }
+.dp-pt { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; } .dp-pt.l { fill: var(--sand-2); } .dp-pt.r { fill: var(--water); }
+.legend i.l-dl { background: var(--sand-2); border-radius: 50%; } .legend i.l-dr { background: var(--water); border-radius: 50%; }
+ul.dlines { margin: 6px 0 4px; padding-left: 18px; } ul.dlines li { margin: 3px 0; }
 svg.pattern { display: block; width: 100%; height: auto; max-width: 420px; margin: 4px auto 10px; background: var(--paper-2); border-radius: var(--r); }
 .pt-grid { stroke: var(--rule); stroke-width: 1; } .pt-grid.side { stroke-dasharray: 2 4; } .pt-ax { font: 500 10px var(--body); fill: var(--ink-3); }
 .pt-target { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 4; } .pt-tee { fill: var(--ink); }
@@ -1152,9 +1158,100 @@ function overviewGapping(stats) {
     ladder.map(({ c, s }) => `<div class="prow"><b>${esc(c.code)}</b>${profileBar(s)}<small>${pct(s.pure, s.n)}% pure</small></div>`).join('') +
     `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>low runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>topped</span></div></details>`;
   h += patternsFold(stats);
+  h += deliveryFold(stats);
   return h;
 }
 
+/* ---------- face, path and strike (2.53.0) ----------
+   What the bay measured at impact, read as it reported it: club path and face
+   angle in degrees (minus is left of the target line for a right-hander), face to
+   path = face − path (minus: closed to the path, the ball curves left), smash =
+   ball speed ÷ club speed (how much of the club's speed reached the ball). All
+   derived on every draw from shots that carry the numbers; nothing stored. Which
+   one the miss follows is how closely each moves with where the shots finished
+   (carry side), a correlation over the shots, labelled as one, from DELIVERY_MIN
+   shots. Smash is compared with his own pure strikes, never a published norm. */
+const DELIVERY_MIN = 5;
+const sdOf = xs => { if (xs.length < 2) return 0; const m = sum(xs) / xs.length; return Math.sqrt(sum(xs.map(x => (x - m) ** 2)) / (xs.length - 1)); };
+function corr(xs, ys) {
+  const n = xs.length; if (n < 3) return null;
+  const mx = sum(xs) / n, my = sum(ys) / n, sx = Math.sqrt(sum(xs.map(x => (x - mx) ** 2))), sy = Math.sqrt(sum(ys.map(y => (y - my) ** 2)));
+  return sx > 1e-9 && sy > 1e-9 ? sum(xs.map((x, i) => (x - mx) * (ys[i] - my))) / (sx * sy) : null;
+}
+const degLabel = v => Math.abs(v) < 0.05 ? '0.0°' : `${fmt(Math.abs(v), 1)}° ${v < 0 ? 'left' : 'right'}`;
+const f2pLabel = v => Math.abs(v) < 0.05 ? 'square to the path' : `${fmt(Math.abs(v), 1)}° ${v < 0 ? 'closed' : 'open'}`;
+const strength = r => Math.abs(r) >= 0.7 ? 'closely' : Math.abs(r) >= 0.4 ? 'partly' : 'hardly';
+// shots: [{...shot, prof}] for one club.
+function delivery(shots) {
+  const fp = shots.filter(s => s.faceAngle != null && s.clubPath != null);
+  const sm = shots.filter(s => s.ballSpeed != null && s.speed > 0).map(s => ({ v: s.ballSpeed / s.speed, prof: s.prof }));
+  const out = { n: fp.length, enough: fp.length >= DELIVERY_MIN, pts: fp.map(s => ({ path: s.clubPath, face: s.faceAngle, side: s.carrySide })), smashN: sm.length };
+  if (out.enough) {
+    const face = fp.map(s => s.faceAngle), path = fp.map(s => s.clubPath), f2p = fp.map(s => s.faceAngle - s.clubPath);
+    Object.assign(out, { face: sum(face) / face.length, path: sum(path) / path.length, f2p: sum(f2p) / f2p.length, faceSd: sdOf(face), pathSd: sdOf(path),
+      faceRange: [Math.min(...face), Math.max(...face)], pathRange: [Math.min(...path), Math.max(...path)] });
+    const ws = fp.filter(s => s.carrySide != null);
+    if (ws.length >= DELIVERY_MIN) out.follows = { n: ws.length, face: corr(ws.map(s => s.faceAngle), ws.map(s => s.carrySide)), path: corr(ws.map(s => s.clubPath), ws.map(s => s.carrySide)) };
+  }
+  if (sm.length >= DELIVERY_MIN) {
+    const m = xs => xs.length ? sum(xs) / xs.length : null;
+    out.smash = m(sm.map(x => x.v));
+    const pure = sm.filter(x => x.prof === 'pure').map(x => x.v), runner = sm.filter(x => x.prof === 'runner').map(x => x.v);
+    if (pure.length >= 2 && runner.length >= 2) out.smashBy = { pure: m(pure), pureN: pure.length, runner: m(runner), runnerN: runner.length };
+  }
+  return out;
+}
+// The sentences: what the face and path did, which one the finish followed, and the strike.
+function deliveryLines(d) {
+  const lines = [];
+  if (d.enough) {
+    lines.push(`Face ${degLabel(d.face)} and path ${degLabel(d.path)} on average, so the face was ${f2pLabel(d.f2p)} to the path${Math.abs(d.f2p) >= 0.05 ? ` (curving the ball ${d.f2p < 0 ? 'left' : 'right'})` : ''}.`);
+    lines.push(`Shot to shot the face ranged ${degLabel(d.faceRange[0])} to ${degLabel(d.faceRange[1])}, the path ${degLabel(d.pathRange[0])} to ${degLabel(d.pathRange[1])}: the ${d.faceSd > 1.5 * d.pathSd ? 'face moved more' : d.pathSd > 1.5 * d.faceSd ? 'path moved more' : 'two moved about as much'}.`);
+    const f = d.follows;
+    if (f && f.face != null && f.path != null) lines.push(`Where they finished followed the face ${strength(f.face)} (r ${fmt(f.face, 2)}) and the path ${strength(f.path)} (r ${fmt(f.path, 2)}), over ${f.n} shots.`);
+  }
+  if (d.smash != null) lines.push(d.smashBy ? `Smash ${fmt(d.smash, 2)} on average: ${fmt(d.smashBy.runner, 2)} on low runners against ${fmt(d.smashBy.pure, 2)} on pure strikes (${d.smashBy.runnerN} and ${d.smashBy.pureN} shots)${d.smashBy.runner < d.smashBy.pure - 0.02 ? ', so the runners lose ball speed: struck off the middle, not just launched low' : ', about the same strike'}.` : `Smash ${fmt(d.smash, 2)} on average (ball speed ÷ club speed).`);
+  return lines;
+}
+// Path across, face up: above the diagonal the face is open to the path, below it closed.
+function deliverySvg(d) {
+  const lim = Math.max(6, ...d.pts.flatMap(p => [Math.abs(p.path), Math.abs(p.face)])) + 1, W = 240, P = 26, s = (W - 2 * P) / (2 * lim);
+  const X = v => P + (v + lim) * s, Y = v => P + (lim - v) * s, f1 = v => v.toFixed(1);
+  let g = `<rect class="dp-box" x="${P}" y="${P}" width="${W - 2 * P}" height="${W - 2 * P}"/>`;
+  g += `<line class="dp-axis" x1="${X(0)}" x2="${X(0)}" y1="${P}" y2="${W - P}"/><line class="dp-axis" x1="${P}" x2="${W - P}" y1="${Y(0)}" y2="${Y(0)}"/>`;
+  g += `<line class="dp-diag" x1="${X(-lim)}" y1="${Y(-lim)}" x2="${X(lim)}" y2="${Y(lim)}"/>`;
+  g += `<text class="dp-lab" x="${P + 4}" y="${P + 12}">curves right</text><text class="dp-lab" x="${W - P - 4}" y="${W - P - 6}" text-anchor="end">curves left</text>`;
+  g += `<text class="dp-ax" x="${W / 2}" y="${W - 6}" text-anchor="middle">path · left ← → right</text><text class="dp-ax" transform="translate(11 ${W / 2}) rotate(-90)" text-anchor="middle">face · left ← → right</text>`;
+  g += d.pts.map(p => `<circle class="dp-pt${p.side == null ? '' : p.side < 0 ? ' l' : ' r'}" cx="${f1(X(p.path))}" cy="${f1(Y(p.face))}" r="4"/>`).join('');
+  return `<svg class="dplane" viewBox="0 0 ${W} ${W}" role="img" aria-label="Club path against face angle, one dot a shot">${g}</svg>`;
+}
+function deliveryHtml(d, id) {
+  if (!d.n && d.smash == null && !d.smashN) return '';
+  let h = '';
+  if (d.n) h += deliverySvg(d) + `<div class="legend"><span><i class="l-dl"></i>finished left</span><span><i class="l-dr"></i>finished right</span><span>diagonal: face square to path</span></div>`;
+  if (d.enough) h += `<div class="tiles">${tile(degLabel(d.face).replace(' left', 'L').replace(' right', 'R'), 'face', 'to the target')}${tile(degLabel(d.path).replace(' left', 'L').replace(' right', 'R'), 'path', 'to the target')}${tile(d.smash != null ? fmt(d.smash, 2) : '–', 'smash', 'ball ÷ club speed')}</div>`;
+  const lines = deliveryLines(d);
+  if (!d.enough && d.n) lines.unshift(`${d.n} of the ${DELIVERY_MIN} shots with face and path this needs.`);
+  if (lines.length) h += `<ul class="dlines" id="${id}Lines">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>`;
+  return h + `<p class="small muted">As the bay measured it, for a right-hander: minus is left. A correlation shows what moved together, not what caused it.</p>`;
+}
+function blockDelivery(b, profOf) {
+  const full = (b.swing || 'full') === 'full', shots = (b.shots || []).map((sh, i) => ({ ...sh, prof: full ? profOf(i) : '' }));
+  const d = delivery(shots); const body = deliveryHtml(d, 'blockDelivery');
+  return body ? `<section class="sec" id="blockDelivery"><h2>Face, path and strike</h2>${body}</section>` : '';
+}
+const clubDelivery = code => memoised('clubDelivery', code, () => { const shots = fullShots(code), prof = classify(shots); return delivery(shots.map((sh, i) => ({ ...sh, prof: prof[i] }))); });
+function deliveryFold(stats) {
+  const rows = stats.map(({ c }) => ({ c, d: clubDelivery(c.code) })).filter(r => r.d.n || r.d.smashN);
+  if (!rows.length) return '';
+  const ok = rows.filter(r => r.d.enough || r.d.smash != null);
+  const lead = ok.find(r => r.d.follows && r.d.follows.face != null && r.d.follows.path != null);
+  const teaser = lead ? `${lead.c.code} follows the ${Math.abs(lead.d.follows.face) >= Math.abs(lead.d.follows.path) ? 'face' : 'path'}` : `${plural(rows.length, 'club')} measured`;
+  let body = ok.length ? `<div class="scroll"><table id="deliveryTable"><thead><tr><th>Club</th><th>Face</th><th>Path</th><th>Face to path</th><th>Smash</th><th>Shots</th></tr></thead><tbody>${ok.map(({ c, d }) => `<tr><td>${esc(c.code)}</td><td>${d.enough ? degLabel(d.face) : '–'}</td><td>${d.enough ? degLabel(d.path) : '–'}</td><td>${d.enough ? f2pLabel(d.f2p) : '–'}</td><td>${d.smash != null ? fmt(d.smash, 2) : '–'}</td><td>${d.n}</td></tr>`).join('')}</tbody></table></div>` : '';
+  body += rows.map(({ c, d }) => { const ls = deliveryLines(d); if (!d.enough && d.n) ls.unshift(`${d.n} of the ${DELIVERY_MIN} shots with face and path this needs.`); return ls.length ? `<p class="small" data-club="${esc(c.code)}"><b>${esc(c.code)}</b> ${esc(ls.join(' '))}</p>` : ''; }).join('');
+  body += `<p class="small muted">From the sessions the range filter counts, full swings, as the bay measured them (for a right-hander, minus is left). Each club's own page shows the shots.</p>`;
+  return fold('ovDelivery', 'Face, path and strike', teaser, body);
+}
 /* ---------- shot patterns (2.52.0) ----------
    Where a club's shots finish, seen from above: each shot at its side (left of
    the target line minus, right plus) and its carry, or its total. The oval holds
@@ -1426,6 +1523,7 @@ function vBlock() {
   if (shots.length && full) h += dotStrip(shots, shots.map((_, i) => profOf(i)), b.target, Math.max(...all.map(x => x.carry))) + `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>avg club speed mph</small></span>` : ''}</div>`;
   h += blockPattern(b, s, profOf);
+  h += blockDelivery(b, profOf);
   // Where the numbers came from (2.51.1, he asked): kept, but folded at the foot, not on the card.
   let src = '';
   if (b.fromImages) { const fi = b.fromImages; src += `<p class="small muted" style="margin-top:10px">Read from ${plural((fi.assets || []).length, 'screenshot')} on ${dateLabel(fi.readOn)}${fi.converted ? ', converted from yards' : ''}${fi.units === 'unknown' ? ', units not shown on the screen' : ''}, then checked before saving.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`; }
@@ -3576,6 +3674,7 @@ function ballContextFor(code) {
     `Strike mix: ${pct(s.pure, s.n)}% pure, ${pct(s.runner, s.n)}% low runners (low launch, long roll), ${pct(s.short, s.n)}% short or fat, ${pct(s.top, s.n)}% topped.`,
     tot && tot.measured ? `Stock total ${fmt(tot.v)}m.` : '',
     cal && cal.n ? `On course this club has measured ${fmt(cal.med)}m over ${cal.n} full swings.` : '',
+    (() => { const d = clubDelivery(code); return d.enough ? `Measured at impact by the bay over ${d.n} shots (right-hander, minus is left): ${deliveryLines(d).join(' ')}` : d.smash != null ? deliveryLines(d).join(' ') : ''; })(),
   ].filter(Boolean).join(' ');
 }
 function swingPrompt(sw, session) {

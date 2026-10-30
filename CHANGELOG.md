@@ -1,3 +1,9 @@
+## 2.53.0 — 2026-10-31
+- Face, path and strike. A range block with the bay's club data now shows a *Face, path and strike* section: each shot's club path against its face angle (coloured by whether it finished left or right), the average face, path and smash factor, and a few plain sentences. Where the face was against the path, which one moved more shot to shot, and which one where the shots finished followed.
+- Smash factor (ball speed ÷ club speed) is compared with your own pure strikes. If the low runners lose ball speed, it says so, as a measured sign they're struck off the middle rather than just launched low.
+- On the Overview, under Gapping, *Face, path and strike* has a row per club and the same sentences.
+- Swing readings are now given that club's measured face and path, alongside the distances they already had.
+
 ## 2.52.0 — 2026-10-31
 - Shot patterns at the range. A block with side numbers now shows a *Pattern*: every shot seen from above, left or right of the target against how far it went, and the oval that holds about 8 in 10 of them. Under it: the centre, how far it leans left or right, how wide and how deep.
 - A *Carry / Total* switch shows where the balls landed or where they finished. The phone remembers your choice.

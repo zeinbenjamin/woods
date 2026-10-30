@@ -1931,6 +1931,24 @@ earlier session's block with a pattern) and on the Overview under Gapping
 oval by hand, tops, sides missing, total, wild misses, weights, his five 5W shots
 on the block page, the switch, the comparison, few shots, the fold with recency,
 equal weighting and an excluded session, nothing stored; 13 mutations caught.
+**Face, path and strike** (2.53.0, he asked: whether the left miss comes from the
+face or the path, and smash as a measured check on the 7i runners): `delivery(shots)`
+over `{...shot, prof}`: from `DELIVERY_MIN` (5) shots with both `faceAngle` and
+`clubPath`, the means, ranges and SDs, face to path (= face − path; minus is closed,
+curving left), and `follows`: Pearson r of carry side with face and with path
+(`corr`, 5+ shots with a side), worded `closely` (|r| ≥ 0.7), `partly` (≥ 0.4) or
+`hardly`; smash = `ballSpeed / speed` (club speed), from 5 shots, and `smashBy` low
+runners against pure strikes when each has 2+ (his own pure strikes, never a
+published norm). `deliveryLines` writes the sentences, `deliverySvg` the D-plane
+style chart (path across, face up, the diagonal face = path; dots sand when they
+finished left, blue right). On the block page (`blockDelivery`, `#blockDelivery`,
+after the pattern), on the Overview (`deliveryFold`, `#ovDelivery`, `clubDelivery`
+over `fullShots`, so the range filter applies; no recency weighting, these are
+plain counts), and in `ballContextFor`, so a swing reading gets the measured face
+and path. Right-hander's signs as the bay reports them; every place says a
+correlation shows what moved together, not what caused it. `ui-delivery` (7) works
+his five 5W shots by hand; 12 mutations caught.
+
 **The block page's source is folded** (2.51.1, he found the screenshots and
 "Read from…" lines wasted the card's room, and the shot patterns will want it):
 `fromImages` and `filledFrom` show only inside `#blockSource` (*Source screenshots
@@ -1955,7 +1973,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 429 tests, about 45s.
+`npm test` — 436 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2007,6 +2025,9 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `ui-delivery.test.js` (7) — face, path and strike: his five 5W shots by hand,
+  smash against his own pure strikes, few shots, the block section, the Overview fold,
+  the swing reading's context, nothing stored.
 - `ui-patterns.test.js` (10) — shot patterns at the range (see *Range data from
   screenshots*): the oval by hand, tops, wild misses, weights, the block page with his
   five 5W shots, Carry/Total, the comparison, the Overview fold, nothing stored.
