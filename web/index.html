@@ -436,11 +436,11 @@ async function connect() {
   // Swing analysis needs a view that can send images to Claude.
   try { const sm = await claude.use('sample'); const lim = sm ? await sm.limits().catch(() => null) : null; S.sampleOk = !!(lim && lim.images); render(); } catch (e) { S.sampleOk = false; }
   const onErr = e => { if (e && e.code === 'signed_in') return signedInAgain(); if (e && (e.code === 'unauthorised' || e.code === 'signed_out')) return askSignIn(e.code); setStatus('Storage error: ' + (e && e.code || 'unknown'), true); };
-  db.collection('clubs').onSnapshot(snap => { S.clubs = snap.docs.map(d => d.data()).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); render(); }, onErr);
-  db.collection('courses').onSnapshot(snap => { S.courses = snap.docs.map(d => d.data()).sort((a, b) => a.name.localeCompare(b.name)); render(); }, onErr);
+  db.collection('clubs').onSnapshot(snap => { S.clubs = snap.docs.map(d => d.data()).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)); bgRender(); }, onErr);
+  db.collection('courses').onSnapshot(snap => { S.courses = snap.docs.map(d => d.data()).sort((a, b) => a.name.localeCompare(b.name)); bgRender(); }, onErr);
   setTimeout(() => runMigrations(), 400);
-  db.collection('settings').onSnapshot(snap => { S.settings = (snap.docs[0] && snap.docs[0].data()) || null; render(); }, onErr);
-  db.collection('sessions').onSnapshot(snap => { S.sessions = snap.docs.map(d => d.data()).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.created || 0) - (a.created || 0)); render(); }, onErr);
+  db.collection('settings').onSnapshot(snap => { S.settings = (snap.docs[0] && snap.docs[0].data()) || null; bgRender(); }, onErr);
+  db.collection('sessions').onSnapshot(snap => { S.sessions = snap.docs.map(d => d.data()).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.created || 0) - (a.created || 0)); bgRender(); }, onErr);
 }
 // Sign-in is Cloudflare Access (2.0.0). Two ways to be refused, said once:
 // the Access session ran out (Cloudflare redirects instead of answering), or
@@ -761,6 +761,11 @@ function parseGo(str) {
   if (rest.includes('=')) { const sub = {}; rest.split(',').forEach(p => { const [k, v] = p.split('='); sub[k] = v; }); return [tab, sub]; }
   const j = rest.indexOf(':'); return [tab, { [rest.slice(0, j)]: rest.slice(j + 1) }];
 }
+// A phone's date picker or select closes when its element is redrawn, so a
+// redraw nobody asked for (an answer arriving, a poll) waits while one is
+// open; it used to shut the calendar a second after *Pick a date* opened it.
+const pickerOpen = () => { const a = document.activeElement; return !!a && (a.id === 'ttPick' || !!(a.matches && a.matches('select[data-ttpref]'))); };
+function bgRender() { clearTimeout(bgRender.t); if (pickerOpen()) { bgRender.t = setTimeout(bgRender, 250); return; } render(); }
 function render() {
   if (S.settings) applyTheme(settings().theme);
   if (window.HoleMap) HoleMap.onLoad = mapArrived;
@@ -1450,7 +1455,7 @@ function ttPump() {
 // while the page is the one on screen.
 function ttRedraw() {
   if (tt.redraw) return;
-  tt.redraw = setTimeout(() => { tt.redraw = null; if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') render(); }, 50);
+  tt.redraw = setTimeout(() => { tt.redraw = null; if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') bgRender(); }, 50);
 }
 function ttLifecycle() { if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') ttWant(ttDate(), ttCourses(ttPrefs()).read); }
 // The answer's times that suit the filters; today, only times still ahead.
@@ -1543,7 +1548,7 @@ function vTeeTimes() {
 document.addEventListener('change', e => {
   const s = e.target.closest && e.target.closest('select[data-ttpref]');
   if (s) { ttSetPref(s.dataset.ttpref, s.value === '' ? null : s.dataset.num ? Number(s.value) : s.value); render(); return; }
-  if (e.target.id === 'ttPick' && e.target.value) go('courses', { view: 'teetimes', date: e.target.value });
+  if (e.target.id === 'ttPick' && e.target.value && e.target.value !== ttDate()) go('courses', { view: 'teetimes', date: e.target.value });
 });
 
 /* ---------- course map (OpenStreetMap) ----------

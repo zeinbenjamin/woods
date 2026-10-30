@@ -165,6 +165,24 @@ test('any day up to a year ahead can be picked; a day outside that falls back to
   app.go('courses', { view: 'teetimes', date: TOMORROW }); await settled('back to tomorrow');
 });
 
+test('an open date picker or filter is not redrawn away while answers arrive', async () => {
+  // 2.43.2: answers redrew the page, which replaced the date box and shut the
+  // phone's calendar a second after Pick a date opened it.
+  app.go('courses', { view: 'teetimes', date: day(5) });
+  const pick = app.$('#ttPick'); pick.focus();
+  const n = hits.length;
+  await app.waitFor(() => hits.length > n && !app.E('tt.running'), { what: 'answers arriving while the picker is open' });
+  await new Promise(r => setTimeout(r, 400));
+  assert.equal(app.$('#ttPick'), pick, 'the same date box: nothing redrew it');
+  assert.equal(app.win.document.activeElement, pick);
+  assert.doesNotMatch(app.text('#ttStatus'), /suit/, 'the answers wait');
+  pick.value = day(5); pick.dispatchEvent(new app.win.Event('change', { bubbles: true }));
+  assert.equal(app.$('#ttPick'), pick, 'the day already shown, as a phone fills in when the picker opens: not a new search');
+  pick.blur();
+  await settled('drawn once the picker is put down');
+  app.go('courses', { view: 'teetimes', date: TOMORROW }); await settled('back to tomorrow');
+});
+
 test('a wider distance adds courses; another day asks again; check again re-reads', async () => {
   { const e = app.$('select[data-ttpref="within"]'); e.value = '0'; e.dispatchEvent(new app.win.Event('change', { bubbles: true })); }
   await settled('far course checked');

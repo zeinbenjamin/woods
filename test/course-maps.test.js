@@ -413,9 +413,12 @@ test('the A- batch of 2026-10-28: 18 holes each on mapped greens; partial bounda
 test('the B batch of 2026-10-28: the lines OSM has, estimated greens on pins, the rest from marks', () => {
   const batch = readdirSync('course-maps/src').map(f => JSON.parse(readFileSync(`course-maps/src/${f}`, 'utf8'))).filter(s => /^Tier B on OSM data of 2026-10-28/.test(s.why || ''));
   const r = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
-  const expect = { everglades: r(1, 18), monash: r(1, 18), chatswood: [1, 2, 4, 5, 6, 7, 8, 11, 12], 'macarthur-grange': r(1, 9), cammeray: [1, 2, 3, 4, 5, 7, 8], eastlake: [1], 'ryde-parramatta': [1] };
+  const expect = { everglades: r(1, 18), monash: r(1, 18), chatswood: [], 'macarthur-grange': r(1, 9), cammeray: [1, 2, 3, 4, 5, 7, 8], eastlake: [1], 'ryde-parramatta': [1] };
   assert.deepEqual(batch.map(s => s.id).sort(), Object.keys(expect).sort());
   for (const src of batch) assert.deepEqual(mapOf(src.id).holes.map(h => h.n), expect[src.id], `${src.id}: the holes OSM has lines for`);
+  // Chatswood is Newgreens now (12 holes, May 2026); OSM's shapes are the old layout, so the map is its outline only.
+  const ch = mapOf('chatswood');
+  assert.equal(ch.name, 'Newgreens Chatswood'); assert.deepEqual(ch.features, []); assert.equal(ch.holesFrom, 'your GPS marks');
   // Everglades and Macarthur Grange have no green shapes: each is estimated on its pin.
   for (const id of ['everglades', 'macarthur-grange']) assert.ok(mapOf(id).holes.every(h => mapOf(id).features[h.green].est), id);
   // Monash: the 2026 remap of 2-18 and the older 1; the older 2 and 8 are left out.

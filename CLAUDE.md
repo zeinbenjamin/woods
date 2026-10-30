@@ -696,7 +696,13 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   app's buttons (2.43.1, he asked: "consistent with the design of the app", not
   2.42.0's 16px of their own): 500 14px, 38px tall. A select can't be under
   16px or iOS zooms into it, so each is a `.ttsel` label showing the choice,
-  with the real 16px select laid invisibly over it, as `#ttPick` is. Measured in Chromium at 390px,
+  with the real 16px select laid invisibly over it, as `#ttPick` is.
+  **An open picker isn't redrawn away** (2.43.2, he found *Pick a date* shut a
+  second after opening): each answer arriving redrew the page, replacing the
+  date box and closing the phone's calendar. Background redraws (answers,
+  polls) go through `bgRender()`, which waits while `#ttPick` or a filter
+  select has focus (`pickerOpen()`, retried every 250 ms); a change to the day
+  already shown (iOS fills in today on opening) is not a new search. Measured in Chromium at 390px,
   light and dark: two rows, one size, no sideways scroll.
 - **TeeItUp, read at his decision** (2.43.0, 2026-10-30: "build the GolfNow
   reader anyway, since it's for personal and non-commercial use"; told first
@@ -706,12 +712,16 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   browser (a TinyFish run found no times in the HTML), so the reader asks the
   API the page uses: `GET <TEEITUP_API>/v2/tee-times?date=D&facilityIds=ID`
   with `x-be-alias: <alias>` (`TEEITUP_API` defaults to
-  `https://phx-api-be-east-1b.kenna.io`). **Not yet seen live**: the answer's
-  shape in `parseTeeitup` (a day per facility with `teetimes`, each with
-  `teetime` ISO, `maxPlayers`/`bookedPlayers`, `rates[]` with `name`, `holes`,
-  `greenFeeWalking`, `allowedPlayers`, `backNine`) is the one TeeItUp is known
-  to use, read defensively: times with an offset moved to Sydney's clock, fees
-  of 1000+ taken as cents, spots from `allowedPlayers` else max − booked. An
+  `https://phx-api-be-east-1b.kenna.io`). **Seen live** (2.43.2, his NAS,
+  Georges River for Sun 1 Nov: 31 eighteen-hole times at $45, 23 nine-hole
+  from 2 pm at $32): the answer's shape in `parseTeeitup` (a day per facility
+  with `teetimes`, each with `teetime` ISO, `maxPlayers`, `rates[]` with
+  `name`, `holes`, `greenFeeWalking`, `allowedPlayers`, `backNine`) is right,
+  read defensively: times with an offset moved to Sydney's clock, fees of
+  1000+ taken as cents, spots from `allowedPlayers` else `maxPlayers`, which
+  is the players still bookable, not the group's size (it equalled the spots
+  on every time; 2.43.0 subtracted `bookedPlayers` from it and called it the
+  group's size, `of`, now null); a time with neither is left out. An
   answer that doesn't fit is `unreadable` with `sample` (its first 1500
   characters), and an error status keeps its body in `sample`, so the first
   live search says what to change. `test/teeitup.test.js`'s answer is
@@ -722,7 +732,7 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   Bardwell Valley 16578 (no import: set in the app). Wallacia and Woodville:
   no TeeItUp address found (guessed subdomains don't exist), GolfNow links
   kept. The page's `ttReadable` takes a TeeItUp link with its course id.
-- **Next:** the first live TeeItUp search, and a way to store a course's MiClub id when
+- **Next:** the other TeeItUp courses' first searches, and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
 ## Appearance (2.37.0)
@@ -1210,6 +1220,20 @@ scorecard sets every length.
   tagged like a road; Riverlands (closed), Dural and Helensburgh (ranges),
   Pittwater Golf Centre, two unnamed outlines, "Stirling Drive". The area
   sweep found no other course. **The queue left:** a Melbourne tiering.
+  **Chatswood** (2.43.2): rebuilt by the club as Newgreens Chatswood, 12
+  holes, reopened May 2026 (the Carry chat's `imports/chatswood.json`, par
+  44, 2,871 m). OSM still has the old 18-hole layout (pars differ on 4, 8,
+  11), so the source is `holes: "marks"` with **`shapes: false`**: the
+  outline and origin only, no old greens or bunkers setting lies. Rebuild
+  from OSM when it has the new holes. **Pairing from the card** (asked
+  2026-10-30, to do course by course as he plays them, not as a sweep):
+  where OSM has greens and tees but no hole lines, a hole can be paired with
+  its tee box and green from the routing and the card's lengths and added
+  as a hand mapping (`holes: {...}` or `addHoles`), shown on a contact
+  sheet and confirmed by him before it is committed, as The Coast's 4 and
+  14 were. Worth it at Eastlake, Ryde Parramatta, Cabramatta, North Ryde,
+  Wakehurst, Warringah, Macquarie Links (18 unnumbered lines), Leonay,
+  Marrickville, Roseville; Manly's 14 needs only the card's length.
 
 ## The course batch (2026-10-28)
 
@@ -1686,7 +1710,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 388 tests, about 45s.
+`npm test` — 389 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1703,7 +1727,7 @@ fixture would let the reading be pinned.
   `/api/version`, the stamped page, and `/api/analyse` against a fake
   Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
   Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
-- `ui-teetimes.test.js` (10) — the search screen against a stand-in MiClub
+- `ui-teetimes.test.js` (11) — the search screen against a stand-in MiClub
   serving Bexley's pages: which courses are asked (near, public, readable),
   a course's rates and time chips linking to the club's timesheet, why a
   course shows nothing and the order, filters working without asking any
