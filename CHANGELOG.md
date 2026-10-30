@@ -1,3 +1,10 @@
+## 2.57.0 — 2026-10-31
+- A swing's camera angle can be changed: *Change angle* on the swing card. The body measures follow straight away. A reading made under the old angle stays, with a note to analyse again.
+- *Across the swing* now shows a dotted guide at the top and impact on each chart, and marks the swing red where it's outside it. The measures list says *outside the guide* too.
+  - The hip guide comes from tour data (Sportsbox: hips under about 2 inches away at the top, about 5 inches toward the target by impact).
+  - The head, lead arm and posture guides are coaching rules of thumb, and the chart says so.
+- The long note under the body measures is gone; the heading now says *2D* and where impact came from.
+
 ## 2.56.1 — 2026-10-31
 - A swing where the pose model found no one now says so, and asks you to film the whole body. It used to tell a face-on swing it needed a face-on view.
 - A measured swing has *Measure again*, so a clip that measured badly isn't stuck.

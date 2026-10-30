@@ -358,6 +358,8 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "video": "<asset id>|null",        // null when over the 60 MB cap (20 before 2.25.0)
   "analysis": { /* free-form; see keys below */ },
   "analysedOn": "2026-09-24",
+  "analysedView": "face",             // 2.57.0: the camera angle the reading was made under; set by an analysis, or kept when
+                                     // the angle is changed after one (the card then says to analyse again)
   "analysedIn": "chat"               // on older analyses pasted back from a chat
                                      // (that route was removed in 1.3.0)
 }

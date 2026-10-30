@@ -99,11 +99,12 @@ test('face-on by hand: the positions from the hands, sway at the top, hips and h
   const T = Object.fromEntries(F_TOP.map(([i, x, y]) => [i, [r3(x), r3(y)]]));
   near(v.armTop, angle(T[11], T[13], T[15]), 1e-6, 'lead arm');
   const lines = app.$$('#pose_sw_face .dlines li').map(li => li.textContent);
-  assert.deepEqual(lines.slice(0, 3), ['Hip sway at the top: 12% of hip width away from the target', 'Hips at impact: 20% of hip width toward the target from where they started', 'Head drift, address to impact: 5% of shoulder width back']);
+  assert.deepEqual(lines.slice(0, 3), ['Hip sway at the top: 12% of hip width away from the target', 'Hips at impact: 20% of hip width toward the target from where they started · outside the guide', 'Head drift, address to impact: 5% of shoulder width back']);
   assert.deepEqual(app.$$('#pose_sw_face figcaption').map(f => f.textContent), ['Address', 'Top', 'Impact', 'Finish']);
   assert.ok(app.$$('#pose_sw_face .poseSk line').length >= 10, 'the skeleton over each');
   assert.match(app.text('#pose_sw_face'), /16 of 16 frames/);
-  assert.match(app.text('#pose_sw_face'), /top and impact found from the hands.*not a reading of the swing/);
+  assert.match(app.text('#pose_sw_face .small'), /^The body, measured 16 of 16 frames · 2D · impact from the hands$/);
+  assert.doesNotMatch(app.text('#pose_sw_face'), /Measured from the frames by a pose model/, 'the long caption is gone (2.57.0)');
   assert.ok(app.$('#ptr_sw_face') && app.$$('#ptr_sw_face .ptrace').length === 4, 'a chart per measure across the swing');
 });
 
@@ -133,7 +134,7 @@ test('joints the model is unsure of are left out; too few frames found is said, 
   const m = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_hid'))`);
   assert.deepEqual([m.found, m.of, m.reliable], [11, 16, false]);
   assert.equal(m.series.hip[1], null, 'no hips on that frame: no number, never a guess');
-  assert.match(app.text('#pose_sw_hid'), /11 of 16 frames · too few to rely on/);
+  assert.match(app.text('#pose_sw_hid'), /11 of 16 frames · 2D · impact from the hands · too few to rely on/);
   assert.equal(app.E(`poseContext(session('s_oct').swings.find(s => s.id === 'sw_hid'))`), '');
 });
 
@@ -212,10 +213,10 @@ test('no body on any frame says so (not that the view is wrong), and a measured 
   app.$('[data-act="measureSwing"][data-wid="sw_none"]').click();
   await app.waitFor(() => app.$('#pose_sw_none'), { what: 'measured' });
   const t = app.text('#pose_sw_none');
-  assert.match(t, /0 of 4 frames · too few to rely on/);
+  assert.match(t, /0 of 4 frames · 2D · too few to rely on/);
   assert.match(app.text('#poseNone_sw_none'), /^No body was found on these frames\. Film with the whole body in the picture, then measure again\.$/);
   assert.doesNotMatch(t, /measures need a face-on or down-the-line view/);
-  assert.doesNotMatch(t, /found from the hands/, 'no hands were found');
+  assert.doesNotMatch(t, /from the hands/, 'no hands were found');
   // The same frames answered with a body now: Measure again replaces the joints.
   ANSWERS.no = FACE;
   asked = [];
@@ -263,4 +264,61 @@ test('the swing trend list keeps its own height (it once took the scoring chart\
   assert.notEqual(app.win.getComputedStyle(ul).height, '80px');
   app.go('overview');
   for (const el of app.$$('.trend')) assert.equal(el.tagName, 'DIV', 'only the bar chart is .trend');
+});
+
+test('the guide: dotted bands at the top and impact, red where the swing is outside, said in the list', () => {
+  // 2.57.0: hips face-on from Sportsbox's tour data (under ~2 in away at the top, ~5 in toward the
+  // target at impact) over an assumed 11 in between the hip points; the rest rules of thumb.
+  const m = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face'))`);
+  const band = (s, at) => app.J(`poseBand(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face')), '${s}', '${at}')`);
+  near(band('hip', 'top')[0], -200 / 11); near(band('hip', 'top')[1], 200 / 11);
+  near(band('hip', 'impact')[0], 350 / 11); near(band('hip', 'impact')[1], 650 / 11);
+  assert.deepEqual(band('head', 'impact'), [-15, 5]); assert.deepEqual(band('arm', 'top'), [150, 180]);
+  assert.equal(band('tilt', 'impact'), null, 'no guide for spine tilt: nothing to stand on');
+  // Hips 20% toward the target at impact: short of the ~32% the guide starts at. Sway -12% at the top: inside.
+  const off = Object.fromEntries(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face'))).map(x => [x.k, x.off])`));
+  assert.deepEqual(off, { swayTop: false, hipImpact: true, headImpact: false, armTop: false });
+  app.go('range', { sessionId: 's_oct' });
+  const hip = app.$('#ptr_sw_face .ptrace[data-k="hip"]'), head = app.$('#ptr_sw_face .ptrace[data-k="head"]'), tilt = app.$('#ptr_sw_face .ptrace[data-k="tilt"]');
+  assert.equal(hip.querySelectorAll('.tr-band').length, 2, 'a band at the top and at impact');
+  assert.ok(hip.querySelector('.tr-guide'), 'a dotted guide path');
+  assert.equal(hip.querySelectorAll('.tr-off').length, 1, 'impact marked red');
+  assert.ok(hip.classList.contains('off'));
+  assert.equal(head.querySelectorAll('.tr-off').length, 0); assert.ok(!head.classList.contains('off'));
+  assert.equal(tilt.querySelectorAll('.tr-band').length, 0, 'no band without a guide');
+  assert.match(app.text('#poseGuide_sw_face'), /^Dotted: a guide at the top and impact\. Red: outside it\. Hips from tour data \(Sportsbox\), the rest rules of thumb\. Not a measurement of you\.$/);
+  // Down the line: forward bend held within 6° of its own address.
+  const d = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))`);
+  const bb = app.J(`poseBand(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl')), 'bend', 'impact')`);
+  near(bb[0], d.series.bend[d.keys.address] - 6); near(bb[1], d.series.bend[d.keys.address] + 6);
+  assert.match(app.E(`poseContext(session('s_oct').swings.find(s => s.id === 'sw_face'))`), /Hips at impact: 20% of hip width toward the target from where they started \(outside a coaching guide for this position\)/);
+  // Nothing about the guide is stored.
+  assert.ok(!JSON.stringify(app.J(`session('s_oct').swings`)).includes('guide'));
+});
+
+test('a swing\'s camera angle can be changed: the measures follow, and a reading made under the old one says so', async () => {
+  // 2.57.0: he asked, after a down-the-line clip marked face-on read -394% hip sway.
+  app.go('range', { sessionId: 's_oct' });
+  const s0 = await doc('s_oct');
+  await app.api.put('sessions', 's_oct', { ...s0, swings: s0.swings.map(w => w.id === 'sw_dtl' ? { ...w, view: 'face', analysis: { one_thing: 'Stay in your posture' }, analysedOn: '2026-10-25' } : w) });
+  await app.waitFor(() => app.E(`session('s_oct').swings.find(s => s.id === 'sw_dtl').view === 'face'`), { what: 'poll' });
+  app.go('range', { sessionId: 's_oct' });
+  app.click('#view [data-act="swingAngle"][data-wid="sw_dtl"]');
+  assert.deepEqual(app.$$('#angleChoices .choice b').map(b => b.textContent), ['Down the line', 'Face on current', 'Other angle']);
+  assert.ok(app.$('#angleChoices [data-v="face"]').hasAttribute('autofocus'), 'the sheet opens on the current angle, not the first');
+  assert.equal(app.$('#angleChoices [data-v="face"]').getAttribute('aria-pressed'), 'true');
+  app.click('#angleChoices [data-v="dtl"]');
+  await app.waitFor(async () => (await doc('s_oct')).swings.find(s => s.id === 'sw_dtl').view === 'dtl', { what: 'saved' });
+  const sw = (await doc('s_oct')).swings.find(s => s.id === 'sw_dtl');
+  assert.equal(sw.analysedView, 'face', 'the angle the reading was made under');
+  assert.deepEqual(sw.analysis, { one_thing: 'Stay in your posture' }, 'the reading kept');
+  await app.waitFor(() => app.$('#angleNote_sw_dtl'), { what: 'redrawn' });
+  assert.match(app.text('#angleNote_sw_dtl'), /^This reading was made when the clip was marked Face on\. Analyse again to read it as Down the line\.$/);
+  assert.deepEqual(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))).map(x => x.k)`), ['extImpact', 'bendLoss', 'headUp'], 'measured as down the line');
+  // Back to the angle it was read under: no note.
+  app.act('swingAngle', { sid: 's_oct', wid: 'sw_dtl' });
+  app.click('#angleChoices [data-v="face"]');
+  await app.waitFor(async () => (await doc('s_oct')).swings.find(s => s.id === 'sw_dtl').view === 'face', { what: 'saved again' });
+  await app.waitFor(() => !app.$('#angleNote_sw_dtl'), { what: 'note gone' });
+  // (An analysis records the angle it was made under: ui-swing, against a stubbed reading.)
 });
