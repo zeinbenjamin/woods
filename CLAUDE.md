@@ -122,7 +122,8 @@ server/teetimes.js  reads a course's public MiClub tee-time pages on request
 web/index.html      the app, one file, ~3,200 lines
 web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
-web/vendor/leaflet/ Leaflet 1.9.4 for Courses on a map (loaded when opened)
+web/vendor/maplibre/ MapLibre GL 4.7.1: Courses on a map, drawn as a yardage book (loaded when opened)
+web/vendor/leaflet/ Leaflet 1.9.4: the same map's fallback without WebGL
 web/course-maps/    built map files, one per course, + index.json (committed)
 course-maps/        map sources: src/<id>.json (card, mapping, origin), osm/<id>.geojson
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
@@ -997,6 +998,37 @@ keeps clicks inside a popup to itself, so *Open course* gets its own handler on
 `createSVGRect` stub, which jsdom lacks): the row, the pins and colours, home,
 the escaped popup, the same element and zoom after a redraw, a pin opening its
 course, and no button without a placed course.
+**Drawn as a yardage book** (2.49.0, from the roadmap, he said build it): the
+map is MapLibre GL 4.7.1 (vendored in `web/vendor/maplibre/`, BSD-3, 803 KB,
+loaded when the map opens, `cmLoadGl`) over **OpenFreeMap**'s vector tiles
+(`CM_GL_SRC` `tiles.openfreemap.org/planet`, OpenMapTiles schema, to zoom 14,
+fonts at `CM_GLYPHS`, no key; a custom style is allowed as our own JSON; read
+from its TileJSON, Positron style and quick start on 2026-10-30 through a page
+reader, since this container can't reach it). `cmStyle(v, dark, geo)` builds
+the style from the hole maps' `--hm-*` tokens (`v` = `cmVar`): parchment
+background with a hatch texture, wood, parks and grass stippled, sand, golf
+courses (`landcover` subclass `golf_course`) in `--hm-fw` with an ink edge from
+z11, water waved with an inked shore, rivers from z10, roads as thin ink lines
+(motorway/trunk from z8, primary/secondary z11, tertiary z13, nothing smaller),
+place names only (city to z11, suburbs from z12, Noto Sans, upper case), the
+pins (`cm-courses`, a GeoJSON source from `cmGeo()`) on top; no buildings,
+boundaries, airports, POIs or road names. The textures (`cmPattern`: hatch,
+stipple, wave, drawn on a canvas in the theme's colours at 2x) are added the
+moment the map is made: a patterned fill drawn before its image arrives stays
+blank on that tile, and a background never asks (`styleimagemissing` came too
+late; found in Chromium). Another theme makes the map again where it was
+(`cmGlSync`), so its textures are there first; new courses or home go in as
+data (`setData`, a `Marker` for home). Pins open `cmPopup` in a MapLibre popup
+(themed in CSS) with its own handler for *Open course*. No WebGL
+(`cmWebGL()`), or MapLibre failing to load or start: the Leaflet map over
+OSM's tiles above, unchanged. Checked in Chromium with WebGL (SwiftShader)
+against hand-made OpenMapTiles-shaped tiles (geojson-vt + vt-pbf in the
+scratchpad, Playwright standing in for OpenFreeMap): the hatching, waves,
+shore, golf fill, roads, pins and the popup, light and dark, 390px, no
+sideways scroll; the sample's polygons dropped at some zooms (an artefact of
+the sample tool, not the style), so the real tiles on his phone are the test.
+`ui-coursemap-gl` checks the style as data and drives the map code against a
+stand-in MapLibre; `ui-coursemap` still covers the Leaflet fallback.
 
 **Course pictures** (2.47.0, the hole-maps chat's note after its 2.46.0
 `icons.json`): each list row is a `.crow` with `courseIcon(c)` at the left,
@@ -1845,7 +1877,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 405 tests, about 45s.
+`npm test` — 408 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1956,6 +1988,8 @@ fixture would let the reading be pinned.
   `ui-rounds-images` (rounds from 18Birdies screenshots: day-first dates, the
   course and tee matched, totals checked, a scorecard joining its summary, the
   review, pars from Carry's card, the screenshots kept, a duplicate unticked),
+  `ui-coursemap-gl` (the yardage-book map: the style as data, the map code
+  against a stand-in MapLibre, kept across redraws, rebuilt for a theme),
   `ui-coursemap` (Courses on a map: the one row, pins by who can play, home,
   the map kept across a redraw, a pin opening its course),
   `ui-theme` (Appearance: System, Light, Dark; the root attribute, the
@@ -2054,17 +2088,10 @@ In rough order of value:
    Valley has its map (hole-maps 2.16.0) and its art rounds move onto it
    from the course page (2.17.0, *Artwork → map*).
 
-4. **Courses on a map in the yardage-book style** (backlog, he asked
-   2026-10-30, then parked it). OSM's raster tiles can only be tinted, not
-   thinned: at city zoom they're crowded with streets, suburb labels and road
-   numbers. The way: vector tiles drawn with Carry's own style (MapLibre GL,
-   about 800 KB, vendored as Leaflet is): paper ground, inked coastline,
-   hatched water, stippled parks in the hole maps' `--hm-*` palette, main roads
-   only when zoomed in, minor streets and most labels never; pins unchanged.
-   Data from OpenFreeMap (free, no key) first; later a Sydney PMTiles file on
-   the NAS (Protomaps, ~100–300 MB) so the map asks no outside host at all.
-   This container reaches neither, so the style would be built against a
-   hand-made sample and tuned from his screenshots.
+4. **Courses on a map in the yardage-book style** shipped in 2.49.0 on
+   OpenFreeMap (see *Courses list order*). Next, if he wants the map to ask no
+   outside host: a Sydney PMTiles file on the NAS (Protomaps, ~100–300 MB)
+   behind the same style.
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
