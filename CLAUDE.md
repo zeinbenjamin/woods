@@ -125,6 +125,7 @@ web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
 web/vendor/maplibre/ MapLibre GL 4.7.1: Courses on a map, drawn as a yardage book (loaded when opened)
 web/vendor/leaflet/ Leaflet 1.9.4: the same map's fallback without WebGL
+web/vendor/mediapipe/ MediaPipe Pose Landmarker (lite) and its wasm: the body, measured on swing frames
 web/course-maps/    built map files, one per course, + index.json (committed)
 course-maps/        map sources: src/<id>.json (card, mapping, origin), osm/<id>.geojson
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
@@ -788,6 +789,50 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 `ACTIONS.setTheme` in Settings' *Appearance* section (`#appearance`, after
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
+
+## The body, measured (2.55.0)
+
+He asked (2026-10-31, after the mockup at https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK)
+for pose estimation before the course overlay. **The model:** MediaPipe Pose
+Landmarker, lite float16 v1, with `@mediapipe/tasks-vision` 0.10.35 (Apache-2.0),
+vendored in `web/vendor/mediapipe/` (17 MB: `vision_bundle.mjs`, the SIMD wasm only,
+`pose_landmarker_lite.task`; `LICENSE.txt` says where each came from), loaded by
+`import()` on first use (`poseModel`: GPU, else CPU) and run in the browser on the
+swing's stored frames. No outside host, nothing sent. Without WebAssembly SIMD (iOS
+before 16.4) it says so. Checked in Chromium on MediaPipe's own sample photo: 33
+joints, the express static server types `.mjs` and `.wasm` right.
+- **Stored:** `swing.pose` = `{by, on, aspect, frames: [{asset, t, j: [[x, y, vis] ×
+  33] | null}]}` (SCHEMA.md), positions 0..1 of the frame, rounded to 3 places.
+  The joints are a measurement of each frame (slow to make on a phone), like the
+  frames themselves; every measure is derived on each draw (`poseMeasures`). Matched
+  to the swing's frames by asset (`poseFrames`), so a frame removed later drops out.
+  The import's remap carries it.
+- **Positions:** address the first frame with a body; impact the marked one
+  (`sw.impact`), else the hands' lowest point after the top; the top the hands'
+  highest before impact (in the first three quarters when unmarked); finish the last.
+- **Measures per view** (`POSE_MEASURES`): face-on, along the target line (its
+  side read from the lead shoulder at address, so a mirrored clip reads the same):
+  hip sway at the top and hips at impact (% of hip width at address), head drift
+  to impact (% of shoulder width), the lead arm's angle at the top. Down the line
+  (the ball's side read from the nose against the hips at address): hips toward
+  the ball at impact (early extension, % of torso length), forward bend lost
+  (degrees), head height at impact. Other views: the skeleton, no measures. A
+  right-hander is assumed for the lead arm, as everywhere.
+- **Honesty:** joints under `POSE_VIS` (0.5) are left out; a swing with a body in
+  fewer than `POSE_MIN_SHARE` (¾) of its frames is "too few to rely on" and kept
+  out of trends and the reading's prompt. Every place says 2D, from the frames,
+  a measurement of where the joints were, not a reading.
+- **Where:** the swing card (`poseSection`: *Measure the body*, then four positions
+  with the skeleton, the measures, *Across the swing* traces in `#ptr_<id>`); the
+  Swings page (`#measureAll`, and `poseTrendHtml` in each club's fold: each measure
+  swing by swing, per view); the reading's prompt (`poseContext`).
+- `ui-pose` (12) uses a stand-in detector (`window.carryPose`) with hand-made
+  joints: face-on and down-the-line values by hand, a mirrored clip, unsure joints,
+  a marked impact, a removed frame, the prompt, measure-all and the trends, a model
+  that can't run, the import; 13 mutations caught (one survived at first: the trend
+  test couldn't tell an unreliable swing was left out; tightened). Real run in
+  Chromium (390px, light and dark): four frames stored on the server, measured,
+  saved and drawn. Not yet run on his swings: the first real batch is the test.
 
 ## Opening without signal (2.54.0)
 
@@ -2008,7 +2053,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 446 tests, about 45s.
+`npm test` — 458 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2060,6 +2105,9 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `ui-pose.test.js` (12) — the body, measured: a stand-in detector with hand-made
+  joints, face-on and down-the-line measures by hand, mirrored clips, unsure joints,
+  trends, the reading's prompt, a model that can't run, the import.
 - `sw.test.js` (9) — opening without signal: the service worker against stand-in
   caches and network (install, activate, the page, data, what is never kept, course
   maps), the server's stamped copy, the status line and the shim's notice.
@@ -2224,16 +2272,15 @@ In rough order of value:
    *Strokes gained*). Next: a measured amateur baseline in place of the
    modelled handicap allowance, and letting the practice list use it (he
    asked for read-only first).
-2. **Pose estimation on swing frames.** Turns swing analysis from a reading
-   into measured angles tracked over time. He wants it **before** stage 2 of
-   the shot patterns (2026-10-31), mockup first: https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK
+2. **Pose estimation on swing frames** shipped in 2.55.0 (see *The body,
+   measured*). He wanted it **before** stage 2 of the shot patterns (2026-10-31),
+   mockup first: https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK
    (a skeleton on each frame, a chart per measure across the 16 frames, faults
    session by session; one camera is 2D, so face-on measures sway and head
    drift, down-the-line early extension, neither turn in degrees or the club).
-   The mockup proposes MediaPipe Pose Landmarker in the browser (Apache-2.0,
-   the model vendored on the NAS) and the joints stored on the swing as a
-   measurement of each frame; his calls on views, first measures and the
-   practice list are open. Not built.
+   Built as the mockup proposed (MediaPipe in the browser, the joints stored on
+   the swing). Next, at his word: the practice list using a measured fault, and
+   a club detector for wrist hinge and shaft lean.
 3. **More course maps** (see *Course maps*). Barnwell Park, Beverley
    Park and Lane Cove are drawn from his GPS marks as he plays them. Hunter
    Valley has its map (hole-maps 2.16.0) and its art rounds move onto it

@@ -1,3 +1,12 @@
+## 2.55.0 — 2026-10-31
+- Swings can now be measured. *Measure the body* on a swing finds your joints on each of its frames, on your phone, with a pose model that runs in the browser (nothing is sent anywhere). The swing card then shows the skeleton over Address, Top, Impact and Finish, and what the camera can measure:
+  - Face-on: hip sway at the top, where the hips are at impact, head drift from address to impact, and the lead arm at the top.
+  - Down the line: hips moving toward the ball by impact (early extension), forward bend lost, and head height.
+- *Across the swing* charts each measure frame by frame, with the top and impact marked. Top and impact are found from your hands, or taken from your impact mark.
+- On the Swings page, *Measure the body on n swings* measures everything at once, and each club's fold shows each measure swing by swing, so you can see whether a fault is shrinking.
+- Swing readings are given the measured numbers too, and asked to say if what they see disagrees.
+- Unsure joints are left out, never guessed. A swing where the body was found in fewer than three in four frames says it's too few to rely on, and isn't counted in the trends. Phones need Safari 16.4 or later, or a recent Chrome.
+
 ## 2.54.0 — 2026-10-31
 - Carry opens without signal. The page, your data and the course maps you've opened are kept on the phone as they last arrived, and used only when the network can't be reached. The status line says "No signal: showing this phone's copy from …", saves wait on the phone as before, and everything goes back to normal when the signal returns. After updating, open Carry once with signal. Swing videos, photos, map tiles, tee times and swing readings still need signal.
 - Patterns by club on the Overview is calmer: it shows each club's oval without the dots. Tap a club's row to see just that club's shots, with the other ovals faint behind; tap it again to see every club. Clubs without enough shots yet are listed too, so you can see their dots.

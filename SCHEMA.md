@@ -345,6 +345,12 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "addedOn": "2026-09-24", "duration": 6.4,
   "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below; 16 since 2.18.0 (8 before), even across the trim, or packed around `impact`
   "impact": 1.02,                     // 2.26.0: where he marked the club meeting the ball, s from the clip's start; null or absent = not marked, frames even
+  "pose": {                           // 2.55.0, optional: the body found on each frame by the pose model, in the browser
+    "by": "mediapipe-0.10.35-lite", "on": "2026-10-31", "aspect": 1.5,   // aspect = frame width / height, so x and y share a scale
+    "frames": [ { "asset": "<frame asset id>", "t": 0.05,
+                  "j": [[0.512, 0.231, 0.98] /* × 33, MediaPipe's order: x, y as 0..1 of the frame, visibility */] } ]
+  },                                  // j: null where no body was found. A measurement of each frame, like the frames; every measure is derived on each draw.
+                                      // Matched to `frames` by asset: a frame removed later drops out. Import remaps the assets.
   "video": "<asset id>|null",        // null when over the 60 MB cap (20 before 2.25.0)
   "analysis": { /* free-form; see keys below */ },
   "analysedOn": "2026-09-24",
