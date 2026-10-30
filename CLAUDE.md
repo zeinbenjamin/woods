@@ -982,7 +982,8 @@ wraps on a phone with the location on its own line, still on the right.
 **The map** (`vCourseMap`, `courses:view=map`): a pin per course with
 `lat`/`lng`, coloured by `access(c)` through `CM_COLOUR`/`cmFill` (2.49.1, his
 colours, after the first set faded into the yardage-book map: public
-`--score-1` sand D7B66D, members `--score-e` green 4E9B76, closed `--score-3` red
+`--score-1` sand D7B66D, members `--cm-members` lavender AA96BD (its own token, both
+themes; he first picked the eagle green 4E9B76, then this), closed `--score-3` red
 C96A6A, not known `--ink-3` grey; legend, GL pins and the Leaflet fallback alike), home as a square, the courses with no location
 counted under it (`#cmMissing`); a pin's popup (`cmPopup`) has the name,
 suburb, distance, access tag and *Open course*. Leaflet 1.9.4 is vendored in

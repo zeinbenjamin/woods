@@ -40,11 +40,11 @@ test('the map: a pin per placed course coloured by who can play, home, and the c
   await app.waitFor(() => app.E('cm.layer && cm.layer.getLayers().length'), { what: 'pins on the map' });
   const pins = app.J(`cm.layer.getLayers().filter(l => l.options.fillColor).map(l => [l.getLatLng().lat, l.options.fillColor])`);
   const css = n => app.E(`cmVar('${n}')`);
-  // 2.49.1, his colours: public sand D7B66D, members green 4E9B76, closed red C96A6A, not known grey.
-  assert.deepEqual(pins.sort(), [[-33.97, css('--score-3')], [-33.95, css('--score-1')], [-33.85, css('--score-e')]].sort());
-  assert.deepEqual([css('--score-1'), css('--score-e'), css('--score-3')].map(c => c.toUpperCase()), ['#D7B66D', '#4E9B76', '#C96A6A']);
+  // 2.49.1, his colours: public sand D7B66D, members lavender AA96BD, closed red C96A6A, not known grey.
+  assert.deepEqual(pins.sort(), [[-33.97, css('--score-3')], [-33.95, css('--score-1')], [-33.85, css('--cm-members')]].sort());
+  assert.deepEqual([css('--score-1'), css('--cm-members'), css('--score-3')].map(c => c.toUpperCase()), ['#D7B66D', '#AA96BD', '#C96A6A']);
   assert.deepEqual(app.$$('.cmKey i').map(i => i.getAttribute('style')).slice(0, 4),
-    ['background:var(--score-1)', 'background:var(--score-e)', 'background:var(--score-3)', 'background:var(--ink-3)'], 'the legend says the same');
+    ['background:var(--score-1)', 'background:var(--cm-members)', 'background:var(--score-3)', 'background:var(--ink-3)'], 'the legend says the same');
   assert.equal(app.E(`cm.layer.getLayers().filter(l => !l.options.fillColor).length`), 1, 'home');
   assert.match(app.text('#cmCount'), /3 courses, and Home/);
   assert.match(app.text('#cmMissing'), /1 course with no location on its card isn't on the map/);
