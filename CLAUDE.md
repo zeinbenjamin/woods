@@ -1970,6 +1970,18 @@ In rough order of value:
    Valley has its map (hole-maps 2.16.0) and its art rounds move onto it
    from the course page (2.17.0, *Artwork → map*).
 
+4. **Courses on a map in the yardage-book style** (backlog, he asked
+   2026-10-30, then parked it). OSM's raster tiles can only be tinted, not
+   thinned: at city zoom they're crowded with streets, suburb labels and road
+   numbers. The way: vector tiles drawn with Carry's own style (MapLibre GL,
+   about 800 KB, vendored as Leaflet is): paper ground, inked coastline,
+   hatched water, stippled parks in the hole maps' `--hm-*` palette, main roads
+   only when zoomed in, minor streets and most labels never; pins unchanged.
+   Data from OpenFreeMap (free, no key) first; later a Sydney PMTiles file on
+   the NAS (Protomaps, ~100–300 MB) so the map asks no outside host at all.
+   This container reaches neither, so the style would be built against a
+   hand-made sample and tuned from his screenshots.
+
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
 
