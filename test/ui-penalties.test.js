@@ -72,7 +72,7 @@ test('the report page shows it all, links each hole to its latest trace, and say
 test('reachable from the Rounds list and from the Overview', () => {
   app.go('rounds');
   const link = app.$('#view [data-go="rounds:view=penalties"]');
-  assert.match(link.textContent, /Penalty report: 4 penalty strokes/);
+  assert.match(link.textContent, /Penalty report · 4 strokes/);
   app.go('overview');
   assert.ok(app.$('#view [data-go="rounds:view=penalties"]'));
   app.click('#view [data-go="rounds:view=penalties"]');

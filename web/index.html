@@ -87,8 +87,10 @@ input[type=number] { -moz-appearance: textfield; } input[type=range] { width: 10
 textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; } .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
 .check { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 15px; color: var(--ink); } .check input { width: 18px; height: 18px; margin: 0; }
-.courseBar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; } .courseBar #homeLink { margin-left: auto; margin-right: -8px; } .courseBar .seg button, #cmOpen { height: 36px; } #cmOpen { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; } #cmOpen .short { display: none; }
-@media (max-width: 480px) { #cmOpen .long { display: none; } #cmOpen .short { display: inline; } }
+.courseBar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; } .courseBar #homeLink { margin-left: auto; margin-right: -8px; } .courseBar .seg button { height: 36px; }
+.choices { display: grid; gap: 8px; margin: 4px 0 8px; } .choice { display: grid; gap: 2px; text-align: left; padding: 12px 14px; } .choice b { font-weight: 600; }
+#reelsOpen { display: inline-flex; align-items: center; gap: 6px; }
+.iconBtn { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; } .iconBtn svg { display: block; }
 :root { --cm-members: #AA96BD; }   /* members' pins on the course map (2.49.1, his colour), both themes */
 .cmHome { width: 14px; height: 14px; border-radius: 3px; background: var(--ink); border: 2px solid var(--paper); box-sizing: content-box; }
 #cmMap .maplibregl-popup-content { background: var(--paper); color: var(--ink); border-radius: var(--r); padding: 12px 14px; font: 400 14px var(--body); box-shadow: 0 2px 10px rgba(0,0,0,.25); } #cmMap .maplibregl-popup-content .t { font-weight: 600; } #cmMap .maplibregl-popup-content button[data-go] { margin-top: 8px; } #cmMap .maplibregl-popup-close-button { color: var(--ink-3); font-size: 18px; padding: 2px 6px; }
@@ -419,6 +421,7 @@ const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).
 // date anything before 10am as yesterday.
 const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const today = () => localDay(new Date());
+const monthLabel = iso => { const d = new Date((iso || '') + 'T00:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }); };
 const dateLabel = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }); };
 const sum = a => a.reduce((x, y) => x + y, 0);
 const mean = a => a.length ? sum(a) / a.length : null;
@@ -1281,14 +1284,14 @@ function vBlock() {
   let h = back('range', 'sessionId:' + s.id, dateLabel(s.date)) + `<div class="spread"><h1>${esc(b.club)} ${b.target ? '<span class="muted">to ' + b.target + 'm</span>' : ''}</h1><button data-act="editBlock" data-sid="${s.id}" data-bid="${b.id}">Edit</button></div>
   <p class="muted small">${dateLabel(s.date)}, ${esc(b.swing || 'full')} swing${b.drill ? ', ' + esc(b.drill) : ''}</p>`;
   if (shots.length && full) h += dotStrip(shots, shots.map((_, i) => profOf(i)), b.target, Math.max(...all.map(x => x.carry))) + `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
-  h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>mph</small></span>` : ''}</div>`;
+  h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>avg club speed mph</small></span>` : ''}</div>`;
   if (b.fromImages) { const fi = b.fromImages; h += `<p class="small muted" style="margin-top:10px">Read from ${plural((fi.assets || []).length, 'screenshot')} on ${dateLabel(fi.readOn)}${fi.converted ? ', converted from yards' : ''}${fi.units === 'unknown' ? ', units not shown on the screen' : ''}, then checked before saving.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`; }
   const cmp = compareBlock(b, s);
   if (cmp) h += `<p class="small" id="blockCompare">${esc(compareText(b, cmp))}</p>`;
   if (b.intent || b.outcome) h += `<dl class="kv">${b.intent ? `<dt>Working on</dt><dd>${esc(b.intent)}</dd>` : ''}${b.outcome ? `<dt>Outcome</dt><dd>${esc(b.outcome)}</dd>` : ''}</dl>`;
   const gs = (b.goals || []).length ? blockGoals(b) : [];
   if (gs.length) h += `<div id="blockGoals" class="small">For: ${gs.map(g => `<button class="quiet" style="padding:2px 6px" data-go="range:goal=${esc(g.key)}">${esc(goalName(g))} →</button>`).join('')}</div>`;
-  if (shots.length) h += `<details id="shotTable"><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Speed</th><th></th></tr></thead><tbody>` +
+  if (shots.length) h += `<details id="shotTable"><summary class="small muted" style="cursor:pointer;margin:14px 0 8px">Shot table</summary><div class="scroll"><table><thead><tr><th>#</th><th>Carry</th><th>Total</th><th>Roll</th><th>Club speed</th><th></th></tr></thead><tbody>` +
     shots.map((sh, i) => { const p = full ? profOf(i) : ''; return `<tr class="${p === 'top' ? 'flag' : ''}"><td>${i + 1}</td><td class="num">${fmt(sh.carry, 1)}</td><td>${fmt(sh.total, 1)}</td><td>${fmt(sh.total - sh.carry, 1)}</td><td>${fmt(sh.speed, 1)}</td><td>${p ? `<span class="tag ${p === 'pure' ? 'green' : p === 'top' ? 'flag' : ''}">${p}</span>` : ''}${sh.hitC ? ' ✓' : ''}</td></tr>`; }).join('') + `</tbody></table></div></details>`;
   else if (b.plan) h += `<div class="notice"><b>Planned block.</b> ${esc(b.intent || '')}.${b.reason ? ` Why: ${esc(b.reason)}.` : ''} After you hit it, tap Edit and paste the shots.</div>`;
   else h += `<p class="muted small">Summary only. Edit the block to paste shots.</p>`;
@@ -1304,9 +1307,9 @@ function vRounds() {
   if (S.sub && S.sub.sessionId) return vRound();
   const list = S.sessions.filter(s => s.type === 'round');
   const pens = penaltyReport();
-  return `<div class="spread"><h1>Rounds</h1><div class="row-actions" style="margin:0"><button data-act="newRound">New round</button><button class="primary" data-act="startPlay">Start round</button></div></div>` +
-    `<div class="row-actions" style="margin:0 0 8px">${pens.total ? `<button class="quiet" data-go="rounds:view=penalties">Penalty report: ${plural(pens.total, 'penalty stroke')} →</button>` : ''}<button class="quiet" id="roundsFromImages" data-act="roundsFromImages">Add past rounds from screenshots</button></div>` +
-    (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a round by scorecard, then tap any hole to trace your shots on its stencil.</p><button class="primary" data-act="newRound">New round</button></div>`);
+  return `<div class="spread"><h1>Rounds</h1><div class="row-actions" style="margin:0"><button id="addPastRound" data-act="addPastRound">Add past round</button><button class="primary" id="playOpen" data-act="startPlay">Play</button></div></div>` +
+    (pens.total ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" data-go="rounds:view=penalties">Penalty report · ${plural(pens.total, 'stroke')} →</button></div>` : '') +
+    (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Play a round with GPS, or add one you've played: by scorecard, or from screenshots. Then tap any hole to trace your shots.</p><button class="primary" data-act="addPastRound">Add past round</button></div>`);
 }
 function vRound() {
   const r = session(S.sub.sessionId); if (!r) return back('rounds', null, 'Rounds') + `<p>Round not found.</p>`;
@@ -1342,10 +1345,10 @@ function vCourses() {
   if (S.sub && S.sub.courseId && S.sub.hole) return vCourseHole();
   if (S.sub && S.sub.courseId) return vCourse();
   if (S.sub && S.sub.view === 'map') return vCourseMap();
-  let h = `<div class="spread"><h1>Courses</h1><div class="row-actions" style="margin:0"><button data-go="courses:view=teetimes" id="ttOpen">Find a tee time →</button><button class="primary" data-act="newCourse">Add course</button></div></div>`;
+  let h = `<div class="spread"><h1>Courses</h1><div class="row-actions" style="margin:0"><button class="iconBtn" id="addCourse" data-act="newCourse" aria-label="Add course" title="Add course"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button class="primary" data-go="courses:view=teetimes" id="ttOpen">Find a tee time</button></div></div>`;
   const sort = courseSort(), list = sortedCourses(sort);
   // One row (2.44.0): the sort, the map, and on the right where distances are from.
-  h += `<div class="courseBar">${S.courses.length > 1 ? `<div class="seg" id="courseSort">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>` : ''}${S.courses.some(hasCoords) ? `<button data-go="courses:view=map" id="cmOpen" aria-label="View on a map"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span class="long">View on a map</span><span class="short">Map</span></button>` : ''}<button class="quiet" id="homeLink" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
+  h += `<div class="courseBar">${S.courses.length > 1 ? `<div class="seg" id="courseSort">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>` : ''}${S.courses.some(hasCoords) ? `<button class="iconBtn" data-go="courses:view=map" id="cmOpen" aria-label="View on a map" title="View on a map"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></button>` : ''}<button class="quiet" id="homeLink" data-act="setHome">${home() ? `From ${esc(home().label || 'your location')} ›` : 'Set location ›'}</button></div>`;
   if (window.HoleMap && HoleMap.icons) HoleMap.icons();   // starts icons.json; its arrival redraws through mapArrived
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
@@ -1363,7 +1366,7 @@ const courseIcon = c => (window.HoleMap && HoleMap.iconTile ? HoleMap.iconTile(c
 // Sorting the course list. Default: closest first when his location is set
 // (and at least one course has coordinates), otherwise most recently added.
 // A choice he makes is kept in settings.
-const COURSE_SORTS = [['near', 'Closest'], ['recent', 'Recently added'], ['az', 'A–Z']];
+const COURSE_SORTS = [['near', 'Closest'], ['recent', 'Newest'], ['az', 'A–Z']];
 const nearAvailable = () => S.courses.some(c => distanceTo(c) != null);
 function courseSort() {
   const want = settings().courseSort;
@@ -1801,7 +1804,7 @@ function blockForm(b = {}) {
   const clubs = activeClubs().map(c => [c.code, c.code + '  ' + c.name]);
   return `<h2>${b.id ? 'Edit block' : 'Add block'}</h2>
   <div class="grid3">${selectF('Club', 'club', clubs, b.club || (clubs[0] || [])[0])}${selectF('Swing', 'swing', [['full', 'Full'], ['part', 'Part'], ['chip', 'Chip']], b.swing || 'full')}${field('Target m', 'target', 'number', b.target, 'inputmode="decimal"')}</div>
-  <label>Shots — one per line: carry, total, speed (4 numbers: row, carry, total, speed)<textarea name="shots" placeholder="147.5  178.2  -&#10;156.6  170.8  79.4" spellcheck="false" style="min-height:150px;font-variant-numeric:tabular-nums">${esc(shotsText(b.shots))}</textarea></label>
+  <label>Shots — one per line: carry, total, club speed (4 numbers: row, carry, total, club speed)<textarea name="shots" placeholder="147.5  178.2  -&#10;156.6  170.8  79.4" spellcheck="false" style="min-height:150px;font-variant-numeric:tabular-nums">${esc(shotsText(b.shots))}</textarea></label>
   <div class="count" id="shotCount"></div>
   <details ${b.summary && Object.keys(b.summary).length ? 'open' : ''}><summary class="small muted" style="cursor:pointer;margin:12px 0 4px">Bay summary — from-pin figures the bay shows, or the whole block if you have no shot list</summary>
     <div class="grid3">${field('Shots', 'sm_n', 'number', b.summary?.n)}${field('Avg carry', 'sm_avgCarry', 'number', b.summary?.avgCarry, 'step="0.1"')}${field('Avg total', 'sm_avgTotal', 'number', b.summary?.avgTotal, 'step="0.1"')}</div>
@@ -3683,11 +3686,12 @@ function vSwings() {
   const sws = swingHistory();
   const vids = sws.filter(sw => sw.video).length;
   // The feed's button sits beside the heading, as Range's, Rounds' and Courses' do (2.45.0, he asked).
-  let h = vids ? `<div class="spread"><h1>Swings</h1><button class="primary" id="reelsOpen" data-go="swings:view=reels">Watch: ${plural(vids, 'video')} →</button></div>` : `<h1>Swings</h1>`;
+  let h = vids ? `<div class="spread"><h1>Swings</h1><button class="primary" id="reelsOpen" data-go="swings:view=reels" aria-label="Watch ${plural(vids, 'video')}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Watch ${vids}</button></div>` : `<h1>Swings</h1>`;
   if (!sws.length) return h + `<div class="empty"><p>No swings on file yet. Add a video to a range session or a round and it appears here.</p></div>`;
   const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
-  const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length, places = [...new Set(sws.map(sw => sw.session.id))].length;
-  h += `<p class="small muted" id="swingBasis">${plural(sws.length, 'swing')} from ${plural(places, 'session')}, ${swingDate(sws[sws.length - 1]) ? `${dateLabel(swingDate(sws[sws.length - 1]))} to ${dateLabel(swingDate(sws[0]))}` : ''}; ${read} read. Readings are interpretations, not measurements; the summaries below are put together from them, nothing new is read.</p>`;
+  const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length;
+  const span = [monthLabel(swingDate(sws[sws.length - 1])), monthLabel(swingDate(sws[0]))].filter(Boolean);
+  h += `<p class="small muted" id="swingBasis">${[plural(sws.length, 'swing'), [...new Set(span)].join(' – '), read === sws.length ? 'all read' : `${read} read`].filter(Boolean).join(' · ')}</p>`;
   h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
     const c = swingClubSummary(club, sws), name = club || 'No club';
     const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
@@ -3708,7 +3712,7 @@ function vSwings() {
       <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>
       <div class="s">${a && a.one_thing ? `<b>${esc(a.one_thing)}</b>${a.ball_data === 'agrees' ? ' · ball data agrees' : a.ball_data === 'contradicts' ? ' · contradicts ball data' : ''}` : a ? esc((a.observations || [])[0]?.what || 'read') : 'not read yet'}</div></div></button>`;
   }).join('') + `</div>`;
-  return h;
+  return h + `<p class="small muted" id="swingCaveat">Readings are interpretations, not measurements. The summaries are put together from them; nothing new is read.</p>`;
 }
 
 /* ---------- the feed (2.25.0) ----------
@@ -4117,7 +4121,7 @@ function openShotReview(sid, read, images) {
     ${read.blocks.map((b, i) => `<div class="readblock">
       ${checkF(`<b>Block ${i + 1}</b>${b.clubAsShown ? ` <span class="muted small">screen says “${esc(b.clubAsShown)}”</span>` : ''}`, `keep_${i}`, true)}
       <div class="grid3">${selectF('Club', `club_${i}`, clubs, b.club || '')}${selectF('Swing', `swing_${i}`, [['full', 'Full'], ['part', 'Part'], ['chip', 'Chip']], 'full')}${field('Target m', `target_${i}`, 'number', b.target, 'inputmode="decimal"')}</div>
-      <label>Shots — carry, total, speed<textarea name="shots_${i}" spellcheck="false">${esc(shotsText(b.shots))}</textarea></label>
+      <label>Shots — carry, total, club speed<textarea name="shots_${i}" spellcheck="false">${esc(shotsText(b.shots))}</textarea></label>
       <div class="count" data-count="${i}"></div>
       ${b.summary ? `<div class="grid3">${field('Shots', `sm_n_${i}`, 'number', b.summary.n)}${smF(i, 'fromPinCarry', 'From pin (carry)', b.summary.fromPinCarry)}${smF(i, 'fromPinTotal', 'From pin (total)', b.summary.fromPinTotal)}</div><div class="grid2">${smF(i, 'avgCarry', 'Avg carry', b.summary.avgCarry)}${smF(i, 'avgTotal', 'Avg total', b.summary.avgTotal)}</div>` : ''}
       ${b.warnings.length ? `<ul class="warnlist">${b.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
@@ -4340,6 +4344,12 @@ async function readRoundImages(files, onProgress) {
   if (items.every(it => it.error === 'unavailable')) return { error: 'unavailable' };
   return mergeRoundReads(items);
 }
+// One button for a round already played (2.50.0): typed in, or read from screenshots.
+ACTIONS.addPastRound = function () {
+  openSheet(`<h2>Add a past round</h2><div class="choices">
+    <button class="choice" data-act="newRound"><b>Type it in</b><span class="small muted">A score per hole; trace the shots afterwards if you like.</span></button>
+    <button class="choice" id="roundsFromImages" data-act="roundsFromImages"><b>From screenshots</b><span class="small muted">Summaries or scorecards from 18Birdies or another app, many rounds at once.</span></button></div>`);
+};
 ACTIONS.roundsFromImages = function () {
   openSheet(`<h2>Rounds from screenshots</h2>
     <p class="small muted">Screenshots of past rounds from 18Birdies or another scoring app, up to ${ROUND_IMAGES_MAX} at a time: each round's summary (date, course, tee, the hole scores), and its full scorecard after it if you want putts too. Claude reads each one; you check every round beside its screenshots before anything is saved. Pars and lengths come from the course's card in Carry, so add any missing course first.</p>

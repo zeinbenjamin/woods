@@ -39,6 +39,7 @@ after(() => app && app.stop());
 const png = word => new app.win.File([word], word + '.png', { type: 'image/png' });
 async function readScreens(words) {
   app.go('rounds');
+  app.click('#addPastRound');
   app.click('#roundsFromImages');
   Object.defineProperty(app.field('imgs'), 'files', { value: words.map(png) });
   app.$('#sheetInner [data-save]').click();
@@ -105,4 +106,19 @@ test('a round already in Carry for that course and day comes unticked, and a cou
   assert.equal(m.rounds.length, 2);
   assert.equal(m.rounds[0].dupe, true); assert.ok(m.rounds[0].warnings.some(w => /already have a round here on this day/.test(w)));
   assert.equal(m.rounds[1].courseId, '');
+});
+
+test('the Rounds heading has Play and one button for a past round, which offers typing it in or screenshots', () => {
+  // 2.50.0, he found the top crowded on his phone: two buttons and a link became one.
+  app.go('rounds');
+  const head = app.$('#view h1').parentElement;
+  assert.deepEqual(app.$$('button', head).map(b => [b.id, b.textContent]), [['addPastRound', 'Add past round'], ['playOpen', 'Play']]);
+  assert.equal(app.$('#playOpen').dataset.act, 'startPlay');
+  assert.ok(!app.$('#view #roundsFromImages'), 'screenshots are in the sheet, not on the page');
+  app.click('#addPastRound');
+  assert.deepEqual(app.$$('#sheetInner .choice b').map(b => b.textContent), ['Type it in', 'From screenshots']);
+  app.click('#sheetInner [data-act="newRound"]');
+  assert.ok(app.$('#sheetInner [name=courseId]'), 'Type it in opens the round form');
+  assert.ok(app.$('#sheetInner [data-save]'));
+  app.$('#sheetInner [data-close]').click();
 });
