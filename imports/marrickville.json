@@ -15,7 +15,7 @@
       "lng": 151.1379,
       "tee": "men",
       "notes": "18 holes, par 60, 3,739 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: men 60 / 99, ladies 63 / 96. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2061509, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.marrickvillegolf.com.au/fees-and-schedule).",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2061509, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.marrickvillegolf.com.au/fees-and-schedule); booking link 2026-10-30: the club's TeeItUp page (GolfNow's booking engine, course 16264, the same id as its GolfNow listing), read live that day, map link copied from the NAS record so a re-import keeps it.",
       "holes": [
         {
           "n": 1,
@@ -199,7 +199,11 @@
         }
       ],
       "bookable": true,
-      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/16264-marrickville-golf-club/search"
+      "bookingUrl": "https://marrickville-golf-club.book.teeitup.com/?course=16264",
+      "map": {
+        "id": "marrickville",
+        "linked": "2026-10-30"
+      }
     }
   ],
   "sessions": [],

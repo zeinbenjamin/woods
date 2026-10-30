@@ -1,5 +1,5 @@
 // Tee times (2.40.0): what a course's own booking site shows as free, read on
-// request and never stored. Only MiClub so far: its public calendar lists the
+// request and never stored. MiClub, and TeeItUp since 2.43.0 (below). MiClub's public calendar lists the
 // rates for each day (18 holes, 9 holes, a late rate…), and each rate's
 // timesheet lists the tee times with every spot as Taken or Available. Both
 // are public pages that need no login.
@@ -111,27 +111,114 @@ export function parseTimesheet(html) {
 /* ---------- fetching ---------- */
 
 // → { text, at }: the page and when it was read, so a cached answer says how old it is.
-async function fetchPage(url, fresh = false) {
-  const hit = cache.get(url);
+// `headers` are added to the request and to the cache key (TeeItUp's alias).
+async function fetchPage(url, fresh = false, headers = null) {
+  const key = headers ? url + ' ' + JSON.stringify(headers) : url;
+  const hit = cache.get(key);
   if (hit instanceof Promise) return hit;
   if (hit && Date.now() - hit.at < (fresh ? Math.min(hit.ttl, FRESH_MIN) : hit.ttl)) { if (hit.error) throw hit.error; return { text: hit.value, at: hit.at }; }
   const p = (async () => {
     try {
-      const res = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html' }, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT) });
-      if (!res.ok) throw Object.assign(new Error(`the booking site answered ${res.status}`), { code: 'unreachable' });
+      const res = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html', ...(headers || {}) }, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT) });
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw Object.assign(new Error(`the booking site answered ${res.status}`), { code: 'unreachable', sample: body.slice(0, 600) });
+      }
       const value = await res.text(), at = Date.now();
-      cache.set(url, { at, ttl: TTL, value });
+      cache.set(key, { at, ttl: TTL, value });
       return { text: value, at };
     } catch (e) {
       const error = e.code ? e : Object.assign(new Error(e.name === 'TimeoutError' ? 'the booking site took too long to answer' : 'the booking site could not be reached'), { code: 'unreachable' });
-      cache.set(url, { at: Date.now(), ttl: ERROR_TTL, error });
+      cache.set(key, { at: Date.now(), ttl: ERROR_TTL, error });
       throw error;
     }
   })();
-  cache.set(url, p);
+  cache.set(key, p);
   return p;
 }
 export const clearTeeTimeCache = () => cache.clear();
+
+/* ---------- TeeItUp: GolfNow's booking engine for clubs ----------
+   Read at Zein's decision (2026-10-30), knowing GolfNow's terms forbid
+   automated reading ("software robots, spider, crawlers…", s.2); read as
+   politely as MiClub: only when he searches, once per course and day, kept
+   five minutes, nothing stored. A club's page (<alias>.book.teeitup.com/
+   ?course=<facility id>, the GolfNow facility id) is built in the browser;
+   the times come from GolfNow's booking API, asked with the club's alias.
+   **Not yet seen live** (this container can't reach it): the answer's shape
+   below is the one TeeItUp's page is known to use (a day per facility, its
+   `teetimes`, each with rates), read defensively; an answer that doesn't fit
+   comes back `unreadable` with the start of the reply in `sample`, so the
+   first live search shows what to change. */
+const TEEITUP_API = (process.env.TEEITUP_API || 'https://phx-api-be-east-1b.kenna.io').replace(/\/$/, '');
+export const TEEITUP_HOST = /^([a-z0-9-]+)\.book\.teeitup\.com$/i;
+export function teeitupSource(bookingUrl) {
+  let u;
+  try { u = new URL(bookingUrl); } catch { return null; }
+  const m = TEEITUP_HOST.exec(u.hostname), facility = u.searchParams.get('course');
+  return m && /^\d+$/.test(facility || '') ? { alias: m[1].toLowerCase(), facility } : null;
+}
+export const teeitupPage = (src, date) => `https://${src.alias}.book.teeitup.com/?course=${src.facility}&date=${date}`;
+export const teeitupApi = (src, date) => `${TEEITUP_API}/v2/tee-times?date=${date}&facilityIds=${src.facility}`;
+
+// An ISO time with an offset is moved to Sydney's clock; one without is taken as written.
+function localClock(iso, tz = 'Australia/Sydney') {
+  if (typeof iso !== 'string') return null;
+  if (/(Z|[+-]\d\d:?\d\d)$/i.test(iso)) {
+    const d = new Date(iso);
+    if (isNaN(d)) return null;
+    const p = new Intl.DateTimeFormat('en-AU', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
+    const v = t => (p.find(x => x.type === t) || {}).value;
+    return `${v('hour')}:${v('minute')}`;
+  }
+  const m = /T(\d{2}):(\d{2})/.exec(iso);
+  return m ? `${m[1]}:${m[2]}` : null;
+}
+// Fees may be in cents (4500) or dollars (45): a green fee of $1,000 or more
+// is taken as cents. The live page shows dollars, which settles it.
+const dollars = v => (typeof v !== 'number' || !isFinite(v) ? null : v >= 1000 ? v / 100 : v);
+const ratePrice = r => dollars(r.greenFeeWalking ?? r.greenFee ?? r.price ?? r.greenFeeCart);
+const rateHoles = r => { const h = Array.isArray(r.holes) ? Math.max(...r.holes) : Number(r.holes); return [9, 10, 12, 18].includes(h) ? h : null; };
+
+// The API's answer → the same rates as a MiClub calendar gives, or null when
+// it isn't the shape expected.
+export function parseTeeitup(body, src, date) {
+  let j;
+  try { j = typeof body === 'string' ? JSON.parse(body) : body; } catch { return null; }
+  const days = Array.isArray(j) ? j : j && Array.isArray(j.data) ? j.data : [j];
+  if (!days.some(d => d && Array.isArray(d.teetimes))) return null;
+  const groups = new Map();
+  for (const tt of days.flatMap(d => (d && Array.isArray(d.teetimes) ? d.teetimes : []))) {
+    const time = localClock(tt.teetime || tt.time);
+    if (!time) continue;
+    const booked = Number(tt.bookedPlayers) || 0, max = Number(tt.maxPlayers) || 4;
+    for (const r of Array.isArray(tt.rates) && tt.rates.length ? tt.rates : [{}]) {
+      const allowed = Array.isArray(r.allowedPlayers) && r.allowedPlayers.length ? Math.max(...r.allowedPlayers) : null;
+      const free = allowed ?? Math.max(0, max - booked), name = String(r.name || 'Tee time'), holes = rateHoles(r), price = ratePrice(r);
+      const key = name + '|' + holes;
+      if (!groups.has(key)) groups.set(key, { name, holes, price, special: false, url: teeitupPage(src, date), times: [] });
+      const g = groups.get(key);
+      if (price != null && (g.price == null || price < g.price)) g.price = price;
+      g.times.push({ time, tee: tt.backNine ? 'Back nine' : null, free, of: max, fees: price != null ? [{ price, who: name }] : [] });
+    }
+  }
+  return [...groups.values()].map(g => ({ ...g, times: g.times.sort((a, b) => (a.time < b.time ? -1 : 1)) })).sort((a, b) => (b.holes || 0) - (a.holes || 0));
+}
+
+async function teeitupTimes(src, date, filters, fresh) {
+  const page = teeitupPage(src, date);
+  try {
+    const got = await fetchPage(teeitupApi(src, date), fresh, { 'x-be-alias': src.alias, accept: 'application/json' });
+    const all = parseTeeitup(got.text, src, date);
+    if (!all) return { status: 'unreadable', source: 'TeeItUp', calendar: page, message: 'GolfNow\'s booking engine answered, but not in a form Carry can read yet.', sample: got.text.slice(0, 1500) };
+    const offered = all.filter(r => !filters.holes || !r.holes || r.holes === filters.holes);
+    const rates = offered.map(r => { const times = r.times.filter(t => suits(t, r, filters)); return { ...r, times, listed: r.times.length }; });
+    const note = rates.length ? null : !all.length ? 'Nothing is open to the public on this day.' : 'No rate on this day matches the holes asked for.';
+    return { status: 'ok', source: 'TeeItUp', date, calendar: page, rates, ...(note ? { note } : {}), fetchedAt: new Date(got.at).toISOString() };
+  } catch (e) {
+    return { status: e.code === 'unreachable' ? 'unreachable' : 'unreadable', source: 'TeeItUp', calendar: page, message: e.message, ...(e.sample ? { sample: e.sample } : {}) };
+  }
+}
 
 /* ---------- filters ---------- */
 
@@ -150,8 +237,10 @@ export function suits(t, rate, { from, to, holes, players } = {}) {
 // → { status: 'ok', date, calendar, rates: [{ name, holes, price, special, url, times, shown }], fetchedAt }
 //   or { status: 'unsupported' | 'unreadable' | 'unreachable', message }.
 export async function teeTimes(course, date, filters = {}, { fresh = false } = {}) {
+  const tee = teeitupSource(course && course.bookingUrl);
+  if (tee) return teeitupTimes(tee, date, filters, fresh);
   const src = miclubSource(course && course.bookingUrl);
-  if (!src) return { status: 'unsupported', message: course && course.bookingUrl ? 'Carry can only read MiClub booking sites so far.' : 'This course has no booking link.' };
+  if (!src) return { status: 'unsupported', message: course && course.bookingUrl ? 'Carry can read MiClub and TeeItUp booking sites so far.' : 'This course has no booking link.' };
   const calendar = calendarUrl(src, date);
   try {
     const page = await fetchPage(calendar, fresh);

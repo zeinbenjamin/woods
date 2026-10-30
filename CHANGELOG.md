@@ -1,3 +1,7 @@
+## 2.43.0 — 2026-10-30
+- Find a tee time now also reads the clubs that book through GolfNow's TeeItUp pages: Georges River, Marrickville, Palm Beach and Avalon once their imports are loaded again, and Bardwell Valley once its booking link is set to its TeeItUp page. Each time links to the club's TeeItUp page for that day.
+- First live search to come: if a TeeItUp course says it couldn't be read, open its tee-times address in the browser and send what it shows.
+
 ## 2.42.0 — 2026-10-30
 - Tee times: pick any day up to a year ahead with the new Pick a date chip, not just the coming week.
 - Tee times: a Max price filter. It goes by each time's own fee, and says when nothing is at or under your price and what the cheapest would be.
