@@ -1,3 +1,8 @@
+## 2.41.1 — 2026-10-30
+- Tee times: courses with nothing that suits are now folded together under the ones with times, instead of a long list of "No times left that match". Each says what came closest: times outside your window (and the first of them), times in your window without enough spots, or no rate for the holes you picked.
+- Courses: Find a tee time sits beside Add course, on the heading's row.
+- Liverpool's booking link pointed at a site that no longer exists; it now points at Oak Point's (the club's name since the merger). Import liverpool.json again to pick it up.
+
 ## 2.41.0 — 2026-10-30
 - Courses → Find a tee time: free tee times on the clubs' own booking sites for the next seven days. Pick the day, a time window, how many players, 9 or 18 holes and how far from home; the courses with times come first, nearest first, each time showing how many spots are left.
 - Tap a time to book it on the club's own page. Carry books nothing and stores nothing; it reads the clubs' public pages when you look, and "Check again" reads them afresh.

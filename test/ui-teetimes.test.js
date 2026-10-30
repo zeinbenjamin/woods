@@ -82,8 +82,10 @@ test('every course that shows nothing says why', () => {
   assert.match(row('c_empty'), /lists no rates at all/);
   assert.match(app.text('#ttOther'), /Quick GC/);
   assert.match(app.text('#ttOther'), /Public 9 holes/);
-  const order = app.$$('#ttList > [data-tt], #ttList > details').map(x => x.dataset.tt || x.id.replace('tt_', ''));
-  assert.deepEqual(order, ['c_near', 'c_empty', 'c_down'], 'times first, then nothing that suits, then couldn\'t read');
+  const ids = sel => app.$$(sel).map(x => x.dataset.tt || x.id.replace('tt_', ''));
+  assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near'], 'only courses with times in the list');
+  assert.deepEqual(ids('#ttRestList > [data-tt]'), ['c_empty', 'c_down'], 'the rest folded: nothing that suits, then couldn\'t read');
+  assert.match(app.text('#ttRest summary'), /Nothing that suits\s*2 courses, 1 couldn't be read/);
 });
 
 test('players, time and holes filter the answers already read, without asking the clubs again', async () => {
@@ -93,9 +95,17 @@ test('players, time and holes filter the answers already read, without asking th
   const from = app.$('select[data-ttpref="from"]'); from.value = '13:00'; from.dispatchEvent(new app.win.Event('change', { bubbles: true }));
   assert.match(teaser('c_near'), /4 times from 13:04/);
   app.click('#tt_holes [data-v="9"]');
-  assert.match(row('c_near'), /No times left that match/, 'no 9-hole rate that day');
+  assert.match(row('c_near'), /No 9-hole rate on this day; it has 8 times at other lengths/);
   app.click('#tt_holes [data-v=""]');
   assert.match(teaser('c_near'), /4 times/);
+  // Nothing fits: the nearest miss, from the day's own times.
+  const sel = (k, v) => { const e = app.$(`select[data-ttpref="${k}"]`); e.value = v; e.dispatchEvent(new app.win.Event('change', { bubbles: true })); };
+  sel('to', '13:00');
+  assert.match(row('c_near'), /Nothing in your time window\. 6 times with room for 2 outside it, from 12:48\./, '13:00 to 13:00 has nothing');
+  sel('from', '14:00'); sel('to', '');
+  app.click('#tt_players [data-v="4"]');
+  assert.match(row('c_near'), /Nothing in your time window\. 2 times with room for 4 outside it, from 13:04\./, 'after 14:00 only 14:32, with 2 spots');
+  sel('from', '13:00'); app.click('#tt_players [data-v="2"]');
   assert.equal(hits.length, before, 'nothing asked of any club');
   assert.deepEqual(JSON.parse(app.win.localStorage.getItem('carry.tt')), { from: '13:00', to: '', holes: null, players: 2, within: 20 }, 'kept for next time on this phone');
 });

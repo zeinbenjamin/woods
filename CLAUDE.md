@@ -638,6 +638,22 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   re-reads a club's page only if Carry's copy is over `TEETIMES_FRESH_MS`
   (1 min) old, so taps can't hammer a club. Checked in Chromium at 390 px,
   light and dark: no sideways scroll.
+- **His first search** (2.41.1, Sun 1 Nov, 05:00–10:00, 4 players, 18
+  holes, 20 km): 2 of 21 courses had times, and 17 rows said "No times left
+  that match", which buried them and said nothing. Now the courses with
+  nothing (and those that couldn't be read) are one fold, `#ttRest`
+  ("Nothing that suits · n courses, m couldn't be read"), under the list, and
+  each says the nearest miss (`ttMiss`, from the day's own times, the filters
+  relaxed one at a time): no rate for those holes; nothing in the window but
+  n times with room outside it, from the first; n in the window without the
+  spots; all with fewer spots. Liverpool was "could not be reached": the
+  audit's link was `liverpool.miclub.com.au`, which doesn't resolve; the club
+  is Oak Point (merged with Kogarah) and books on `oakpoint.miclub.com.au`
+  (3000000, seen in search results), so `imports/liverpool.json` carries that.
+  *Find a tee time* moved beside *Add course* on the heading's row.
+  **Worth knowing:** MiClub runs **TeeNet** (`clubshare.miclub.com.au/teenet`),
+  its own listing of public times across its clubs; not looked at yet, but
+  it may be one page to read instead of one per club.
 - **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 

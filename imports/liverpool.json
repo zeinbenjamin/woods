@@ -15,7 +15,7 @@
       "lng": 150.97258,
       "tee": "blue",
       "notes": "18 holes, par 72, 6,312 m off the blue tees. Lengths in metres; tee sets: blue, orange, red, gold (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify,: blue 72 / 139, orange 72 / 133, red 74 / 134, gold 72 / 115. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify files Liverpool Golf Club's course under its course name, Oak Point.",
-      "source": "Card: Golfify, which lists the course as Oak Point Golf Club (blue, orange, red and gold, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2874141, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://liverpool.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=).",
+      "source": "Card: Golfify, which lists the course as Oak Point Golf Club (blue, orange, red and gold, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2874141, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://liverpool.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp?bookingResourceId=); booking link corrected 2026-10-30: the club trades as Oak Point Golf Club and books on oakpoint.miclub.com.au (resource 3000000, seen in web search results for its public calendar and an 18-hole timesheet); liverpool.miclub.com.au does not resolve.",
       "holes": [
         {
           "n": 1,
@@ -235,7 +235,7 @@
         }
       ],
       "bookable": true,
-      "bookingUrl": "https://liverpool.miclub.com.au/guests/bookings/ViewPublicTimesheet.msp"
+      "bookingUrl": "https://oakpoint.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000"
     }
   ],
   "sessions": [],
