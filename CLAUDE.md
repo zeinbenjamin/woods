@@ -683,6 +683,18 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   calendars (on its domain and `theridge.miclub.com.au`) carry only lesson
   bookings, so no MiClub link: `imports/the-ridge.json` now has the club's
   tee-times page, a phone `bookingNote` and its listed green fees.
+- **Filters, two lines and any day** (2.42.0, he asked): the seven day chips
+  are followed by *Pick a date* (`#ttPick`, a `type=date` input laid invisibly
+  over a chip so the native picker opens), from today to `TT_AHEAD` (365) days;
+  `ttDate()` accepts any day in that range, else today. The filters are a label
+  over each control in two `.ttline` rows: Time + Players, then Holes + Within
+  + Max price; Within became a select (`data-num`), and the new `price` pref
+  (`TT_PRICES` 30–100, `carry.tt`) keeps times whose own fee (`ttPrice`: first
+  fee, else the rate's price) is at or under it; an unknown price is left out
+  under a limit, never guessed in, and `ttMiss` names the cheapest that would
+  otherwise suit. Day chips, segment buttons and selects are all 16px (iOS
+  zooms into a select under 16px) and 38px tall. Measured in Chromium at 390px,
+  light and dark: two rows, one size, no sideways scroll.
 - **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
@@ -1634,7 +1646,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 380 tests, about 45s.
+`npm test` — 383 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1651,12 +1663,13 @@ fixture would let the reading be pinned.
   `/api/version`, the stamped page, and `/api/analyse` against a fake
   Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
   Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
-- `ui-teetimes.test.js` (7) — the search screen against a stand-in MiClub
+- `ui-teetimes.test.js` (10) — the search screen against a stand-in MiClub
   serving Bexley's pages: which courses are asked (near, public, readable),
   a course's rates and time chips linking to the club's timesheet, why a
   course shows nothing and the order, filters working without asking any
   club again (and kept on the phone), distance, another day and *Check
-  again*, no home location, and today at a fixed 13:30 hiding 13:04.
+  again*, no home location, today at a fixed 13:30 hiding 13:04, the price
+  limit by each time's own fee, one size and two lines, and a day 40 days out.
 - `teetimes.test.js` (9) — the MiClub reader against Bexley's real calendar
   and timesheet (`test/fixtures/`), which links are MiClub, the filters, and
   the route against a stand-in MiClub: rates, times, the cache expiring,
