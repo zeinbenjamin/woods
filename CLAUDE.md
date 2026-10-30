@@ -692,8 +692,11 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   (`TT_PRICES` 30–100, `carry.tt`) keeps times whose own fee (`ttPrice`: first
   fee, else the rate's price) is at or under it; an unknown price is left out
   under a limit, never guessed in, and `ttMiss` names the cheapest that would
-  otherwise suit. Day chips, segment buttons and selects are all 16px (iOS
-  zooms into a select under 16px) and 38px tall. Measured in Chromium at 390px,
+  otherwise suit. Day chips, segment buttons and selects are set like the
+  app's buttons (2.42.1, he asked: "consistent with the design of the app", not
+  2.42.0's 16px of their own): 500 14px, 38px tall. A select can't be under
+  16px or iOS zooms into it, so each is a `.ttsel` label showing the choice,
+  with the real 16px select laid invisibly over it, as `#ttPick` is. Measured in Chromium at 390px,
   light and dark: two rows, one size, no sideways scroll.
 - **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
@@ -1659,7 +1662,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 383 tests, about 45s.
+`npm test` — 384 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1782,7 +1785,7 @@ fixture would let the reading be pinned.
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
   holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, the tier-A batch (mapped greens, ref numbers, Manly's 14, Woollahra's nine, Moore Park's ten), the A- batch (partial boundaries, Avondale's outline, Kogarah's shared lines), the B batch (the lines OSM has, Monash's older lines, holes from marks on a partial map), the C batch (lines or marks, flags snapping to mapped greens), the D batch, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
   check, lies, the view's orientation and tap round trip.
-- `imports.test.js` (4) — every file in `imports/` is a one-course
+- `imports.test.js` (5) — every file in `imports/` is a one-course
   carry-export whose card adds up (holes 1..n, pars, `metres` mirroring the
   primary tee, each stroke index once, a Sydney location, a source); every
   course map has an import, is on the NAS already, or is on the test's

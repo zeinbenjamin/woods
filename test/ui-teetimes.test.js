@@ -126,11 +126,16 @@ test('a price limit keeps the times at or under it, by each time\'s own fee, and
   assert.equal(hits.length, before, 'filtering by price asks no club anything');
 });
 
-test('the filters are one size and two lines: day chips, buttons and selects all 16px', () => {
-  // 2.42.0 (he asked): chips were 13px and the buttons the body size beside 16px selects. 16px is
-  // what iOS needs to not zoom into a select, so everything matches it.
+test('the filters are set like the app\'s buttons, in two lines, and a select never zooms the phone', () => {
+  // 2.42.1 (he asked: "consistent with the design of the app", not one size of their own): day chips,
+  // segment buttons and the dropdowns all at the buttons' 500 14px. The real selects stay 16px, which
+  // iOS needs to not zoom on a tap, laid invisibly over a label showing the choice.
   const css = app.doc.querySelector('style').textContent;
-  assert.match(css, /#ttDays \.chip, \.ttfilters \.seg button, \.ttfilters select \{ font: 500 16px var\(--body\); \}/);
+  assert.match(css, /button, \.btn \{ font: 500 14px var\(--body\);/, 'the app\'s buttons');
+  assert.match(css, /#ttDays \.chip, \.ttfilters \.seg button, \.ttsel \{ font: 500 14px var\(--body\); \}/, 'the filters match them');
+  assert.match(css, /\.ttsel select \{[^}]*opacity: 0; font-size: 16px;/, 'the real select: invisible, 16px');
+  const within = app.$('#tt_within');
+  assert.equal(within.closest('label.ttsel').querySelector('span').textContent, within.selectedOptions[0].textContent, 'the label shows the choice');
   assert.deepEqual(app.$$('.ttfilters .ttline').map(l => [...l.querySelectorAll('.ttl')].map(x => x.textContent)), [['Time', 'Players'], ['Holes', 'Within', 'Max price']]);
 });
 
