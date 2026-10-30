@@ -15,7 +15,7 @@
       "lng": 151.30751,
       "tee": "men",
       "notes": "18 holes, par 72, 6,005 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4334962, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4334962, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.mvgc.com.au/cms/golf/online-social-tee-bookings/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,11 @@
           },
           "si": 3
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.mvgc.com.au/guests/bookings/ViewPublicCalendar.msp",
+      "prereg": true,
+      "bookingNote": "Register as a public member first; social play outside competition times."
     }
   ],
   "sessions": [],

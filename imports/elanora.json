@@ -15,7 +15,7 @@
       "lng": 151.27201,
       "tee": "men",
       "notes": "18 holes, par 72, 6,084 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2982080, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2982080, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://elanoracc.com.au/cms/?p=71).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 3
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Interstate and overseas members only, by email with a letter of introduction."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 151.07582,
       "tee": "blue",
       "notes": "18 holes, par 71, 6,045 m off the blue tees. Lengths in metres; tee sets: blue, white, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 72 / 136, white 71 / 134, red 75 / 131. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/230626372, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/230626372, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.rydeparramatta.com.au/).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 7
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: members and guests. 02 9874 1204."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 150.64892,
       "tee": "blue",
       "notes": "18 holes, par 71, 5,774 m off the blue tees. Lengths in metres; tee sets: blue, red, yellow (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 69 / 118, red 72 / 128, yellow 71 / 112. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/218020390, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/218020390, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/16535-wallacia-country-club/search).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 4
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/16535-wallacia-country-club/search"
     }
   ],
   "sessions": [],

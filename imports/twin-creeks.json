@@ -15,7 +15,7 @@
       "lng": 150.7583,
       "tee": "black",
       "notes": "18 holes, par 72, 6,444 m off the black tees. Lengths in metres; tee sets: black, gold, silver, jade (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 74 / 132, gold 72 / 130, silver 70 / 128, jade 74 / 136. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (black, gold, silver and jade, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4017006, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (black, gold, silver and jade, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4017006, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.leadingcourses.com/clubs/oceania+australia+new-south-wales/twin-creeks-golf-country-club).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 4
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private, limited visitor access: handicap needed, book through the club, 02 9670 8888."
     }
   ],
   "sessions": [],

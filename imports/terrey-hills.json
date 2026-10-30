@@ -15,7 +15,7 @@
       "lng": 151.19634,
       "tee": "black",
       "notes": "18 holes, par 72, 6,499 m off the black tees. Lengths in metres; tee sets: black, blue, white, yellow (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 75 / 136, blue 73 / 134, white 71 / 131, yellow 73 / 130. Cross-check: Hole19's black card agrees on par and metres hole for hole (6,499 m); its stroke index differs on 12 holes, so the index here is Golfify's and unconfirmed.",
-      "source": "Card: Golfify (black, blue, white and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/176608598, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (black, blue, white and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/176608598, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.terreyhillsgolf.com.au/cms/).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 11
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: members and their guests only."
     }
   ],
   "sessions": [],

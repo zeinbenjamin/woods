@@ -15,7 +15,7 @@
       "lng": 150.78622,
       "tee": "silver",
       "notes": "18 holes, par 70, 5,059 m off the silver tees. Lengths in metres; tee sets: silver, forward (silver is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: silver 70 / 126, forward 68 / 104. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (silver and forward, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4236345, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (silver and forward, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4236345, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.campbelltowngolfclub.com.au/cms/golf/public-bookings/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 1
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.campbelltowngolfclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

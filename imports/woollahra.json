@@ -15,7 +15,7 @@
       "lng": 151.26302,
       "tee": "men",
       "notes": "9 holes, par 34, 2,504 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Nine holes played twice; Golfify's stroke index runs 1 to 9 in hole order and looks like a placeholder.",
-      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/315445455, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/315445455, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.woollahragolfclub.com/cms/golf/golf-booking-and-registration/).",
       "holes": [
         {
           "n": 1,
@@ -107,7 +107,11 @@
           },
           "si": 9
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.woollahragolfclub.com/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000",
+      "prereg": true,
+      "bookingNote": "Register first; public timesheets open 4 days ahead at 6pm."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 150.7949,
       "tee": "the grange",
       "notes": "18 holes, par 70, 5,503 m off the the grange tees. Lengths in metres; tee sets: the grange, the links (the grange is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: the grange 69 / 116, the links 71 / 124. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify ('The Grange' and 'The Links' sets, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/5519706, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify ('The Grange' and 'The Links' sets, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/5519706, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://golfshake.com/course/view/18459/Macarthur_Grange_Country_Club.html).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,8 @@
           },
           "si": 4
         }
-      ]
+      ],
+      "bookingNote": "No online booking found; contact the club."
     }
   ],
   "sessions": [],

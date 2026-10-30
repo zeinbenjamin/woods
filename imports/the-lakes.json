@@ -15,7 +15,7 @@
       "lng": 151.20987,
       "tee": "blue",
       "notes": "18 holes, par 72, 5,966 m off the blue tees. Lengths in metres; tee sets: blue, white, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 73.5 / 133, white 72 / 131, red 69.5 / 127. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's 'Blue (T)' set (par 69, 5,107 m) is a different routing and is left out.",
-      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/605447062, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/605447062, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://thelakesgolfclub.com.au/cms/play-golf/play-golf-at-the-lakes/).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,10 @@
           },
           "si": 13
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingUrl": "https://www.thelakesgolfclub.com.au/cms/golf-booking-enquiry/",
+      "bookingNote": "Private: visitors request a tee time through the enquiry form ($450 for members of an Australian club, $750 for others); a request, not a booking."
     }
   ],
   "sessions": [],

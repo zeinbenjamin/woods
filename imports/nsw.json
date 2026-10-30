@@ -15,7 +15,7 @@
       "lng": 151.24437,
       "tee": "championship",
       "notes": "18 holes, par 72, 6,245 m off the championship tees. Lengths in metres; tee sets: championship, ladies, blue (championship is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: championship 74 / 138, ladies 77 / 140, blue 74 / 136. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (championship, blue and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/3045927, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (championship, blue and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/3045927, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.planetgolf.com/courses/australia/new-south-wales-golf-club).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 13
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: limited weekday visitor times with a letter of introduction, through the club, 02 9661 4455."
     }
   ],
   "sessions": [],

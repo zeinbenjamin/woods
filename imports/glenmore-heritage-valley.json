@@ -15,7 +15,7 @@
       "lng": 150.65373,
       "tee": "blue",
       "notes": "18 holes, par 72, 6,399 m off the blue tees. Lengths in metres; tee sets: blue (blue is the primary: the first men's set the card lists, the only set the source shows). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. A 27-hole club; Hole19 does not say which two nines this 18 is.",
-      "source": "Card: Hole19 (blue, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/116446565, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Hole19 (blue, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/116446565, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://glenmoregolf.com.au/glenmoregolf/php/golf/bookings.php).",
       "holes": [
         {
           "n": 1,
@@ -179,7 +179,10 @@
           },
           "si": 12
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://glenmoregolf.com.au/glenmoregolf/php/golf/bookings.php",
+      "bookingNote": "The club's own booking page needs a login; visitors can also book through the pro shop, 02 4733 1230 option 1."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 151.08537,
       "tee": "yellow",
       "notes": "9 holes, par 34, 2,320 m off the yellow tees. Lengths in metres; tee sets: yellow (yellow is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: yellow 34 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's stroke index on the nine is the odd numbers of an 18-hole index (3, 11, 9, 17, ...), so none is stored.",
-      "source": "Card: Golfify (yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/697265508, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/697265508, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.cbcity.nsw.gov.au/canterbury-golf-course).",
       "holes": [
         {
           "n": 1,
@@ -89,7 +89,8 @@
             "yellow": 283
           }
         }
-      ]
+      ],
+      "bookingNote": "Council course; no online booking found."
     }
   ],
   "sessions": [],

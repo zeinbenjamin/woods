@@ -15,7 +15,7 @@
       "lng": 151.00012,
       "tee": "black",
       "notes": "18 holes, par 72, 6,231 m off the black tees. Lengths in metres; tee sets: black, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on TheGrint: black 71 / 123, red 73 / 121. Cross-check: Hole19's ladies card matches TheGrint's red set hole for hole on par and metres (5,235 against TheGrint's printed 5,237, which is its own rounding); the men's stroke index is TheGrint's. TheGrint's printed totals (6,232 and 5,237 m) are its yard totals converted; the holes add to 6,231 and 5,235.",
-      "source": "Card: TheGrint (black and red, metres read from its yard-and-metre cells), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/50875824, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: TheGrint (black and red, metres read from its yard-and-metre cells), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/50875824, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/16522-the-ridge-golf-course/search).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 17
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/16522-the-ridge-golf-course/search"
     }
   ],
   "sessions": [],

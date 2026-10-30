@@ -15,7 +15,7 @@
       "lng": 150.62884,
       "tee": "white",
       "notes": "18 holes, par 70, 5,675 m off the white tees. Lengths in metres; tee sets: white, yellow (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 69 / -, yellow 66 / 114. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (white and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/48622812, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (white and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/48622812, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://antillpark.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000&mobile=true).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 13
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://antillpark.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000"
     }
   ],
   "sessions": [],

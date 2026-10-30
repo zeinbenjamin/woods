@@ -15,7 +15,7 @@
       "lng": 151.20883,
       "tee": "blue",
       "notes": "9 holes, par 33, 2,636 m off the blue tees. Lengths in metres; tee sets: blue, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 32 / 94, red 33 / 107. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2724750, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2724750, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.bayside.nsw.gov.au/recreation/places/sporting-facilities/botany-golf-course).",
       "holes": [
         {
           "n": 1,
@@ -107,7 +107,8 @@
           },
           "si": 3
         }
-      ]
+      ],
+      "bookingNote": "Council course: no booking, first come first served."
     }
   ],
   "sessions": [],

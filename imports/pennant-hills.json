@@ -15,7 +15,7 @@
       "lng": 151.05286,
       "tee": "blue",
       "notes": "18 holes, par 71, 5,904 m off the blue tees. Lengths in metres; tee sets: blue, white, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 71 / 125, white 71 / 119, red 73 / 100. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23042858, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23042858, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://pennanthillsgolfclub.com.au/cms/?p=691).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 10
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: members' guests and reciprocals with a letter of introduction."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 150.98325,
       "tee": "men 5855",
       "notes": "18 holes, par 71, 5,855 m off the men 5855 tees. Lengths in metres; tee sets: men 5855, men 5644, ladies 5236, ladies 4880 (men 5855 is the primary: the first men's set the card lists, named by its total because Golfify gives the sets no colours). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify names no tee colours: its five columns are three 'Men's' and two 'Ladies' sets, so the sets here are named by their totals. Its first men's column (5,591 m) runs the holes in a different order (par 4,3,5,3,5,...) from the other four, so it is left out as a different routing. Golfify's rating (70 / 122) is on that left-out column.",
-      "source": "Card: Golfify (three men's sets and two ladies' sets, all unnamed, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175623022, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (three men's sets and two ladies' sets, all unnamed, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175623022, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://bankstown.miclub.com.au/).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 8
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://bankstown.miclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 151.21659,
       "tee": "men",
       "notes": "9 holes, par 33, 2,417 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's stroke index runs 1 to 9 in hole order, which looks like a placeholder rather than the club's.",
-      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4292638, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4292638, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://cammeray.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?mobile=true&selectedDate=%24%7BaltDateTimeStr%7D).",
       "holes": [
         {
           "n": 1,
@@ -107,7 +107,10 @@
           },
           "si": 9
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://cammeray.miclub.com.au/guests/bookings/ViewPublicCalendar.msp",
+      "bookingNote": "Public 9-hole par 3; also by phone, 9953 1522 option 1, and walk-ins welcome."
     }
   ],
   "sessions": [],

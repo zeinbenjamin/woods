@@ -1,3 +1,8 @@
+## 2.39.0 — 2026-10-30
+- Every course now says who can play it: a green "public" tag in the Courses list, "private" for members and guests, "closed" for a course that's gone. The course page says the same under Course information, with how to book (register first, phone the pro shop, walk up).
+- The course form asks "Who can play": Public, Private, Closed or Not known. Saving a course whose access wasn't known used to mark it members only; it now stays not known.
+- 77 course imports gained their booking link and who can play, found on 2026-10-29. Import them again to see this on courses added in the batch. Kogarah is marked closed (March 2025), and Chatswood's notes say the course was rebuilt with 12 holes.
+
 ## 2.38.0 — 2026-10-29
 - Import a backup takes any number of files at once: pick them all, answer one question, and each is restored in turn. A file that isn't a Carry export is named and skipped, never silently.
 

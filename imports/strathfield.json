@@ -15,7 +15,7 @@
       "lng": 151.06843,
       "tee": "black",
       "notes": "18 holes, par 71, 5,882 m off the black tees. Lengths in metres; tee sets: black, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 71 / 112. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (black and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4188406, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (black and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4188406, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.strathfieldgolf.com.au/cms/golf/public-bookings/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,11 @@
           },
           "si": 18
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.strathfieldgolf.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000",
+      "prereg": true,
+      "bookingNote": "Register as a public member first; non-members can play every day but Saturday."
     }
   ],
   "sessions": [],

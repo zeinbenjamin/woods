@@ -15,7 +15,7 @@
       "lng": 151.2079,
       "tee": "blue",
       "notes": "9 holes, par 32, 1,930 m off the blue tees. Lengths in metres; tee sets: blue (blue is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. A nine-hole course played as 18 off 14 tees; only the first nine's tees are here. The stroke index is BlueGolf's 1 to 9 in hole order, likely a placeholder.",
-      "source": "Card: BlueGolf (nine holes, labelled yards but in metres: 18Birdies' figures for the same holes are these times 1.094 and its header converts a 3,888 m total), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6168035, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: BlueGolf (nine holes, labelled yards but in metres: 18Birdies' figures for the same holes are these times 1.094 and its header converts a 3,888 m total), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6168035, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://castlecove.miclub.com.au/cms/golf/public-golf/).",
       "holes": [
         {
           "n": 1,
@@ -98,7 +98,9 @@
           },
           "si": 9
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://castlecove.miclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

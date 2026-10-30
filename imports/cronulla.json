@@ -15,7 +15,7 @@
       "lng": 151.15105,
       "tee": "white",
       "notes": "18 holes, par 70, 5,743 m off the white tees. Lengths in metres; tee sets: white (white is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's ladies' column is 300 m on every hole, a placeholder, so only the white set is kept.",
-      "source": "Card: Golfify (white, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23020001, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (white, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23020001, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.cronullagolf.com.au/guests/bookings/ViewPublicCalendar.msp).",
       "holes": [
         {
           "n": 1,
@@ -179,7 +179,10 @@
           },
           "si": 14
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingUrl": "https://www.cronullagolf.com.au/guests/bookings/ViewPublicCalendar.msp",
+      "bookingNote": "Members of a golf club only: every player needs a GOLF Link number."
     }
   ],
   "sessions": [],

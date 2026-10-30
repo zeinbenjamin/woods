@@ -15,7 +15,7 @@
       "lng": 150.94435,
       "tee": "members",
       "notes": "18 holes, par 66, 4,445 m off the members tees. Lengths in metres; tee sets: members, associates (members is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: members 69 / 110, associates 74 / 134. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. The associates' set is longer than the members' on several holes with different pars (hole 2: 429 m par 5 against 289 m par 4), so the two columns may describe different tees or layouts; pars here are the members'.",
-      "source": "Card: Golfify (members' and associates', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174770260, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (members' and associates', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174770260, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://cumberland.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?mobile=true&selectedDate=%24%7BaltDateTimeStr%7D).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 12
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://cumberland.miclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

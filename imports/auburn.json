@@ -15,7 +15,7 @@
       "lng": 151.01551,
       "tee": "men",
       "notes": "18 holes, par 68, 4,879 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify,: men 65 / 105, ladies 69 / 112. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify files this course under the club's name, Rosnay Golf Club; Auburn Golf Course is the council's name for the same course at Lidcombe.",
-      "source": "Card: Golfify, which lists the course as Rosnay Golf Club (men's and women's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/176410946, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify, which lists the course as Rosnay Golf Club (men's and women's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/176410946, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.cumberland.nsw.gov.au/auburn-golf-course-rosnay).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 2
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Council course (Rosnay): book by phone, 02 9649 8429; pro shop 02 9749 1550."
     }
   ],
   "sessions": [],

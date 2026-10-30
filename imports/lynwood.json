@@ -15,7 +15,7 @@
       "lng": 150.85596,
       "tee": "black",
       "notes": "18 holes, par 71, 6,234 m off the black tees. Lengths in metres; tee sets: black, blue, white, yellow, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 73 / 126, blue 73 / 125, white 72 / 124, yellow 70 / 121, red 73 / 121. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (black, blue, white, yellow and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174311087, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (black, blue, white, yellow and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174311087, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, http://www.lynwood.com.au/green-fees-and-bookings).",
       "holes": [
         {
           "n": 1,
@@ -251,7 +251,10 @@
           },
           "si": 18
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://lynwoodcc.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000",
+      "bookingNote": "Visitors book online; bookings essential."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 151.13823,
       "tee": "white",
       "notes": "18 holes, par 69, 5,180 m off the white tees. Lengths in metres; tee sets: white, red (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 67 / 129, red 75 / 128. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/8015171, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/8015171, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://wooloowaregolfclub.com.au/public-bookings/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,11 @@
           },
           "si": 3
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://woolooware.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000",
+      "prereg": true,
+      "bookingNote": "Register as a public member first; social bookings open 8 days ahead from 6pm."
     }
   ],
   "sessions": [],

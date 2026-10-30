@@ -15,7 +15,7 @@
       "lng": 151.08629,
       "tee": "blue",
       "notes": "18 holes, par 65, 4,567 m off the blue tees. Lengths in metres; tee sets: blue, red (blue is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/259493566, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/259493566, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://kareela.miclub.com.au/cms/online-public-bookings/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 18
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://kareela.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000"
     }
   ],
   "sessions": [],
