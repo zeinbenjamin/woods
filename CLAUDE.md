@@ -1223,6 +1223,19 @@ never invented:
   against each map is the next test of these numbers; a flagged hole is a
   reason to look at the club's own card.
 
+**Newgreens Chatswood** (2026-10-30, he asked): Chatswood Golf Club was
+rebuilt on its own ground as Newgreens Chatswood, 12 holes, reopened May 2026
+(an alliance between the club, Pariter and Watermark Living). Not a closed
+course plus a new one: `imports/chatswood.json` keeps `c_chatswood` and now
+holds the club's March 2026 card (par 44, 2,871 m, one distance column the
+card names no colour for, so the tee is `standard`; index 1–12), the MiClub
+calendar its *Book a round* button uses (`chatswood.miclub.com.au`, 3000000,
+read by tee times), and its visitor fees ($49 Mon–Thu, $59 weekends; twilight
+and others in `bookingNote`). Rating: the club says TBC, none stored. The map
+file `chatswood` is OSM's old 18-hole layout under its old name;
+`imports.test.js` lists the course in `RENAMED` so the name check and the
+18-hole check pass, until the hole-maps chat rebuilds the map.
+
 ## Artwork → map (2.17.0)
 
 Hunter Valley's rounds were traced on uploaded artwork (holes 1–9) before

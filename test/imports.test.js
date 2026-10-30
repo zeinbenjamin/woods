@@ -54,6 +54,10 @@ const ON_NAS = ['randwick', 'bardwell-valley', 'the-coast', 'bondi', 'massey-par
 const NO_CARD = ['brighton-lakes', 'del-rio', 'fairfield-city', 'hawkesbury-waters', 'kingdom-estate', 'kurrajong-hills',
   'orchard-hills', 'shortees', 'sylvania-par-3'];
 
+// A course whose club has a new name the map file hasn't caught up with. The map belongs to the
+// hole-maps chat; the course record carries the club's own name (2.43.0: Chatswood Golf Club rebuilt
+// as Newgreens Chatswood, 12 holes, on its own ground; its map is OpenStreetMap's old 18-hole layout).
+const RENAMED = { chatswood: 'Newgreens Chatswood' };
 test('every course map has an import, or is on the NAS already, or has no card worth storing', () => {
   const maps = JSON.parse(readFileSync(new URL('../web/course-maps/index.json', import.meta.url)));
   const missing = maps.map(m => m.id).filter(id => !ON_NAS.includes(id) && !NO_CARD.includes(id) && !files.includes(`${id}.json`));
@@ -64,8 +68,8 @@ test('every course map has an import, or is on the NAS already, or has no card w
     const id = f.replace(/\.json$/, '');
     if (!byId[id]) continue;
     const c = JSON.parse(readFileSync(new URL(f, dir))).courses[0];
-    assert.equal(c.name, byId[id].name, `${f}: named as the map is`);
-    if (byId[id].holes === 18 && id !== 'kogarah') assert.equal(c.holes.length, 18, `${f}: an 18-hole map has an 18-hole card`);
+    assert.equal(c.name, RENAMED[id] || byId[id].name, `${f}: named as the map is`);
+    if (byId[id].holes === 18 && id !== 'kogarah' && !RENAMED[id]) assert.equal(c.holes.length, 18, `${f}: an 18-hole map has an 18-hole card`);
   }
 });
 
@@ -82,4 +86,21 @@ test('the batch keeps the source honest: metres add up to the totals it states, 
       if (m) assert.equal(c.holes.reduce((s, h) => s + h.tees[tee], 0), +m[1].replace(/,/g, ''), `${f}: ${tee} total as stated`);
     }
   }
+});
+
+test('Newgreens Chatswood: the club\'s 12-hole card in place of the old 18, same record, readable for tee times', () => {
+  // The club's scorecard (March 2026) and course page, read 2026-10-30: par 44, 2,871 m, one distance
+  // column, index 1–12 each once. Same id as the old Chatswood record, so rounds there keep their course.
+  const c = JSON.parse(readFileSync(new URL('chatswood.json', dir))).courses[0];
+  assert.equal(c.id, 'c_chatswood');
+  assert.equal(c.name, 'Newgreens Chatswood');
+  assert.deepEqual(c.holes.map(h => h.par), [4, 5, 3, 4, 3, 3, 3, 4, 4, 3, 4, 4]);
+  assert.deepEqual(c.holes.map(h => h.metres), [275, 464, 183, 264, 118, 127, 137, 394, 250, 118, 238, 303]);
+  assert.deepEqual(c.holes.map(h => h.si), [9, 2, 3, 6, 10, 11, 8, 1, 7, 12, 5, 4]);
+  assert.equal(c.holes.reduce((s, h) => s + h.par, 0), 44);
+  assert.equal(c.holes.reduce((s, h) => s + h.tees.standard, 0), 2871);
+  assert.deepEqual([c.holes[1].par, c.holes[1].metres, c.holes[2].metres, c.holes[10].metres], [5, 464, 183, 238], 'the signature holes as the course page gives them');
+  assert.equal(c.ratings, undefined, 'the club says the rating is to be confirmed');
+  assert.match(c.bookingUrl, /^https:\/\/chatswood\.miclub\.com\.au\/guests\/bookings\/ViewPublicCalendar\.msp\?booking_resource_id=3000000$/);
+  assert.deepEqual([c.bookable, c.feeWeekday, c.feeWeekend], [true, 49, 59]);
 });
