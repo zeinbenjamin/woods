@@ -1903,8 +1903,9 @@ and left out; nothing new means the block is skipped. Trackman has no public
 API for the consumer app (checked 2026-10-31: CSV only from TPS on a bay's PC;
 unofficial tools use a browser login token), so screenshots stay the way in;
 a session share link was asked about, not yet seen. `ui-shot-extras` works his
-five 5W shots of 2026-10-31. **Next**: the shot patterns screens (mockups:
-https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh), once there is data.
+five 5W shots of 2026-10-31. **Not yet**: the shot patterns screens (mockups:
+https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh). He said to leave them until later
+(2026-10-31): 2.51.0 only reads and stores the numbers; nothing draws or uses them yet.
 
 Range shots come from screenshots of the bay's shot list, not typing:
 Range → a session → *From screenshots*. Claude reads them into blocks
