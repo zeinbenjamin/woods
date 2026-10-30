@@ -486,7 +486,10 @@ Each of these cost real debugging time. Don't reintroduce them.
   stray comma or full stop. A heading with buttons beside it
   (`.spread:has(> h2)`, 2.27.1) carries the heading's margins itself and
   zeroes the h2's: the buttons are taller than the heading, so margins on
-  the h2 alone left them touching the text above and below. Check a new
+  the h2 alone left them touching the text above and below. A fold that follows a whole
+  section (`section.sec + details.fold`, 24px, 2.41.1, he sent a screenshot of the
+  course page's *Use this map* button on *Course information*'s rule): `.fold`'s
+  `margin: 0` also cleared the 30px a `.sec` gets. Check a new
   section at phone width before shipping; the sweep screenshots are how
   these were found.
 - **No double-tap zoom, and inputs are 16px** (2.11.2): `html { touch-action:
@@ -1589,7 +1592,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 379 tests, about 45s.
+`npm test` — 364 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
