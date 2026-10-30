@@ -435,18 +435,28 @@ Each of these cost real debugging time. Don't reintroduce them.
   redirect (or a 401 that isn't Carry's JSON) → `signed_out`, "Sign in
   again"; Carry's own 401 → `unauthorised`, "open it through Cloudflare".
   1.x's `?token=` and stored token are dropped, never kept.
-  **Quietly, since 2.31.2** (he asked; the sheet took over the feed, and
-  with the Access session at a month he was still being refused): the first
-  refused poll is ignored; the second mounts a hidden iframe on
-  `/api/stamps?reauth=…` (a protected URL, not the app), so a login session
-  still good completes Cloudflare's hops and sets a fresh cookie with no
-  page; the shim fires `signed_in` on the next good poll and the app clears
-  up with a toast. Only after `CARRY_SIGNIN_WAIT_MS` (8 s) still refused does
-  `#signinBar` appear, with *Sign in again* (a reload). Never a sheet,
-  never a reload on its own. The home-address refusal (`unauthorised`)
-  keeps its one sheet. Why a month-long session is refused at all is
-  still open: if it keeps happening, look at what Cloudflare answers
-  (`redirect` vs 401) and at the PWA's cookie store.
+  **Renewed at the top level, since 2.39.1** (he kept seeing the bar). 2.31.2
+  loaded `/api/stamps?reauth=…` in a hidden iframe so a still-good Cloudflare
+  login could hop back with no page. On an iPhone that can never work: every
+  iOS browser is WebKit, which blocks third-party cookies, and inside Carry's
+  frame the `cloudflareaccess.com` login cookie is third-party, so the hop
+  always stopped at the login page and the bar followed 8 s later. Confirmed
+  from here that Cloudflare answers a background request with a 302 to
+  `elevengrant.cloudflareaccess.com` (the proxy can't reach that host, so its
+  own headers weren't read). Now: one refused poll is a glitch; the second
+  saves where he is (`carry.resume` in sessionStorage: tab, sub, scroll, open
+  folds) and `signInHop()` does `location.replace` of the page, the trip a
+  reopen makes, where the cookie is first-party; back on Carry, `resumed`
+  restores the screen once (within 5 min). Never while `#sheet` or
+  `#confirmDlg` is open (`busy()`): the bar shows, and the next refused poll
+  after it closes makes the trip. At most one trip per `REHOP_GAP` (2 min,
+  `carry.rehop`), so a login that won't take shows `#signinBar` with *Sign in
+  again* instead of looping; no sessionStorage, no trip. The outbox keeps
+  saves across it. Tests swap `window.carryHop` for the navigation. This
+  reverses 2.31.2's "never a reload on its own"; the busy guard keeps what
+  that rule protected (a half-typed form). If the bar still shows often, the
+  Cloudflare login session itself is short: Access → the Carry application
+  and its policy's session duration, against Bourdain's.
 - **The server logs writes and errors**, never GETs that succeed, and never
   the query string.
 - **The container stops cleanly**: SIGTERM closes the HTTP server and
@@ -1538,7 +1548,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 369 tests, about 45s.
+`npm test` — 371 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1671,7 +1681,13 @@ fixture would let the reading be pinned.
   replace markers.
 
 `test/harness.js` boots a real server on a free port with seeded
-documents, loads the page as the server serves it into jsdom, and stubs only what jsdom lacks
+documents, and **stops a page in a safe order** (2.39.1's CI run failed in
+`ui-courses-sort` on it): hide the page so the shim stops polling, stop the
+server, let in-flight requests settle for 300 ms while the page still exists,
+then close it. Closing first let a save's answer redraw into a closed page
+from an action's promise, which nothing catches; `housekeeping` holds a save
+open across `stop()` and fails on the old order. It loads the page as the
+server serves it into jsdom, and stubs only what jsdom lacks
 (`<dialog>`, SVG CTM as identity so taps land at exact coordinates,
 object URLs, `TextEncoder`, `Blob.arrayBuffer`). The swing suite adds a
 fake decoder that reproduces the real one's timing: `seeked` fires before

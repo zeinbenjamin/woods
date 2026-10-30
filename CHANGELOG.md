@@ -2,6 +2,10 @@
 - Carry can now read the free tee times on a MiClub booking site (38 of the courses, Bexley and Moore Park among them): each rate for the day (18 holes, 9 holes, late rates), its price, and every time with how many spots are left. Nothing in the app shows them yet. The search screen comes next.
 - Nothing is booked and nothing about you is sent: Carry asks the club's public page for a date, the same as opening it in a browser.
 
+## 2.39.1 — 2026-10-30
+- When your Carry sign-in lapses while the app is open, it now renews it the way reopening the app does: one quick trip through Cloudflare, landing back on the same screen with your folds and scroll. The "Signed out" bar should now only appear when Cloudflare really needs you to log in.
+- It never does this while a form or a question is open; the bar shows instead, and the trip waits until you close it. Anything you saved meanwhile waits on the phone and is sent after.
+
 ## 2.39.0 — 2026-10-30
 - Every course now says who can play it: a green "public" tag in the Courses list, "private" for members and guests, "closed" for a course that's gone. The course page says the same under Course information, with how to book (register first, phone the pro shop, walk up).
 - The course form asks "Who can play": Public, Private, Closed or Not known. Saving a course whose access wasn't known used to mark it members only; it now stays not known.

@@ -72,7 +72,7 @@ export async function waitFor(cond, { timeout = 4000, step = 20, what = 'conditi
 // seed: { clubs: [], courses: [], sessions: [], settings: {} }, all as `user`.
 // signedIn: false boots the page with no Access header (straight to the NAS).
 // storage: localStorage as an earlier visit left it.
-export async function startApp({ seed = {}, pollMs = 150, intercept, query = '', user = ME, signedIn = true, env = {}, storage = {} } = {}) {
+export async function startApp({ seed = {}, pollMs = 150, intercept, query = '', user = ME, signedIn = true, env = {}, storage = {}, session = {} } = {}) {
   const DATA = mkdtempSync(join(tmpdir(), 'carry-ui-'));
   const { proc, port, base } = await bootServer({ ...process.env, DATA_DIR: DATA, ANTHROPIC_API_KEY: '', ...(await accessEnv()), ...env });
 
@@ -121,6 +121,7 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
       win = w;
       w.CARRY_POLL_MS = pollMs;
       for (const [k, v] of Object.entries(storage)) w.localStorage.setItem(k, v);   // what an earlier visit left
+      for (const [k, v] of Object.entries(session)) w.sessionStorage.setItem(k, v);   // this tab's own, kept across a reload
       w.HTMLElement.prototype.showModal = function () { this.open = true; };
       w.HTMLElement.prototype.close = function () { const was = this.open; this.open = false; if (was && this.onclose) this.onclose(); };
       w.scrollTo = () => {};
@@ -210,10 +211,19 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
     },
     act(name, data = {}) { return win.eval(`ACTIONS[${JSON.stringify(name)}](${JSON.stringify(data)})`); },
     waitFor,
+    // Closing the page while a poll is in flight let its answer redraw into a
+    // closed page after the test had ended (a CI failure in ui-courses-sort on
+    // 2.39.1). So: hide the page first (the shim never polls a hidden page),
+    // stop the server, let what was in flight settle while the page is still
+    // there, then close it. Awaiting it is optional; the order holds either way.
     stop() {
-      try { win.close(); } catch {}
+      try { Object.defineProperty(win.document, 'hidden', { configurable: true, get: () => true }); } catch {}
       proc.kill();
-      rmSync(DATA, { recursive: true, force: true });
+      return new Promise(res => setTimeout(() => {
+        try { win.close(); } catch {}
+        rmSync(DATA, { recursive: true, force: true });
+        res();
+      }, 300));
     },
   };
   return app;
