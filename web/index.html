@@ -3900,11 +3900,14 @@ function poseSection(sw, s) {
   let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
   h += `<div class="posePos">${POSE_POS.map(([k, label]) => { const i = m.keys && m.keys[k]; const f = i == null ? null : m.frames[i]; return f ? `<figure><div class="pf"><img src="/_blob/${f.asset}" alt="${label}" loading="lazy">${poseFrameSvg(f)}</div><figcaption>${label}</figcaption></figure>` : ''; }).join('')}</div>`;
   const sayV = x => x.v == null ? 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
-  if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}</li>`).join('')}</ul>`;
+  // No body on any frame says so; a view the measures don't cover says that, never both.
+  if (!m.found) h += `<p class="small muted" id="poseNone_${sw.id}">No body was found on these frames. Film with the whole body in the picture, then measure again.</p>`;
+  else if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}</li>`).join('')}</ul>`;
   else h += `<p class="small muted">The skeleton is drawn, but measures need a face-on or down-the-line view: this one is "${esc(VIEWS[sw.view] || 'other')}".</p>`;
   const tr = m.keys ? poseTraces(m) : '';
   if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}</details>`;
-  h += `<p class="small muted">Measured from the frames by a pose model on this phone, in 2D: ${m.impFrom === 'marked' ? 'impact as you marked it' : 'top and impact found from the hands'}. A measurement of where the joints were, not a reading of the swing; unsure joints are left out.</p></div>`;
+  if (m.found) h += `<p class="small muted">Measured from the frames by a pose model on this phone, in 2D: ${m.impFrom === 'marked' ? 'impact as you marked it' : 'top and impact found from the hands'}. A measurement of where the joints were, not a reading of the swing; unsure joints are left out.</p>`;
+  h += `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
   return h;
 }
 // Measures for the reading's prompt, when the swing has been measured.

@@ -200,3 +200,31 @@ test('an import re-links the joints to the copied frames', async () => {
   assert.notEqual(c.frames[0].asset, 'sep0');
   assert.deepEqual(c.pose.frames.map(f => f.asset), c.frames.map(f => f.asset));
 });
+
+test('no body on any frame says so (not that the view is wrong), and a measured swing can be measured again', async () => {
+  // 2.56.1: a face-on clip where the model found no one read "measures need a face-on or
+  // down-the-line view: this one is Face on", and a measured swing had no way to measure again.
+  ANSWERS.no = Array.from({ length: 16 }, () => null);
+  const s = await doc('s_oct');
+  await app.api.put('sessions', 's_oct', { ...s, swings: s.swings.concat({ id: 'sw_none', view: 'face', club: '7i', frames: fr('no', 4), addedOn: '2026-10-25' }) });
+  await app.waitFor(() => app.E(`!!session('s_oct').swings.find(s => s.id === 'sw_none')`), { what: 'poll' });
+  app.go('range', { sessionId: 's_oct' });
+  app.$('[data-act="measureSwing"][data-wid="sw_none"]').click();
+  await app.waitFor(() => app.$('#pose_sw_none'), { what: 'measured' });
+  const t = app.text('#pose_sw_none');
+  assert.match(t, /0 of 4 frames · too few to rely on/);
+  assert.match(app.text('#poseNone_sw_none'), /^No body was found on these frames\. Film with the whole body in the picture, then measure again\.$/);
+  assert.doesNotMatch(t, /measures need a face-on or down-the-line view/);
+  assert.doesNotMatch(t, /found from the hands/, 'no hands were found');
+  // The same frames answered with a body now: Measure again replaces the joints.
+  ANSWERS.no = FACE;
+  asked = [];
+  const again = app.$('#pose_sw_none [data-act="measureSwing"]');
+  assert.equal(again.textContent, 'Measure again');
+  again.click();
+  await app.waitFor(async () => ((await doc('s_oct')).swings.find(s => s.id === 'sw_none').pose.frames || []).every(f => f.j), { what: 'measured again' });
+  assert.deepEqual(asked, fr('no', 4).map(f => '/_blob/' + f.asset));
+  await app.waitFor(() => /4 of 4 frames/.test(app.text('#pose_sw_none')), { what: 'redrawn' });
+  assert.equal(app.$('#poseNone_sw_none'), null);
+  assert.ok(app.$('#pose_sw_face [data-act="measureSwing"]'), 'every measured swing offers it');
+});
