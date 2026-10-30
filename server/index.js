@@ -144,7 +144,7 @@ app.get('/api/teetimes/:courseId', async (req, res) => {
   if (!DAY.test(date) || Number.isNaN(Date.parse(date))) return res.status(400).json({ error: 'bad_date', message: 'date must be YYYY-MM-DD' });
   const course = getDoc('courses', req.user, req.params.courseId);
   if (!course) return res.status(404).json({ error: 'not found' });
-  res.set('Cache-Control', 'no-store').json({ course: course.id, ...await teeTimes(course, date, readFilters(req.query)) });
+  res.set('Cache-Control', 'no-store').json({ course: course.id, ...await teeTimes(course, date, readFilters(req.query), { fresh: req.query.fresh === '1' }) });
 });
 
 /* ---------- documents ---------- */

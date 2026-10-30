@@ -11,6 +11,8 @@
 
 const TTL = Number(process.env.TEETIMES_TTL_MS || 5 * 60 * 1000);
 const ERROR_TTL = 60 * 1000;
+// "Check again" (fresh) reads the club again, but not a page read under a minute ago.
+const FRESH_MIN = Number(process.env.TEETIMES_FRESH_MS ?? 60 * 1000);
 const TIMEOUT = Number(process.env.TEETIMES_TIMEOUT_MS || 10000);
 const MAX_RATES = 6;          // rates fetched per course and day: a calendar can list a dozen specials
 const UA = 'Carry/1 (personal golf tracker; reads public tee-time pages on request)';
@@ -105,17 +107,18 @@ export function parseTimesheet(html) {
 
 /* ---------- fetching ---------- */
 
-async function fetchPage(url) {
+// → { text, at }: the page and when it was read, so a cached answer says how old it is.
+async function fetchPage(url, fresh = false) {
   const hit = cache.get(url);
   if (hit instanceof Promise) return hit;
-  if (hit && Date.now() - hit.at < hit.ttl) { if (hit.error) throw hit.error; return hit.value; }
+  if (hit && Date.now() - hit.at < (fresh ? Math.min(hit.ttl, FRESH_MIN) : hit.ttl)) { if (hit.error) throw hit.error; return { text: hit.value, at: hit.at }; }
   const p = (async () => {
     try {
       const res = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html' }, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT) });
       if (!res.ok) throw Object.assign(new Error(`the booking site answered ${res.status}`), { code: 'unreachable' });
-      const value = await res.text();
-      cache.set(url, { at: Date.now(), ttl: TTL, value });
-      return value;
+      const value = await res.text(), at = Date.now();
+      cache.set(url, { at, ttl: TTL, value });
+      return { text: value, at };
     } catch (e) {
       const error = e.code ? e : Object.assign(new Error(e.name === 'TimeoutError' ? 'the booking site took too long to answer' : 'the booking site could not be reached'), { code: 'unreachable' });
       cache.set(url, { at: Date.now(), ttl: ERROR_TTL, error });
@@ -143,18 +146,22 @@ export function suits(t, rate, { from, to, holes, players } = {}) {
 
 // → { status: 'ok', date, calendar, rates: [{ name, holes, price, special, url, times, shown }], fetchedAt }
 //   or { status: 'unsupported' | 'unreadable' | 'unreachable', message }.
-export async function teeTimes(course, date, filters = {}) {
+export async function teeTimes(course, date, filters = {}, { fresh = false } = {}) {
   const src = miclubSource(course && course.bookingUrl);
   if (!src) return { status: 'unsupported', message: course && course.bookingUrl ? 'Carry can only read MiClub booking sites so far.' : 'This course has no booking link.' };
   const calendar = calendarUrl(src, date);
   try {
-    const cal = parseCalendar(await fetchPage(calendar));
+    const page = await fetchPage(calendar, fresh);
+    let oldest = page.at;
+    const cal = parseCalendar(page.text);
     if (!cal) return { status: 'unreadable', calendar, message: src.guessed ? 'The booking site\'s calendar could not be read (its course id was a guess: add the full calendar link to the course).' : 'The booking site\'s calendar could not be read.' };
     const offered = cal.filter(r => r.days[date] && (!filters.holes || !r.holes || r.holes === filters.holes)).slice(0, MAX_RATES);
     const rates = [];
     for (const r of offered) {
       const url = timesheetUrl(src, date, r.id);
-      const sheet = parseTimesheet(await fetchPage(url));
+      const got = await fetchPage(url, fresh);
+      oldest = Math.min(oldest, got.at);
+      const sheet = parseTimesheet(got.text);
       if (!sheet) { rates.push({ name: r.name, holes: r.holes, price: r.days[date].price, special: r.days[date].special, url, unreadable: true, times: [] }); continue; }
       const times = sheet.filter(t => suits(t, r, filters));
       rates.push({ name: r.name, holes: r.holes, price: r.days[date].price, special: r.days[date].special, url, times, listed: sheet.length });
@@ -166,7 +173,7 @@ export async function teeTimes(course, date, filters = {}) {
       : !cal.length ? `The club's public calendar lists no rates at all: its times may only show after signing up on its site${src.guessed ? `, or the course id Carry assumed (${src.resource}) is not this course's` : ''}.`
       : !cal.some(r => r.days[date]) ? 'Nothing is open to the public on this day (often a members\' competition).'
       : 'No rate on this day matches the holes asked for.';
-    return { status: 'ok', source: 'MiClub', date, calendar, rates, ...(note ? { note } : {}), fetchedAt: new Date().toISOString() };
+    return { status: 'ok', source: 'MiClub', date, calendar, rates, ...(note ? { note } : {}), fetchedAt: new Date(oldest).toISOString() };
   } catch (e) {
     return { status: e.code === 'unreachable' ? 'unreachable' : 'unreadable', calendar, message: e.message };
   }

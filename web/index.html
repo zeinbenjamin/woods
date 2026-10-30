@@ -98,6 +98,10 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--rule); vertical-align: middle; }
 .tag.green { background: var(--green-soft); color: var(--green); border-color: transparent; } .tag.flag { background: var(--flag-soft); color: var(--flag); border-color: transparent; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; } .chip { font: 600 13px var(--cond); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
+a.chip { text-decoration: none; display: inline-flex; gap: 5px; align-items: baseline; } .chip small { font: 400 12px var(--body); color: var(--ink-3); }
+#ttDays { flex-wrap: nowrap; overflow-x: auto; margin: 4px 0 12px; padding-bottom: 2px; } #ttDays .chip { flex: none; }
+.ttfilters { display: grid; gap: 8px; margin-bottom: 12px; } .ttf { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .ttf > .small:first-child { width: 56px; flex: none; }
+.ttf select { width: auto; } .ttwhere { font-weight: 400; } .ttrow { padding: 10px 0; border-bottom: 1px solid var(--rule); } .ttrate { margin: 8px 0; } .ttrate .chips { margin-top: 4px; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 /* gapping ladder */
@@ -759,6 +763,7 @@ function render() {
   }
   playLifecycle();
   reelsLifecycle();
+  ttLifecycle();
 }
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-go]'); if (a) { const [tab, sub] = parseGo(a.dataset.go); go(tab, sub); return; }
@@ -1290,10 +1295,11 @@ function vRound() {
 
 /* ---------- courses ---------- */
 function vCourses() {
+  if (S.sub && S.sub.view === 'teetimes') return vTeeTimes();
   if (S.sub && S.sub.courseId && S.sub.hole) return vCourseHole();
   if (S.sub && S.sub.courseId) return vCourse();
   let h = `<div class="spread"><h1>Courses</h1><button class="primary" data-act="newCourse">Add course</button></div>
-  <p class="lead small">Your shortlist. Live tee times for NSW public courses are on <a href="https://www.myteetimes.com.au" target="_blank" rel="noopener">MyTeeTimes</a>.</p>
+  <div class="row-actions" style="margin:0 0 6px"><button data-go="courses:view=teetimes" id="ttOpen">Find a tee time →</button></div>
   <div class="row-actions" style="margin-bottom:6px"><button class="quiet" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
   const sort = courseSort(), list = sortedCourses(sort);
   if (S.courses.length > 1) h += `<div class="seg" id="courseSort" style="margin-bottom:8px">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>`;
@@ -1357,6 +1363,129 @@ function vCourse() {
   h += `<div class="row-actions"><button class="danger" data-act="deleteCourse" data-id="${c.id}">Delete course</button></div>`;
   return h;
 }
+
+/* ---------- tee times (2.41.0) ----------
+   Courses → Tee times: what the clubs' own booking sites show as free, by
+   day, time, holes, players and distance from home. The server reads each
+   course's MiClub pages (GET /api/teetimes/:id, server/teetimes.js); this
+   page asks once per course and day, filters the answers itself so a change
+   of time, holes or players is instant, and links every time to the club's
+   page, where the booking happens. Nothing is stored: the answers live in
+   memory (`tt`) and the filters are a convenience in localStorage. */
+const TT_KEY = 'carry.tt', TT_DAYS = 7, TT_RADII = [5, 10, 20, 40], TT_PARALLEL = 4, TT_STALE = 5 * 60 * 1000;
+const TT_HOURS = Array.from({ length: 16 }, (_, i) => `${String(i + 5).padStart(2, '0')}:00`);   // 05:00 … 20:00
+const tt = { res: {}, queue: [], running: 0, redraw: null, fresh: false };   // `${courseId}|${date}` → { loading } | { data, at }
+
+// The same test the server makes (miclubSource): a MiClub host, or MiClub's
+// /guests/bookings/ path on a club's own domain.
+function ttReadable(c) {
+  try { const u = new URL(c.bookingUrl); return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/bookings\//i.test(u.pathname)); } catch (e) { return false; }
+}
+function ttPrefs() {
+  let p = {}; try { p = JSON.parse(localStorage.getItem(TT_KEY) || '{}') || {}; } catch (e) {}
+  const hhmm = v => (TT_HOURS.includes(v) ? v : '');
+  return { from: hhmm(p.from), to: hhmm(p.to), holes: [9, 18].includes(p.holes) ? p.holes : null, players: [1, 2, 3, 4].includes(p.players) ? p.players : 1,
+    within: p.within === 0 || TT_RADII.includes(p.within) ? p.within : 20 };
+}
+function ttSetPref(k, v) { const p = { ...ttPrefs(), [k]: v }; try { localStorage.setItem(TT_KEY, JSON.stringify(p)); } catch (e) {} }
+function ttDays() {
+  const now = new Date();
+  return Array.from({ length: TT_DAYS }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    return { date: localDay(d), label: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric' }) }; });
+}
+const ttDate = () => { const d = S.sub && S.sub.date; return ttDays().some(x => x.date === d) ? d : today(); };
+// Who is searched: public (or not known), not closed, a readable link, within
+// the distance when a home is set. Others with a way to book are listed apart.
+function ttCourses(p) {
+  const live = S.courses.filter(c => !c.closed && c.bookable !== false);
+  const radius = home() && p.within ? p.within : null;
+  const inRange = radius ? live.filter(c => distanceTo(c) != null && distanceTo(c) <= radius) : live;
+  const byDist = (a, b) => (distanceTo(a) ?? 1e9) - (distanceTo(b) ?? 1e9) || a.name.localeCompare(b.name);
+  return { read: inRange.filter(ttReadable).sort(byDist), other: inRange.filter(c => !ttReadable(c) && (c.bookingUrl || c.bookingNote)).sort(byDist),
+    unplaced: radius ? live.filter(c => ttReadable(c) && distanceTo(c) == null).length : 0,
+    hidden: S.courses.filter(c => c.closed || c.bookable === false).length, radius };
+}
+function ttWant(date, list) {
+  for (const c of list) {
+    const k = c.id + '|' + date, e = tt.res[k];
+    if (e && (e.loading || Date.now() - e.at < TT_STALE)) continue;
+    tt.res[k] = { loading: true }; tt.queue.push([c.id, date, tt.fresh]);
+  }
+  ttPump();
+}
+function ttPump() {
+  while (tt.running < TT_PARALLEL && tt.queue.length) {
+    const [id, date, fresh] = tt.queue.shift(), k = id + '|' + date; tt.running++;
+    fetch(`/api/teetimes/${encodeURIComponent(id)}?date=${date}${fresh ? '&fresh=1' : ''}`, { redirect: 'manual' })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(r.type === 'opaqueredirect' || r.status === 0 ? 'Carry needs you to sign in again.' : `Carry answered ${r.status}.`)))
+      .then(data => { tt.res[k] = { data, at: Date.now() }; },
+        e => { tt.res[k] = { data: { status: 'failed', message: e.message && !/fetch/i.test(e.message) ? e.message : 'Carry could not be reached.' }, at: Date.now() }; })
+      .finally(() => { tt.running--; ttPump(); ttRedraw(); });
+  }
+}
+// Answers arrive one course at a time: redraw at most once a frame, and only
+// while the page is the one on screen.
+function ttRedraw() {
+  if (tt.redraw) return;
+  tt.redraw = setTimeout(() => { tt.redraw = null; if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') render(); }, 50);
+}
+function ttLifecycle() { if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') ttWant(ttDate(), ttCourses(ttPrefs()).read); }
+// The answer's times that suit the filters; today, only times still ahead.
+function ttFit(d, p, date) {
+  const now = date === today() ? new Date().toTimeString().slice(0, 5) : null;
+  return (d.rates || []).filter(r => !p.holes || !r.holes || r.holes === p.holes)
+    .map(r => ({ ...r, times: (r.times || []).filter(t => t.free >= p.players && (!p.from || t.time >= p.from) && (!p.to || t.time <= p.to) && (!now || t.time > now)) }))
+    .filter(r => r.times.length);
+}
+const ttMoney = n => (n == null ? '' : '$' + (Number.isInteger(n) ? n : n.toFixed(2)));
+const ttSafe = u => (/^https?:\/\//i.test(u || '') ? u : null);
+function ttCourse(c, e, p, date) {
+  const where = [distanceLabel(c), c.suburb && esc(c.suburb)].filter(Boolean).join(' · ');
+  const name = `${esc(c.name)}${where ? ` <span class="small muted ttwhere">${where}</span>` : ''}`;
+  const link = (u, label) => (ttSafe(u) ? ` <a href="${esc(u)}" target="_blank" rel="noopener">${label}</a>` : '');
+  if (!e || e.loading) return { n: -1, html: `<div class="ttrow" data-tt="${c.id}"><b>${name}</b><div class="small muted">Checking the club's booking site…</div></div>` };
+  const d = e.data;
+  if (d.status !== 'ok') return { n: -2, html: `<div class="ttrow" data-tt="${c.id}"><b>${name}</b><div class="small muted">Couldn't read its tee times: ${esc(d.message || 'no answer')}${link(d.calendar || c.bookingUrl, 'Check on their site')}</div></div>` };
+  const rates = ttFit(d, p, date), n = rates.reduce((a, r) => a + r.times.length, 0);
+  if (!n) return { n: 0, html: `<div class="ttrow" data-tt="${c.id}"><b>${name}</b><div class="small muted">${esc(d.note || ((d.rates || []).length ? 'No times left that match.' : 'No times listed.'))}${link(d.calendar, 'Their calendar')}</div></div>` };
+  const all = rates.flatMap(r => r.times), first = all.map(t => t.time).sort()[0];
+  const low = Math.min(...rates.flatMap(r => [r.price, ...r.times.map(t => (t.fees[0] || {}).price)]).filter(x => x != null));
+  const body = rates.map(r => `<div class="ttrate"><div class="small"><b>${esc(r.name)}</b>${r.price != null ? ` · ${ttMoney(r.price)}` : ''}${r.special ? ' <span class="tag green">special</span>' : ''}</div>
+    <div class="chips">${r.times.map(t => { const f = t.fees[0] || {}, tee = /\b(1st|first)\b/i.test(t.tee || '') || !t.tee ? '' : (/(\d+)(st|nd|rd|th)\b/i.exec(t.tee) || [])[0];
+      return `<a class="chip ttime" href="${esc(ttSafe(r.url) || '#')}" target="_blank" rel="noopener" title="${esc([t.tee, ...t.fees.map(x => `${ttMoney(x.price)} ${x.who || ''}`)].filter(Boolean).join(' · '))}">${t.time}<small>${t.free} free${f.price != null && f.price !== r.price ? ` · ${ttMoney(f.price)}` : ''}${tee ? ` · ${esc(tee)} tee` : ''}</small></a>`; }).join('')}</div></div>`).join('');
+  return { n, html: fold(`tt_${c.id}`, name, `${plural(n, 'time')} from ${first}${isFinite(low) ? ` · from ${ttMoney(low)}` : ''}`, body + `<p class="small muted">Tap a time to book it on the club's site.${c.prereg ? ' This club asks you to register first.' : ''}</p>`) };
+}
+function vTeeTimes() {
+  const p = ttPrefs(), date = ttDate(), pool = ttCourses(p);
+  const seg = (k, opts) => `<div class="seg" id="tt_${k}">${opts.map(([v, label]) => `<button data-act="ttPref" data-k="${k}" data-v="${v}" aria-pressed="${String(p[k] ?? '') === String(v)}">${label}</button>`).join('')}</div>`;
+  const hourSel = (k, none) => `<select data-ttpref="${k}" aria-label="${k === 'from' ? 'From' : 'Until'}"><option value="">${none}</option>${TT_HOURS.map(t => `<option ${p[k] === t ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  let h = back('courses', null, 'Courses') + `<h1>Tee times</h1>
+  <p class="lead small">Free times on each club's own booking site, read when you look. Booking happens on the club's site.</p>
+  <div class="chips" id="ttDays">${ttDays().map(d => `<button class="chip" data-act="ttDay" data-v="${d.date}" aria-pressed="${d.date === date}">${d.label}</button>`).join('')}</div>
+  <div class="ttfilters">
+    <div class="ttf"><span class="small muted">Time</span><span>${hourSel('from', 'Any time')} <span class="muted">to</span> ${hourSel('to', 'late')}</span></div>
+    <div class="ttf"><span class="small muted">Players</span>${seg('players', [[1, '1'], [2, '2'], [3, '3'], [4, '4']])}</div>
+    <div class="ttf"><span class="small muted">Holes</span>${seg('holes', [['', 'Any'], [9, '9'], [18, '18']])}</div>
+    ${home() ? `<div class="ttf"><span class="small muted">Within</span>${seg('within', [...TT_RADII.map(r => [r, r + ' km']), [0, 'Any']])}</div>` : ''}
+  </div>`;
+  if (!home()) h += `<div class="notice" id="ttHome">Set your location to search by distance. Until then every course is searched. <button class="quiet" data-act="setHome">Set location</button></div>`;
+  if (!pool.read.length) return h + `<div class="empty" id="ttNone"><p>${pool.radius ? `No course Carry can read tee times for is within ${pool.radius} km.` : 'No course has a booking link Carry can read yet.'} Carry reads MiClub booking sites, which most Sydney public courses use.</p></div>`;
+  const cards = pool.read.map(c => ttCourse(c, tt.res[c.id + '|' + date], p, date));
+  const waiting = cards.filter(x => x.n === -1).length, found = cards.filter(x => x.n > 0);
+  const ats = pool.read.map(c => tt.res[c.id + '|' + date]).filter(e => e && e.data && e.data.fetchedAt).map(e => e.data.fetchedAt).sort();
+  h += `<p class="small muted" id="ttStatus">${waiting ? `Checking ${waiting} of ${plural(pool.read.length, 'course')}…` : `${found.length} of ${plural(pool.read.length, 'course')} ${found.length === 1 ? 'has' : 'have'} times that suit.${ats.length ? ` Read from the clubs' sites from ${new Date(ats[0]).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}; times go fast, so the club's page has the last word.` : ''}`}
+    ${waiting ? '' : `<button class="quiet" data-act="ttRefresh">Check again</button>`}</p>`;
+  // Courses with times first, by distance; then still checking, nothing that suits, couldn't read.
+  const rank = x => (x.n > 0 ? 0 : x.n === -1 ? 1 : x.n === 0 ? 2 : 3);
+  h += `<div class="folds" id="ttList">${cards.map((x, i) => ({ ...x, i })).sort((a, b) => rank(a) - rank(b) || a.i - b.i).map(x => x.html).join('')}</div>`;
+  if (pool.other.length) h += fold('ttOther', 'Booked another way', `${plural(pool.other.length, 'course')} Carry can't read`,
+    `<div class="list">${pool.other.map(c => `<div class="item"><b>${esc(c.name)}</b>${distanceLabel(c) ? ` <span class="small muted">${distanceLabel(c)}</span>` : ''}<div class="small muted">${[c.bookingNote && esc(c.bookingNote), ttSafe(c.bookingUrl) && `<a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Their booking page</a>`].filter(Boolean).join(' · ')}</div></div>`).join('')}</div>`);
+  const notes = [pool.unplaced && `${plural(pool.unplaced, 'course')} with no location on ${pool.unplaced === 1 ? 'its' : 'their'} card ${pool.unplaced === 1 ? 'is' : 'are'} left out of a distance search`,
+    pool.hidden && `${plural(pool.hidden, 'private or closed course')} ${pool.hidden === 1 ? 'is' : 'are'} not searched`].filter(Boolean);
+  if (notes.length) h += `<p class="small muted" id="ttNotes">${notes.join('. ')}.</p>`;
+  return h;
+}
+document.addEventListener('change', e => { const s = e.target.closest && e.target.closest('select[data-ttpref]'); if (s) { ttSetPref(s.dataset.ttpref, s.value || null); render(); } });
 
 /* ---------- course map (OpenStreetMap) ----------
    Linking stores only which map the course uses; the shapes stay in the
@@ -3904,6 +4033,11 @@ function distanceTo(c) {
   return kmBetween(h, c);
 }
 const distanceLabel = c => { const d = distanceTo(c); return d == null ? '' : d < 10 ? `${d.toFixed(1)} km` : `${Math.round(d)} km`; };
+
+// Tee times (see vTeeTimes).
+ACTIONS.ttDay = d => go('courses', { view: 'teetimes', date: d.v });
+ACTIONS.ttPref = d => { ttSetPref(d.k, d.v === '' ? null : Number(d.v)); render(); };
+ACTIONS.ttRefresh = () => { const date = ttDate(); for (const k of Object.keys(tt.res)) if (k.endsWith('|' + date) && !tt.res[k].loading) delete tt.res[k]; tt.fresh = true; render(); tt.fresh = false; };
 
 ACTIONS.setHome = function () {
   const h = home() || {};

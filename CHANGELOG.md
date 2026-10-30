@@ -1,3 +1,8 @@
+## 2.41.0 — 2026-10-30
+- Courses → Find a tee time: free tee times on the clubs' own booking sites for the next seven days. Pick the day, a time window, how many players, 9 or 18 holes and how far from home; the courses with times come first, nearest first, each time showing how many spots are left.
+- Tap a time to book it on the club's own page. Carry books nothing and stores nothing; it reads the clubs' public pages when you look, and "Check again" reads them afresh.
+- A course with nothing to show says why (nothing public that day, a calendar that needs signing up, or a site that didn't answer). Courses booked another way (Lane Cove, by phone) are listed underneath with how to book; private and closed courses are left out.
+
 ## 2.40.1 — 2026-10-30
 - Tee times: Moore Park's 12-hole rate is now read as 12 holes, not 9, and a 12-hole round can be asked for.
 - When a course has no tee times to show, Carry now says why: nothing open to the public that day (often a members' competition), or a club whose public calendar shows nothing until you sign up on its site (Massey Park).
