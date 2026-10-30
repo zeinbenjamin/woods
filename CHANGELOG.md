@@ -1,3 +1,6 @@
+## 2.43.1 — 2026-10-30
+- Tee times: the filters now use the same size and weight as the app's other buttons, instead of a larger size of their own. Tapping a menu still opens your phone's picker without zooming the page.
+
 ## 2.43.0 — 2026-10-30
 - Find a tee time now also reads the clubs that book through GolfNow's TeeItUp pages: Georges River, Marrickville, Palm Beach and Avalon once their imports are loaded again, and Bardwell Valley once its booking link is set to its TeeItUp page. Each time links to the club's TeeItUp page for that day.
 - First live search to come: if a TeeItUp course says it couldn't be read, open its tee-times address in the browser and send what it shows.

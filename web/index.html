@@ -100,15 +100,20 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .chips { display: flex; gap: 6px; flex-wrap: wrap; } .chip { font: 600 13px var(--cond); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
 a.chip { text-decoration: none; display: inline-flex; gap: 5px; align-items: baseline; } .chip small { font: 400 12px var(--body); color: var(--ink-3); }
 #ttDays { flex-wrap: nowrap; overflow-x: auto; align-items: center; margin: 4px 0 12px; padding-bottom: 2px; } #ttDays .chip { flex: none; }
-/* Tee-time filters (2.42.0, he asked for one font size and fewer rows): every control at 16px, the
-   size iOS needs to not zoom into a select; each filter a label over its control; Time and Players
-   on one line, Holes, Within and Max price on the next, wrapping only on a narrower screen. */
-#ttDays .chip, .ttfilters .seg button, .ttfilters select { font: 500 16px var(--body); }
+/* Tee-time filters (2.42.0, he asked for one font size and fewer rows; 2.43.1, he meant the app's
+   own size): every control is set like the app's buttons, 500 14px and 38px tall. A select can't be
+   under 16px or iOS zooms into it on a tap, so each one is a button-styled label (.ttsel) showing
+   the choice, with the real 16px select laid invisibly over it, as the date picker is. Each filter
+   a label over its control; Time and Players on one line, Holes, Within and Max price on the next. */
+#ttDays .chip, .ttfilters .seg button, .ttsel { font: 500 14px var(--body); }
+.ttsel { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 38px; box-sizing: border-box; padding: 0 10px 0 12px; border: 1px solid var(--rule); border-radius: var(--r); background: var(--paper); color: var(--ink); margin: 0; cursor: pointer; }
+.ttsel svg { color: var(--ink-3); flex: none; } .ttsel:focus-within { outline: 2px solid var(--focus); outline-offset: 1px; }
+.ttsel select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; border: 0; margin: 0; padding: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
 #ttDays .chip { height: 38px; box-sizing: border-box; padding: 0 14px; display: inline-flex; align-items: center; } .ttpick { position: relative; display: inline-flex; align-items: center; cursor: pointer; margin: 0; } /* a label: not the form labels' 12px above */
 .ttpick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; margin: 0; font-size: 16px; cursor: pointer; }
 .ttfilters { display: grid; gap: 10px; margin-bottom: 12px; } .ttline { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; }
 .ttf { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .ttl { font-size: 13px; color: var(--ink-3); }
-.ttfilters .seg button { padding: 0 11px; } .ttfilters select { width: auto; padding-top: 0; padding-bottom: 0; } .ttfilters select { height: 38px; box-sizing: border-box; } .ttfilters .seg button { height: 36px; } /* + the segment's 1px border = 38 */ .tttime { display: inline-flex; align-items: center; gap: 6px; } .ttwhere { font-weight: 400; } .ttrow { padding: 10px 0; border-bottom: 1px solid var(--rule); } .ttrate { margin: 8px 0; } .ttrate .chips { margin-top: 4px; }
+.ttfilters .seg button { padding: 0 12px; } .ttfilters .seg button { height: 36px; } /* + the segment's 1px border = 38 */ .tttime { display: inline-flex; align-items: center; gap: 6px; } .ttwhere { font-weight: 400; } .ttrow { padding: 10px 0; border-bottom: 1px solid var(--rule); } .ttrate { margin: 8px 0; } .ttrate .chips { margin-top: 4px; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 /* gapping ladder */
@@ -1499,8 +1504,11 @@ function ttCourse(c, e, p, date) {
 function vTeeTimes() {
   const p = ttPrefs(), date = ttDate(), pool = ttCourses(p);
   const seg = (k, opts) => `<div class="seg" id="tt_${k}">${opts.map(([v, label]) => `<button data-act="ttPref" data-k="${k}" data-v="${v}" aria-pressed="${String(p[k] ?? '') === String(v)}">${label}</button>`).join('')}</div>`;
-  const hourSel = (k, none) => `<select data-ttpref="${k}" aria-label="${k === 'from' ? 'From' : 'Until'}"><option value="">${none}</option>${TT_HOURS.map(t => `<option ${p[k] === t ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
-  const numSel = (k, label, opts) => `<select data-ttpref="${k}" data-num="1" id="tt_${k}" aria-label="${label}">${opts.map(([v, l]) => `<option value="${v}" ${String(p[k] ?? '') === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const chev = '<svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // Shown as a button at the app's size; the real select (16px, so no iOS zoom) lies invisibly on top.
+  const pick = (attrs, opts, cur) => `<label class="ttsel"><span>${esc((opts.find(([v]) => String(v) === String(cur ?? '')) || opts[0])[1])}</span>${chev}<select ${attrs}>${opts.map(([v, l]) => `<option value="${v}" ${String(cur ?? '') === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+  const hourSel = (k, none) => pick(`data-ttpref="${k}" aria-label="${k === 'from' ? 'From' : 'Until'}"`, [['', none], ...TT_HOURS.map(t => [t, t])], p[k]);
+  const numSel = (k, label, opts) => pick(`data-ttpref="${k}" data-num="1" id="tt_${k}" aria-label="${label}"`, opts, p[k]);
   const group = (label, control) => `<div class="ttf"><span class="ttl">${label}</span>${control}</div>`;
   const chipDays = ttDays(), later = !chipDays.some(d => d.date === date);
   const laterLabel = later ? new Date(date + 'T12:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Pick a date';

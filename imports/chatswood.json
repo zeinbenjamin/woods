@@ -9,197 +9,128 @@
       "id": "c_chatswood",
       "v": 2,
       "created": 1793207585926,
-      "name": "Chatswood Golf Club",
+      "name": "Newgreens Chatswood",
       "state": "NSW",
       "lat": -33.79918,
       "lng": 151.16213,
-      "tee": "black",
-      "notes": "18 holes, par 65, 4,372 m off the black tees. Lengths in metres; tee sets: black, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 63 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify numbers 18 holes (nine played twice, par 65); the hole-maps chat notes OSM's 11 and 12 may be 3 and 9. The course was rebuilt as Newgreens Chatswood, 12 holes, opened May 2026 (web search, 2026-10-29): this 18-hole card is probably the old layout and wants checking against the new club card.",
-      "source": "Card: Golfify (black and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/181570673, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.agfg.com.au/article/dodici-and-tempo-tee-off-at-sydneys-bold-new-lifestyle-destination-newgreens-chatswood).",
+      "tee": "standard",
+      "notes": "12 holes, par 44, 2,871 m off the standard tees. Lengths in metres; tee sets: standard (the club's card prints one distance column and names no tee colour, so it is called standard here). No handicap rating stored (the club's course page says Course Rating: TBC). The course was rebuilt and reopened in May 2026 as Newgreens Chatswood, Australia's first purpose-built 12-hole course, on Chatswood Golf Club's own ground (130 Beaconsfield Road) in an alliance between the club, Pariter and Watermark Living; the old 17th became the new 11th. This record was Chatswood Golf Club's 18-hole card (Golfify, par 65, 4,372 m black), replaced here by the new club card, so it keeps its id: rounds keep their own card copy. The course map (chatswood) is OpenStreetMap's old layout and won't match these 12 holes until the hole-maps chat rebuilds it; leave it unlinked.",
+      "source": "Card: the club's scorecard, Newgreens_Golf-Scorecard_March_2026.pdf (newgreenschatswood.com.au, read 2026-10-30): par, index and distance per hole, totals par 44 and 2,871 m, which the holes add to; the course page (newgreenschatswood.com.au/golf/the-course/, read 2026-10-30) agrees on 12 holes, par 44, 2,871 m, and on holes 2 (par 5, 464 m), 3 (par 3, 183 m) and 11 (par 4, 238 m). booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.agfg.com.au/article/dodici-and-tempo-tee-off-at-sydneys-bold-new-lifestyle-destination-newgreens-chatswood); booking corrected 2026-10-30 from the club's Tee Times & Rates page (newgreenschatswood.com.au/golf/tee-times-and-rates/, seen): open to the public, its Book a round button is the MiClub calendar stored here, and the fees are its visitor green fees. Location: the course map's origin (OpenStreetMap way/181570673, ODbL, © OpenStreetMap contributors).",
       "holes": [
         {
           "n": 1,
           "par": 4,
-          "metres": 288,
+          "metres": 275,
           "tees": {
-            "black": 288,
-            "red": 280
+            "standard": 275
           },
-          "si": 14
+          "si": 9
         },
         {
           "n": 2,
           "par": 5,
-          "metres": 458,
+          "metres": 464,
           "tees": {
-            "black": 458,
-            "red": 448
+            "standard": 464
           },
-          "si": 9
+          "si": 2
         },
         {
           "n": 3,
           "par": 3,
           "metres": 183,
           "tees": {
-            "black": 183,
-            "red": 170
+            "standard": 183
           },
           "si": 3
         },
         {
           "n": 4,
-          "par": 3,
-          "metres": 208,
-          "tees": {
-            "black": 208,
-            "red": 203
-          },
-          "si": 2
-        },
-        {
-          "n": 5,
-          "par": 3,
-          "metres": 174,
-          "tees": {
-            "black": 174,
-            "red": 168
-          },
-          "si": 7
-        },
-        {
-          "n": 6,
-          "par": 3,
-          "metres": 137,
-          "tees": {
-            "black": 137,
-            "red": 132
-          },
-          "si": 10
-        },
-        {
-          "n": 7,
-          "par": 3,
-          "metres": 148,
-          "tees": {
-            "black": 148,
-            "red": 145
-          },
-          "si": 13
-        },
-        {
-          "n": 8,
-          "par": 5,
-          "metres": 472,
-          "tees": {
-            "black": 472,
-            "red": 452
-          },
-          "si": 8
-        },
-        {
-          "n": 9,
-          "par": 4,
-          "metres": 270,
-          "tees": {
-            "black": 270,
-            "red": 265
-          },
-          "si": 16
-        },
-        {
-          "n": 10,
           "par": 4,
           "metres": 264,
           "tees": {
-            "black": 264,
-            "red": 264
-          },
-          "si": 15
-        },
-        {
-          "n": 11,
-          "par": 3,
-          "metres": 114,
-          "tees": {
-            "black": 114,
-            "red": 106
-          },
-          "si": 12
-        },
-        {
-          "n": 12,
-          "par": 4,
-          "metres": 404,
-          "tees": {
-            "black": 404,
-            "red": 398
-          },
-          "si": 1
-        },
-        {
-          "n": 13,
-          "par": 3,
-          "metres": 119,
-          "tees": {
-            "black": 119,
-            "red": 116
-          },
-          "si": 17
-        },
-        {
-          "n": 14,
-          "par": 3,
-          "metres": 175,
-          "tees": {
-            "black": 175,
-            "red": 170
-          },
-          "si": 5
-        },
-        {
-          "n": 15,
-          "par": 4,
-          "metres": 280,
-          "tees": {
-            "black": 280,
-            "red": 275
-          },
-          "si": 11
-        },
-        {
-          "n": 16,
-          "par": 3,
-          "metres": 144,
-          "tees": {
-            "black": 144,
-            "red": 140
+            "standard": 264
           },
           "si": 6
         },
         {
-          "n": 17,
-          "par": 4,
-          "metres": 210,
+          "n": 5,
+          "par": 3,
+          "metres": 118,
           "tees": {
-            "black": 210,
-            "red": 202
+            "standard": 118
           },
-          "si": 18
+          "si": 10
         },
         {
-          "n": 18,
-          "par": 4,
-          "metres": 324,
+          "n": 6,
+          "par": 3,
+          "metres": 127,
           "tees": {
-            "black": 324,
-            "red": 284
+            "standard": 127
+          },
+          "si": 11
+        },
+        {
+          "n": 7,
+          "par": 3,
+          "metres": 137,
+          "tees": {
+            "standard": 137
+          },
+          "si": 8
+        },
+        {
+          "n": 8,
+          "par": 4,
+          "metres": 394,
+          "tees": {
+            "standard": 394
+          },
+          "si": 1
+        },
+        {
+          "n": 9,
+          "par": 4,
+          "metres": 250,
+          "tees": {
+            "standard": 250
+          },
+          "si": 7
+        },
+        {
+          "n": 10,
+          "par": 3,
+          "metres": 118,
+          "tees": {
+            "standard": 118
+          },
+          "si": 12
+        },
+        {
+          "n": 11,
+          "par": 4,
+          "metres": 238,
+          "tees": {
+            "standard": 238
+          },
+          "si": 5
+        },
+        {
+          "n": 12,
+          "par": 4,
+          "metres": 303,
+          "tees": {
+            "standard": 303
           },
           "si": 4
         }
       ],
       "bookable": true,
-      "bookingNote": "Rebuilt as Newgreens Chatswood (12 holes, opened May 2026): book a tee time on the club site."
+      "bookingUrl": "https://chatswood.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000",
+      "bookingNote": "Open to the public, booked online. Twilight $39 midweek, $49 weekends; students $35 (Mon–Thu); 16 and under $25. Carts $45 (twilight $30). Pro shop (02) 9419 2336. About 3 hours for 12 holes.",
+      "feeWeekday": 49,
+      "feeWeekend": 59
     }
   ],
   "sessions": [],
