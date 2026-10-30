@@ -145,11 +145,12 @@ export const clearTeeTimeCache = () => cache.clear();
    five minutes, nothing stored. A club's page (<alias>.book.teeitup.com/
    ?course=<facility id>, the GolfNow facility id) is built in the browser;
    the times come from GolfNow's booking API, asked with the club's alias.
-   **Not yet seen live** (this container can't reach it): the answer's shape
-   below is the one TeeItUp's page is known to use (a day per facility, its
-   `teetimes`, each with rates), read defensively; an answer that doesn't fit
-   comes back `unreadable` with the start of the reply in `sample`, so the
-   first live search shows what to change. */
+   Seen live on the NAS (Georges River, 1 Nov 2026, searched 30 Oct): a day
+   per facility, its `teetimes`, each with rates, as below. `maxPlayers` is
+   the players still bookable, not the group's size (it equalled the spots
+   free on every time), so the group's size isn't known and `of` is null.
+   Still read defensively: an answer that doesn't fit comes back `unreadable`
+   with the start of the reply in `sample`. */
 const TEEITUP_API = (process.env.TEEITUP_API || 'https://phx-api-be-east-1b.kenna.io').replace(/\/$/, '');
 export const TEEITUP_HOST = /^([a-z0-9-]+)\.book\.teeitup\.com$/i;
 export function teeitupSource(bookingUrl) {
@@ -191,15 +192,16 @@ export function parseTeeitup(body, src, date) {
   for (const tt of days.flatMap(d => (d && Array.isArray(d.teetimes) ? d.teetimes : []))) {
     const time = localClock(tt.teetime || tt.time);
     if (!time) continue;
-    const booked = Number(tt.bookedPlayers) || 0, max = Number(tt.maxPlayers) || 4;
+    const left = Number.isFinite(Number(tt.maxPlayers)) && tt.maxPlayers != null ? Number(tt.maxPlayers) : null;
     for (const r of Array.isArray(tt.rates) && tt.rates.length ? tt.rates : [{}]) {
       const allowed = Array.isArray(r.allowedPlayers) && r.allowedPlayers.length ? Math.max(...r.allowedPlayers) : null;
-      const free = allowed ?? Math.max(0, max - booked), name = String(r.name || 'Tee time'), holes = rateHoles(r), price = ratePrice(r);
+      const free = allowed ?? left, name = String(r.name || 'Tee time'), holes = rateHoles(r), price = ratePrice(r);
+      if (free == null) continue;
       const key = name + '|' + holes;
       if (!groups.has(key)) groups.set(key, { name, holes, price, special: false, url: teeitupPage(src, date), times: [] });
       const g = groups.get(key);
       if (price != null && (g.price == null || price < g.price)) g.price = price;
-      g.times.push({ time, tee: tt.backNine ? 'Back nine' : null, free, of: max, fees: price != null ? [{ price, who: name }] : [] });
+      g.times.push({ time, tee: tt.backNine ? 'Back nine' : null, free, of: null, fees: price != null ? [{ price, who: name }] : [] });
     }
   }
   return [...groups.values()].map(g => ({ ...g, times: g.times.sort((a, b) => (a.time < b.time ? -1 : 1)) })).sort((a, b) => (b.holes || 0) - (a.holes || 0));

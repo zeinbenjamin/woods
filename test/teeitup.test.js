@@ -1,10 +1,10 @@
 // TeeItUp (2.43.0): GolfNow's booking engine for clubs, read at Zein's
-// decision. The answer below is HAND-MADE in the shape TeeItUp's page is known
-// to use (this container can't reach GolfNow to copy a real one), with the
-// times the live Georges River page showed for Sat 31 Oct 2026: 10:28 for one
-// player at $45 (18 holes), 11:17 for up to four, 2:24 pm for one or two at
-// $32 (9 holes). The first live search on the NAS is its real test; a reply
-// that doesn't fit comes back unreadable with a sample of what came.
+// decision. The answer below is HAND-MADE (this container can't reach GolfNow
+// to copy a real one), with the times the live Georges River page showed for
+// Sat 31 Oct 2026: 10:28 for one player at $45 (18 holes), 11:17 for up to
+// four, 2:24 pm for one or two at $32 (9 holes). Its shape was confirmed by
+// the first live search on the NAS (1 Nov 2026), which also showed that
+// maxPlayers is the players still bookable (2.43.2).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -17,9 +17,9 @@ import { teeitupSource, teeitupPage, parseTeeitup } from '../server/teetimes.js'
 const DAY = [{
   dayInfo: {},
   teetimes: [
-    { teetime: '2026-10-30T23:28:00.000Z', backNine: false, maxPlayers: 4, bookedPlayers: 3, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 4500, allowedPlayers: [1] }] },
+    { teetime: '2026-10-30T23:28:00.000Z', backNine: false, maxPlayers: 1, bookedPlayers: 3, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 4500, allowedPlayers: [1] }] },
     { teetime: '2026-10-31T00:17:00.000Z', backNine: false, maxPlayers: 4, bookedPlayers: 0, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 4500, allowedPlayers: [1, 2, 3, 4] }] },
-    { teetime: '2026-10-31T03:24:00.000Z', backNine: true, maxPlayers: 4, bookedPlayers: 2, rates: [{ name: '9 Holes Afternoon', holes: 9, greenFeeWalking: 3200, allowedPlayers: [1, 2] }] },
+    { teetime: '2026-10-31T03:24:00.000Z', backNine: true, maxPlayers: 2, bookedPlayers: 2, rates: [{ name: '9 Holes Afternoon', holes: 9, greenFeeWalking: 3200, allowedPlayers: [1, 2] }] },
   ],
 }];
 const GR = 'https://georges-river-golf-course.book.teeitup.com/?course=16001&date=2026-10-30&max=999999';
@@ -35,12 +35,12 @@ test('which links are TeeItUp, with the alias and GolfNow course id behind each'
 test('an answer becomes rates of Sydney times with spots free, dollars from cents', () => {
   const rates = parseTeeitup(JSON.stringify(DAY), teeitupSource(GR), '2026-10-31');
   assert.deepEqual(rates.map(r => [r.name, r.holes, r.price]), [['18 Holes', 18, 45], ['9 Holes Afternoon', 9, 32]]);
-  assert.deepEqual(rates[0].times.map(t => [t.time, t.free, t.of]), [['10:28', 1, 4], ['11:17', 4, 4]], 'UTC moved to Sydney summer time (+11)');
-  assert.deepEqual(rates[1].times[0], { time: '14:24', tee: 'Back nine', free: 2, of: 4, fees: [{ price: 32, who: '9 Holes Afternoon' }] });
+  assert.deepEqual(rates[0].times.map(t => [t.time, t.free, t.of]), [['10:28', 1, null], ['11:17', 4, null]], 'UTC moved to Sydney summer time (+11); the group\'s size isn\'t in the answer');
+  assert.deepEqual(rates[1].times[0], { time: '14:24', tee: 'Back nine', free: 2, of: null, fees: [{ price: 32, who: '9 Holes Afternoon' }] });
   assert.equal(rates[0].url, 'https://georges-river-golf-course.book.teeitup.com/?course=16001&date=2026-10-31');
-  // Without allowedPlayers, the spots left are max − booked; a time written without an offset is taken as written; dollars stay dollars.
-  const plain = parseTeeitup([{ teetimes: [{ teetime: '2026-10-31T07:05:00', maxPlayers: 4, bookedPlayers: 1, rates: [{ name: 'Twilight', holes: 18, greenFeeWalking: 25 }] }] }], teeitupSource(GR), '2026-10-31');
-  assert.deepEqual([plain[0].times[0].time, plain[0].times[0].free, plain[0].price], ['07:05', 3, 25]);
+  // Without allowedPlayers, maxPlayers is the spots left (live: never less booked on top); neither, and the time is left out rather than guessed. A time written without an offset is taken as written; dollars stay dollars.
+  const plain = parseTeeitup([{ teetimes: [{ teetime: '2026-10-31T07:05:00', maxPlayers: 3, bookedPlayers: 1, rates: [{ name: 'Twilight', holes: 18, greenFeeWalking: 25 }] }, { teetime: '2026-10-31T07:14:00', rates: [{ name: 'Twilight', holes: 18, greenFeeWalking: 25 }] }] }], teeitupSource(GR), '2026-10-31');
+  assert.deepEqual([plain[0].times.map(t => [t.time, t.free]), plain[0].price], [[['07:05', 3]], 25]);
   assert.deepEqual(parseTeeitup('[{"teetimes": []}]', teeitupSource(GR), '2026-10-31'), [], 'a day with nothing is empty, not unreadable');
   for (const bad of ['<html>Login</html>', '{"error":"not found"}', '[]', 'null']) assert.equal(parseTeeitup(bad, teeitupSource(GR), '2026-10-31'), null, bad);
 });
