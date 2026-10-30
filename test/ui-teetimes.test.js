@@ -24,6 +24,8 @@ before(async () => {
     const u = new URL(req.url, 'http://x'); hits.push(u.pathname + u.search);
     const id = u.searchParams.get('booking_resource_id') || u.searchParams.get('bookingResourceId');
     if (id === '4') { res.writeHead(503); return res.end('down'); }
+    // GolfNow's TeeItUp API (2.43.0), asked with the club's alias: one 18-hole time for up to four.
+    if (u.pathname === '/v2/tee-times') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(req.headers['x-be-alias'] === 'tiu-golf' ? JSON.stringify([{ teetimes: [{ teetime: '2026-10-31T07:30:00', maxPlayers: 4, bookedPlayers: 0, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 4500, allowedPlayers: [1, 2, 3, 4] }] }] }]) : '{}'); }
     res.writeHead(200, { 'content-type': 'text/html' });
     if (/ViewPublicCalendar/.test(u.pathname)) return res.end(id === '5' ? EMPTY : CAL.replaceAll('2026-10-30', '1999-01-01').replaceAll('2026-11-02', '1999-01-02').replaceAll('2026-10-31', u.searchParams.get('selectedDate')));
     res.end(SHEET);
@@ -31,9 +33,10 @@ before(async () => {
   await new Promise(r => fake.listen(0, '127.0.0.1', r));
   const mi = id => `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=${id}`;
   const c = (id, name, lat, extra) => ({ id, v: 2, name, tee: 'white', holes: card(9), lat, lng: 151.2, ...extra });
-  app = await startApp({ env: { TEETIMES_FRESH_MS: '0' }, seed: { clubs: [], sessions: [], settings: { home: { label: 'Home', lat: -33.9, lng: 151.2 } }, courses: [
+  app = await startApp({ env: { TEETIMES_FRESH_MS: '0', TEEITUP_API: `http://127.0.0.1:${fake.address().port}` }, seed: { clubs: [], sessions: [], settings: { home: { label: 'Home', lat: -33.9, lng: 151.2 } }, courses: [
     c('c_near', 'Near GC', -33.91, { bookable: true, bookingUrl: mi(3000000), suburb: 'Bexley' }),
     c('c_far', 'Far GC', -34.2, { bookable: true, bookingUrl: mi(3000001) }),
+    c('c_tiu', 'TeeItUp GC', -33.95, { bookable: true, bookingUrl: 'https://tiu-golf.book.teeitup.com/?course=16001' }),
     // A link to MiClub's event list on the club's own domain, as Gordon's and Richmond's are.
     c('c_events', 'Events GC', -34.05, { bookable: true, bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/ListBookingEvents.msp?booking_resource_id=3000004` }),
     c('c_down', 'Down GC', -33.92, { bookable: true, bookingUrl: mi(4) }),
@@ -60,7 +63,8 @@ test('Courses opens Tee times: seven days, today first, and the courses near hom
   await settled('tomorrow checked');
   const asked = new Set(hits.filter(h => /Calendar/.test(h)).map(h => new URL(h, 'http://x').searchParams.get('booking_resource_id')));
   assert.deepEqual([...asked].sort(), ['3000000', '3000004', '4', '5'], 'near home, public or not known, readable (an event-list link too): not Far (33 km), Private, Shut or Quick');
-  assert.match(app.text('#ttStatus'), /2 of 4 courses have times that suit/);
+  assert.match(app.text('#ttStatus'), /3 of 5 courses have times that suit/);
+  assert.ok(hits.some(h => h.startsWith('/v2/tee-times?date=') && h.includes('facilityIds=16001')), 'the TeeItUp course asked through GolfNow\'s API');
   assert.match(app.text('#ttNotes'), /2 private or closed courses are not searched/);
 });
 
@@ -85,7 +89,11 @@ test('every course that shows nothing says why', () => {
   assert.match(app.text('#ttOther'), /Quick GC/);
   assert.match(app.text('#ttOther'), /Public 9 holes/);
   const ids = sel => app.$$(sel).map(x => x.dataset.tt || x.id.replace('tt_', ''));
-  assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near', 'c_events'], 'only courses with times in the list, nearest first');
+  assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near', 'c_tiu', 'c_events'], 'only courses with times in the list, nearest first');
+  // The TeeItUp course: its time, and the club's own page for the day.
+  const tiu = app.$('#tt_c_tiu a.ttime');
+  assert.match(tiu.textContent, /07:30\s*4 free/);
+  assert.equal(tiu.href, `https://tiu-golf.book.teeitup.com/?course=16001&date=${TOMORROW}`);
   assert.deepEqual(ids('#ttRestList > [data-tt]'), ['c_empty', 'c_down'], 'the rest folded: nothing that suits, then couldn\'t read');
   assert.match(app.text('#ttRest summary'), /Nothing that suits\s*2 courses, 1 couldn't be read/);
 });

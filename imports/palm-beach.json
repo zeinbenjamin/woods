@@ -15,7 +15,7 @@
       "lng": 151.32261,
       "tee": "white",
       "notes": "9 holes, par 32, 2,046 m off the white tees. Lengths in metres; tee sets: white (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 25 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (white, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6861189, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/17230-palm-beach-golf-club/search).",
+      "source": "Card: Golfify (white, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6861189, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/17230-palm-beach-golf-club/search); booking link 2026-10-30: the club's TeeItUp page (GolfNow's booking engine, course 17230, the same id as its GolfNow listing), read live that day.",
       "holes": [
         {
           "n": 1,
@@ -100,7 +100,7 @@
         }
       ],
       "bookable": true,
-      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/17230-palm-beach-golf-club/search"
+      "bookingUrl": "https://palm-beach-golf-club.book.teeitup.com/?course=17230"
     }
   ],
   "sessions": [],

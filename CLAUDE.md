@@ -695,7 +695,31 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   otherwise suit. Day chips, segment buttons and selects are all 16px (iOS
   zooms into a select under 16px) and 38px tall. Measured in Chromium at 390px,
   light and dark: two rows, one size, no sideways scroll.
-- **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
+- **TeeItUp, read at his decision** (2.43.0, 2026-10-30: "build the GolfNow
+  reader anyway, since it's for personal and non-commercial use"; told first
+  that GolfNow's terms ban automated reading for any use). TeeItUp is GolfNow's
+  booking engine for clubs (`<alias>.book.teeitup.com/?course=<GolfNow
+  facility id>`, title "GolfNow Booking Engine"); its page is built in the
+  browser (a TinyFish run found no times in the HTML), so the reader asks the
+  API the page uses: `GET <TEEITUP_API>/v2/tee-times?date=D&facilityIds=ID`
+  with `x-be-alias: <alias>` (`TEEITUP_API` defaults to
+  `https://phx-api-be-east-1b.kenna.io`). **Not yet seen live**: the answer's
+  shape in `parseTeeitup` (a day per facility with `teetimes`, each with
+  `teetime` ISO, `maxPlayers`/`bookedPlayers`, `rates[]` with `name`, `holes`,
+  `greenFeeWalking`, `allowedPlayers`, `backNine`) is the one TeeItUp is known
+  to use, read defensively: times with an offset moved to Sydney's clock, fees
+  of 1000+ taken as cents, spots from `allowedPlayers` else max − booked. An
+  answer that doesn't fit is `unreadable` with `sample` (its first 1500
+  characters), and an error status keeps its body in `sample`, so the first
+  live search says what to change. `test/teeitup.test.js`'s answer is
+  hand-made, labelled so, from the times the live Georges River page showed.
+  Courses: Georges River 16001, Marrickville 16264, Palm Beach 17230, Avalon
+  17227 (imports carry the TeeItUp links, and Georges River's and
+  Marrickville's now the NAS's map link too, so a re-import keeps it);
+  Bardwell Valley 16578 (no import: set in the app). Wallacia and Woodville:
+  no TeeItUp address found (guessed subdomains don't exist), GolfNow links
+  kept. The page's `ttReadable` takes a TeeItUp link with its course id.
+- **Next:** the first live TeeItUp search, and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
 ## Appearance (2.37.0)
@@ -1646,7 +1670,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 383 tests, about 45s.
+`npm test` — 387 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1670,6 +1694,9 @@ fixture would let the reading be pinned.
   club again (and kept on the phone), distance, another day and *Check
   again*, no home location, today at a fixed 13:30 hiding 13:04, the price
   limit by each time's own fee, one size and two lines, and a day 40 days out.
+- `teeitup.test.js` (4) — the TeeItUp reader on a hand-made answer (see
+  *Tee times*): links, Sydney times, cents, spots, the route asking with the
+  alias, unreadable and refused answers keeping a sample.
 - `teetimes.test.js` (9) — the MiClub reader against Bexley's real calendar
   and timesheet (`test/fixtures/`), which links are MiClub, the filters, and
   the route against a stand-in MiClub: rates, times, the cache expiring,
