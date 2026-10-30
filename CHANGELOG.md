@@ -1,3 +1,6 @@
+## 2.41.1 — 2026-10-30
+- On a course page, the Use this map button no longer sits on the line of Course information below it.
+
 ## 2.41.0 — 2026-10-30
 - Courses → Find a tee time: free tee times on the clubs' own booking sites for the next seven days. Pick the day, a time window, how many players, 9 or 18 holes and how far from home; the courses with times come first, nearest first, each time showing how many spots are left.
 - Tap a time to book it on the club's own page. Carry books nothing and stores nothing; it reads the clubs' public pages when you look, and "Check again" reads them afresh.

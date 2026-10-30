@@ -128,3 +128,18 @@ test('the page reserves the tab bar and the home-indicator strip, from the same 
   assert.match(css, /main \{[^}]*padding: 16px 16px calc\(var\(--nav-h\) \+ var\(--safe-b\) \+ 32px\);/, 'and the page clears both');
   assert.doesNotMatch(css, /nav\.tabs \{[^}]*env\(safe-area-inset-bottom/, 'never a separate copy that can drift');
 });
+
+/* ---------- 11. a fold after a whole section keeps its gap ---------- */
+
+// 2.41.1 (he sent a screenshot): on a course page the map section ends in
+// its Use this map button and Course information's fold follows the
+// section. .fold's margin: 0 also cleared the section's own 30px, so the
+// fold's rule sat on the button. Measured in Chromium: 0px before, 24px after.
+test('a fold that follows a whole section keeps a gap from it (the course page: map section, then Course information)', () => {
+  const css = app.doc.querySelector('style').textContent;
+  assert.match(css, /section\.sec \+ details\.fold \{ margin-top: 24px; \}/);
+  const c = { id: 'c_gap', v: 2, name: 'Gap GC', tee: 'white', holes: Array.from({ length: 9 }, (_, i) => ({ n: i + 1, par: 4, metres: 300 })), feeWeekday: 40, map: { id: 'no-such-map', linked: true } };
+  const html = app.E(`courseMapSection(${JSON.stringify(c)}) + fold('courseInfo', 'Course information', '', '<p>x</p>')`);
+  assert.match(html, /^<section class="sec" id="courseMap">/, 'a course naming a map always gets the section');
+  assert.match(html, /<\/section><details class="sec fold" id="courseInfo">/, 'the fold follows the section directly, so the rule applies');
+});
