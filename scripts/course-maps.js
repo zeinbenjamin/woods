@@ -7,7 +7,7 @@
 //       course, or again after a fresh export.
 //
 //   node scripts/course-maps.js build [id ...]
-//       Builds web/course-maps/<id>.json (and index.json) from
+//       Builds web/course-maps/<id>.json (and index.json, icons.json) from
 //       course-maps/src/<id>.json + course-maps/osm/<id>.geojson, and prints
 //       each hole against the scorecard in the source. Output is
 //       deterministic: building twice gives identical files, and a test
@@ -338,6 +338,10 @@ function writeIndex() {
     return { id, name: m.name, osmName: m.osm.name, holes: m.holes.length };
   });
   writeFileSync(join(OUT, 'index.json'), JSON.stringify(idx, null, 1) + '\n');
+  // Every map's icon for the Courses list, one small file so the list never loads a map.
+  const icons = {};
+  for (const { id } of idx) { const ic = HM.iconOf(JSON.parse(readFileSync(join(OUT, id + '.json'), 'utf8'))); if (ic) icons[id] = ic; }
+  writeFileSync(join(OUT, 'icons.json'), JSON.stringify(icons) + '\n');
 }
 
 const [cmd, ...args] = process.argv.slice(2);

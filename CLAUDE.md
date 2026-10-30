@@ -1287,6 +1287,21 @@ scorecard sets every length.
   14 were. Worth it at Eastlake, Ryde Parramatta, Cabramatta, North Ryde,
   Wakehurst, Warringah, Macquarie Links (18 unnumbered lines), Leonay,
   Marrickville, Roseville; Manly's 14 needs only the card's length.
+  **Not Eastlake** (checked 2026-10-30): its outline (47 ha, a 2 km crescent)
+  holds 46 bunkers and ~130 trees but only 4 greens, 1 tee and 1 fairway; the
+  37 greens near it are The Lakes' and Bonnie Doon's. OSM is thin there, so
+  its holes come from marks.
+  **Course icons** (2.46.0, he asked for covers on the Courses list; a preview
+  of 12 at 56 px, light and dark, chose the plain level): the build writes
+  `icons.json`, the whole course north up in a 100-unit square (outline,
+  fairways and tees, water, greens as dots, estimated greens hollow; trees and
+  bunkers left out as speckle at that size), clipped to the outline so a
+  neighbour's shapes stay out, simplified (`ICON_TOL` 0.8 units) to about 1.2
+  KB a course (120 KB for 100, 44 KB compressed; the test holds it under 1.6
+  KB). `HoleMap.icon` / `iconTile` draw it (`--hmi-*`, a step lighter in dark
+  mode than the map's own greens, which sank into the tile), with the course's
+  initials where there is no map. The Courses list drawing them is the Carry
+  chat's (`index.html`).
 
 ## The course batch (2026-10-28)
 
@@ -1765,7 +1780,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 399 tests, about 45s.
+`npm test` — 400 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1892,7 +1907,7 @@ fixture would let the reading be pinned.
   from shapes, the legend showing only what the hole has, outline holes
   staying put, edits keeping the link, unlinking, a boundary-only map drawing
   only the holes with marks).
-- `course-maps.test.js` (31) — the committed maps match their sources,
+- `course-maps.test.js` (32) — the committed maps match their sources,
   attribution and fixed origins, Randwick's own lines (not the neighbour's),
   ownership inside the boundary, Bardwell's and The Coast's hand-mapped
   holes, Bondi's metres-vs-yards check, Massey Park's reds and missing hole 9, Long Reef's whites, Northbridge without a card, Hurstville's estimated greens and renumbered nines, Hunter Valley on a partial boundary with its own green per pin, Bexley's three tee sets all on boxes, the tier-A batch (mapped greens, ref numbers, Manly's 14, Woollahra's nine, Moore Park's ten), the A- batch (partial boundaries, Avondale's outline, Kogarah's shared lines), the B batch (the lines OSM has, Monash's older lines, holes from marks on a partial map), the C batch (lines or marks, flags snapping to mapped greens), the D batch, artwork taps onto the map, boundary-only maps and holes from GPS marks (agreement, stray and rough marks, the tee played, moving an estimated green), GPS projection and green front/middle/back, which holes are flagged and why, the tee rule and the tee-box
@@ -1930,7 +1945,7 @@ Every gotcha above has a test, and each was checked by reintroducing the
 bug and watching the test fail (22 mutations for the original suites,
 18 for versioning and screenshots, 8 for the practice list, 14 for
 1.5.0's distances, penalties and housekeeping, 26 for the handicap,
-9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for Hunter Valley, 2 for the tier-A batch, 2 for the A- batch, 1 for the B batch, 5 for flag snapping, 5 for `fromArt` (also run against the Carry chat's ui-artconvert), 2 for the legend, 5 for the
+9 for course maps, 4 for the 1.9.0 tee-box check, 9 for holes from marks, 1 for Hurstville's renumbering, 2 for Hunter Valley, 2 for the tier-A batch, 2 for the A- batch, 1 for the B batch, 5 for flag snapping, 3 for course icons, 5 for `fromArt` (also run against the Carry chat's ui-artconvert), 2 for the legend, 5 for the
 stroke index column, 28 for 2.0.0's sign-in and whose-data rules, 23 for Play
 mode and the outbox, 15 for GPS marks (14 caught by their own test; a wrong
 `tee` field from the app survives it because the server corrects it), 9 for 2.5.0's

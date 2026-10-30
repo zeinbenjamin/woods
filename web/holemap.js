@@ -524,9 +524,77 @@
   }
   function mapToView(hm, p) { return viewOf(hm.map, hm.hole, hm.pl).toView(p); }
 
+  /* ---------- course icons ----------
+     A whole course at list size: its outline, fairways, water and greens,
+     north up in a 100-unit square, simplified to under a pixel at 56 px.
+     The build writes one per map into icons.json (iconOf), so the Courses
+     list never loads a map file; icon() draws it, iconTile() falls back to
+     the course's initials where there is no map. Greens are dots (a 25 m
+     green is 1-2 px there), an estimated green a hollow one. */
+  const ICON = 100, ICON_PAD = 2, ICON_TOL = 0.8;
+  const esc = x => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function simplify(pts, tol) {
+    if (pts.length < 4) return pts;
+    const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
+    const st = [[0, pts.length - 1]];
+    while (st.length) {
+      const [i, j] = st.pop(); let m = -1, md = 0;
+      for (let k = i + 1; k < j; k++) { const d = segDist(pts[k], pts[i], pts[j]).d; if (d > md) { md = d; m = k; } }
+      if (md > tol) { keep[m] = 1; st.push([i, m], [m, j]); }
+    }
+    return pts.filter((_, k) => keep[k]);
+  }
+  const ringArea = r => Math.abs(r.reduce((a, p, i) => { const q = r[(i + 1) % r.length]; return a + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
+  function iconOf(map) {
+    const all = map.boundary.flat(); if (!all.length) return null;
+    const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const sc = (ICON - 2 * ICON_PAD) / Math.max(x1 - x0, y1 - y0, 1);
+    const ox = (ICON - sc * (x1 - x0)) / 2, oy = (ICON - sc * (y1 - y0)) / 2;
+    const v = p => [Math.round(ox + (p[0] - x0) * sc), Math.round(oy + (y1 - p[1]) * sc)];
+    const ring = r => { const q = simplify(r.map(v), ICON_TOL).filter((p, i, a) => !i || p[0] !== a[i - 1][0] || p[1] !== a[i - 1][1]); return q.length > 2 && ringArea(q) >= 2 ? 'M' + q.map(p => p.join(' ')).join(' ') + 'Z' : ''; };
+    const inside = f => inRings(centroid(f.r[0]), map.boundary);
+    const shapes = k => map.features.filter(f => k.includes(f.k) && f.r && !f.est && inside(f)).map(f => f.r.map(ring).join('')).join('');
+    const out = { b: map.boundary.map(ring).join('') };
+    const fw = shapes(['fairway', 'tee']), w = shapes(['water']);
+    if (fw) out.f = fw; if (w) out.w = w;
+    const dot = (c, a) => { const p = v(c); return [p[0], p[1], Math.max(1, Math.round(Math.sqrt(a / Math.PI) * sc * 10) / 10)]; };
+    const g = map.features.filter(f => f.k === 'green' && f.r && !f.est && inside(f)).map(f => dot(centroid(f.r[0]), ringArea(f.r[0])));
+    if (g.length) out.g = g;
+    const e = (map.holes || []).filter(h => (map.features[h.green] || {}).est).map(h => v(h.line[h.line.length - 1]));
+    if (e.length) out.e = e;
+    return out;
+  }
+  let icons = null;
+  function iconSet() {
+    if (icons) return icons;
+    if (!waiting.__icons) waiting.__icons = fetch('/course-maps/icons.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))
+      .then(x => { icons = x && typeof x === 'object' ? x : {}; onLoad('__icons'); });
+    return null;
+  }
+  // The icon for a map id, as an SVG string; null while icons.json loads or when the map has none.
+  function icon(id, opts = {}) {
+    const set = opts.icons || iconSet(), d = set && set[id]; if (!d) return null;
+    const size = opts.size || 56, cid = 'hmi-' + String(id).replace(/[^\w-]/g, '');
+    const dots = (a, cls) => (a || []).map(p => `<circle class="${cls}" cx="${p[0]}" cy="${p[1]}" r="${p[2] || 1.3}"/>`).join('');
+    return `<svg class="hm-icon" width="${size}" height="${size}" viewBox="0 0 ${ICON} ${ICON}" role="img" aria-label="${esc(opts.title || 'Course map')}"><defs><clipPath id="${cid}"><path d="${d.b}"/></clipPath></defs>` +
+      `<path class="i-course" d="${d.b}"/><g clip-path="url(#${cid})">${d.f ? `<path class="i-fw" d="${d.f}"/>` : ''}${d.w ? `<path class="i-water" d="${d.w}"/>` : ''}${dots(d.g, 'i-green')}${dots(d.e, 'i-green i-est')}</g>` +
+      `<path class="i-edge" d="${d.b}"/></svg>`;
+  }
+  // The course's initials in the same tile, for a course with no map (or before icons.json arrives).
+  function initials(name) {
+    const w = String(name || '').replace(/\s*\(.*?\)/g, '').split(/\s+/).filter(x => x && !/^(golf|club|course|the|country|links|public|resort|and|&)$/i.test(x));
+    return (w.slice(0, 2).map(x => x[0]).join('') || '?').toUpperCase();
+  }
+  function iconTile(id, name, opts = {}) {
+    const size = opts.size || 56;
+    return icon(id, { ...opts, size, title: name }) ||
+      `<svg class="hm-icon hm-icon-none" width="${size}" height="${size}" viewBox="0 0 ${ICON} ${ICON}" role="img" aria-label="${esc(name || 'Course')}"><text x="50" y="52" text-anchor="middle" dominant-baseline="middle">${esc(initials(name))}</text></svg>`;
+  }
+
   /* ---------- style A, light and dark ---------- */
-  const LIGHT = '--hm-bg:#efe8d4;--hm-hatch:#c3b894;--hm-rough:#dfe5c6;--hm-stip:#6f8a5a;--hm-ink:#2b3a2c;--hm-fw:#b6cf8e;--hm-fwe:#cddcab;--hm-green:#d7e6b5;--hm-collar:#c4d8a0;--hm-sand:#f1e2b5;--hm-sanddot:#9c8650;--hm-water:#a9cbe0;--hm-wave:#4d7fa3;--hm-can:#8fae78;--hm-canh:#3f5e37;--hm-path:#8d8468;--hm-flag:#b8432b;--hm-ball:#ffffff;';
-  const DARK = '--hm-bg:#171b16;--hm-hatch:#2f3529;--hm-rough:#27301f;--hm-stip:#4f6040;--hm-ink:#d8d0b8;--hm-fw:#3f5a31;--hm-fwe:#34482a;--hm-green:#61814a;--hm-collar:#4b6a3a;--hm-sand:#8e7d4f;--hm-sanddot:#d2bd85;--hm-water:#2d5169;--hm-wave:#79a6c6;--hm-can:#2c4429;--hm-canh:#1a2a18;--hm-path:#8f8a78;--hm-flag:#e0674d;--hm-ball:#e9e3d0;';
+  const LIGHT = '--hm-bg:#efe8d4;--hm-hatch:#c3b894;--hm-rough:#dfe5c6;--hm-stip:#6f8a5a;--hm-ink:#2b3a2c;--hm-fw:#b6cf8e;--hm-fwe:#cddcab;--hm-green:#d7e6b5;--hm-collar:#c4d8a0;--hm-sand:#f1e2b5;--hm-sanddot:#9c8650;--hm-water:#a9cbe0;--hm-wave:#4d7fa3;--hm-can:#8fae78;--hm-canh:#3f5e37;--hm-path:#8d8468;--hm-flag:#b8432b;--hm-ball:#ffffff;--hmi-tile:var(--paper-2, #ECEFE9);--hmi-course:#dfe5c6;--hmi-fw:#b6cf8e;--hmi-green:#eef4da;--hmi-water:#a9cbe0;--hmi-ink:#2b3a2c;';
+  const DARK = '--hm-bg:#171b16;--hm-hatch:#2f3529;--hm-rough:#27301f;--hm-stip:#4f6040;--hm-ink:#d8d0b8;--hm-fw:#3f5a31;--hm-fwe:#34482a;--hm-green:#61814a;--hm-collar:#4b6a3a;--hm-sand:#8e7d4f;--hm-sanddot:#d2bd85;--hm-water:#2d5169;--hm-wave:#79a6c6;--hm-can:#2c4429;--hm-canh:#1a2a18;--hm-path:#8f8a78;--hm-flag:#e0674d;--hm-ball:#e9e3d0;--hmi-tile:var(--paper-2, #182119);--hmi-course:#34422b;--hmi-fw:#557a42;--hmi-green:#9cbf7c;--hmi-water:#3d6c8c;--hmi-ink:#c9c2a8;';
   const CSS = `:root{${LIGHT}}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${DARK}}}
 :root[data-theme="dark"]{${DARK}}
@@ -555,7 +623,12 @@
 .hm-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:3px 10px;max-width:340px;margin:8px auto 2px;font-size:11px;line-height:1.3;color:var(--ink-2, #4A5A4F)}
 .holemap .hm-edge{fill:none;stroke:var(--hm-ink);stroke-width:.6;opacity:.5}
 .hm-legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.hm-legend svg{width:22px;height:14px;flex:none;border-radius:2px}`;
+.hm-legend svg{width:22px;height:14px;flex:none;border-radius:2px}
+.hm-icon{display:block;flex:none;border-radius:10px;background:var(--hmi-tile)}
+.hm-icon .i-course{fill:var(--hmi-course)} .hm-icon .i-edge{fill:none;stroke:var(--hmi-ink);stroke-width:1.1;stroke-linejoin:round}
+.hm-icon .i-fw{fill:var(--hmi-fw)} .hm-icon .i-water{fill:var(--hmi-water)}
+.hm-icon .i-green{fill:var(--hmi-green);stroke:var(--hmi-ink);stroke-width:.45} .hm-icon .i-est{fill:none;stroke-dasharray:1 .8}
+.hm-icon-none text{font:700 34px var(--cond, sans-serif);fill:var(--ink-3, #7E8B82)}`;
   function injectStyle(doc) {
     if (!doc || doc.getElementById('holemap-style')) return;
     const st = doc.createElement('style'); st.id = 'holemap-style'; st.textContent = CSS; doc.head.appendChild(st);
@@ -563,11 +636,11 @@
   if (root.document) injectStyle(root.document);
 
   root.HoleMap = {
-    get, list, forHole, svg, legend, legendKinds, tapToMap,
+    get, list, forHole, svg, legend, legendKinds, tapToMap, iconOf, icon, iconTile, initials, icons: iconSet,
     projection, fromLatLng, toLatLng, offCourse, greenDistances, mapToView, lieAt, toGreen, playLine, mismatch, stripFor, fromArt,
     set onLoad(f) { onLoad = typeof f === 'function' ? f : () => {}; },
     geom: { dist, lineLen, pointAt, sub, segDist, lineDist, inRings, centroid, bbox },
-    FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH, MARK_ACC, MARK_NEAR, MARK_OFF, MARK_GREEN_MOVE, MARK_SNAP,
+    FLAG_AT, TEE_NEAR, STRIP_W, STRIP_FROM, VW, VH, ICON, MARK_ACC, MARK_NEAR, MARK_OFF, MARK_GREEN_MOVE, MARK_SNAP,
     // Tests put a map in directly; the app always goes through get().
     _put(id, m) { files[id] = m ? prepare(m) : null; },
   };
