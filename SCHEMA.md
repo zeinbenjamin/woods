@@ -129,6 +129,26 @@ values. Measured numbers are derived from shots and never written back.
 - `map` stores only which map file the course uses. The shapes live in the
   file (see *Course maps* below), never in the database.
 
+### Course icons (`web/course-maps/icons.json`, 2.46.0)
+
+Built with the maps (`HoleMap.iconOf(map)`), never stored on a course: one entry
+per map id, the whole course north up in a 100-unit square (`HoleMap.ICON`),
+simplified to under a pixel at 56 px, integers throughout.
+
+```jsonc
+{ "bexley": {
+    "b": "M12 30 15 31 … Z",          // the outline (SVG path, one subpath per ring)
+    "f": "M… Z",                       // fairways and tee boxes inside the outline (optional)
+    "w": "M… Z",                       // water inside the outline (optional)
+    "g": [[44, 52, 1.8], …],           // mapped greens as dots: x, y, radius (optional)
+    "e": [[30, 71], …] } }             // estimated greens (no shape) as hollow dots (optional)
+```
+
+`HoleMap.icon(id, {size, title})` draws one as an SVG string (`.hm-icon`,
+clipped to the outline, coloured by `--hmi-*`), null while the file loads or
+when the map has none; `HoleMap.iconTile(id, name, {size})` falls back to the
+course's initials. `HoleMap.icons()` loads the file once (`onLoad('__icons')`).
+
 ### Course maps (`web/course-maps/<id>.json`)
 
 Built by `scripts/course-maps.js` from OpenStreetMap data and committed; not a

@@ -1,3 +1,6 @@
+## 2.46.0 — 2026-10-30
+- Every course map now comes with a small picture of the whole course, its outline, fairways, water and greens, ready for the Courses list. It appears there once the list is updated to show it.
+
 ## 2.45.0 — 2026-10-30
 - Each course's page has a Tee times fold near the top. Open it to see that course's free times for today, from the club's own booking site; once today's times have gone it shows tomorrow. Pick another day or the number of players, and tap a time to book it on the club's site.
 - The fold asks the club only when you open it, so browsing courses doesn't. A course Carry can't read shows how to book it instead, and "Other courses this day" opens Find a tee time on the same day.

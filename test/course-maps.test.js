@@ -487,6 +487,41 @@ test('a flag marked on a mapped green takes that green: the line to its middle, 
   assert.ok(dist(est.green, far) < 0.2);
 });
 
+test('course icons: every map has one in icons.json, small, inside the square, drawn north up', () => {
+  const icons = JSON.parse(readFileSync('web/course-maps/icons.json', 'utf8'));
+  const idx = JSON.parse(readFileSync('web/course-maps/index.json', 'utf8'));
+  assert.deepEqual(Object.keys(icons).sort(), idx.map(x => x.id).sort(), 'one icon per map');
+  const bytes = JSON.stringify(icons).length;
+  assert.ok(bytes / idx.length < 1600, `about ${Math.round(bytes / idx.length)} bytes a course: the Courses list loads them all`);
+  for (const [id, d] of Object.entries(icons)) {
+    const nums = [d.b, d.f, d.w].filter(Boolean).join(' ').match(/-?\d+/g).map(Number).concat((d.g || []).flatMap(g => g.slice(0, 2)), (d.e || []).flat());
+    assert.ok(nums.every(n => n >= 0 && n <= HM.ICON), `${id}: inside the 0-${HM.ICON} square`);
+  }
+  // Greens: every mapped green inside the outline is a dot; an estimated one is hollow; a marks-only map is its outline.
+  const m = mapOf('bexley'), ic = HM.iconOf(m);
+  assert.equal(ic.g.length, m.features.filter(f => f.k === 'green' && !f.est && HM.geom.inRings(centroid(f.r[0]), m.boundary)).length);
+  assert.equal(HM.iconOf(mapOf('hurstville')).e.length, 18, 'Hurstville\'s estimated greens');
+  const bw = icons['barnwell-park']; assert.ok(bw.b && !bw.f && !bw.g, 'Barnwell Park: the outline alone');
+  // North up: Bondi runs north-south, so its icon is taller than wide.
+  const bx = icons.bondi.b.match(/-?\d+/g).map(Number), xs = bx.filter((_, i) => i % 2 === 0), ys = bx.filter((_, i) => i % 2);
+  assert.ok(Math.max(...ys) - Math.min(...ys) > 2 * (Math.max(...xs) - Math.min(...xs)));
+  // A green in the north is at the top, one in the east on the right.
+  const sq = [[[0, 0], [200, 0], [200, 200], [0, 200], [0, 0]]], blob = (x, y) => [[[x - 8, y - 8], [x + 8, y - 8], [x + 8, y + 8], [x - 8, y + 8], [x - 8, y - 8]]];
+  const t = HM.iconOf({ boundary: sq, features: [{ k: 'green', r: blob(100, 180) }, { k: 'green', r: blob(180, 100) }], holes: [] });
+  assert.ok(t.g[0][1] < 20 && Math.abs(t.g[0][0] - 50) < 2, 'north at the top'); assert.ok(t.g[1][0] > 80 && Math.abs(t.g[1][1] - 50) < 2, 'east on the right');
+  // A neighbour's shapes stay out: The Lakes' icon has none of Eastlake's or Bonnie Doon's greens.
+  const lakes = mapOf('the-lakes'); assert.equal(HM.iconOf(lakes).g.length, lakes.features.filter(f => f.k === 'green' && !f.est && HM.geom.inRings(centroid(f.r[0]), lakes.boundary)).length);
+  // Drawing: clipped to the outline, labelled with the name; no map gives the initials tile.
+  const svg = HM.iconTile('bexley', 'Bexley Golf Club', { icons, size: 56 });
+  assert.match(svg, /^<svg class="hm-icon" width="56" height="56" viewBox="0 0 100 100"/);
+  assert.match(svg, /clipPath id="hmi-bexley"/); assert.match(svg, /aria-label="Bexley Golf Club"/);
+  assert.match(svg, /class="i-green"/);
+  const none = HM.iconTile('no-such-map', 'Cammeray Golf Club (9 holes)', { icons });
+  assert.match(none, /hm-icon-none/); assert.match(none, />C<\/text>/);
+  assert.equal(HM.initials('The Royal Sydney Golf Club'), 'RS'); assert.equal(HM.initials('Moore Park Golf'), 'MP');
+  assert.match(HM.iconTile('x', '<b>', { icons }), /aria-label="&lt;b&gt;"/, 'escaped');
+});
+
 test('Hunter Valley: 18 OSM lines on a partial boundary, each green estimated on its own pin', () => {
   const m = mapOf('hunter-valley'), src = JSON.parse(readFileSync('course-maps/src/hunter-valley.json', 'utf8'));
   const geo = JSON.parse(readFileSync('course-maps/osm/hunter-valley.geojson', 'utf8')).features;
