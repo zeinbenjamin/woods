@@ -1301,8 +1301,7 @@ function vCourses() {
   if (S.sub && S.sub.view === 'teetimes') return vTeeTimes();
   if (S.sub && S.sub.courseId && S.sub.hole) return vCourseHole();
   if (S.sub && S.sub.courseId) return vCourse();
-  let h = `<div class="spread"><h1>Courses</h1><button class="primary" data-act="newCourse">Add course</button></div>
-  <div class="row-actions" style="margin:0 0 6px"><button data-go="courses:view=teetimes" id="ttOpen">Find a tee time →</button></div>
+  let h = `<div class="spread"><h1>Courses</h1><div class="row-actions" style="margin:0"><button data-go="courses:view=teetimes" id="ttOpen">Find a tee time →</button><button class="primary" data-act="newCourse">Add course</button></div></div>
   <div class="row-actions" style="margin-bottom:6px"><button class="quiet" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
   const sort = courseSort(), list = sortedCourses(sort);
   if (S.courses.length > 1) h += `<div class="seg" id="courseSort" style="margin-bottom:8px">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>`;
@@ -1440,6 +1439,20 @@ function ttFit(d, p, date) {
     .map(r => ({ ...r, times: (r.times || []).filter(t => t.free >= p.players && (!p.from || t.time >= p.from) && (!p.to || t.time <= p.to) && (!now || t.time > now)) }))
     .filter(r => r.times.length);
 }
+// Why a course with times on the day has none that suit, from its own times
+// (2.41.1: twenty rows of "No times left that match" said nothing): the
+// holes, then the window, then the players, whichever let something through.
+function ttMiss(d, p, date) {
+  const flat = q => ttFit(d, { ...p, ...q }, date).flatMap(r => r.times).map(t => t.time).sort();
+  const any = flat({ holes: null, players: 1, from: '', to: '' });
+  if (!any.length) return date === today() ? 'No times left today.' : 'No free times on this day.';
+  if (p.holes && !flat({ players: 1, from: '', to: '' }).length) return `No ${p.holes}-hole rate on this day; it has ${plural(any.length, 'time')} at other lengths.`;
+  const outside = flat({ from: '', to: '' }), inside = flat({ players: 1 });
+  const room = p.players > 1 ? ` with room for ${p.players}` : '';
+  if (outside.length) return `Nothing in your time window. ${plural(outside.length, 'time')}${room} outside it, from ${outside[0]}.`;
+  if (inside.length) return `${plural(inside.length, 'time')} in your window, but none with ${p.players} spots free.`;
+  return `None with room for ${p.players}: ${plural(flat({ players: 1, from: '', to: '' }).length, 'time')} on this day, all with fewer spots.`;
+}
 const ttMoney = n => (n == null ? '' : '$' + (Number.isInteger(n) ? n : n.toFixed(2)));
 const ttSafe = u => (/^https?:\/\//i.test(u || '') ? u : null);
 function ttCourse(c, e, p, date) {
@@ -1450,7 +1463,7 @@ function ttCourse(c, e, p, date) {
   const d = e.data;
   if (d.status !== 'ok') return { n: -2, html: `<div class="ttrow" data-tt="${c.id}"><b>${name}</b><div class="small muted">Couldn't read its tee times: ${esc(d.message || 'no answer')}${link(d.calendar || c.bookingUrl, 'Check on their site')}</div></div>` };
   const rates = ttFit(d, p, date), n = rates.reduce((a, r) => a + r.times.length, 0);
-  if (!n) return { n: 0, html: `<div class="ttrow" data-tt="${c.id}"><b>${name}</b><div class="small muted">${esc(d.note || ((d.rates || []).length ? 'No times left that match.' : 'No times listed.'))}${link(d.calendar, 'Their calendar')}</div></div>` };
+  if (!n) return { n: 0, html: `<div class="ttrow" data-tt="${c.id}"><b>${name}</b><div class="small muted">${esc(d.note || ttMiss(d, p, date))}${link(d.calendar, 'Their calendar')}</div></div>` };
   const all = rates.flatMap(r => r.times), first = all.map(t => t.time).sort()[0];
   const low = Math.min(...rates.flatMap(r => [r.price, ...r.times.map(t => (t.fees[0] || {}).price)]).filter(x => x != null));
   const body = rates.map(r => `<div class="ttrate"><div class="small"><b>${esc(r.name)}</b>${r.price != null ? ` · ${ttMoney(r.price)}` : ''}${r.special ? ' <span class="tag green">special</span>' : ''}</div>
@@ -1478,9 +1491,13 @@ function vTeeTimes() {
   const ats = pool.read.map(c => tt.res[c.id + '|' + date]).filter(e => e && e.data && e.data.fetchedAt).map(e => e.data.fetchedAt).sort();
   h += `<p class="small muted" id="ttStatus">${waiting ? `Checking ${waiting} of ${plural(pool.read.length, 'course')}…` : `${found.length} of ${plural(pool.read.length, 'course')} ${found.length === 1 ? 'has' : 'have'} times that suit.${ats.length ? ` Read from the clubs' sites from ${new Date(ats[0]).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}; times go fast, so the club's page has the last word.` : ''}`}
     ${waiting ? '' : `<button class="quiet" data-act="ttRefresh">Check again</button>`}</p>`;
-  // Courses with times first, by distance; then still checking, nothing that suits, couldn't read.
+  // Courses with times first, by distance, and those still being checked; the
+  // rest (nothing that suits, then couldn't read) in one fold, each with why.
   const rank = x => (x.n > 0 ? 0 : x.n === -1 ? 1 : x.n === 0 ? 2 : 3);
-  h += `<div class="folds" id="ttList">${cards.map((x, i) => ({ ...x, i })).sort((a, b) => rank(a) - rank(b) || a.i - b.i).map(x => x.html).join('')}</div>`;
+  const sorted = cards.map((x, i) => ({ ...x, i })).sort((a, b) => rank(a) - rank(b) || a.i - b.i);
+  const shown = sorted.filter(x => x.n !== 0 && x.n !== -2), rest = sorted.filter(x => x.n === 0 || x.n === -2), unread = rest.filter(x => x.n === -2).length;
+  h += `<div class="folds" id="ttList">${shown.map(x => x.html).join('')}</div>`;
+  if (rest.length) h += fold('ttRest', 'Nothing that suits', `${plural(rest.length, 'course')}${unread ? `, ${unread} couldn't be read` : ''}`, `<div id="ttRestList">${rest.map(x => x.html).join('')}</div>`);
   if (pool.other.length) h += fold('ttOther', 'Booked another way', `${plural(pool.other.length, 'course')} Carry can't read`,
     `<div class="list">${pool.other.map(c => `<div class="item"><b>${esc(c.name)}</b>${distanceLabel(c) ? ` <span class="small muted">${distanceLabel(c)}</span>` : ''}<div class="small muted">${[c.bookingNote && esc(c.bookingNote), ttSafe(c.bookingUrl) && `<a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Their booking page</a>`].filter(Boolean).join(' · ')}</div></div>`).join('')}</div>`);
   const notes = [pool.unplaced && `${plural(pool.unplaced, 'course')} with no location on ${pool.unplaced === 1 ? 'its' : 'their'} card ${pool.unplaced === 1 ? 'is' : 'are'} left out of a distance search`,
