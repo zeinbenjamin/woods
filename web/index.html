@@ -100,7 +100,7 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .chips { display: flex; gap: 6px; flex-wrap: wrap; } .chip { font: 600 13px var(--cond); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
 a.chip { text-decoration: none; display: inline-flex; gap: 5px; align-items: baseline; } .chip small { font: 400 12px var(--body); color: var(--ink-3); }
 #ttDays { flex-wrap: nowrap; overflow-x: auto; align-items: center; margin: 4px 0 12px; padding-bottom: 2px; } #ttDays .chip { flex: none; }
-/* Tee-time filters (2.42.0, he asked for one font size and fewer rows; 2.42.1, he meant the app's
+/* Tee-time filters (2.42.0, he asked for one font size and fewer rows; 2.43.1, he meant the app's
    own size): every control is set like the app's buttons, 500 14px and 38px tall. A select can't be
    under 16px or iOS zooms into it on a tap, so each one is a button-styled label (.ttsel) showing
    the choice, with the real 16px select laid invisibly over it, as the date picker is. Each filter
@@ -1390,10 +1390,16 @@ const TT_KEY = 'carry.tt', TT_DAYS = 7, TT_RADII = [5, 10, 20, 40], TT_PRICES = 
 const TT_HOURS = Array.from({ length: 16 }, (_, i) => `${String(i + 5).padStart(2, '0')}:00`);   // 05:00 … 20:00
 const tt = { res: {}, queue: [], running: 0, redraw: null, fresh: false };   // `${courseId}|${date}` → { loading } | { data, at }
 
-// The same test the server makes (miclubSource): a MiClub host, or MiClub's
-// /guests/bookings/ path on a club's own domain.
+// The same tests the server makes (teeitupSource, miclubSource): a TeeItUp
+// page with its course id, a MiClub host, or MiClub's /guests/ pages on a
+// club's own domain.
 function ttReadable(c) {
-  try { const u = new URL(c.bookingUrl); return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/(bookings\/|\w+\.msp$)/i.test(u.pathname)); } catch (e) { return false; }
+  try {
+    const u = new URL(c.bookingUrl);
+    // TeeItUp (2.43.0): <club>.book.teeitup.com with its GolfNow course id, as the server's teeitupSource.
+    if (/^[a-z0-9-]+\.book\.teeitup\.com$/i.test(u.hostname)) return /^\d+$/.test(u.searchParams.get('course') || '');
+    return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/(bookings\/|\w+\.msp$)/i.test(u.pathname));
+  } catch (e) { return false; }
 }
 function ttPrefs() {
   let p = {}; try { p = JSON.parse(localStorage.getItem(TT_KEY) || '{}') || {}; } catch (e) {}
@@ -1514,7 +1520,7 @@ function vTeeTimes() {
     <div class="ttline">${group('Holes', seg('holes', [['', 'Any'], [9, '9'], [18, '18']]))}${home() ? group('Within', numSel('within', 'Within', [...TT_RADII.map(r => [r, r + ' km']), [0, 'Any']])) : ''}${group('Max price', numSel('price', 'Max price', [['', 'Any'], ...TT_PRICES.map(v => [v, '$' + v])]))}</div>
   </div>`;
   if (!home()) h += `<div class="notice" id="ttHome">Set your location to search by distance. Until then every course is searched. <button class="quiet" data-act="setHome">Set location</button></div>`;
-  if (!pool.read.length) return h + `<div class="empty" id="ttNone"><p>${pool.radius ? `No course Carry can read tee times for is within ${pool.radius} km.` : 'No course has a booking link Carry can read yet.'} Carry reads MiClub booking sites, which most Sydney public courses use.</p></div>`;
+  if (!pool.read.length) return h + `<div class="empty" id="ttNone"><p>${pool.radius ? `No course Carry can read tee times for is within ${pool.radius} km.` : 'No course has a booking link Carry can read yet.'} Carry reads MiClub booking sites, which most Sydney public courses use, and GolfNow's TeeItUp pages.</p></div>`;
   const cards = pool.read.map(c => ttCourse(c, tt.res[c.id + '|' + date], p, date));
   const waiting = cards.filter(x => x.n === -1).length, found = cards.filter(x => x.n > 0);
   const ats = pool.read.map(c => tt.res[c.id + '|' + date]).filter(e => e && e.data && e.data.fetchedAt).map(e => e.data.fetchedAt).sort();
