@@ -741,6 +741,23 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   Bardwell Valley 16578 (no import: set in the app). Wallacia and Woodville:
   no TeeItUp address found (guessed subdomains don't exist), GolfNow links
   kept. The page's `ttReadable` takes a TeeItUp link with its course id.
+- **A course's own tee times** (2.45.0, he asked: "tee times for each course
+  when you click their course card"): `courseTeeTimes(c)`, the fold
+  `#courseTt` under the course page's subtitle, closed by default. The club is
+  asked only once it's open (`ctLifecycle()`, from `ttLifecycle()` after every
+  render and from a capture-phase `toggle` listener); `ttWant` now returns how
+  many it asked for, so the redraw that reopens the fold asks nothing and can't
+  loop. Today first; once today's answer has no time left that suits, tomorrow,
+  saying so (`ctDate`, his choice), until a day is picked (`S.sub.date`;
+  `ttSetDay` keeps a course page a course page). The same day chips and *Pick a
+  date* (same ids, so `ttDaysScroll`, `showPicker` and `pickerOpen` apply),
+  players only (the search's pref; time, holes and price aren't applied to one
+  course), `ttRatesHtml` (split out of `ttCourse`) for the times, *Check again*
+  for that day (`ttRefresh` takes a date), and *Other courses this day →* into
+  the search. The answers are the search's `tt.res`, so the two agree. A
+  course Carry can't read shows its `bookingNote` and link ("members and
+  guests" when private); a closed course, or one with no way to book, has no
+  fold. `ui-courseteetimes` (4) against the stand-in MiClub.
 - **Next:** the other TeeItUp courses' first searches, and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
@@ -1452,6 +1469,8 @@ themes the ball data contradicted as often as agreed. All from the readings'
 wording, derived on every draw, nothing stored; the cross-reading stays the
 real read across them. The timeline's rows open the swing's card
 (`reelCard`), as the feed's caption does, with one link on to the session.
+*Watch: n videos* (`#reelsOpen`) sits beside the heading in a `.spread`
+(2.45.0, he asked), as Range's, Rounds' and Courses' buttons do.
 
 **A reading across the readings** (2.24.0, he asked for the cross-reading
 button): `crossSection(club)` on the club's fold, `crossRead(club)` →
@@ -1746,7 +1765,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 395 tests, about 45s.
+`npm test` — 399 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1770,6 +1789,10 @@ fixture would let the reading be pinned.
   club again (and kept on the phone), distance, another day and *Check
   again*, no home location, today at a fixed 13:30 hiding 13:04, the price
   limit by each time's own fee, one size and two lines, and a day 40 days out.
+- `ui-courseteetimes.test.js` (4) — a course page's Tee times fold: no club
+  asked until it's opened, today then tomorrow once today's times have gone, a
+  day picked staying on the course page, players, a redraw asking nothing new,
+  an unreadable course's booking note, no fold for a closed course.
 - `teeitup.test.js` (4) — the TeeItUp reader on a hand-made answer (see
   *Tee times*): links, Sydney times, cents, spots, the route asking with the
   alias, unreadable and refused answers keeping a sample.

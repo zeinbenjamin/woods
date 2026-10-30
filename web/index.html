@@ -1376,6 +1376,7 @@ function vCourse() {
   const par = sum((c.holes || []).map(h => h.par || 0)), len = sum((c.holes || []).map(h => h.metres || 0));
   let h = back('courses', null, 'Courses') + `<div class="spread"><h1>${esc(c.name)}</h1><button data-act="editCourse" data-id="${c.id}">Edit</button></div>
   <p class="muted small">${[[c.suburb, c.state].filter(Boolean).map(esc).join(', '), c.holes && c.holes.length ? `Par ${par}, ${len}m` : '', distanceLabel(c) ? `${distanceLabel(c)} from ${esc((home() || {}).label || 'you')}, straight line` : ''].filter(Boolean).join(' · ')}</p>`;
+  h += courseTeeTimes(c);
   if (c.holes && c.holes.length) {
     const gaps = missingHoles(c.holes);
     if (gaps.length) h += `<div class="notice warn">Hole${gaps.length > 1 ? 's' : ''} ${gaps.join(', ')} ${gaps.length > 1 ? 'are' : 'is'} missing from this scorecard. <button class="quiet" data-act="editCourse" data-id="${c.id}">Add ${gaps.length > 1 ? 'them' : 'it'}</button></div>`;
@@ -1445,12 +1446,14 @@ function ttCourses(p) {
     hidden: S.courses.filter(c => c.closed || c.bookable === false).length, radius };
 }
 function ttWant(date, list) {
+  let asked = 0;
   for (const c of list) {
     const k = c.id + '|' + date, e = tt.res[k];
     if (e && (e.loading || Date.now() - e.at < TT_STALE)) continue;
-    tt.res[k] = { loading: true }; tt.queue.push([c.id, date, tt.fresh]);
+    tt.res[k] = { loading: true }; tt.queue.push([c.id, date, tt.fresh]); asked++;
   }
   ttPump();
+  return asked;
 }
 function ttPump() {
   while (tt.running < TT_PARALLEL && tt.queue.length) {
@@ -1466,13 +1469,13 @@ function ttPump() {
 // while the page is the one on screen.
 function ttRedraw() {
   if (tt.redraw) return;
-  tt.redraw = setTimeout(() => { tt.redraw = null; if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') bgRender(); }, 50);
+  tt.redraw = setTimeout(() => { tt.redraw = null; if (S.tab === 'courses' && S.sub && (S.sub.view === 'teetimes' || S.sub.courseId && !S.sub.hole)) bgRender(); }, 50);
 }
 // Another day keeps the page where it is (2.44.0): the day chips scroll
 // sideways, and every redraw rebuilt them at the start, so a day picked at the
 // end of the row slid out of sight. render() puts the row back where it was,
 // and when the day was just changed, brings the pressed day into view.
-function ttSetDay(date) { S.sub = { ...(S.sub || {}), view: 'teetimes', date }; tt.showDay = true; render(); }
+function ttSetDay(date) { S.sub = { ...(S.sub || {}), ...(S.sub && S.sub.courseId ? {} : { view: 'teetimes' }), date }; tt.showDay = true; render(); }
 function ttDaysScroll(x) {
   const row = document.getElementById('ttDays'); if (!row) return;
   row.scrollLeft = x;
@@ -1484,7 +1487,10 @@ function ttDaysScroll(x) {
 // On a computer, a click on a date box selects its typed fields instead of
 // opening the calendar, and this box is invisible: open the calendar outright.
 document.addEventListener('click', e => { if (e.target.id === 'ttPick' && e.target.showPicker) { try { e.target.showPicker(); } catch (err) {} } });
-function ttLifecycle() { if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') ttWant(ttDate(), ttCourses(ttPrefs()).read); }
+function ttLifecycle() {
+  if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') return ttWant(ttDate(), ttCourses(ttPrefs()).read);
+  return ctLifecycle();
+}
 // The answer's times that suit the filters; today, only times still ahead.
 // A time's price is its own first fee, else its rate's (as the list shows
 // it); under a price limit, a time whose price isn't known is left out, not
@@ -1527,11 +1533,72 @@ function ttCourse(c, e, p, date) {
   const rates = ttFit(d, p, date), n = rates.reduce((a, r) => a + r.times.length, 0);
   if (!n) return { n: 0, html: `<div class="ttrow" data-tt="${c.id}"><b>${name}</b><div class="small muted">${esc(d.note || ttMiss(d, p, date))}${link(d.calendar, 'Their calendar')}</div></div>` };
   const all = rates.flatMap(r => r.times), first = all.map(t => t.time).sort()[0];
-  const low = Math.min(...rates.flatMap(r => [r.price, ...r.times.map(t => (t.fees[0] || {}).price)]).filter(x => x != null));
-  const body = rates.map(r => `<div class="ttrate"><div class="small"><b>${esc(r.name)}</b>${r.price != null ? ` · ${ttMoney(r.price)}` : ''}${r.special ? ' <span class="tag green">special</span>' : ''}</div>
+  const low = ttLow(rates);
+  const body = ttRatesHtml(rates);
+  return { n, html: fold(`tt_${c.id}`, name, `${plural(n, 'time')} from ${first}${isFinite(low) ? ` · from ${ttMoney(low)}` : ''}`, body + `<p class="small muted">Tap a time to book it on the club's site.${c.prereg ? ' This club asks you to register first.' : ''}</p>`) };
+}
+const ttLow = rates => Math.min(...rates.flatMap(r => [r.price, ...r.times.map(t => (t.fees[0] || {}).price)]).filter(x => x != null));
+function ttRatesHtml(rates) {
+  return rates.map(r => `<div class="ttrate"><div class="small"><b>${esc(r.name)}</b>${r.price != null ? ` · ${ttMoney(r.price)}` : ''}${r.special ? ' <span class="tag green">special</span>' : ''}</div>
     <div class="chips">${r.times.map(t => { const f = t.fees[0] || {}, tee = /\b(1st|first)\b/i.test(t.tee || '') || !t.tee ? '' : (/(\d+)(st|nd|rd|th)\b/i.exec(t.tee) || [])[0];
       return `<a class="chip ttime" href="${esc(ttSafe(r.url) || '#')}" target="_blank" rel="noopener" title="${esc([t.tee, ...t.fees.map(x => `${ttMoney(x.price)} ${x.who || ''}`)].filter(Boolean).join(' · '))}">${t.time}<small>${t.free} free${f.price != null && f.price !== r.price ? ` · ${ttMoney(f.price)}` : ''}${tee ? ` · ${esc(tee)} tee` : ''}</small></a>`; }).join('')}</div></div>`).join('');
-  return { n, html: fold(`tt_${c.id}`, name, `${plural(n, 'time')} from ${first}${isFinite(low) ? ` · from ${ttMoney(low)}` : ''}`, body + `<p class="small muted">Tap a time to book it on the club's site.${c.prereg ? ' This club asks you to register first.' : ''}</p>`) };
+}
+/* ---------- a course's own tee times (2.45.0) ----------
+   The course page's *Tee times* fold: the same reading as Find a tee time,
+   for one course. Closed by default, and the club's site is asked only once
+   it is opened (a toggle, or a redraw with it open), so browsing courses asks
+   no club anything. Today first; once today's times have all gone it shows
+   tomorrow, until a day is picked (S.sub.date). Players is the search's own
+   setting; time, holes and price aren't applied here: one course's rates are
+   few enough to list. The answers are the search's (tt.res, 5 minutes), so
+   the two screens agree. A course Carry can't read shows how it books. */
+const ctOpen = () => { const d = document.getElementById('courseTt'); return !!(d && d.open); };
+function ctDate(c) {
+  if (S.sub && S.sub.date && ttDate() === S.sub.date) return { date: S.sub.date, fell: false };
+  const t = today(), e = tt.res[c.id + '|' + t];
+  if (e && e.data && e.data.status === 'ok' && !ttFit(e.data, ctPrefs(), t).length) {
+    const n = new Date(); return { date: localDay(new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1)), fell: true };
+  }
+  return { date: t, fell: false };
+}
+const ctPrefs = () => ({ ...ttPrefs(), holes: null, price: null, from: '', to: '' });
+function ctLifecycle() {
+  if (!(S.tab === 'courses' && S.sub && S.sub.courseId && !S.sub.hole) || !ctOpen()) return 0;
+  const c = course(S.sub.courseId); if (!c || !ttReadable(c)) return 0;
+  let asked = ttWant(today(), [c]);
+  const { date } = ctDate(c); if (date !== today()) asked += ttWant(date, [c]);
+  return asked;
+}
+// Opening the fold asks the club; a redraw that reopens it asks nothing new
+// (ttWant counts), so it can't loop.
+document.addEventListener('toggle', e => { if (e.target.id === 'courseTt' && e.target.open && ctLifecycle()) bgRender(); }, true);
+function courseTeeTimes(c) {
+  if (c.closed) return '';
+  const link = ttSafe(c.bookingUrl) ? `<a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Their booking page</a>` : '';
+  if (!ttReadable(c)) {
+    if (!c.bookingNote && !link) return '';
+    return fold('courseTt', 'Tee times', c.bookable === false ? 'members and guests' : 'booked on their site', `<p class="small" id="ctOther">${[c.bookingNote && esc(c.bookingNote), link].filter(Boolean).join(' · ')}${c.prereg ? '. This club asks you to register first.' : ''}</p><p class="small muted">Carry can't read this club's tee times: it reads MiClub booking sites and GolfNow's TeeItUp pages.</p>`);
+  }
+  const p = ctPrefs(), { date, fell } = ctDate(c), e = tt.res[c.id + '|' + date];
+  const chipDays = ttDays(), later = !chipDays.some(d => d.date === date);
+  const dayName = d => { const x = chipDays.find(y => y.date === d); return x ? x.label : new Date(d + 'T12:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  let teaser = 'from the club’s booking site', body;
+  if (!e || e.loading) body = `<p class="small muted" id="ctStatus">Checking the club's booking site…</p>`;
+  else if (e.data.status !== 'ok') { teaser = 'couldn’t be read'; body = `<p class="small muted" id="ctStatus">Couldn't read its tee times: ${esc(e.data.message || 'no answer')}${ttSafe(e.data.calendar || c.bookingUrl) ? ` <a href="${esc(e.data.calendar || c.bookingUrl)}" target="_blank" rel="noopener">Check on their site</a>` : ''}</p>`; }
+  else {
+    const rates = ttFit(e.data, p, date), n = rates.reduce((a, r) => a + r.times.length, 0);
+    if (n) {
+      const first = rates.flatMap(r => r.times).map(t => t.time).sort()[0], low = ttLow(rates);
+      teaser = `${dayName(date)}: ${plural(n, 'time')} from ${first}${isFinite(low) ? ` · from ${ttMoney(low)}` : ''}`;
+      body = `<p class="small muted" id="ctStatus">${fell ? 'Today’s times have all gone, so this is tomorrow. ' : ''}${plural(n, 'time')} with room for ${p.players}. Tap a time to book it on the club's site.${c.prereg ? ' This club asks you to register first.' : ''}</p>${ttRatesHtml(rates)}`;
+    } else { teaser = `${dayName(date)}: nothing free`; body = `<p class="small muted" id="ctStatus">${esc(e.data.note || ttMiss(e.data, p, date))}${ttSafe(e.data.calendar) ? ` <a href="${esc(e.data.calendar)}" target="_blank" rel="noopener">Their calendar</a>` : ''}</p>`; }
+  }
+  const seg = `<div class="seg" id="tt_players">${[1, 2, 3, 4].map(v => `<button data-act="ttPref" data-k="players" data-v="${v}" aria-pressed="${p.players === v}">${v}</button>`).join('')}</div>`;
+  const laterLabel = later ? dayName(date) : 'Pick a date';
+  return fold('courseTt', 'Tee times', teaser, `<div class="chips" id="ttDays">${chipDays.map(d => `<button class="chip" data-act="ttDay" data-v="${d.date}" aria-pressed="${d.date === date}">${d.label}</button>`).join('')}<label class="chip ttpick" aria-pressed="${later}"><span>${laterLabel}</span><input type="date" id="ttPick" min="${chipDays[0].date}" max="${ttLast()}" value="${later ? date : ''}" aria-label="Pick a date"></label></div>
+    <div class="ttfilters"><div class="ttline"><div class="ttf"><span class="ttl">Players</span>${seg}</div></div></div>
+    ${body}
+    <div class="row-actions">${e && !e.loading ? `<button class="quiet" data-act="ttRefresh" data-date="${date}">Check again</button>` : ''}<button class="quiet" data-go="courses:view=teetimes,date=${date}">Other courses this day →</button></div>`);
 }
 function vTeeTimes() {
   const p = ttPrefs(), date = ttDate(), pool = ttCourses(p);
@@ -3594,12 +3661,13 @@ Object.assign(ACTIONS, {
 function vSwingsTab() { return S.sub && S.sub.view === 'reels' ? vReels() : vSwings(); }
 function vSwings() {
   const sws = swingHistory();
-  let h = `<h1>Swings</h1>`;
+  const vids = sws.filter(sw => sw.video).length;
+  // The feed's button sits beside the heading, as Range's, Rounds' and Courses' do (2.45.0, he asked).
+  let h = vids ? `<div class="spread"><h1>Swings</h1><button class="primary" id="reelsOpen" data-go="swings:view=reels">Watch: ${plural(vids, 'video')} →</button></div>` : `<h1>Swings</h1>`;
   if (!sws.length) return h + `<div class="empty"><p>No swings on file yet. Add a video to a range session or a round and it appears here.</p></div>`;
   const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length, places = [...new Set(sws.map(sw => sw.session.id))].length;
   h += `<p class="small muted" id="swingBasis">${plural(sws.length, 'swing')} from ${plural(places, 'session')}, ${swingDate(sws[sws.length - 1]) ? `${dateLabel(swingDate(sws[sws.length - 1]))} to ${dateLabel(swingDate(sws[0]))}` : ''}; ${read} read. Readings are interpretations, not measurements; the summaries below are put together from them, nothing new is read.</p>`;
-  if (sws.some(sw => sw.video)) h += `<div class="row-actions"><button class="primary" data-go="swings:view=reels">Watch: ${plural(sws.filter(sw => sw.video).length, 'video')} →</button></div>`;
   h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
     const c = swingClubSummary(club, sws), name = club || 'No club';
     const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
@@ -4206,7 +4274,7 @@ function courseMapLifecycle() {
 // Tee times (see vTeeTimes).
 ACTIONS.ttDay = d => ttSetDay(d.v);
 ACTIONS.ttPref = d => { ttSetPref(d.k, d.v === '' ? null : Number(d.v)); render(); };
-ACTIONS.ttRefresh = () => { const date = ttDate(); for (const k of Object.keys(tt.res)) if (k.endsWith('|' + date) && !tt.res[k].loading) delete tt.res[k]; tt.fresh = true; render(); tt.fresh = false; };
+ACTIONS.ttRefresh = d => { const date = d && d.date || ttDate(); for (const k of Object.keys(tt.res)) if (k.endsWith('|' + date) && !tt.res[k].loading) delete tt.res[k]; tt.fresh = true; render(); tt.fresh = false; };
 
 ACTIONS.setHome = function () {
   const h = home() || {};

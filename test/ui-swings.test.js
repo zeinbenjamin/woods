@@ -153,6 +153,9 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   await app.waitFor(() => app.E(`reelSwings('').length`) === 3, { what: 'videos' });
   app.go('swings');
   assert.match(app.text('#view [data-go="swings:view=reels"]'), /Watch: 3 videos/);
+  // 2.45.0: beside the heading, top right, as on Range, Rounds and Courses.
+  assert.equal(app.$('#reelsOpen').parentElement, app.$('#view h1').parentElement, 'on the heading\'s row');
+  assert.ok(app.$('#reelsOpen').parentElement.classList.contains('spread'));
   // A stand-in observer: jsdom has none. Record what gets observed and let the test fire it.
   let cb = null, observed = [];
   app.win.IntersectionObserver = class { constructor(f, o) { cb = f; this.o = o; } observe(el) { observed.push(el); } disconnect() { observed = []; } };
