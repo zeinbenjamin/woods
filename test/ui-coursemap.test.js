@@ -50,6 +50,18 @@ test('the map: a pin per placed course coloured by who can play, home, and the c
   assert.match(pop, /data-go="courses:courseId:c_pub"/);
 });
 
+test('tiles are OpenStreetMap\'s own, which need no key; dark mode darkens them, not the pins', async () => {
+  // 2.44.1: CARTO's basemap answered every tile with "API key required".
+  assert.equal(app.E('cm.tiles._url'), 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+  assert.match(app.E('cm.map.attributionControl.getContainer().textContent'), /OpenStreetMap contributors/);
+  assert.match(app.win.document.querySelector('style').textContent, /#cmMap\.dark \.leaflet-tile-pane \{ filter: invert\(1\)/);
+  await app.E(`ACTIONS.setTheme({ v: 'dark' })`); app.E('render()');
+  assert.ok(app.$('#cmMap').classList.contains('dark'), 'dark tiles');
+  await app.E(`ACTIONS.setTheme({ v: 'light' })`); app.E('render()');
+  assert.ok(!app.$('#cmMap').classList.contains('dark'), 'light again');
+  await app.E(`ACTIONS.setTheme({ v: 'system' })`);
+});
+
 test('a redraw keeps the map, where it was panned and the pin opened; a pin opens its course', async () => {
   app.E(`cm.map.setView([-33.9, 151.1], 14)`);
   const el = app.$('#cmMap');

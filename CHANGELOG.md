@@ -1,3 +1,6 @@
+## 2.44.1 — 2026-10-30
+- Courses on a map: the streets now show behind the pins. The map service used in 2.44.0 started asking for a key and covered the map in "API key required"; it now uses OpenStreetMap's own map, darkened in dark mode.
+
 ## 2.44.0 — 2026-10-30
 - Courses: the sort buttons, a new map button and "Distances from…" now share one row, with your location on the right. On a phone the location link drops to its own line, still on the right.
 - View on a map: every course with a location is a pin, green for public, grey for members, red for closed, with your home as a square. Tap a pin for the course's name, distance and a link to its page. The map follows light or dark mode, and courses with no location are counted under it.
