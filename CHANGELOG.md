@@ -1,3 +1,10 @@
+## 2.52.0 — 2026-10-31
+- Shot patterns at the range. A block with side numbers now shows a *Pattern*: every shot seen from above, left or right of the target against how far it went, and the oval that holds about 8 in 10 of them. Under it: the centre, how far it leans left or right, how wide and how deep.
+- A *Carry / Total* switch shows where the balls landed or where they finished. The phone remembers your choice.
+- A club needs 5 shots with side numbers for an oval; with fewer you see the dots and how many more it needs. Tops are left out and counted. Once a club has enough shots to tell, a wild miss (a shank, a big hook) is drawn in red outside the oval and counted, so it doesn't stretch the shape.
+- Each block's pattern is compared with your last session with that club, for example "6 m narrower, centre 4 m further left".
+- On the Overview, under Gapping, *Patterns by club* draws every club's oval from one tee at one scale, with a table of centre, lean, wide and deep. It uses the same range filters as your distances, and recent shots count more.
+
 ## 2.51.1 — 2026-10-31
 - A range block's page no longer shows its screenshots and "Read from…" lines between the numbers. They're kept, folded under *Source screenshots* at the foot of the page, below the shot table.
 

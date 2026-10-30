@@ -90,6 +90,13 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .courseBar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; } .courseBar #homeLink { margin-left: auto; margin-right: -8px; } .courseBar .seg button { height: 36px; }
 .choices { display: grid; gap: 8px; margin: 4px 0 8px; } .choice { display: grid; gap: 2px; text-align: left; padding: 12px 14px; } .choice b { font-weight: 600; }
 #reelsOpen { display: inline-flex; align-items: center; gap: 6px; }
+svg.pattern { display: block; width: 100%; height: auto; max-width: 420px; margin: 4px auto 10px; background: var(--paper-2); border-radius: var(--r); }
+.pt-grid { stroke: var(--rule); stroke-width: 1; } .pt-grid.side { stroke-dasharray: 2 4; } .pt-ax { font: 500 10px var(--body); fill: var(--ink-3); }
+.pt-target { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 4; } .pt-tee { fill: var(--ink); }
+.pt-oval { fill: color-mix(in srgb, var(--green) 18%, transparent); stroke: var(--green); stroke-width: 1.6; }
+.pt-shot { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; } .pt-shot.few { stroke: var(--ink-3); }
+.pt-wild { fill: var(--flag); stroke: var(--ink); stroke-width: 1; } .pt-lab { font: 700 13px var(--cond); fill: var(--ink); }
+#blockPattern .spread, #ovPatterns .spread { align-items: center; } .patternView button { padding: 5px 12px; }
 .iconBtn { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; } .iconBtn svg { display: block; }
 :root { --cm-members: #AA96BD; }   /* members' pins on the course map (2.49.1, his colour), both themes */
 .cmHome { width: 14px; height: 14px; border-radius: 3px; background: var(--ink); border: 2px solid var(--paper); box-sizing: content-box; }
@@ -1144,7 +1151,140 @@ function overviewGapping(stats) {
   h += `<details class="sec fold" id="strikeProfile"><summary><span><b>Strike profile</b> <span class="small muted">pure, low runners, short and topped</span></span></summary>` +
     ladder.map(({ c, s }) => `<div class="prow"><b>${esc(c.code)}</b>${profileBar(s)}<small>${pct(s.pure, s.n)}% pure</small></div>`).join('') +
     `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>low runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>topped</span></div></details>`;
+  h += patternsFold(stats);
   return h;
+}
+
+/* ---------- shot patterns (2.52.0) ----------
+   Where a club's shots finish, seen from above: each shot at its side (left of
+   the target line minus, right plus) and its carry, or its total. The oval holds
+   about 8 in 10 of them if the spread holds (a weighted covariance, k = √(−2 ln 0.2)),
+   from PATTERN_MIN shots (5, his rule: he warms up with 5 a club). Tops are left
+   out and counted, as for stock carry; a shot past 99 in 100 of the rest is a
+   wild miss, drawn apart in red and counted, never smoothed away (with fewer than
+   about 11 shots none can be told). Worked out on every draw; nothing stored. */
+const PATTERN_MIN = 5;
+const PATTERN_K = Math.sqrt(-2 * Math.log(0.2));
+const WILD_K = Math.sqrt(-2 * Math.log(0.01));
+const patternView = () => { try { return localStorage.getItem('carry.pattern') === 'total' ? 'total' : 'carry'; } catch (e) { return 'carry'; } };
+const patternPoint = (sh, view) => view === 'total' ? (sh.totalSide != null && sh.total != null ? [sh.totalSide, sh.total] : null) : (sh.carrySide != null && sh.carry != null ? [sh.carrySide, sh.carry] : null);
+// Weighted mean and covariance of {x, y, w}; reliability weights, so equal weights give the sample covariance.
+function spreadOf(pts) {
+  const top = Math.max(0, ...pts.map(p => p.w)); if (!(top > 0)) return null;
+  const ws = pts.map(p => p.w / top), W = sum(ws), V2 = sum(ws.map(w => w * w)), d = W - V2 / W;
+  const mx = sum(pts.map((p, i) => ws[i] * p.x)) / W, my = sum(pts.map((p, i) => ws[i] * p.y)) / W;
+  if (!(d > 0)) return { mx, my, sxx: 0, syy: 0, sxy: 0 };
+  const c = f => sum(pts.map((p, i) => ws[i] * f(p))) / d;
+  return { mx, my, sxx: c(p => (p.x - mx) ** 2), syy: c(p => (p.y - my) ** 2), sxy: c(p => (p.x - mx) * (p.y - my)) };
+}
+function mahal(sp, x, y) {
+  const a = sp.sxx + 1e-6, b = sp.sxy, d = sp.syy + 1e-6, det = a * d - b * b, dx = x - sp.mx, dy = y - sp.my;
+  return Math.sqrt(Math.max(0, (d * dx * dx - 2 * b * dx * dy + a * dy * dy) / det));
+}
+// shots: [{...shot, prof, w}]. Returns what the pattern rests on and, from PATTERN_MIN shots, its oval.
+function shotPattern(shots, view) {
+  const withSide = shots.filter(sh => patternPoint(sh, view));
+  const tops = withSide.filter(sh => sh.prof === 'top').length;
+  let keep = withSide.filter(sh => sh.prof !== 'top').map(sh => { const [x, y] = patternPoint(sh, view); return { x, y, w: sh.w ?? 1, shot: sh }; });
+  const out = { view, all: shots.length, noSide: shots.length - withSide.length, tops, wild: [], pts: keep, n: keep.length, enough: keep.length >= PATTERN_MIN };
+  if (!out.enough) return out;
+  for (let i = 0; i < 3; i++) {
+    const sp = spreadOf(keep), far = keep.filter(p => mahal(sp, p.x, p.y) > WILD_K);
+    if (!far.length || keep.length - far.length < PATTERN_MIN) break;
+    out.wild.push(...far); keep = keep.filter(p => !far.includes(p));
+  }
+  const sp = spreadOf(keep);
+  return { ...out, pts: keep, n: keep.length, sp, centre: sp.my, lean: sp.mx, wide: 2 * PATTERN_K * Math.sqrt(sp.sxx), deep: 2 * PATTERN_K * Math.sqrt(sp.syy) };
+}
+// The oval as points in metres.
+function patternOval(sp, steps = 48) {
+  const t = Math.atan2(2 * sp.sxy, sp.sxx - sp.syy) / 2, m = (sp.sxx + sp.syy) / 2, r = Math.sqrt(((sp.sxx - sp.syy) / 2) ** 2 + sp.sxy ** 2);
+  const a = PATTERN_K * Math.sqrt(Math.max(0, m + r)), b = PATTERN_K * Math.sqrt(Math.max(0, m - r));
+  return Array.from({ length: steps }, (_, i) => { const u = 2 * Math.PI * i / steps, x = a * Math.cos(u), y = b * Math.sin(u);
+    return [sp.mx + x * Math.cos(t) - y * Math.sin(t), sp.my + x * Math.sin(t) + y * Math.cos(t)]; });
+}
+const sideLabel = v => Math.abs(v) < 0.5 ? 'on line' : `${fmt(Math.abs(v), 1)} ${v < 0 ? 'L' : 'R'}`;
+// Seen from above, one scale both ways, the target line up the middle. groups: [{pat, label, cls}].
+function patternSvg(groups, { fromTee = false } = {}) {
+  const W = 320, L = 36, R = 10, T = 10, B = 24, IW = W - L - R;
+  const xs = [], ys = [];
+  for (const g of groups) { for (const p of g.pat.pts.concat(g.pat.wild)) { xs.push(p.x); ys.push(p.y); }
+    if (g.pat.sp) for (const [x, y] of patternOval(g.pat.sp, 24)) { xs.push(x); ys.push(y); } }
+  if (!xs.length) return '';
+  let xr = Math.max(15, ...xs.map(Math.abs)) + 4, y0 = fromTee ? 0 : Math.min(...ys) - 6, y1 = Math.max(...ys) + 6;
+  const step = (y1 - y0) > 120 ? 50 : (y1 - y0) > 50 ? 20 : 10; y0 = fromTee ? 0 : Math.floor(y0 / 10) * 10; y1 = Math.ceil(y1 / 10) * 10;
+  const s = Math.min(IW / (2 * xr), 380 / (y1 - y0)); xr = IW / s / 2;
+  const H = T + (y1 - y0) * s + B, X = x => L + IW / 2 + x * s, Y = y => T + (y1 - y) * s, f1 = v => v.toFixed(1);
+  let g = '';
+  for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) g += `<line class="pt-grid" x1="${L}" x2="${W - R}" y1="${f1(Y(y))}" y2="${f1(Y(y))}"/><text class="pt-ax" x="${L - 4}" y="${f1(Y(y) + 3.5)}" text-anchor="end">${y}</text>`;
+  const sx = xr > 45 ? 20 : 10;
+  for (let x = sx; x < xr; x += sx) for (const v of [-x, x]) g += `<line class="pt-grid side" x1="${f1(X(v))}" x2="${f1(X(v))}" y1="${T}" y2="${f1(Y(y0))}"/><text class="pt-ax" x="${f1(X(v))}" y="${f1(H - 8)}" text-anchor="middle">${x}${v < 0 ? 'L' : 'R'}</text>`;
+  g += `<line class="pt-target" x1="${f1(X(0))}" x2="${f1(X(0))}" y1="${T}" y2="${f1(Y(y0))}"/>`;
+  if (fromTee) g += `<circle class="pt-tee" cx="${f1(X(0))}" cy="${f1(Y(0))}" r="3.5"/>`;
+  const many = groups.length > 1;
+  for (const gr of groups) {
+    const c = gr.cls || '';
+    if (gr.pat.sp) g += `<path class="pt-oval ${c}" d="M${patternOval(gr.pat.sp).map(([x, y]) => f1(X(x)) + ',' + f1(Y(y))).join('L')}Z"/>`;
+    g += gr.pat.pts.map(p => `<circle class="pt-shot ${c}${gr.pat.sp ? '' : ' few'}" cx="${f1(X(p.x))}" cy="${f1(Y(p.y))}" r="${many ? 2.2 : 3.6}"/>`).join('');
+    g += gr.pat.wild.map(p => `<circle class="pt-wild" cx="${f1(X(p.x))}" cy="${f1(Y(p.y))}" r="${many ? 2.6 : 4}"/>`).join('');
+    if (many && gr.label) { const sp = gr.pat.sp, lx = sp ? sp.mx + PATTERN_K * Math.sqrt(sp.sxx) : Math.max(...gr.pat.pts.map(p => p.x)), ly = sp ? sp.my : median(gr.pat.pts.map(p => p.y));
+      g += `<text class="pt-lab" x="${f1(Math.min(W - R - 2, X(lx) + 5))}" y="${f1(Y(ly) + 4)}"${X(lx) + 5 > W - 40 ? ' text-anchor="end"' : ''}>${esc(gr.label)}</text>`; }
+  }
+  return `<svg class="pattern" viewBox="0 0 ${W} ${f1(H)}" role="img" aria-label="Shot pattern from above">${g}</svg>`;
+}
+const patternSwitch = () => { const v = patternView(); return `<div class="seg patternView">${[['carry', 'Carry'], ['total', 'Total']].map(([k, t]) => `<button data-act="setPatternView" data-v="${k}" aria-pressed="${v === k}">${t}</button>`).join('')}</div>`; };
+const patternTiles = p => `<div class="tiles">${tile(fmt(p.centre), p.view === 'total' ? 'centre, total m' : 'centre, carry m', sideLabel(p.lean))}${tile(fmt(p.wide), 'wide m', 'left to right')}${tile(fmt(p.deep), 'deep m', 'short to long')}</div>`;
+function patternNote(p) {
+  const word = p.view === 'total' ? 'total side' : 'carry side';
+  return [p.enough ? `The oval holds about 8 in 10 shots like these${p.n < 10 ? `; from ${p.n} shots it is a rough shape` : ''}` : `${p.n} of the ${PATTERN_MIN} shots a pattern needs`,
+    p.tops ? `${plural(p.tops, 'top')} left out` : '', p.wild.length ? `${plural(p.wild.length, 'wild miss', 'wild misses')} in red, not in the oval` : '',
+    p.noSide ? `${plural(p.noSide, 'shot')} without a ${word}` : ''].filter(Boolean).join(' · ') + '.';
+}
+// A block's own pattern: one session, every shot the same weight.
+function blockPattern(b, s, profOf) {
+  const full = (b.swing || 'full') === 'full', shots = (b.shots || []).map((sh, i) => ({ ...sh, prof: full ? profOf(i) : '', w: 1 }));
+  if (!shots.some(sh => sh.carrySide != null || sh.totalSide != null)) return '';
+  const p = shotPattern(shots, patternView());
+  let h = `<section class="sec" id="blockPattern"><div class="spread"><h2>Pattern</h2>${patternSwitch()}</div>`;
+  h += p.pts.length + p.wild.length ? patternSvg([{ pat: p }]) : `<p class="small muted">No ${p.view} side for these shots.</p>`;
+  if (p.enough) h += patternTiles(p);
+  h += `<p class="small muted" id="patternNote">${esc(patternNote(p))}</p>`;
+  const cmp = p.enough ? comparePattern(b, s, p) : null;
+  if (cmp) h += `<p class="small" id="patternCompare">${esc(cmp)}</p>`;
+  return h + `</section>`;
+}
+// Against the latest earlier session with a pattern for this club and swing.
+function comparePattern(b, s, now) {
+  for (const prev of S.sessions.filter(x => x.type === 'range' && x.id !== s.id && x.date && x.date < s.date).sort((x, y) => y.date.localeCompare(x.date))) {
+    for (const pb of (prev.blocks || []).filter(x => x.club === b.club && (x.swing || 'full') === (b.swing || 'full'))) {
+      const pool = shotsWithSession(b.club, prev), prof = classify(pool);
+      const shots = (pb.shots || []).map((sh, i) => { const k = pool.findIndex(x => x.blockId === pb.id && x.idx === i); return { ...sh, prof: (b.swing || 'full') === 'full' && k >= 0 ? prof[k] : '', w: 1 }; });
+      const was = shotPattern(shots, now.view); if (!was.enough) continue;
+      const diff = (a, c, more, less) => Math.abs(a - c) < 1 ? '' : `${fmt(Math.abs(a - c))} m ${a > c ? more : less}`;
+      const parts = [diff(now.wide, was.wide, 'wider', 'narrower'), diff(now.deep, was.deep, 'deeper', 'shallower'),
+        Math.abs(now.lean - was.lean) < 1 ? '' : `centre ${fmt(Math.abs(now.lean - was.lean))} m further ${now.lean < was.lean ? 'left' : 'right'}`].filter(Boolean);
+      return `Against ${dateLabel(prev.date)} (${was.n} shots): ${parts.length ? parts.join(', ') : 'about the same shape'}.`;
+    }
+  }
+  return null;
+}
+// Every club's pattern from the counted sessions: the range filters and recency weighting, as for stock carry.
+const clubPattern = (code, view) => memoised('clubPattern', code + '|' + view, () => {
+  const shots = fullShots(code), prof = classify(shots);
+  return shotPattern(shots.map((sh, i) => ({ ...sh, prof: prof[i], w: shotWeight(sh.date) })), view);
+});
+function patternsFold(stats) {
+  const view = patternView(), rows = stats.map(({ c }) => ({ c, p: clubPattern(c.code, view) })).filter(r => r.p.n || r.p.wild.length);
+  const anySide = stats.some(({ c }) => fullShots(c.code).some(sh => sh.carrySide != null || sh.totalSide != null));
+  if (!anySide) return '';
+  const ok = rows.filter(r => r.p.enough).sort((a, b) => b.p.centre - a.p.centre), few = stats.filter(({ c }) => !ok.some(r => r.c.code === c.code));
+  const teaser = ok.length ? ok.slice(0, 2).map(r => `${r.c.code} ${fmt(r.p.wide)} m wide`).join(' · ') : `${PATTERN_MIN} shots with side numbers make a club's pattern`;
+  let body = `<div class="spread" style="margin:6px 0">${patternSwitch()}</div>`;
+  if (rows.length) body += patternSvg(rows.map(r => ({ pat: r.p, label: r.c.code, cls: r.p.enough ? '' : 'few' })), { fromTee: true });
+  if (ok.length) body += `<div class="scroll"><table id="patternTable"><thead><tr><th>Club</th><th>Centre</th><th>Lean</th><th>Wide</th><th>Deep</th><th>Shots</th></tr></thead><tbody>${ok.map(({ c, p }) => `<tr><td>${esc(c.code)}</td><td class="num">${fmt(p.centre)}</td><td>${sideLabel(p.lean)}</td><td>${fmt(p.wide)}</td><td>${fmt(p.deep)}</td><td>${p.n}${p.wild.length ? ` +${p.wild.length}` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+  const fewTxt = few.map(({ c }) => { const p = clubPattern(c.code, view); return `${c.code} ${p.n} of ${PATTERN_MIN}`; });
+  body += `<p class="small muted" id="patternFew">${[ok.length ? `Ovals hold about 8 in 10 of each club's full swings, from the sessions the range filter counts, recent shots counting more.` : '', fewTxt.length ? `Not enough shots with ${view} side yet: ${fewTxt.join(', ')}.` : '', `Tops are left out; wild misses are counted (+n), not drawn into the oval. Measured at the range, not on the course.`].filter(Boolean).join(' ')}</p>`;
+  return fold('ovPatterns', 'Patterns by club', teaser, body);
 }
 
 // Where a club's full swings actually land (tops left out, as for stock carry):
@@ -1285,6 +1425,7 @@ function vBlock() {
   <p class="muted small">${dateLabel(s.date)}, ${esc(b.swing || 'full')} swing${b.drill ? ', ' + esc(b.drill) : ''}</p>`;
   if (shots.length && full) h += dotStrip(shots, shots.map((_, i) => profOf(i)), b.target, Math.max(...all.map(x => x.carry))) + `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>top</span><span>┆ target</span></div>`;
   h += `<div style="margin-top:14px"><span class="stat"><b>${fmt(sm.avgCarry, 1)}</b><small>avg carry m</small></span><span class="stat"><b>${fmt(sm.avgTotal, 1)}</b><small>avg total m</small></span>${sm.fromPinCarry != null ? `<span class="stat"><b>${fmt(sm.fromPinCarry, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, carry' : 'distance miss'}</small></span>` : ''}${sm.fromPinTotal != null ? `<span class="stat"><b>${fmt(sm.fromPinTotal, 1)}</b><small>${sm.fromPinSource === 'bay' ? 'from pin, total' : 'distance miss, total'}</small></span>` : ''}${sm.hitsC ? `<span class="stat"><b>${sm.hitsC}/${sm.n}</b><small>target hit, carry</small></span>` : ''}${sm.hitsT ? `<span class="stat"><b>${sm.hitsT}/${sm.n}</b><small>target hit, total</small></span>` : ''}${sm.avgSpeed ? `<span class="stat"><b>${fmt(sm.avgSpeed, 1)}</b><small>avg club speed mph</small></span>` : ''}</div>`;
+  h += blockPattern(b, s, profOf);
   // Where the numbers came from (2.51.1, he asked): kept, but folded at the foot, not on the card.
   let src = '';
   if (b.fromImages) { const fi = b.fromImages; src += `<p class="small muted" style="margin-top:10px">Read from ${plural((fi.assets || []).length, 'screenshot')} on ${dateLabel(fi.readOn)}${fi.converted ? ', converted from yards' : ''}${fi.units === 'unknown' ? ', units not shown on the screen' : ''}, then checked before saving.</p>${(fi.assets || []).length ? `<div class="shotimgs">${fi.assets.map(a => `<a href="/_blob/${a}" target="_blank" rel="noopener"><img src="/_blob/${a}" alt="source screenshot" loading="lazy"></a>`).join('')}</div>` : ''}`; }
@@ -4450,6 +4591,8 @@ async function readRoundImages(files, onProgress) {
   if (items.every(it => it.error === 'unavailable')) return { error: 'unavailable' };
   return mergeRoundReads(items);
 }
+// Carry or total on the shot patterns: a per-phone choice, like the tee-time filters.
+ACTIONS.setPatternView = d => { try { localStorage.setItem('carry.pattern', d.v === 'total' ? 'total' : 'carry'); } catch (e) {} render(); };
 // One button for a round already played (2.50.0): typed in, or read from screenshots.
 ACTIONS.addPastRound = function () {
   openSheet(`<h2>Add a past round</h2><div class="choices">

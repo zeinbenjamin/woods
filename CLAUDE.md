@@ -1904,8 +1904,32 @@ API for the consumer app (checked 2026-10-31: CSV only from TPS on a bay's PC;
 unofficial tools use a browser login token), so screenshots stay the way in;
 a session share link was asked about, not yet seen. `ui-shot-extras` works his
 five 5W shots of 2026-10-31. **Not yet**: the shot patterns screens (mockups:
-https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh). He said to leave them until later
-(2026-10-31): 2.51.0 only reads and stores the numbers; nothing draws or uses them yet.
+https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh). He first said to leave them until
+later, then (2026-10-31) split the build in two: **stage 1, the range (2.52.0, built)**;
+**stage 2, the course** (a hole's page and Play mode: a club's pattern laid along the
+hole, "3 of 20" by where they'd finish, water and OB on carry, the rest on total; the
+armed club never changes) **not built yet**.
+
+**Shot patterns, stage 1** (2.52.0): `shotPattern(shots, view)` over `{...shot, prof,
+w}`: points are (side, carry) or (total side, total) (`patternPoint`, `view` =
+`patternView()`, the per-phone `carry.pattern`, switched by `setPatternView`); tops
+(`prof === 'top'`) left out and counted, shots without that side counted (`noSide`);
+from **`PATTERN_MIN` = 5** (his rule: he warms up with 5 a club; the draft said 10)
+a weighted mean and covariance (`spreadOf`, reliability weights, so equal weights are
+the sample covariance), the oval at `PATTERN_K` = √(−2 ln 0.2) (8 in 10 for a round
+spread, `patternOval`), and wild misses: past `WILD_K` (99 in 100) Mahalanobis,
+refit up to 3 times, never below 5 kept; with under ~11 shots none can be told, by
+the maths. `wide`/`deep` are the oval's left-right and short-long extents (2·k·sd),
+`lean` the mean side. Shown on the block page (`blockPattern`, `#blockPattern`,
+below the stats, one session at equal weight, `comparePattern` against the latest
+earlier session's block with a pattern) and on the Overview under Gapping
+(`patternsFold`, fold `#ovPatterns`: `clubPattern(code, view)`, memoised, over
+`fullShots` with `shotWeight`, so the range filter and recency apply; one
+`patternSvg` from the tee, `#patternTable`, `#patternFew` for clubs short of 5).
+`patternSvg` draws one scale both ways. Nothing stored. `ui-patterns` (10): the
+oval by hand, tops, sides missing, total, wild misses, weights, his five 5W shots
+on the block page, the switch, the comparison, few shots, the fold with recency,
+equal weighting and an excluded session, nothing stored; 13 mutations caught.
 **The block page's source is folded** (2.51.1, he found the screenshots and
 "Read from…" lines wasted the card's room, and the shot patterns will want it):
 `fromImages` and `filledFrom` show only inside `#blockSource` (*Source screenshots
@@ -1930,7 +1954,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 419 tests, about 45s.
+`npm test` — 429 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1982,6 +2006,9 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `ui-patterns.test.js` (10) — shot patterns at the range (see *Range data from
+  screenshots*): the oval by hand, tops, wild misses, weights, the block page with his
+  five 5W shots, Carry/Total, the comparison, the Overview fold, nothing stored.
 - `ui-shot-extras.test.js` (10) — the bay's other numbers: his Trackman screen read
   as signed metres, mph and degrees; yards and implausible numbers; kept on their
   shot through edits; existing shots filled in by carry and total, never added
