@@ -114,6 +114,8 @@ test('filters reach the club only as its own pages: holes picks the rates, the r
   await new Promise(r => setTimeout(r, 1600));
   await get('/api/teetimes/c_mi?date=2026-10-30&holes=9');
   assert.equal(seen.length, 4, 'and asked again once the memory is older than its few minutes (1.5 s here)');
+  await get('/api/teetimes/c_mi?date=2026-10-30&holes=9&fresh=1');
+  assert.equal(seen.length, 4, '"check again" leaves a page read under a minute ago alone');
 });
 
 test('an empty answer says why: nothing that day, a calendar with no rates, a holes filter', async () => {

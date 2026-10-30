@@ -608,9 +608,38 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   (registered public members only, it seems): "lists no rates at all… may
   only show after signing up", plus "or the course id Carry assumed" when
   the link had none. `test/fixtures/miclub-calendar-empty.html` is that page.
-- **Next:** the search screen (Courses → *Tee times*: day, time window, 9/18,
-  players, distance from `home`, one request per course so results fill in
-  as they come), then GolfNow (8 courses).
+- **The search screen** (2.41.0, he said go): Courses → *Find a tee time*
+  (`#ttOpen`) → `vTeeTimes` (`courses:view=teetimes`, `date` in the sub).
+  Seven day chips (`#ttDays`, today first), a time window (two hour selects,
+  `select[data-ttpref]`, a delegated `change`), players 1–4, holes Any/9/18
+  (a 12-hole rate shows only under Any), and within 5/10/20/40 km or Any
+  (only with a `home`; without one every course is searched and `#ttHome`
+  says so). The filters are `localStorage` `carry.tt` (a per-phone
+  convenience, nothing stored). **Who is searched** (`ttCourses`): not
+  `closed`, `bookable !== false`, a link `ttReadable` reads (the server's
+  `miclubSource` test), within the radius; others with a link or
+  `bookingNote` are folded under *Booked another way*; private/closed and
+  courses with no location are counted in `#ttNotes`. **Asking:**
+  `ttLifecycle()` after every render asks `/api/teetimes/:id?date=` once per
+  course and day (`tt.res`, `TT_PARALLEL` 4 at a time, kept `TT_STALE` 5 min
+  in memory), **unfiltered**: `ttFit` applies time, players and holes in the
+  page, so a filter change asks no club anything (`ui-teetimes` counts the
+  requests); today drops times already gone. Answers redraw at most every
+  50 ms (`ttRedraw`). **Showing:** courses with times first by distance, each
+  a fold `tt_<id>` ("8 times from 12:16 · from $25") with a row of time chips
+  per rate, each chip a link to that rate's timesheet (new tab) with spots
+  free, its own price when it differs from the rate's (Bexley's twilight),
+  and the tee when it isn't the 1st (Bexley's 10th); then still checking,
+  nothing that suits (the server's `note`), couldn't read (with the club's
+  page). `#ttStatus` says how many courses have times and the time of the
+  **oldest page** behind them: the server's `fetchedAt` is now when its
+  oldest page was read, not when it answered, so a cached answer isn't
+  passed off as new. **Check again** (`ttRefresh`) sends `fresh=1`, which
+  re-reads a club's page only if Carry's copy is over `TEETIMES_FRESH_MS`
+  (1 min) old, so taps can't hammer a club. Checked in Chromium at 390 px,
+  light and dark: no sideways scroll.
+- **Next:** GolfNow (8 courses), and a way to store a course's MiClub id when
+  its link has none (Massey Park's calendar shows nothing publicly).
 
 ## Appearance (2.37.0)
 
@@ -1560,7 +1589,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 372 tests, about 45s.
+`npm test` — 379 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1577,6 +1606,12 @@ fixture would let the reading be pinned.
   `/api/version`, the stamped page, and `/api/analyse` against a fake
   Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
   Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
+- `ui-teetimes.test.js` (7) — the search screen against a stand-in MiClub
+  serving Bexley's pages: which courses are asked (near, public, readable),
+  a course's rates and time chips linking to the club's timesheet, why a
+  course shows nothing and the order, filters working without asking any
+  club again (and kept on the phone), distance, another day and *Check
+  again*, no home location, and today at a fixed 13:30 hiding 13:04.
 - `teetimes.test.js` (9) — the MiClub reader against Bexley's real calendar
   and timesheet (`test/fixtures/`), which links are MiClub, the filters, and
   the route against a stand-in MiClub: rates, times, the cache expiring,
