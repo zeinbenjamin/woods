@@ -99,9 +99,16 @@ td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll 
 .tag.green { background: var(--green-soft); color: var(--green); border-color: transparent; } .tag.flag { background: var(--flag-soft); color: var(--flag); border-color: transparent; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; } .chip { font: 600 13px var(--cond); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
 a.chip { text-decoration: none; display: inline-flex; gap: 5px; align-items: baseline; } .chip small { font: 400 12px var(--body); color: var(--ink-3); }
-#ttDays { flex-wrap: nowrap; overflow-x: auto; margin: 4px 0 12px; padding-bottom: 2px; } #ttDays .chip { flex: none; }
-.ttfilters { display: grid; gap: 8px; margin-bottom: 12px; } .ttf { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .ttf > .small:first-child { width: 56px; flex: none; }
-.ttf select { width: auto; } .ttwhere { font-weight: 400; } .ttrow { padding: 10px 0; border-bottom: 1px solid var(--rule); } .ttrate { margin: 8px 0; } .ttrate .chips { margin-top: 4px; }
+#ttDays { flex-wrap: nowrap; overflow-x: auto; align-items: center; margin: 4px 0 12px; padding-bottom: 2px; } #ttDays .chip { flex: none; }
+/* Tee-time filters (2.42.0, he asked for one font size and fewer rows): every control at 16px, the
+   size iOS needs to not zoom into a select; each filter a label over its control; Time and Players
+   on one line, Holes, Within and Max price on the next, wrapping only on a narrower screen. */
+#ttDays .chip, .ttfilters .seg button, .ttfilters select { font: 500 16px var(--body); }
+#ttDays .chip { height: 38px; box-sizing: border-box; padding: 0 14px; display: inline-flex; align-items: center; } .ttpick { position: relative; display: inline-flex; align-items: center; cursor: pointer; margin: 0; } /* a label: not the form labels' 12px above */
+.ttpick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; margin: 0; font-size: 16px; cursor: pointer; }
+.ttfilters { display: grid; gap: 10px; margin-bottom: 12px; } .ttline { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; }
+.ttf { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .ttl { font-size: 13px; color: var(--ink-3); }
+.ttfilters .seg button { padding: 0 11px; } .ttfilters select { width: auto; padding-top: 0; padding-bottom: 0; } .ttfilters select { height: 38px; box-sizing: border-box; } .ttfilters .seg button { height: 36px; } /* + the segment's 1px border = 38 */ .tttime { display: inline-flex; align-items: center; gap: 6px; } .ttwhere { font-weight: 400; } .ttrow { padding: 10px 0; border-bottom: 1px solid var(--rule); } .ttrate { margin: 8px 0; } .ttrate .chips { margin-top: 4px; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 /* gapping ladder */
@@ -1374,7 +1381,7 @@ function vCourse() {
    of time, holes or players is instant, and links every time to the club's
    page, where the booking happens. Nothing is stored: the answers live in
    memory (`tt`) and the filters are a convenience in localStorage. */
-const TT_KEY = 'carry.tt', TT_DAYS = 7, TT_RADII = [5, 10, 20, 40], TT_PARALLEL = 4, TT_STALE = 5 * 60 * 1000;
+const TT_KEY = 'carry.tt', TT_DAYS = 7, TT_RADII = [5, 10, 20, 40], TT_PRICES = [30, 40, 50, 60, 80, 100], TT_AHEAD = 365, TT_PARALLEL = 4, TT_STALE = 5 * 60 * 1000;
 const TT_HOURS = Array.from({ length: 16 }, (_, i) => `${String(i + 5).padStart(2, '0')}:00`);   // 05:00 … 20:00
 const tt = { res: {}, queue: [], running: 0, redraw: null, fresh: false };   // `${courseId}|${date}` → { loading } | { data, at }
 
@@ -1387,7 +1394,7 @@ function ttPrefs() {
   let p = {}; try { p = JSON.parse(localStorage.getItem(TT_KEY) || '{}') || {}; } catch (e) {}
   const hhmm = v => (TT_HOURS.includes(v) ? v : '');
   return { from: hhmm(p.from), to: hhmm(p.to), holes: [9, 18].includes(p.holes) ? p.holes : null, players: [1, 2, 3, 4].includes(p.players) ? p.players : 1,
-    within: p.within === 0 || TT_RADII.includes(p.within) ? p.within : 20 };
+    within: p.within === 0 || TT_RADII.includes(p.within) ? p.within : 20, price: TT_PRICES.includes(p.price) ? p.price : null };
 }
 function ttSetPref(k, v) { const p = { ...ttPrefs(), [k]: v }; try { localStorage.setItem(TT_KEY, JSON.stringify(p)); } catch (e) {} }
 function ttDays() {
@@ -1395,7 +1402,10 @@ function ttDays() {
   return Array.from({ length: TT_DAYS }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
     return { date: localDay(d), label: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric' }) }; });
 }
-const ttDate = () => { const d = S.sub && S.sub.date; return ttDays().some(x => x.date === d) ? d : today(); };
+// Any day from today to TT_AHEAD days out (2.42.0, he asked: not only the
+// coming week); the chips are the next seven, the picker the rest.
+const ttLast = () => { const n = new Date(); return localDay(new Date(n.getFullYear(), n.getMonth(), n.getDate() + TT_AHEAD)); };
+const ttDate = () => { const d = S.sub && S.sub.date; return /^\d{4}-\d{2}-\d{2}$/.test(d || '') && d >= today() && d <= ttLast() ? d : today(); };
 // Who is searched: public (or not known), not closed, a readable link, within
 // the distance when a home is set. Others with a way to book are listed apart.
 function ttCourses(p) {
@@ -1433,10 +1443,15 @@ function ttRedraw() {
 }
 function ttLifecycle() { if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') ttWant(ttDate(), ttCourses(ttPrefs()).read); }
 // The answer's times that suit the filters; today, only times still ahead.
+// A time's price is its own first fee, else its rate's (as the list shows
+// it); under a price limit, a time whose price isn't known is left out, not
+// guessed in.
+const ttPrice = (r, t) => { const f = (t.fees || [])[0]; return f && f.price != null ? f.price : r.price ?? null; };
 function ttFit(d, p, date) {
   const now = date === today() ? new Date().toTimeString().slice(0, 5) : null;
   return (d.rates || []).filter(r => !p.holes || !r.holes || r.holes === p.holes)
-    .map(r => ({ ...r, times: (r.times || []).filter(t => t.free >= p.players && (!p.from || t.time >= p.from) && (!p.to || t.time <= p.to) && (!now || t.time > now)) }))
+    .map(r => ({ ...r, times: (r.times || []).filter(t => t.free >= p.players && (!p.from || t.time >= p.from) && (!p.to || t.time <= p.to) && (!now || t.time > now)
+      && (!p.price || (ttPrice(r, t) != null && ttPrice(r, t) <= p.price))) }))
     .filter(r => r.times.length);
 }
 // Why a course with times on the day has none that suit, from its own times
@@ -1444,9 +1459,13 @@ function ttFit(d, p, date) {
 // holes, then the window, then the players, whichever let something through.
 function ttMiss(d, p, date) {
   const flat = q => ttFit(d, { ...p, ...q }, date).flatMap(r => r.times).map(t => t.time).sort();
-  const any = flat({ holes: null, players: 1, from: '', to: '' });
+  const any = flat({ holes: null, players: 1, from: '', to: '', price: null });
   if (!any.length) return date === today() ? 'No times left today.' : 'No free times on this day.';
-  if (p.holes && !flat({ players: 1, from: '', to: '' }).length) return `No ${p.holes}-hole rate on this day; it has ${plural(any.length, 'time')} at other lengths.`;
+  if (p.holes && !flat({ players: 1, from: '', to: '', price: null }).length) return `No ${p.holes}-hole rate on this day; it has ${plural(any.length, 'time')} at other lengths.`;
+  if (p.price && !flat({}).length && flat({ price: null }).length) {
+    const cheap = Math.min(...ttFit(d, { ...p, price: null }, date).flatMap(r => r.times.map(t => ttPrice(r, t))).filter(x => x != null));
+    return `Nothing at ${ttMoney(p.price)} or less${isFinite(cheap) ? `; the cheapest that otherwise suits is ${ttMoney(cheap)}` : ''}.`;
+  }
   const outside = flat({ from: '', to: '' }), inside = flat({ players: 1 });
   const room = p.players > 1 ? ` with room for ${p.players}` : '';
   if (outside.length) return `Nothing in your time window. ${plural(outside.length, 'time')}${room} outside it, from ${outside[0]}.`;
@@ -1475,14 +1494,16 @@ function vTeeTimes() {
   const p = ttPrefs(), date = ttDate(), pool = ttCourses(p);
   const seg = (k, opts) => `<div class="seg" id="tt_${k}">${opts.map(([v, label]) => `<button data-act="ttPref" data-k="${k}" data-v="${v}" aria-pressed="${String(p[k] ?? '') === String(v)}">${label}</button>`).join('')}</div>`;
   const hourSel = (k, none) => `<select data-ttpref="${k}" aria-label="${k === 'from' ? 'From' : 'Until'}"><option value="">${none}</option>${TT_HOURS.map(t => `<option ${p[k] === t ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  const numSel = (k, label, opts) => `<select data-ttpref="${k}" data-num="1" id="tt_${k}" aria-label="${label}">${opts.map(([v, l]) => `<option value="${v}" ${String(p[k] ?? '') === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const group = (label, control) => `<div class="ttf"><span class="ttl">${label}</span>${control}</div>`;
+  const chipDays = ttDays(), later = !chipDays.some(d => d.date === date);
+  const laterLabel = later ? new Date(date + 'T12:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Pick a date';
   let h = back('courses', null, 'Courses') + `<h1>Tee times</h1>
   <p class="lead small">Free times on each club's own booking site, read when you look. Booking happens on the club's site.</p>
-  <div class="chips" id="ttDays">${ttDays().map(d => `<button class="chip" data-act="ttDay" data-v="${d.date}" aria-pressed="${d.date === date}">${d.label}</button>`).join('')}</div>
+  <div class="chips" id="ttDays">${chipDays.map(d => `<button class="chip" data-act="ttDay" data-v="${d.date}" aria-pressed="${d.date === date}">${d.label}</button>`).join('')}<label class="chip ttpick" aria-pressed="${later}"><span>${laterLabel}</span><input type="date" id="ttPick" min="${chipDays[0].date}" max="${ttLast()}" value="${later ? date : ''}" aria-label="Pick a date"></label></div>
   <div class="ttfilters">
-    <div class="ttf"><span class="small muted">Time</span><span>${hourSel('from', 'Any time')} <span class="muted">to</span> ${hourSel('to', 'late')}</span></div>
-    <div class="ttf"><span class="small muted">Players</span>${seg('players', [[1, '1'], [2, '2'], [3, '3'], [4, '4']])}</div>
-    <div class="ttf"><span class="small muted">Holes</span>${seg('holes', [['', 'Any'], [9, '9'], [18, '18']])}</div>
-    ${home() ? `<div class="ttf"><span class="small muted">Within</span>${seg('within', [...TT_RADII.map(r => [r, r + ' km']), [0, 'Any']])}</div>` : ''}
+    <div class="ttline">${group('Time', `<span class="tttime">${hourSel('from', 'Any')}<span class="muted">to</span>${hourSel('to', 'Late')}</span>`)}${group('Players', seg('players', [[1, '1'], [2, '2'], [3, '3'], [4, '4']]))}</div>
+    <div class="ttline">${group('Holes', seg('holes', [['', 'Any'], [9, '9'], [18, '18']]))}${home() ? group('Within', numSel('within', 'Within', [...TT_RADII.map(r => [r, r + ' km']), [0, 'Any']])) : ''}${group('Max price', numSel('price', 'Max price', [['', 'Any'], ...TT_PRICES.map(v => [v, '$' + v])]))}</div>
   </div>`;
   if (!home()) h += `<div class="notice" id="ttHome">Set your location to search by distance. Until then every course is searched. <button class="quiet" data-act="setHome">Set location</button></div>`;
   if (!pool.read.length) return h + `<div class="empty" id="ttNone"><p>${pool.radius ? `No course Carry can read tee times for is within ${pool.radius} km.` : 'No course has a booking link Carry can read yet.'} Carry reads MiClub booking sites, which most Sydney public courses use.</p></div>`;
@@ -1505,7 +1526,11 @@ function vTeeTimes() {
   if (notes.length) h += `<p class="small muted" id="ttNotes">${notes.join('. ')}.</p>`;
   return h;
 }
-document.addEventListener('change', e => { const s = e.target.closest && e.target.closest('select[data-ttpref]'); if (s) { ttSetPref(s.dataset.ttpref, s.value || null); render(); } });
+document.addEventListener('change', e => {
+  const s = e.target.closest && e.target.closest('select[data-ttpref]');
+  if (s) { ttSetPref(s.dataset.ttpref, s.value === '' ? null : s.dataset.num ? Number(s.value) : s.value); render(); return; }
+  if (e.target.id === 'ttPick' && e.target.value) go('courses', { view: 'teetimes', date: e.target.value });
+});
 
 /* ---------- course map (OpenStreetMap) ----------
    Linking stores only which map the course uses; the shapes stay in the

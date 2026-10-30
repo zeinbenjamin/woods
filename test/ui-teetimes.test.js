@@ -50,7 +50,7 @@ const row = id => app.text(`[data-tt="${id}"]`);
 test('Courses opens Tee times: seven days, today first, and the courses near home are checked', async () => {
   app.go('courses');
   app.click('#ttOpen');
-  const days = app.$$('#ttDays .chip');
+  const days = app.$$('#ttDays button.chip');
   assert.equal(days.length, 7);
   assert.deepEqual([days[0].textContent, days[1].textContent], ['Today', 'Tomorrow']);
   assert.equal(days[0].getAttribute('aria-pressed'), 'true');
@@ -107,11 +107,51 @@ test('players, time and holes filter the answers already read, without asking th
   assert.match(row('c_near'), /Nothing in your time window\. 2 times with room for 4 outside it, from 13:04\./, 'after 14:00 only 14:32, with 2 spots');
   sel('from', '13:00'); app.click('#tt_players [data-v="2"]');
   assert.equal(hits.length, before, 'nothing asked of any club');
-  assert.deepEqual(JSON.parse(app.win.localStorage.getItem('carry.tt')), { from: '13:00', to: '', holes: null, players: 2, within: 20 }, 'kept for next time on this phone');
+  assert.deepEqual(JSON.parse(app.win.localStorage.getItem('carry.tt')), { from: '13:00', to: '', holes: null, players: 2, within: 20, price: null }, 'kept for next time on this phone');
+});
+
+test('a price limit keeps the times at or under it, by each time\'s own fee, and says when none are', async () => {
+  // Every time in the fixture's timesheet charges $45 (its own first fee), whatever its rate's price.
+  const before = hits.length;
+  const sel = (k, v) => { const e = app.$(`select[data-ttpref="${k}"]`); e.value = v; e.dispatchEvent(new app.win.Event('change', { bubbles: true })); };
+  sel('price', '40');
+  assert.match(row('c_near'), /Nothing at \$40 or less; the cheapest that otherwise suits is \$45\./);
+  sel('price', '50');
+  assert.match(teaser('c_near'), /4 times from 13:04/, 'all four still fit at $50');
+  assert.equal(JSON.parse(app.win.localStorage.getItem('carry.tt')).price, 50, 'kept as a number');
+  sel('price', '');
+  assert.equal(JSON.parse(app.win.localStorage.getItem('carry.tt')).price, null);
+  assert.equal(hits.length, before, 'filtering by price asks no club anything');
+});
+
+test('the filters are one size and two lines: day chips, buttons and selects all 16px', () => {
+  // 2.42.0 (he asked): chips were 13px and the buttons the body size beside 16px selects. 16px is
+  // what iOS needs to not zoom into a select, so everything matches it.
+  const css = app.doc.querySelector('style').textContent;
+  assert.match(css, /#ttDays \.chip, \.ttfilters \.seg button, \.ttfilters select \{ font: 500 16px var\(--body\); \}/);
+  assert.deepEqual(app.$$('.ttfilters .ttline').map(l => [...l.querySelectorAll('.ttl')].map(x => x.textContent)), [['Time', 'Players'], ['Holes', 'Within', 'Max price']]);
+});
+
+test('any day up to a year ahead can be picked; a day outside that falls back to today', async () => {
+  const far = day(40);
+  const pick = app.$('#ttPick');
+  assert.equal(pick.getAttribute('min'), day(0)); assert.equal(pick.getAttribute('max'), day(365));
+  assert.match(app.text('#ttDays .ttpick'), /Pick a date/);
+  const n = hits.length;
+  pick.value = far; pick.dispatchEvent(new app.win.Event('change', { bubbles: true }));
+  assert.equal(app.J('S.sub').date, far);
+  assert.equal(app.$('#ttDays .ttpick').getAttribute('aria-pressed'), 'true', 'the picked day is the pressed one');
+  assert.ok(app.$$('#ttDays button.chip').every(b => b.getAttribute('aria-pressed') === 'false'));
+  assert.doesNotMatch(app.text('#ttDays .ttpick'), /Pick a date/, 'it shows the date picked');
+  await settled('a day 40 days out');
+  assert.ok(hits.slice(n).some(h => h.includes(`selectedDate=${far}`)), 'the clubs are asked for that day');
+  app.go('courses', { view: 'teetimes', date: day(-1) }); assert.equal(app.E('ttDate()'), day(0), 'yesterday reads as today');
+  app.go('courses', { view: 'teetimes', date: day(400) }); assert.equal(app.E('ttDate()'), day(0), 'over a year out reads as today');
+  app.go('courses', { view: 'teetimes', date: TOMORROW }); await settled('back to tomorrow');
 });
 
 test('a wider distance adds courses; another day asks again; check again re-reads', async () => {
-  app.click('#tt_within [data-v="0"]');
+  { const e = app.$('select[data-ttpref="within"]'); e.value = '0'; e.dispatchEvent(new app.win.Event('change', { bubbles: true })); }
   await settled('far course checked');
   assert.match(teaser('c_far'), /4 times from 13:04/);
   const n = hits.length;
