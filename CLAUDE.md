@@ -479,6 +479,13 @@ Each of these cost real debugging time. Don't reintroduce them.
   Both now use `--safe-b`, and `regressions.test.js` checks it. The
   `:root` padding doesn't help: `html` is `height: 100%`, so content
   overflows past it.
+- **A new list's class must not be one the app already uses** (2.56.1, he sent screenshots
+  of the Swings page): the pose trend was `ul.trend`, and `.trend` is the Overview's
+  scoring chart (`height: 80px`), so every club's list overflowed its 80 px box and drew
+  over the timeline. It is `ul.ptrend` now; `ui-pose` checks the computed height. The
+  debug sweep checked sideways overflow only, so it missed it; the sweep now also flags
+  content past a fixed-height box and siblings drawn over each other (scratchpad, not the
+  repo: it needs Chromium and a seeded server).
 - **Spacing is set by adjacency, not per section** (2.25.1, he sent three
   screenshots of folds against buttons, Delete buttons against text, and the
   bag table cut off): `.folds`, `details.fold`, `.row-actions` and `h2` get
@@ -860,7 +867,10 @@ joints, the express static server types `.mjs` and `.wasm` right.
 - **Where:** the swing card (`poseSection`: *Measure the body*, then four positions
   with the skeleton, the measures, *Across the swing* traces in `#ptr_<id>`, and
   *Measure again*, 2.56.1; no body on any frame says so in `#poseNone_<id>`, found in
-  the full debug of 2026-10-31, where it had said a face-on swing needed a face-on view); the
+  the full debug of 2026-10-31, where it had said a face-on swing needed a face-on view;
+  a face-on clip not square on, hip or shoulder width at address under `POSE_SQUARE` (0.2)
+  of the torso's length, gets no face-on measures and says so in `#poseSquare_<id>`: his
+  phone showed -256% and -394% of hip width, a shift divided by a width near nothing); the
   Swings page (`#measureAll`, and `poseTrendHtml` in each club's fold: each measure
   swing by swing, per view); the reading's prompt (`poseContext`).
 - `ui-pose` (12) uses a stand-in detector (`window.carryPose`) with hand-made
@@ -2090,7 +2100,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 465 tests, about 45s.
+`npm test` — 467 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2144,7 +2154,7 @@ fixture would let the reading be pinned.
   blobs, polling works.
 - `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags
   following their shot, the prompt, filmed marks, the finding's page.
-- `ui-pose.test.js` (13) — the body, measured: a stand-in detector with hand-made
+- `ui-pose.test.js` (15) — the body, measured: a stand-in detector with hand-made
   joints, face-on and down-the-line measures by hand, mirrored clips, unsure joints,
   trends, the reading's prompt, a model that can't run, the import.
 - `sw.test.js` (9) — opening without signal: the service worker against stand-in

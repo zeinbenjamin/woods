@@ -1,6 +1,8 @@
 ## 2.56.1 — 2026-10-31
 - A swing where the pose model found no one now says so, and asks you to film the whole body. It used to tell a face-on swing it needed a face-on view.
 - A measured swing has *Measure again*, so a clip that measured badly isn't stuck.
+- On the Swings page, each club's *Measured, swing by swing* list no longer draws over the page below it.
+- A face-on swing filmed from an angle (hips and shoulders almost in line) is no longer measured. It said things like −394% of hip width; now the card says the camera wasn't square on.
 - Server libraries updated for two security fixes (in Express's request reading).
 
 ## 2.56.0 — 2026-10-31

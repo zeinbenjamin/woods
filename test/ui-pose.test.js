@@ -228,3 +228,39 @@ test('no body on any frame says so (not that the view is wrong), and a measured 
   assert.equal(app.$('#poseNone_sw_none'), null);
   assert.ok(app.$('#pose_sw_face [data-act="measureSwing"]'), 'every measured swing offers it');
 });
+
+test('a face-on clip filmed from the side gives no face-on measures, and says why', async () => {
+  // 2.56.1: on his phone a course swing read -256% hip sway and -394% hips at impact: hips almost in
+  // line at address (camera not square on), so a shift was divided by a width near nothing.
+  ANSWERS.sd = FACE.map(j => j.map(([x, y, v]) => [0.5 + (x - 0.5) * 0.25, y, v]));   // hips 0.025 apart over a 0.25 torso
+  const s = await doc('s_oct');
+  await app.api.put('sessions', 's_oct', { ...s, swings: s.swings.concat({ id: 'sw_side', view: 'face', club: '7i', frames: fr('sd'), addedOn: '2026-10-26' }) });
+  await app.waitFor(() => app.E(`!!session('s_oct').swings.find(s => s.id === 'sw_side')`), { what: 'poll' });
+  app.go('range', { sessionId: 's_oct' });
+  app.$('[data-act="measureSwing"][data-wid="sw_side"]').click();
+  await app.waitFor(() => app.$('#pose_sw_side'), { what: 'measured' });
+  const m = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_side'))`);
+  assert.equal(m.square, false);
+  assert.ok(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_side')))`).every(x => x.v == null), 'nothing measured');
+  assert.match(app.text('#poseSquare_sw_side'), /^Not measured: at address the hips and shoulders are almost in line/);
+  assert.equal(app.$$('#pose_sw_side .dlines li').length, 0);
+  assert.doesNotMatch(app.E(`swingPrompt(session('s_oct').swings.find(s => s.id === 'sw_side'), session('s_oct'))`), /MEASURED FROM THESE FRAMES/);
+  assert.equal(app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face')).square`), true, 'a square-on clip still measures');
+  // Kept out of the club's trend, which still lists the square-on swings.
+  app.go('swings');
+  app.$('#swc_7i').open = true;
+  const sway = app.$$('#ptrend_7i li').find(li => /Hip sway at the top/.test(li.textContent));
+  assert.ok(sway && !/26 Oct/.test(sway.textContent), 'the side-on swing has no point');
+});
+
+test('the swing trend list keeps its own height (it once took the scoring chart\'s 80 px and drew over the page)', () => {
+  // 2.56.1: `ul.trend` shared `.trend` with the Overview's bar chart: height 80px, so each club's
+  // list overflowed onto the timeline below on his phone.
+  app.go('swings');
+  const ul = app.$('#ptrend_7i');
+  assert.ok(ul, 'the list is there');
+  assert.ok(!ul.classList.contains('trend'), 'not the bar chart\'s class');
+  assert.notEqual(app.win.getComputedStyle(ul).height, '80px');
+  app.go('overview');
+  for (const el of app.$$('.trend')) assert.equal(el.tagName, 'DIV', 'only the bar chart is .trend');
+});
