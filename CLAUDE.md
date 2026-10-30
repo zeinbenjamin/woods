@@ -2173,6 +2173,11 @@ In rough order of value:
    Valley has its map (hole-maps 2.16.0) and its art rounds move onto it
    from the course page (2.17.0, *Artwork → map*).
 
+4. **Courses on a map in the yardage-book style** shipped in 2.49.0 on
+   OpenFreeMap (see *Courses list order*). Next, if he wants the map to ask no
+   outside host: a Sydney PMTiles file on the NAS (Protomaps, ~100–300 MB)
+   behind the same style.
+
 5. **Shot patterns on the course** (stage 2 of the dispersion work; stage 1, the
    range, shipped in 2.52.0, see *Range data from screenshots*). On the backlog at
    his word (2026-10-31): a club's pattern laid along a hole on its page and in Play
@@ -2180,11 +2185,6 @@ In rough order of value:
    lie rules (water and OB on carry, the rest on total), other clubs one tap away,
    the armed club never changed. Later, a course pattern from logged approaches set
    against the range one. Mockups: https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh.
-
-4. **Courses on a map in the yardage-book style** shipped in 2.49.0 on
-   OpenFreeMap (see *Courses list order*). Next, if he wants the map to ask no
-   outside host: a Sydney PMTiles file on the NAS (Protomaps, ~100–300 MB)
-   behind the same style.
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
