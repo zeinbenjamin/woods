@@ -101,6 +101,9 @@ svg.pattern { display: block; width: 100%; height: auto; max-width: 420px; margi
 .pt-target { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 4; } .pt-tee { fill: var(--ink); }
 .pt-oval { fill: color-mix(in srgb, var(--green) 18%, transparent); stroke: var(--green); stroke-width: 1.6; }
 .pt-shot { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; } .pt-shot.few { stroke: var(--ink-3); }
+.pt-oval.ghost { fill: none; stroke: var(--ink-3); stroke-width: 1; opacity: .5; } .pt-oval.picked { stroke-width: 2.2; }
+#patternTable tr.patRow { cursor: pointer; } #patternTable tr.patRow:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+#patternTable tr.sel td { background: var(--green-soft); } #patternTable tr.sel td:first-child { font-weight: 700; }
 .pt-wild { fill: var(--flag); stroke: var(--ink); stroke-width: 1; } .pt-lab { font: 700 13px var(--cond); fill: var(--ink); }
 #blockPattern .spread, #ovPatterns .spread { align-items: center; } .patternView button { padding: 5px 12px; }
 .iconBtn { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; } .iconBtn svg { display: block; }
@@ -1302,7 +1305,7 @@ function patternOval(sp, steps = 48) {
 }
 const sideLabel = v => Math.abs(v) < 0.5 ? 'on line' : `${fmt(Math.abs(v), 1)} ${v < 0 ? 'L' : 'R'}`;
 // Seen from above, one scale both ways, the target line up the middle. groups: [{pat, label, cls}].
-function patternSvg(groups, { fromTee = false } = {}) {
+function patternSvg(groups, { fromTee = false, many: manyOpt } = {}) {
   const W = 320, L = 36, R = 10, T = 10, B = 24, IW = W - L - R;
   const xs = [], ys = [];
   for (const g of groups) { for (const p of g.pat.pts.concat(g.pat.wild)) { xs.push(p.x); ys.push(p.y); }
@@ -1318,17 +1321,19 @@ function patternSvg(groups, { fromTee = false } = {}) {
   for (let x = sx; x < xr; x += sx) for (const v of [-x, x]) g += `<line class="pt-grid side" x1="${f1(X(v))}" x2="${f1(X(v))}" y1="${T}" y2="${f1(Y(y0))}"/><text class="pt-ax" x="${f1(X(v))}" y="${f1(H - 8)}" text-anchor="middle">${x}${v < 0 ? 'L' : 'R'}</text>`;
   g += `<line class="pt-target" x1="${f1(X(0))}" x2="${f1(X(0))}" y1="${T}" y2="${f1(Y(y0))}"/>`;
   if (fromTee) g += `<circle class="pt-tee" cx="${f1(X(0))}" cy="${f1(Y(0))}" r="3.5"/>`;
-  const many = groups.length > 1;
-  for (const gr of groups) {
+  const many = manyOpt ?? groups.length > 1;
+  const drawn = groups.filter(gr => gr.cls === 'ghost').concat(groups.filter(gr => gr.cls !== 'ghost'));   // faint ones underneath
+  for (const gr of drawn) {
     const c = gr.cls || '';
     if (gr.pat.sp) g += `<path class="pt-oval ${c}" d="M${patternOval(gr.pat.sp).map(([x, y]) => f1(X(x)) + ',' + f1(Y(y))).join('L')}Z"/>`;
-    g += gr.pat.pts.map(p => `<circle class="pt-shot ${c}${gr.pat.sp ? '' : ' few'}" cx="${f1(X(p.x))}" cy="${f1(Y(p.y))}" r="${many ? 2.2 : 3.6}"/>`).join('');
-    g += gr.pat.wild.map(p => `<circle class="pt-wild" cx="${f1(X(p.x))}" cy="${f1(Y(p.y))}" r="${many ? 2.6 : 4}"/>`).join('');
+    if (gr.dots !== false) g += gr.pat.pts.map(p => `<circle class="pt-shot ${c}${gr.pat.sp ? '' : ' few'}" cx="${f1(X(p.x))}" cy="${f1(Y(p.y))}" r="${/picked/.test(c) ? 3.2 : many ? 2.2 : 3.6}"/>`).join('');
+    if (gr.dots !== false) g += gr.pat.wild.map(p => `<circle class="pt-wild" cx="${f1(X(p.x))}" cy="${f1(Y(p.y))}" r="${/picked/.test(c) ? 3.6 : many ? 2.6 : 4}"/>`).join('');
     if (many && gr.label) { const sp = gr.pat.sp, lx = sp ? sp.mx + PATTERN_K * Math.sqrt(sp.sxx) : Math.max(...gr.pat.pts.map(p => p.x)), ly = sp ? sp.my : median(gr.pat.pts.map(p => p.y));
       g += `<text class="pt-lab" x="${f1(Math.min(W - R - 2, X(lx) + 5))}" y="${f1(Y(ly) + 4)}"${X(lx) + 5 > W - 40 ? ' text-anchor="end"' : ''}>${esc(gr.label)}</text>`; }
   }
   return `<svg class="pattern" viewBox="0 0 ${W} ${f1(H)}" role="img" aria-label="Shot pattern from above">${g}</svg>`;
 }
+const patternClub = () => { try { return localStorage.getItem('carry.patternClub') || ''; } catch (e) { return ''; } };
 const patternSwitch = () => { const v = patternView(); return `<div class="seg patternView">${[['carry', 'Carry'], ['total', 'Total']].map(([k, t]) => `<button data-act="setPatternView" data-v="${k}" aria-pressed="${v === k}">${t}</button>`).join('')}</div>`; };
 const patternTiles = p => `<div class="tiles">${tile(fmt(p.centre), p.view === 'total' ? 'centre, total m' : 'centre, carry m', sideLabel(p.lean))}${tile(fmt(p.wide), 'wide m', 'left to right')}${tile(fmt(p.deep), 'deep m', 'short to long')}</div>`;
 function patternNote(p) {
@@ -1377,8 +1382,13 @@ function patternsFold(stats) {
   const ok = rows.filter(r => r.p.enough).sort((a, b) => b.p.centre - a.p.centre), few = stats.filter(({ c }) => !ok.some(r => r.c.code === c.code));
   const teaser = ok.length ? ok.slice(0, 2).map(r => `${r.c.code} ${fmt(r.p.wide)} m wide`).join(' · ') : `${PATTERN_MIN} shots with side numbers make a club's pattern`;
   let body = `<div class="spread" style="margin:6px 0">${patternSwitch()}</div>`;
-  if (rows.length) body += patternSvg(rows.map(r => ({ pat: r.p, label: r.c.code, cls: r.p.enough ? '' : 'few' })), { fromTee: true });
-  if (ok.length) body += `<div class="scroll"><table id="patternTable"><thead><tr><th>Club</th><th>Centre</th><th>Lean</th><th>Wide</th><th>Deep</th><th>Shots</th></tr></thead><tbody>${ok.map(({ c, p }) => `<tr><td>${esc(c.code)}</td><td class="num">${fmt(p.centre)}</td><td>${sideLabel(p.lean)}</td><td>${fmt(p.wide)}</td><td>${fmt(p.deep)}</td><td>${p.n}${p.wild.length ? ` +${p.wild.length}` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+  // One club at a time (2.54.0, he found every club's dots too busy): with none picked,
+  // only the ovals; tap a club's row and its shots show, the other ovals faint behind.
+  const pick = rows.some(r => r.c.code === patternClub()) ? patternClub() : '';
+  const shown = pick ? rows.filter(r => r.p.enough || r.c.code === pick) : ok;
+  if (shown.length) body += patternSvg(shown.map(r => r.c.code === pick ? { pat: r.p, label: r.c.code, cls: r.p.enough ? 'picked' : 'picked few' } : { pat: r.p, label: pick ? '' : r.c.code, cls: pick ? 'ghost' : '', dots: false }), { fromTee: true, many: true });
+  const listed = ok.concat(rows.filter(r => !r.p.enough));
+  if (listed.length) body += `<p class="small muted" id="patternHint">${pick ? `${esc(pick)}'s shots, the other clubs faint. Tap it again to see every club.` : 'Tap a club to see its shots.'}</p><div class="scroll"><table id="patternTable"><thead><tr><th>Club</th><th>Centre</th><th>Lean</th><th>Wide</th><th>Deep</th><th>Shots</th></tr></thead><tbody>${listed.map(({ c, p }) => `<tr class="patRow${c.code === pick ? ' sel' : ''}" data-act="setPatternClub" data-v="${esc(c.code)}" tabindex="0" role="button" aria-pressed="${c.code === pick}"><td>${esc(c.code)}</td>${p.enough ? `<td class="num">${fmt(p.centre)}</td><td>${sideLabel(p.lean)}</td><td>${fmt(p.wide)}</td><td>${fmt(p.deep)}</td>` : '<td>–</td><td>–</td><td>–</td><td>–</td>'}<td>${p.enough ? `${p.n}${p.wild.length ? ` +${p.wild.length}` : ''}` : `${p.n} of ${PATTERN_MIN}`}</td></tr>`).join('')}</tbody></table></div>`;
   const fewTxt = few.map(({ c }) => { const p = clubPattern(c.code, view); return `${c.code} ${p.n} of ${PATTERN_MIN}`; });
   body += `<p class="small muted" id="patternFew">${[ok.length ? `Ovals hold about 8 in 10 of each club's full swings, from the sessions the range filter counts, recent shots counting more.` : '', fewTxt.length ? `Not enough shots with ${view} side yet: ${fewTxt.join(', ')}.` : '', `Tops are left out; wild misses are counted (+n), not drawn into the oval. Measured at the range, not on the course.`].filter(Boolean).join(' ')}</p>`;
   return fold('ovPatterns', 'Patterns by club', teaser, body);
@@ -4691,6 +4701,9 @@ async function readRoundImages(files, onProgress) {
   return mergeRoundReads(items);
 }
 // Carry or total on the shot patterns: a per-phone choice, like the tee-time filters.
+// A table row that acts as a button answers Enter and Space too.
+document.addEventListener('keydown', e => { const t = e.target; if ((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('tr[role="button"][data-act]')) { e.preventDefault(); t.click(); } });
+ACTIONS.setPatternClub = d => { try { if (patternClub() === d.v) localStorage.removeItem('carry.patternClub'); else localStorage.setItem('carry.patternClub', d.v); } catch (e) {} render(); };
 ACTIONS.setPatternView = d => { try { localStorage.setItem('carry.pattern', d.v === 'total' ? 'total' : 'carry'); } catch (e) {} render(); };
 // One button for a round already played (2.50.0): typed in, or read from screenshots.
 ACTIONS.addPastRound = function () {
@@ -5920,6 +5933,20 @@ Object.assign(ACTIONS, {
   },
   finishPlay(d) { stopGps(); go('rounds', { sessionId: d.sid }); },
 });
+// Opening without signal (2.54.0): the service worker keeps the page and the data as
+// they last arrived and answers from them only when the network can't be reached.
+// Only where the browser allows one (https, or localhost); jsdom has none.
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('/sw.js').catch(e => console.warn('service worker', e));
+  // The first time it takes over this page, ask for the data again through it, so one open with signal is enough.
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (window.carryRefetch) window.carryRefetch(); });
+}
+const OFFLINE_NOTE = /^No signal: showing/;
+window.addEventListener('carry:offline', e => {
+  const at = new Date(e.detail && e.detail.at), when = isNaN(at) ? '' : ` from ${localDay(at) === today() ? '' : dateLabel(localDay(at)) + ' '}${at.toTimeString().slice(0, 5)}`;
+  setStatus(`No signal: showing this phone's copy${when}`, true);
+});
+window.addEventListener('carry:online', () => { if (OFFLINE_NOTE.test($('#status').textContent)) setStatus(''); });
 // Saves waiting on the phone for signal, said in the status line.
 window.addEventListener('carry:outbox', e => {
   const n = e.detail && e.detail.pending;

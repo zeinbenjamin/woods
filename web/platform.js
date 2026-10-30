@@ -16,6 +16,14 @@
     try { history.replaceState(history.state, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (e) {}
   }
   const fault = (code, message) => { const e = new Error(message || code); e.code = code; return e; };
+  // No signal (2.54.0): the service worker answers with the phone's last copy and
+  // says when it was kept. Tell the app once, and again when the server answers.
+  let offline = false;
+  function noteOffline(res) {
+    const at = res.headers && res.headers.get && res.headers.get('x-carry-offline');
+    if (at && !offline) { offline = true; window.dispatchEvent(new CustomEvent('carry:offline', { detail: { at } })); }
+    else if (!at && offline && res.ok) { offline = false; window.dispatchEvent(new CustomEvent('carry:online')); }
+  }
 
   async function api(path, opts = {}) {
     // redirect: 'manual' — when the Access session has run out, Cloudflare
@@ -23,6 +31,7 @@
     // request on. Following it would fail as a cross-site request; seeing it
     // tells the app to send him to sign in again.
     const res = await fetch('/api' + path, { ...opts, redirect: 'manual' });
+    noteOffline(res);
     if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) throw fault('signed_out');
     // Carry itself refused (its own JSON says so): no valid Access token, so
     // this didn't come through Cloudflare — the home address, for instance.
@@ -100,6 +109,10 @@
     return flushing;
   }
   window.addEventListener('online', () => flush());
+  // Ask for every collection again (2.54.0): when the service worker first takes over a
+  // page, what loaded before it went past it unkept. A quiet refetch through it keeps a
+  // copy; the app only redraws if something changed.
+  window.carryRefetch = () => Promise.all(Object.keys(listeners).map(refresh));
   window.carryOutbox = () => ({ pending: Object.keys(readBox()).length, flush });
 
   let polling = false, signedOut = false;
