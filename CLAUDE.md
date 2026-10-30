@@ -860,6 +860,25 @@ joints, the express static server types `.mjs` and `.wasm` right.
   the ball at impact (early extension, % of torso length), forward bend lost
   (degrees), head height at impact. Other views: the skeleton, no measures. A
   right-hander is assumed for the lead arm, as everywhere.
+- **The guide** (2.57.0, he asked for an "optimal" line on *Across the swing* and the areas
+  of concern; told how thin the published data is, he chose guide bands over his own best
+  swings): `POSE_GUIDE`, per view and series, a band at the top and at impact
+  (`poseBand`; `rel` for forward bend, around its own address value), drawn as dotted boxes
+  with a dotted path through their middles; the swing's point red (`tr-off`) and the
+  measure "outside the guide" (`poseOff`, `off` on `poseValues`) where it leaves one; the
+  reading's prompt is told too. Hips face-on are the one sourced band: Sportsbox AI's tour
+  data in Golf Digest (pelvis under ~2 in away at the top, ~5 in toward the target by
+  impact), converted over `POSE_HIP_IN` (an assumed 11 in between the model's hip points,
+  not his): -18..18% at the top, 32..59% at impact. Head (-15..5% of shoulder width), lead
+  arm (150..180°), down-the-line hips (-15..5% of torso), bend (±6° of address) and head
+  height (±6%) are rules of thumb; spine tilt has no band. The legend (`#poseGuide_<id>`)
+  says which. The long caption went (he found it verbose): the heading says `2D` and where
+  impact came from.
+- **Changing the angle** (2.57.0, he asked after the -394% clip): *Change angle* on the swing
+  card (`swingAngle`, a sheet opening on the current one, `setSwingAngle`). The measures
+  follow on the next draw; a reading keeps the angle it was made under in `analysedView`
+  (SCHEMA.md; set by `analyseSwing` too) and the card says to analyse again
+  (`#angleNote_<id>`) until the angle matches.
 - **Honesty:** joints under `POSE_VIS` (0.5) are left out; a swing with a body in
   fewer than `POSE_MIN_SHARE` (¾) of its frames is "too few to rely on" and kept
   out of trends and the reading's prompt. Every place says 2D, from the frames,
@@ -2100,7 +2119,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 467 tests, about 45s.
+`npm test` — 469 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2154,7 +2173,7 @@ fixture would let the reading be pinned.
   blobs, polling works.
 - `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags
   following their shot, the prompt, filmed marks, the finding's page.
-- `ui-pose.test.js` (15) — the body, measured: a stand-in detector with hand-made
+- `ui-pose.test.js` (17) — the body, measured (the guide and changing the angle since 2.57.0): a stand-in detector with hand-made
   joints, face-on and down-the-line measures by hand, mirrored clips, unsure joints,
   trends, the reading's prompt, a model that can't run, the import.
 - `sw.test.js` (9) — opening without signal: the service worker against stand-in

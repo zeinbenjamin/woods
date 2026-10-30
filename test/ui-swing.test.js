@@ -257,6 +257,7 @@ test('Analyse sends the frames with the ball data and view brief, and stores the
   assert.match(analyseSeen.prompt, /One fix, not a list/, 'coached as one fix');
   assert.match(analyseSeen.prompt, /"feel"[\s\S]*"check"[\s\S]*"ball_data": "agrees" \| "contradicts" \| "unclear"/);
   assert.match(analyseSeen.prompt, /At most three observations/);
+  assert.equal((await app.api.get('sessions', 's_sw')).swings[0].analysedView, 'dtl', 'the angle it was read under (2.57.0)');
 });
 
 // Regression: in-app analysis used to keep a stale analysedIn: 'chat'.

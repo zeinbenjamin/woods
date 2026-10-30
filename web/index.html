@@ -96,7 +96,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .poseSk { position: absolute; inset: 0; width: 100%; height: 100%; } .poseSk line { stroke: #F4F1E6; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linecap: round; }
 .poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .8; vector-effect: non-scaling-stroke; }
 .ptrace { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 8px; align-items: center; margin: 4px 0; } .ptrace .lab { font-size: 11.5px; color: var(--ink-3); line-height: 1.25; } .ptrace .lab b { display: block; font: 600 13px var(--cond); color: var(--ink); }
-.ptrace svg { display: block; width: 100%; height: auto; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-mlab { font: 500 9.5px var(--body); fill: var(--ink-3); }
+.ptrace svg { display: block; width: 100%; height: auto; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-guide { fill: none; stroke: var(--ink-2); stroke-width: 1.3; stroke-dasharray: 3 3; opacity: .7; } .tr-band { fill: var(--green); fill-opacity: .08; stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 2 2; opacity: .8; } .tr-off { fill: var(--flag); stroke: var(--paper); stroke-width: 1; } .ptrace.off .lab b { color: var(--flag); } .dlines .offg { color: var(--flag); font-weight: 600; } .tr-mlab { font: 500 9.5px var(--body); fill: var(--ink-3); }
 ul.ptrend { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 6px; } ul.ptrend li { background: var(--paper-2); border-radius: var(--r); padding: 8px 10px; }
 ul.ptrend .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; } ul.ptrend .vals { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); } ul.ptrend .s { font-size: 11.5px; color: var(--ink-3); }
 svg.dplane { display: block; width: 100%; max-width: 280px; height: auto; margin: 4px auto 6px; }
@@ -3857,6 +3857,39 @@ function poseMeasures(sw) {
   }
   return out;
 }
+/* A guide at the top and impact (2.57.0, he asked for an "optimal" line to compare with
+   and the areas of concern; he chose guide bands over his own best swings when told how
+   thin the published data is). Per series and position, [lo, hi] in the series' units.
+   Hips face-on from one source: Sportsbox AI's tour data (Golf Digest, read 2026-10-31):
+   the pelvis moves less than about 2 in away at the top and about 5 in toward the target
+   by impact, converted with POSE_HIP_IN (an assumed 11 in between the model's hip points,
+   not his). Everything else is a coaching rule of thumb (head kept nearly still, a fairly
+   straight lead arm, posture held down the line), not a measured norm, and says so.
+   `rel`: the band is around the swing's own address value (forward bend). */
+const POSE_HIP_IN = 11;
+const POSE_GUIDE = {
+  face: {
+    hip: { top: [-200 / POSE_HIP_IN, 200 / POSE_HIP_IN], impact: [350 / POSE_HIP_IN, 650 / POSE_HIP_IN], src: 'tour' },
+    head: { top: [-15, 5], impact: [-15, 5] },
+    arm: { top: [150, 180] },
+  },
+  dtl: {
+    hipDepth: { top: [-15, 5], impact: [-15, 5] },
+    bend: { top: [-6, 6], impact: [-6, 6], rel: true },
+    headUp: { top: [-6, 6], impact: [-6, 6] },
+  },
+};
+// The band for a series at a position, in its units, or null where there's no guide.
+function poseBand(m, s, at) {
+  const g = POSE_GUIDE[m.view] && POSE_GUIDE[m.view][s]; if (!g || !g[at]) return null;
+  if (!g.rel) return g[at];
+  const a0 = m.series[s] && m.series[s][m.keys.address]; return a0 == null ? null : [a0 + g[at][0], a0 + g[at][1]];
+}
+// Outside the guide, at the position a measure is read: true, false, or null without a guide or a value.
+function poseOff(m, d) {
+  const i = m.keys && m.keys[d.at], ser = m.series[d.s], v = i == null || !ser ? null : ser[i], b = poseBand(m, d.s, d.at);
+  return v == null || !b ? null : v < b[0] || v > b[1];
+}
 // What each view measures, at which position, and how to say it.
 const POSE_MEASURES = {
   face: [
@@ -3875,7 +3908,7 @@ function poseValues(m) {
   if (!m || !m.keys || !POSE_MEASURES[m.view]) return [];
   return POSE_MEASURES[m.view].map(d => { const i = m.keys[d.at], ser = m.series[d.s]; let v = i == null || !ser ? null : ser[i];
     if (d.diff && v != null) { const a0 = ser[m.keys.address]; v = a0 == null ? null : a0 - v; }
-    return { ...d, v: v == null || !isFinite(v) ? null : v }; });
+    return { ...d, v: v == null || !isFinite(v) ? null : v, off: poseOff(m, d) }; });
 }
 // The skeleton over one frame, in the frame's own 0..1 positions.
 function poseFrameSvg(f) {
@@ -3891,11 +3924,19 @@ function poseTraces(m) {
   const W = 240, H = 56, P = 5, n = m.frames.length;
   return defs.map(([k, name, unit]) => {
     const v = m.series[k]; if (!v || v.every(x => x == null)) return '';
-    const xs = v.filter(x => x != null), lo = Math.min(...xs), hi = Math.max(...xs), span = hi - lo || 1;
+    const bands = ['top', 'impact'].map(at => ({ at, i: m.keys[at], b: m.keys[at] == null ? null : poseBand(m, k, at) })).filter(x => x.b);
+    const xs = v.filter(x => x != null).concat(...bands.map(x => x.b)), lo = Math.min(...xs), hi = Math.max(...xs), span = hi - lo || 1;
     const X = i => P + i * (W - 2 * P) / Math.max(1, n - 1), Y = x => P + 4 + (H - 2 * P - 8) * (1 - (x - lo) / span);
     let d = '', pen = false; v.forEach((x, i) => { if (x == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x).toFixed(1)}`; pen = true; });
     const marks = [['top', 'top'], ['impact', 'impact']].filter(([key]) => m.keys[key] != null).map(([key, t]) => `<line class="tr-mark" x1="${X(m.keys[key]).toFixed(1)}" x2="${X(m.keys[key]).toFixed(1)}" y1="${P}" y2="${H - P}"/><text class="tr-mlab" x="${(X(m.keys[key]) + 3).toFixed(1)}" y="${H - 2}">${t}</text>`).join('');
-    return `<div class="ptrace"><div class="lab"><b>${name}</b>${unit}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)} across the swing">${marks}<path class="tr-line" d="${d}"/></svg></div>`;
+    // The guide: a dotted path from address (or the first band) through the middle of each band, the bands as dotted boxes,
+    // and the swing's own point red where it is outside one.
+    const a0 = v[m.keys.address], start = a0 != null && !['arm'].includes(k) ? [[m.keys.address, POSE_GUIDE[m.view][k] && POSE_GUIDE[m.view][k].rel ? a0 : 0]] : [];
+    const gpts = start.concat(bands.map(x => [x.i, (x.b[0] + x.b[1]) / 2]));
+    const gpath = gpts.length > 1 ? `<path class="tr-guide" d="${gpts.map(([i, y], j) => `${j ? 'L' : 'M'}${X(i).toFixed(1)},${Y(y).toFixed(1)}`).join('')}"/>` : '';
+    const boxes = bands.map(x => `<rect class="tr-band" x="${(X(x.i) - 6).toFixed(1)}" y="${Y(x.b[1]).toFixed(1)}" width="12" height="${Math.max(1, Y(x.b[0]) - Y(x.b[1])).toFixed(1)}"/>`).join('');
+    const offs = bands.filter(x => v[x.i] != null && (v[x.i] < x.b[0] || v[x.i] > x.b[1])).map(x => `<circle class="tr-off" cx="${X(x.i).toFixed(1)}" cy="${Y(v[x.i]).toFixed(1)}" r="3.5"/>`).join('');
+    return `<div class="ptrace${offs ? ' off' : ''}" data-k="${k}"><div class="lab"><b>${name}</b>${unit}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)} across the swing${bands.length ? ', with the guide' : ''}${offs ? ', outside the guide' : ''}">${marks}${boxes}${gpath}<path class="tr-line" d="${d}"/>${offs}</svg></div>`;
   }).join('');
 }
 // The swing card's body section.
@@ -3904,24 +3945,24 @@ function poseSection(sw, s) {
   const m = sw.pose ? poseMeasures(sw) : null;
   if (!m) return `<div class="row-actions" style="margin-top:6px"><button data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure the body</button><span class="small muted">Finds the joints on each frame, on this phone.</span></div><div id="pm_${sw.id}"></div>`;
   const vals = poseValues(m);
-  let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
+  let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
   h += `<div class="posePos">${POSE_POS.map(([k, label]) => { const i = m.keys && m.keys[k]; const f = i == null ? null : m.frames[i]; return f ? `<figure><div class="pf"><img src="/_blob/${f.asset}" alt="${label}" loading="lazy">${poseFrameSvg(f)}</div><figcaption>${label}</figcaption></figure>` : ''; }).join('')}</div>`;
   const sayV = x => x.v == null ? 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
   // No body on any frame says so; a view the measures don't cover says that, never both.
   if (!m.found) h += `<p class="small muted" id="poseNone_${sw.id}">No body was found on these frames. Film with the whole body in the picture, then measure again.</p>`;
   else if (m.square === false) h += `<p class="small muted" id="poseSquare_${sw.id}">Not measured: at address the hips and shoulders are almost in line, so the camera wasn't square on to the chest. Face-on measures need the camera facing you; a clip filmed from behind or down the line can't give them.</p>`;
-  else if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}</li>`).join('')}</ul>`;
+  else if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>`;
   else h += `<p class="small muted">The skeleton is drawn, but measures need a face-on or down-the-line view: this one is "${esc(VIEWS[sw.view] || 'other')}".</p>`;
   const tr = m.keys ? poseTraces(m) : '';
-  if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}</details>`;
-  if (m.found) h += `<p class="small muted">Measured from the frames by a pose model on this phone, in 2D: ${m.impFrom === 'marked' ? 'impact as you marked it' : 'top and impact found from the hands'}. A measurement of where the joints were, not a reading of the swing; unsure joints are left out.</p>`;
+  const guide = POSE_GUIDE[m.view] ? `<p class="small muted" id="poseGuide_${sw.id}">Dotted: a guide at the top and impact. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '';
+  if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}${guide}</details>`;
   h += `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
   return h;
 }
 // Measures for the reading's prompt, when the swing has been measured.
 function poseContext(sw) {
   const m = sw.pose ? poseMeasures(sw) : null, vals = poseValues(m).filter(x => x.v != null);
-  return vals.length && m.reliable ? `MEASURED FROM THESE FRAMES (a pose model's joints, 2D, ${m.impFrom === 'marked' ? 'impact as marked' : 'top and impact from the hands'}): ${vals.map(x => `${x.name}: ${x.say(x.v)}`).join('; ')}. Treat these as measurements of the body's positions; say if what you see disagrees.` : '';
+  return vals.length && m.reliable ? `MEASURED FROM THESE FRAMES (a pose model's joints, 2D, ${m.impFrom === 'marked' ? 'impact as marked' : 'top and impact from the hands'}): ${vals.map(x => `${x.name}: ${x.say(x.v)}${x.off ? ' (outside a coaching guide for this position)' : ''}`).join('; ')}. Treat these as measurements of the body's positions; say if what you see disagrees.` : '';
 }
 // Per club and view, each measure across sessions, oldest first: whether a fault is going away.
 function poseTrend(club, swings) {
@@ -3980,11 +4021,13 @@ function swingCard(sw, s, opts = {}) {
     <div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
     ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}
     ${poseSection(sw, s)}
+    ${a && sw.analysedView && sw.analysedView !== sw.view ? `<div class="notice small" id="angleNote_${sw.id}">This reading was made when the clip was marked ${esc(VIEWS[sw.analysedView] || sw.analysedView)}. Analyse again to read it as ${esc(VIEWS[sw.view] || sw.view)}.</div>` : ''}
     ${a ? swingReading(sw, s, a) : ''}
     ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet — tap Analyse and Claude reads these frames against your ball data for this club.</div>`}
     <div class="row-actions">
       <button class="${a ? '' : 'primary'}" data-act="analyseSwing" data-sid="${s.id}" data-wid="${sw.id}">${a ? 'Analyse again' : 'Analyse'}</button>
       ${sw.video ? `<button data-act="playSwing" data-sid="${s.id}" data-wid="${sw.id}">Play video</button>` : ''}
+      <button data-act="swingAngle" data-sid="${s.id}" data-wid="${sw.id}">Change angle</button>
       <button class="danger" data-act="deleteSwing" data-sid="${s.id}" data-wid="${sw.id}">Delete</button>
     </div>
     <div id="an_${sw.id}"></div>
@@ -3996,6 +4039,22 @@ function swingSection(s) {
     (sws.length ? sws.map(sw => swingCard(sw, s)).join('')
       : `<p class="small muted">${S.assets ? 'Add a video and the app pulls frames out of it — a couple per session is plenty.' : 'Adding swings needs write access to this page.'}</p>`) + `</section>`;
 }
+
+/* A swing's camera angle, changed after it was added (2.57.0, he asked: a down-the-line clip
+   marked face-on read -394% hip sway). The body measures follow on the next draw (they're
+   derived from the stored joints); a reading made under the old angle keeps it in
+   `analysedView` and the card says to analyse again. */
+ACTIONS.swingAngle = function (d) {
+  const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid); if (!sw) return;
+  openSheet(`<h2>Camera angle</h2>
+    <p class="small muted">Where the camera was. It decides which body measures can be taken${sw.analysis ? ', and the reading was made for the angle it had then' : ''}.</p>
+    <div class="choices" id="angleChoices">${Object.entries(VIEWS).map(([v, label]) => `<button class="choice" data-act="setSwingAngle" data-sid="${s.id}" data-wid="${sw.id}" data-v="${v}" aria-pressed="${sw.view === v}"${sw.view === v ? ' autofocus' : ''}><b>${esc(label)}${sw.view === v ? ' <span class="tag green">current</span>' : ''}</b><span class="small muted">${v === 'face' ? 'Facing your chest: sway, hips, head, lead arm.' : v === 'dtl' ? 'From behind, along the target line: early extension, posture, head height.' : 'Anything else: the skeleton, no measures.'}</span></button>`).join('')}</div>`);
+};
+ACTIONS.setSwingAngle = async function (d) {
+  const s = session(d.sid); if (!s || !VIEWS[d.v]) return;
+  const ok = await queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => w.id !== d.wid || w.view === d.v ? w : { ...w, view: d.v, ...(w.analysis && !w.analysedView ? { analysedView: w.view } : {}) }) }); });
+  if (ok) { sheet.close(); toast(`Marked ${VIEWS[d.v]}`); render(); }
+};
 
 /* ---------- this swing's own shot (2.56.0) ----------
    He asked (2026-10-31): tie a swing to the ball it hit, on the course or at the
@@ -4542,7 +4601,7 @@ Object.assign(ACTIONS, {
     }
     const s = session(d.sid);
     // Read in the app this time, so drop any earlier "read in a chat" credit.
-    const swings = swingsOf(s).map(x => { if (x.id !== d.wid) return x; const { analysedIn, ...rest } = x; return { ...rest, analysis: res.data, analysedOn: today() }; });
+    const swings = swingsOf(s).map(x => { if (x.id !== d.wid) return x; const { analysedIn, ...rest } = x; return { ...rest, analysis: res.data, analysedOn: today(), analysedView: x.view }; });
     if (await save('sessions', d.sid, { ...s, swings })) render();
   },
   async deleteSwing(d) {
