@@ -1,3 +1,7 @@
+## 2.40.1 — 2026-10-30
+- Tee times: Moore Park's 12-hole rate is now read as 12 holes, not 9, and a 12-hole round can be asked for.
+- When a course has no tee times to show, Carry now says why: nothing open to the public that day (often a members' competition), or a club whose public calendar shows nothing until you sign up on its site (Massey Park).
+
 ## 2.40.0 — 2026-10-30
 - Carry can now read the free tee times on a MiClub booking site (38 of the courses, Bexley and Moore Park among them): each rate for the day (18 holes, 9 holes, late rates), its price, and every time with how many spots are left. Nothing in the app shows them yet. The search screen comes next.
 - Nothing is booked and nothing about you is sent: Carry asks the club's public page for a date, the same as opening it in a browser.
