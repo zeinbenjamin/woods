@@ -362,6 +362,10 @@ const S = {
   tab: 'overview', sub: null,                 // sub: {sessionId, blockId, courseId}
 };
 try { const t = localStorage.getItem('carry.tab'); if (['overview','swings','range','rounds','courses','settings'].includes(t)) S.tab = t; else if (t === 'bag') S.tab = 'settings'; } catch (e) {}
+// Back from a trip round Cloudflare (signInHop): the same screen, folds and
+// scroll, if the trip was in the last five minutes; used once.
+const resumed = (() => { try { const r = JSON.parse(sessionStorage.getItem('carry.resume') || 'null'); sessionStorage.removeItem('carry.resume'); return r && Date.now() - r.t < 300000 ? r : null; } catch (e) { return null; } })();
+if (resumed && typeof resumed.tab === 'string') { S.tab = resumed.tab; S.sub = resumed.sub || null; }
 // Appearance (2.37.0, he asked): light, dark, or the system's. The setting lives in
 // the settings document; a copy in localStorage applies it before the server
 // answers, so the page doesn't open in the wrong mode and switch.
@@ -424,25 +428,42 @@ async function connect() {
 // the page was opened at an address that doesn't go through Cloudflare (the
 // NAS's own http://…:1818), which no longer opens anything. Asked once per
 // page load: every poll fails the same way, and Cancel should mean it.
-// Signed out, quietly (2.31.2, he asked: the sheet took over the feed, and a
-// month-long Access session was still being refused). One failed poll is
-// ignored (a glitch). The second starts a silent sign-in: a hidden iframe
-// loads /api/stamps through Cloudflare, and a login session that is still
-// good completes the redirect hops with no page to show, setting a fresh
-// cookie; the next poll then succeeds and the shim says `signed_in`. Only if
-// polls still fail SIGNIN_WAIT later does a slim banner appear, with the one
-// button, which reloads (that lands on Cloudflare's login if it must). Never
-// a sheet, never a reload on its own. The home-address refusal keeps its
-// sheet: that one needs reading, once.
+// Signed out, quietly. 2.31.2 tried a hidden iframe on /api/stamps so a
+// still-good Cloudflare login could hop back with no page; on an iPhone that
+// can never work (2.38.1, he was still seeing the bar): every iOS browser is
+// WebKit, which blocks third-party cookies, and inside Carry's frame the
+// cloudflareaccess.com login cookie is third-party, so the hop always stopped
+// at the login page. What does work is what reopening the app does: one
+// top-level trip through Cloudflare, where that cookie is first-party. So:
+// one refused poll is a glitch; the second saves where he is (tab, page,
+// scroll, open folds) and goes round Cloudflare, landing back on the same
+// screen with a fresh cookie, or on Cloudflare's login if the login itself
+// has run out. Never while a sheet or a question is open (he may be typing):
+// the bar shows instead, and the hop waits for the next refused poll after it
+// closes. At most one hop in two minutes, so a login that won't take can't
+// loop: then the bar, with Sign in again. Saves made meanwhile wait in the
+// outbox (localStorage), so a hop loses nothing. The home-address refusal
+// keeps its sheet: that one needs reading, once.
 let askingSignIn = false;
-const signIn = { strikes: 0, frame: null, timer: null };
+const signIn = { strikes: 0, timer: null };
+const REHOP_KEY = 'carry.rehop', RESUME_KEY = 'carry.resume', REHOP_GAP = 120000;
+const busy = () => document.getElementById('sheet').open || document.getElementById('confirmDlg').open;
+function signInHop() {
+  let last = 0; try { last = +sessionStorage.getItem(REHOP_KEY) || 0; } catch (e) {}
+  if (Date.now() - last < REHOP_GAP) return false;
+  try {
+    sessionStorage.setItem(REHOP_KEY, String(Date.now()));
+    sessionStorage.setItem(RESUME_KEY, JSON.stringify({ tab: S.tab, sub: S.sub, y: window.scrollY, open: [...document.querySelectorAll('#view details[id][open]')].map(d => d.id), t: Date.now() }));
+  } catch (e) { return false; }   // nowhere to note the trip: a loop guard we can't keep, so no trip
+  (window.carryHop || (u => location.replace(u)))(location.pathname + location.search);
+  return true;
+}
 function askSignIn(code) {
   if (code === 'signed_out') {
-    if (signIn.strikes++ < 1 || signIn.frame) return;
+    if (signIn.strikes++ < 1) return;
     setStatus('Signed out', true);
-    const f = document.createElement('iframe'); f.id = 'reauth'; f.hidden = true; f.setAttribute('aria-hidden', 'true'); f.src = '/api/stamps?reauth=' + Date.now();
-    document.body.appendChild(f); signIn.frame = f;
-    signIn.timer = setTimeout(signInBar, Number(window.CARRY_SIGNIN_WAIT_MS || 8000));
+    if (!busy() && signInHop()) return;
+    if (!signIn.timer) signIn.timer = setTimeout(signInBar, busy() ? 0 : Number(window.CARRY_SIGNIN_WAIT_MS || 0));
     return;
   }
   if (askingSignIn) return;
@@ -461,7 +482,6 @@ function signInBar() {
 }
 function signedInAgain() {
   signIn.strikes = 0; clearTimeout(signIn.timer); signIn.timer = null;
-  if (signIn.frame) { signIn.frame.remove(); signIn.frame = null; }
   const bar = document.getElementById('signinBar'); if (bar) bar.remove();
   setStatus(''); toast('Signed in again');
 }
@@ -732,6 +752,11 @@ function render() {
   const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
   $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
   for (const id of open) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
+  if (resumed && !resumed.done && S.sessions.length + S.clubs.length) {
+    resumed.done = true;
+    for (const id of resumed.open || []) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
+    requestAnimationFrame(() => window.scrollTo(0, resumed.y || 0));
+  }
   playLifecycle();
   reelsLifecycle();
 }

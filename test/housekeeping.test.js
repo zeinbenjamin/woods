@@ -29,44 +29,62 @@ test('opened at an address that skips Cloudflare, the app says where to open it,
   } finally { app.stop(); }
 });
 
-test('when the Access session is refused, the app re-signs in quietly: a glitch ignored, a hidden sign-in, then a banner, never a sheet', async () => {
+test('when the Access session is refused, the app goes round Cloudflare once at the top level, back to the same screen; never mid-form, never in a loop', async () => {
   // Cloudflare answers an expired session with a redirect to its login page
-  // (seen as one with redirect: 'manual'), or with a 401 of its own.
+  // (seen as one with redirect: 'manual'), or with a 401 of its own. A hidden
+  // iframe can't renew it on an iPhone (WebKit blocks the login's third-party
+  // cookie), so the app does what reopening it does: a top-level trip.
   for (const expired of [
     () => new Response(null, { status: 302, headers: { location: 'https://team.cloudflareaccess.com/cdn-cgi/access/login' } }),
     () => new Response('<html>Forbidden</html>', { status: 401, headers: { 'content-type': 'text/html' } }),
   ]) {
     let out = false, polls = 0;
-    const app = await startApp({ seed: { clubs: [club('7i', 'iron')] }, intercept: url => { if (!out || !url.includes('/api/')) return null; polls++; return expired(); } });
+    const app = await startApp({ seed: { clubs: [club('7i', 'iron')], sessions: [{ id: 'r1', v: 2, type: 'round', date: '2026-10-20', courseName: 'Loop GC', holes: [] }] }, intercept: url => { if (!out || !url.includes('/api/')) return null; polls++; return expired(); } });
     try {
-      assert.equal(app.E('S.clubs.length'), 1, 'signed in, loaded');
-      app.E('window.CARRY_SIGNIN_WAIT_MS = 400');
+      app.E('window.carryHop = u => window.__hops.push(u); window.__hops = []');
+      const hopped = () => app.J('window.__hops').length;
+      app.go('rounds', { sessionId: 'r1' });
       out = true;
-      // One refused poll is a glitch: nothing shows. The second starts the silent sign-in.
       await app.waitFor(() => polls >= 1, { what: 'first refused poll' });
-      assert.equal(app.$('#reauth'), null, 'one refusal: nothing yet');
-      assert.equal(app.sheetOpen(), false);
-      await app.waitFor(() => app.$('#reauth'), { what: 'the hidden sign-in frame' });
-      assert.match(app.$('#reauth').getAttribute('src'), /^\/api\/stamps\?reauth=/, 'a small protected URL through Cloudflare, not the whole app');
-      assert.ok(app.$('#reauth').hidden);
-      assert.equal(app.text('#status'), 'Signed out');
+      assert.equal(hopped(), 0, 'one refusal is a glitch: nothing yet');
+      await app.waitFor(() => hopped() === 1, { what: 'the trip round Cloudflare' });
+      assert.deepEqual(app.J('window.__hops'), ['/'], 'the page itself, top level');
+      const saved = app.J(`JSON.parse(sessionStorage.getItem('carry.resume'))`);
+      assert.equal(saved.tab, 'rounds'); assert.deepEqual(saved.sub, { sessionId: 'r1' }, 'where he was, kept for the return');
       assert.equal(app.sheetOpen(), false, 'no sheet');
-      assert.equal(app.$('#signinBar'), null, 'no banner yet: the silent sign-in gets its chance');
-      assert.equal(app.E('S.clubs.length'), 1, 'what was on screen stays');
-      // Still refused after the wait: the banner, with the one button.
-      await app.waitFor(() => app.$('#signinBar'), { what: 'the banner' });
+      assert.equal(app.$('#reauth'), null, 'no iframe any more');
+      // Still refused (the trip did not take): no second trip inside two minutes, the bar instead.
+      await app.waitFor(() => app.$('#signinBar'), { what: 'the bar' });
+      assert.equal(hopped(), 1, 'never a loop');
       assert.match(app.text('#signinBar'), /Signed out/);
       assert.equal(app.text('#signinBar [data-act="signInAgain"]'), 'Sign in again');
-      assert.equal(app.sheetOpen(), false, 'still no sheet');
-      assert.equal(app.$$('#reauth').length, 1, 'one frame, not one per poll');
-      // The cookie comes back (the silent sign-in got through): banner and frame go, quietly.
+      // The cookie comes back: the bar goes, quietly.
       out = false;
-      await app.waitFor(() => !app.$('#signinBar'), { what: 'banner gone' });
-      assert.equal(app.$('#reauth'), null);
+      await app.waitFor(() => !app.$('#signinBar'), { what: 'bar gone' });
       assert.equal(app.text('#status'), '');
       assert.match(app.toast(), /Signed in again/);
+      // Mid-form (a sheet open): no trip, the bar at once; the trip waits until the sheet closes.
+      app.E(`sessionStorage.removeItem('carry.rehop')`);
+      app.act('newCourse');
+      assert.ok(app.sheetOpen());
+      out = true; const before = polls;
+      await app.waitFor(() => polls >= before + 2 && app.$('#signinBar'), { what: 'bar while typing' });
+      assert.equal(hopped(), 1, 'no trip while a sheet is open');
+      app.click('#sheetInner [data-close]');
+      await app.waitFor(() => hopped() === 2, { what: 'the trip once the sheet is closed' });
     } finally { app.stop(); }
   }
+});
+
+test('back from the trip, the app opens on the screen it left, with its folds, once', async () => {
+  const app = await startApp({ seed: { clubs: [club('7i', 'iron')], sessions: [{ id: 'r1', v: 2, type: 'round', date: '2026-10-20', courseName: 'Loop GC', holes: [] }] },
+    session: { 'carry.resume': JSON.stringify({ tab: 'rounds', sub: { sessionId: 'r1' }, y: 0, open: [], t: Date.now() }) } });
+  try {
+    await app.waitFor(() => /Loop GC/.test(app.text('#view')), { what: 'the round page' });
+    assert.equal(app.E('S.tab'), 'rounds');
+    assert.equal(app.J('S.sub').sessionId, 'r1');
+    assert.equal(app.E(`sessionStorage.getItem('carry.resume')`), null, 'used once');
+  } finally { app.stop(); }
 });
 
 test('Bag says who is signed in, offers to sign out, and that courses are shared', async () => {

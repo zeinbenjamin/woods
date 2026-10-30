@@ -1,3 +1,7 @@
+## 2.39.1 — 2026-10-30
+- When your Carry sign-in lapses while the app is open, it now renews it the way reopening the app does: one quick trip through Cloudflare, landing back on the same screen with your folds and scroll. The "Signed out" bar should now only appear when Cloudflare really needs you to log in.
+- It never does this while a form or a question is open; the bar shows instead, and the trip waits until you close it. Anything you saved meanwhile waits on the phone and is sent after.
+
 ## 2.39.0 — 2026-10-30
 - Every course now says who can play it: a green "public" tag in the Courses list, "private" for members and guests, "closed" for a course that's gone. The course page says the same under Course information, with how to book (register first, phone the pro shop, walk up).
 - The course form asks "Who can play": Public, Private, Closed or Not known. Saving a course whose access wasn't known used to mark it members only; it now stays not known.
