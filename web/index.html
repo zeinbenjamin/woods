@@ -87,6 +87,12 @@ input[type=number] { -moz-appearance: textfield; } input[type=range] { width: 10
 textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; } .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
 .check { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 15px; color: var(--ink); } .check input { width: 18px; height: 18px; margin: 0; }
+.courseBar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; } .courseBar #homeLink { margin-left: auto; margin-right: -8px; } .courseBar .seg button, #cmOpen { height: 36px; } #cmOpen { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; } #cmOpen .short { display: none; }
+@media (max-width: 480px) { #cmOpen .long { display: none; } #cmOpen .short { display: inline; } }
+#cmMap .leaflet-bar a { background: var(--paper); color: var(--ink); border-color: var(--rule); } #cmMap .leaflet-control-attribution { background: color-mix(in srgb, var(--paper) 85%, transparent); color: var(--ink-2); } #cmMap .leaflet-control-attribution a { color: var(--green); }
+#cmMap { height: min(62vh, 560px); min-height: 340px; border: 1px solid var(--rule); border-radius: var(--r); background: var(--paper-2); z-index: 0; }
+.cmKey { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 4px; } .cmKey span { display: inline-flex; align-items: center; gap: 6px; } .cmKey i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--ink-3); }
+#cmMap .leaflet-popup-content-wrapper, #cmMap .leaflet-popup-tip { background: var(--paper); color: var(--ink); } #cmMap .leaflet-popup-content { margin: 12px 14px; font: 400 14px var(--body); } #cmMap .leaflet-popup-content .t { font-weight: 600; } #cmMap .leaflet-popup-content button { margin-top: 8px; } #cmMap .leaflet-container a.leaflet-popup-close-button { color: var(--ink-3); }
 .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; } .seg button { border: 0; border-radius: 0; background: none; padding: 7px 12px; color: var(--ink-2); } .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 
 .list { border-top: 1px solid var(--rule); }
@@ -774,8 +780,10 @@ function render() {
   const gear = document.getElementById('settingsBtn'); if (gear) gear.setAttribute('aria-current', S.tab === 'settings' ? 'page' : 'false');
   // Every save redraws the view; panels he opened stay open (matched by id).
   const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
+  const days = document.getElementById('ttDays'), daysX = days ? days.scrollLeft : 0;
   $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
   for (const id of open) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
+  ttDaysScroll(daysX);
   if (resumed && !resumed.done && S.sessions.length + S.clubs.length) {
     resumed.done = true;
     for (const id of resumed.open || []) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
@@ -783,6 +791,7 @@ function render() {
   }
   playLifecycle();
   reelsLifecycle();
+  courseMapLifecycle();
   ttLifecycle();
 }
 document.addEventListener('click', e => {
@@ -1318,10 +1327,11 @@ function vCourses() {
   if (S.sub && S.sub.view === 'teetimes') return vTeeTimes();
   if (S.sub && S.sub.courseId && S.sub.hole) return vCourseHole();
   if (S.sub && S.sub.courseId) return vCourse();
-  let h = `<div class="spread"><h1>Courses</h1><div class="row-actions" style="margin:0"><button data-go="courses:view=teetimes" id="ttOpen">Find a tee time →</button><button class="primary" data-act="newCourse">Add course</button></div></div>
-  <div class="row-actions" style="margin-bottom:6px"><button class="quiet" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
+  if (S.sub && S.sub.view === 'map') return vCourseMap();
+  let h = `<div class="spread"><h1>Courses</h1><div class="row-actions" style="margin:0"><button data-go="courses:view=teetimes" id="ttOpen">Find a tee time →</button><button class="primary" data-act="newCourse">Add course</button></div></div>`;
   const sort = courseSort(), list = sortedCourses(sort);
-  if (S.courses.length > 1) h += `<div class="seg" id="courseSort" style="margin-bottom:8px">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>`;
+  // One row (2.44.0): the sort, the map, and on the right where distances are from.
+  h += `<div class="courseBar">${S.courses.length > 1 ? `<div class="seg" id="courseSort">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>` : ''}${S.courses.some(hasCoords) ? `<button data-go="courses:view=map" id="cmOpen" aria-label="View on a map"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span class="long">View on a map</span><span class="short">Map</span></button>` : ''}<button class="quiet" id="homeLink" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
     const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.filter(isSolo).map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
@@ -1457,6 +1467,22 @@ function ttRedraw() {
   if (tt.redraw) return;
   tt.redraw = setTimeout(() => { tt.redraw = null; if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') bgRender(); }, 50);
 }
+// Another day keeps the page where it is (2.44.0): the day chips scroll
+// sideways, and every redraw rebuilt them at the start, so a day picked at the
+// end of the row slid out of sight. render() puts the row back where it was,
+// and when the day was just changed, brings the pressed day into view.
+function ttSetDay(date) { S.sub = { ...(S.sub || {}), view: 'teetimes', date }; tt.showDay = true; render(); }
+function ttDaysScroll(x) {
+  const row = document.getElementById('ttDays'); if (!row) return;
+  row.scrollLeft = x;
+  if (!tt.showDay) return; tt.showDay = false;
+  const on = row.querySelector('[aria-pressed="true"]'); if (!on) return;
+  const l = on.offsetLeft - row.offsetLeft, r = l + on.offsetWidth;
+  if (l < row.scrollLeft) row.scrollLeft = l; else if (r > row.scrollLeft + row.clientWidth) row.scrollLeft = r - row.clientWidth;
+}
+// On a computer, a click on a date box selects its typed fields instead of
+// opening the calendar, and this box is invisible: open the calendar outright.
+document.addEventListener('click', e => { if (e.target.id === 'ttPick' && e.target.showPicker) { try { e.target.showPicker(); } catch (err) {} } });
 function ttLifecycle() { if (S.tab === 'courses' && S.sub && S.sub.view === 'teetimes') ttWant(ttDate(), ttCourses(ttPrefs()).read); }
 // The answer's times that suit the filters; today, only times still ahead.
 // A time's price is its own first fee, else its rate's (as the list shows
@@ -1548,7 +1574,7 @@ function vTeeTimes() {
 document.addEventListener('change', e => {
   const s = e.target.closest && e.target.closest('select[data-ttpref]');
   if (s) { ttSetPref(s.dataset.ttpref, s.value === '' ? null : s.dataset.num ? Number(s.value) : s.value); render(); return; }
-  if (e.target.id === 'ttPick' && e.target.value && e.target.value !== ttDate()) go('courses', { view: 'teetimes', date: e.target.value });
+  if (e.target.id === 'ttPick' && e.target.value && e.target.value !== ttDate()) ttSetDay(e.target.value);
 });
 
 /* ---------- course map (OpenStreetMap) ----------
@@ -4098,8 +4124,80 @@ function distanceTo(c) {
 }
 const distanceLabel = c => { const d = distanceTo(c); return d == null ? '' : d < 10 ? `${d.toFixed(1)} km` : `${Math.round(d)} km`; };
 
+/* ---------- courses on a map (2.44.0) ----------
+   Every course with a location as a pin on an OpenStreetMap base (CARTO's
+   light or dark tiles, following the theme), coloured by who can play, and
+   home. Leaflet is served from Carry itself (web/vendor/leaflet) and loaded
+   only when the map is opened. The map lives in one element kept across
+   redraws (render() replaces the page; the element is put back), so a poll
+   doesn't reset where he has panned or close a pin he opened. Nothing stored. */
+const CM_COLOUR = { public: '--green', private: '--ink-3', closed: '--flag' };
+const cm = { el: null, map: null, layer: null, tiles: null, dark: null, key: null, loading: null };
+function vCourseMap() {
+  const placed = S.courses.filter(hasCoords), missing = S.courses.length - placed.length;
+  const key = [['public', 'Public'], ['private', 'Members'], ['closed', 'Closed'], [null, 'Not known']];
+  return `<button class="quiet" data-go="courses" style="padding-left:0">‹ Courses</button>
+  <h1>Courses on a map</h1>
+  <p class="small muted" id="cmCount">${plural(placed.length, 'course')}${home() && hasCoords(home()) ? `, and ${esc(home().label || 'your location')}` : ''}. Tap a pin for the course.</p>
+  <div id="cmMap" role="region" aria-label="Map of the courses"></div>
+  <div class="cmKey small">${key.map(([a, l]) => `<span><i style="background:${a ? `var(${CM_COLOUR[a]})` : 'var(--paper-2)'}"></i>${l}</span>`).join('')}${home() && hasCoords(home()) ? `<span><i style="background:var(--ink);border-radius:2px"></i>${esc(home().label || 'Home')}</span>` : ''}</div>
+  ${missing ? `<p class="small muted" id="cmMissing">${plural(missing, 'course')} with no location on ${missing === 1 ? 'its' : 'their'} card ${missing === 1 ? "isn't" : "aren't"} on the map. Add a latitude and longitude on the course to place ${missing === 1 ? 'it' : 'them'}.</p>` : ''}`;
+}
+function cmLoad() {
+  if (window.L) return Promise.resolve(window.L);
+  if (cm.loading) return cm.loading;
+  return cm.loading = new Promise((ok, bad) => {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'vendor/leaflet/leaflet.css'; document.head.appendChild(css);
+    const js = document.createElement('script'); js.src = 'vendor/leaflet/leaflet.js'; js.onload = () => ok(window.L); js.onerror = () => { cm.loading = null; bad(new Error('map')); };
+    document.head.appendChild(js);
+  });
+}
+const cmDark = () => { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); };
+const cmVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888';
+function cmPopup(c) {
+  return `<div class="t">${esc(c.name)}</div><div class="small muted">${[esc(c.suburb || ''), distanceLabel(c) && `${distanceLabel(c)} away`].filter(Boolean).join(' · ')}${accessTag(c)}</div><button data-go="courses:courseId:${esc(c.id)}">Open course →</button>`;
+}
+function cmPins(L) {
+  const h = home(), key = JSON.stringify([S.courses.filter(hasCoords).map(c => [c.id, c.name, c.suburb, c.lat, c.lng, access(c)]), h && hasCoords(h) ? [h.lat, h.lng, h.label] : null, cmDark()]);
+  if (key === cm.key) return; cm.key = key;
+  if (cm.layer) cm.layer.remove();
+  cm.layer = L.layerGroup().addTo(cm.map);
+  const pts = [];
+  for (const c of S.courses.filter(hasCoords)) {
+    const a = access(c);
+    L.circleMarker([c.lat, c.lng], { radius: 8, weight: 2, color: cmVar('--paper'), fillColor: a ? cmVar(CM_COLOUR[a]) : cmVar('--paper-2'), fillOpacity: 1 })
+      .bindPopup(cmPopup(c), { closeButton: true }).bindTooltip(esc(c.name), { direction: 'top', offset: [0, -8] }).addTo(cm.layer);
+    pts.push([c.lat, c.lng]);
+  }
+  if (h && hasCoords(h)) {
+    L.marker([h.lat, h.lng], { icon: L.divIcon({ className: '', html: `<div style="width:14px;height:14px;background:${cmVar('--ink')};border:2px solid ${cmVar('--paper')};border-radius:3px"></div>`, iconSize: [18, 18] }), keyboard: false })
+      .bindTooltip(esc(h.label || 'Home'), { direction: 'top', offset: [0, -8] }).addTo(cm.layer);
+    pts.push([h.lat, h.lng]);
+  }
+  if (!cm.fitted && pts.length) { cm.fitted = true; pts.length === 1 ? cm.map.setView(pts[0], 12) : cm.map.fitBounds(pts, { padding: [24, 24], maxZoom: 13 }); }
+}
+function cmTiles(L) {
+  const dark = cmDark(); if (cm.tiles && cm.dark === dark) return;
+  if (cm.tiles) cm.tiles.remove();
+  cm.dark = dark;
+  cm.tiles = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, { subdomains: 'abcd', maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>' }).addTo(cm.map);
+}
+function courseMapLifecycle() {
+  const slot = document.getElementById('cmMap');
+  if (!slot) return;
+  if (cm.el) { slot.replaceWith(cm.el); cm.map.invalidateSize(); cmTiles(window.L); cmPins(window.L); return; }
+  cmLoad().then(L => {
+    const now = document.getElementById('cmMap'); if (!now || cm.el) return courseMapLifecycle();
+    cm.el = now;
+    cm.map = L.map(now, { zoomControl: true, attributionControl: true }).setView([-33.87, 151.1], 10);
+    // A pin's button: Leaflet keeps clicks inside a popup to itself, so the page's own handler doesn't see them.
+    cm.map.on('popupopen', e => { const b = e.popup.getElement().querySelector('[data-go]'); if (b) b.onclick = () => { const [tab, sub] = parseGo(b.dataset.go); go(tab, sub); }; });
+    cmTiles(L); cmPins(L);
+  }, () => { const now = document.getElementById('cmMap'); if (now) now.innerHTML = `<div class="empty"><p>The map couldn't be loaded. Check the connection and open it again.</p></div>`; });
+}
+
 // Tee times (see vTeeTimes).
-ACTIONS.ttDay = d => go('courses', { view: 'teetimes', date: d.v });
+ACTIONS.ttDay = d => ttSetDay(d.v);
 ACTIONS.ttPref = d => { ttSetPref(d.k, d.v === '' ? null : Number(d.v)); render(); };
 ACTIONS.ttRefresh = () => { const date = ttDate(); for (const k of Object.keys(tt.res)) if (k.endsWith('|' + date) && !tt.res[k].loading) delete tt.res[k]; tt.fresh = true; render(); tt.fresh = false; };
 

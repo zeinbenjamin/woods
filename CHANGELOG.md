@@ -1,3 +1,9 @@
+## 2.44.0 — 2026-10-30
+- Courses: the sort buttons, a new map button and "Distances from…" now share one row, with your location on the right. On a phone the location link drops to its own line, still on the right.
+- View on a map: every course with a location is a pin, green for public, grey for members, red for closed, with your home as a square. Tap a pin for the course's name, distance and a link to its page. The map follows light or dark mode, and courses with no location are counted under it.
+- Find a tee time: after you pick a day, the row of days stays scrolled to it instead of jumping back to the start, and the page no longer jumps to the top.
+- Find a tee time on a computer: clicking *Pick a date* now opens the calendar. Before, it did nothing you could see.
+
 ## 2.43.2 — 2026-10-30
 - *Pick a date* on Find a tee time no longer closes its calendar a second after opening it. The page was redrawing as each course's times came in; it now waits while a date picker or filter is open.
 - Newgreens Chatswood's map no longer shows the old Chatswood course: OpenStreetMap still has the old 18-hole layout, so the map is the course outline only, under its new name, and each hole is drawn from your Mark tee and Mark flag until OpenStreetMap maps the new 12 holes.

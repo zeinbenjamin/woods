@@ -122,6 +122,7 @@ server/teetimes.js  reads a course's public MiClub tee-time pages on request
 web/index.html      the app, one file, ~3,200 lines
 web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
+web/vendor/leaflet/ Leaflet 1.9.4 for Courses on a map (loaded when opened)
 web/course-maps/    built map files, one per course, + index.json (committed)
 course-maps/        map sources: src/<id>.json (card, mapping, origin), osm/<id>.geojson
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
@@ -702,7 +703,15 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   date box and closing the phone's calendar. Background redraws (answers,
   polls) go through `bgRender()`, which waits while `#ttPick` or a filter
   select has focus (`pickerOpen()`, retried every 250 ms); a change to the day
-  already shown (iOS fills in today on opening) is not a new search. Measured in Chromium at 390px,
+  already shown (iOS fills in today on opening) is not a new search.
+  **The day row keeps its place** (2.44.0, he found it jumped back to the
+  start): `render()` keeps `#ttDays`' `scrollLeft` across the rebuild
+  (`ttDaysScroll`), and a day picked (`ttSetDay`, which replaced `go()` there so
+  the page doesn't jump to the top either) brings the pressed chip into view
+  once (`tt.showDay`); other redraws leave the row where he scrolled it. Checked
+  in Chromium at 390px (jsdom has no layout). **On a computer** a click on the
+  invisible date box selected its typing fields and opened nothing, so a click
+  calls `showPicker()` where the browser has it. Measured in Chromium at 390px,
   light and dark: two rows, one size, no sideways scroll.
 - **TeeItUp, read at his decision** (2.43.0, 2026-10-30: "build the GolfNow
   reader anyway, since it's for personal and non-commercial use"; told first
@@ -933,6 +942,31 @@ digit and reads as undated (listed last), never misdated. The test checks ids
 built from a known time; an assertion on a random `uid()` failed the 1.7.0
 publish exactly that 1 time in 50. Unknowns (no coordinates / no date) go last,
 A–Z, and the list says so.
+
+**One row, and the map** (2.44.0, he asked): the sort, *View on a map*
+(`#cmOpen`, a pin icon and "Map" under 480px so it fits beside the sort) and
+the location link (`#homeLink`, `margin-left: auto`) are one `.courseBar`, which
+wraps on a phone with the location on its own line, still on the right.
+**The map** (`vCourseMap`, `courses:view=map`): a pin per course with
+`lat`/`lng`, coloured by `access(c)` (green public, `--ink-3` members, `--flag`
+closed, paper not known), home as a square, the courses with no location
+counted under it (`#cmMissing`); a pin's popup (`cmPopup`) has the name,
+suburb, distance, access tag and *Open course*. Leaflet 1.9.4 is vendored in
+`web/vendor/leaflet/` (BSD-2, its LICENSE beside it) and loaded only when the
+map opens (`cmLoad`); tiles are CARTO's light or dark basemap of OSM data
+(`cmTiles`, following the theme), so opening the map asks
+`basemaps.cartocdn.com` for the tiles of the area shown (nothing of his, and
+nothing else, is sent; the free tier covers personal use). This container
+can't reach CARTO, so the tiles were never seen loading here: the first open on
+the phone is the test. **The map is one element kept across redraws** (`cm.el`,
+put back into the page's `#cmMap` slot by `courseMapLifecycle()` after every
+render, `invalidateSize`), so a poll can't reset where he panned or close a pin;
+pins redraw only when the courses, home or theme change (`cm.key`). Leaflet
+keeps clicks inside a popup to itself, so *Open course* gets its own handler on
+`popupopen`. `ui-coursemap` loads the real Leaflet into jsdom (with a
+`createSVGRect` stub, which jsdom lacks): the row, the pins and colours, home,
+the escaped popup, the same element and zoom after a redraw, a pin opening its
+course, and no button without a placed course.
 
 ## Estimated handicap
 
@@ -1710,7 +1744,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 389 tests, about 45s.
+`npm test` — 394 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1727,7 +1761,7 @@ fixture would let the reading be pinned.
   `/api/version`, the stamped page, and `/api/analyse` against a fake
   Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
   Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
-- `ui-teetimes.test.js` (11) — the search screen against a stand-in MiClub
+- `ui-teetimes.test.js` (12) — the search screen against a stand-in MiClub
   serving Bexley's pages: which courses are asked (near, public, readable),
   a course's rates and time chips linking to the club's timesheet, why a
   course shows nothing and the order, filters working without asking any
@@ -1813,6 +1847,8 @@ fixture would let the reading be pinned.
   video feed with a stand-in observer),
   `ui-import-many` (Import a backup with many files: one question, a stray
   named and skipped, only wrong files refused),
+  `ui-coursemap` (Courses on a map: the one row, pins by who can play, home,
+  the map kept across a redraw, a pin opening its course),
   `ui-theme` (Appearance: System, Light, Dark; the root attribute, the
   stored copy, a setting from another phone),
   `ui-sg` (strokes gained: the table and allowance by hand, a hole adding
