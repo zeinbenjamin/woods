@@ -706,12 +706,16 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   browser (a TinyFish run found no times in the HTML), so the reader asks the
   API the page uses: `GET <TEEITUP_API>/v2/tee-times?date=D&facilityIds=ID`
   with `x-be-alias: <alias>` (`TEEITUP_API` defaults to
-  `https://phx-api-be-east-1b.kenna.io`). **Not yet seen live**: the answer's
-  shape in `parseTeeitup` (a day per facility with `teetimes`, each with
-  `teetime` ISO, `maxPlayers`/`bookedPlayers`, `rates[]` with `name`, `holes`,
-  `greenFeeWalking`, `allowedPlayers`, `backNine`) is the one TeeItUp is known
-  to use, read defensively: times with an offset moved to Sydney's clock, fees
-  of 1000+ taken as cents, spots from `allowedPlayers` else max − booked. An
+  `https://phx-api-be-east-1b.kenna.io`). **Seen live** (2.43.2, his NAS,
+  Georges River for Sun 1 Nov: 31 eighteen-hole times at $45, 23 nine-hole
+  from 2 pm at $32): the answer's shape in `parseTeeitup` (a day per facility
+  with `teetimes`, each with `teetime` ISO, `maxPlayers`, `rates[]` with
+  `name`, `holes`, `greenFeeWalking`, `allowedPlayers`, `backNine`) is right,
+  read defensively: times with an offset moved to Sydney's clock, fees of
+  1000+ taken as cents, spots from `allowedPlayers` else `maxPlayers`, which
+  is the players still bookable, not the group's size (it equalled the spots
+  on every time; 2.43.0 subtracted `bookedPlayers` from it and called it the
+  group's size, `of`, now null); a time with neither is left out. An
   answer that doesn't fit is `unreadable` with `sample` (its first 1500
   characters), and an error status keeps its body in `sample`, so the first
   live search says what to change. `test/teeitup.test.js`'s answer is
@@ -722,7 +726,7 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   Bardwell Valley 16578 (no import: set in the app). Wallacia and Woodville:
   no TeeItUp address found (guessed subdomains don't exist), GolfNow links
   kept. The page's `ttReadable` takes a TeeItUp link with its course id.
-- **Next:** the first live TeeItUp search, and a way to store a course's MiClub id when
+- **Next:** the other TeeItUp courses' first searches, and a way to store a course's MiClub id when
   its link has none (Massey Park's calendar shows nothing publicly).
 
 ## Appearance (2.37.0)
