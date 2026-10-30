@@ -1506,7 +1506,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 361 tests, about 45s.
+`npm test` — 363 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1635,7 +1635,13 @@ fixture would let the reading be pinned.
   replace markers.
 
 `test/harness.js` boots a real server on a free port with seeded
-documents, loads the page as the server serves it into jsdom, and stubs only what jsdom lacks
+documents, and **stops a page in a safe order** (2.39.1's CI run failed in
+`ui-courses-sort` on it): hide the page so the shim stops polling, stop the
+server, let in-flight requests settle for 300 ms while the page still exists,
+then close it. Closing first let a save's answer redraw into a closed page
+from an action's promise, which nothing catches; `housekeeping` holds a save
+open across `stop()` and fails on the old order. It loads the page as the
+server serves it into jsdom, and stubs only what jsdom lacks
 (`<dialog>`, SVG CTM as identity so taps land at exact coordinates,
 object URLs, `TextEncoder`, `Blob.arrayBuffer`). The swing suite adds a
 fake decoder that reproduces the real one's timing: `seeked` fires before

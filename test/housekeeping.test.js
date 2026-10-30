@@ -161,3 +161,31 @@ test('the TrueNAS YAML marks the five values to replace and runs an init', () =>
   assert.match(y, /^\s+init: true$/m);
   assert.match(readFileSync('docker-compose.yml', 'utf8'), /^\s+init: true$/m);
 });
+
+test('stopping a page with a save in flight never redraws into a closed page', async () => {
+  // The harness's own teardown (a CI failure on 2.39.1, ui-courses-sort): a
+  // save answering after the page was closed redrew it from the action's own
+  // promise, which nothing catches, and the error landed after the test had
+  // ended. Hold a save open, stop, then let it answer.
+  let release, holding = false, held = false;
+  const gate = new Promise(r => { release = r; });
+  const app = await startApp({ seed: { clubs: [club('7i', 'iron')], settings: { theme: 'system' } }, intercept: async (url, o) => {
+    if (!holding || held || !/\/api\/settings\//.test(url) || !o || o.method !== 'PUT') return null;
+    held = true; await gate;
+    return new Response(o.body, { headers: { 'content-type': 'application/json' } });
+  } });
+  await app.waitFor(() => app.E('!!S.settings'), { what: 'settings loaded' });
+  holding = true;
+  app.E(`ACTIONS.setTheme({ v: 'dark' })`);   // not awaited, as a tap isn't
+  await app.waitFor(() => held, { what: 'a save held open' });
+  const errors = [];
+  const onErr = e => errors.push(String(e && e.message || e));
+  process.on('unhandledRejection', onErr); process.on('uncaughtException', onErr);
+  try {
+    const stopping = app.stop();
+    release();
+    await stopping;
+    await sleep(300);
+    assert.deepEqual(errors, [], 'nothing thrown after the page was stopped');
+  } finally { process.off('unhandledRejection', onErr); process.off('uncaughtException', onErr); }
+});

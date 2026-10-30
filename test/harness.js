@@ -211,10 +211,19 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
     },
     act(name, data = {}) { return win.eval(`ACTIONS[${JSON.stringify(name)}](${JSON.stringify(data)})`); },
     waitFor,
+    // Closing the page while a poll is in flight let its answer redraw into a
+    // closed page after the test had ended (a CI failure in ui-courses-sort on
+    // 2.39.1). So: hide the page first (the shim never polls a hidden page),
+    // stop the server, let what was in flight settle while the page is still
+    // there, then close it. Awaiting it is optional; the order holds either way.
     stop() {
-      try { win.close(); } catch {}
+      try { Object.defineProperty(win.document, 'hidden', { configurable: true, get: () => true }); } catch {}
       proc.kill();
-      rmSync(DATA, { recursive: true, force: true });
+      return new Promise(res => setTimeout(() => {
+        try { win.close(); } catch {}
+        rmSync(DATA, { recursive: true, force: true });
+        res();
+      }, 300));
     },
   };
   return app;
