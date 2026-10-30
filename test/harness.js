@@ -110,8 +110,8 @@ export async function startApp({ seed = {}, pollMs = 150, intercept, query = '',
   const served = await (await fetch(`${base}/`)).text();
   let html = served;
   for (const f of ['platform.js', 'holemap.js']) {
-    const tag = `<script src="${f}"></script>`;
-    if (!html.includes(tag)) throw new Error(`harness: ${f} script tag not found in the served page`);
+    const tag = new RegExp(`<script src="${f.replace('.', '\\.')}\\?v=[^"]+"></script>`);
+    if (!tag.test(html)) throw new Error(`harness: ${f} script tag (with its build) not found in the served page`);
     html = html.replace(tag, () => `<script>${readFileSync('web/' + f, 'utf8')}</script>`);
   }
 

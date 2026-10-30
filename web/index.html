@@ -368,8 +368,8 @@ section.sec + details.fold { margin-top: 24px; }
 <dialog class="sheet" id="sheet"><div class="inner" id="sheetInner"></div></dialog>
 <dialog class="sheet" id="confirmDlg"><div class="inner"><p id="confirmMsg" style="margin:8px 0 0"></p><div class="sheet-actions"><button id="confirmNo">Cancel</button><button class="danger-solid" id="confirmYes">Delete</button></div></div></dialog>
 <div class="toast" id="toast"></div>
-<script src="platform.js"></script>
-<script src="holemap.js"></script>
+<script src="platform.js?v=__APP_BUILD__"></script>
+<script src="holemap.js?v=__APP_BUILD__"></script>
 <script>
 /* ============================================================
    Carry — range and round tracker
@@ -783,7 +783,12 @@ function render() {
   // Every save redraws the view; panels he opened stay open (matched by id).
   const open = new Set([...document.querySelectorAll('#view details[id][open]')].map(d => d.id));
   const days = document.getElementById('ttDays'), daysX = days ? days.scrollLeft : 0;
-  $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + (views[S.tab] || vOverview)();
+  // A view that throws says so on the page (2.47.1): before, the tab lit up and the last
+  // page (or nothing) stayed, which read as the app hanging.
+  let body;
+  try { body = (views[S.tab] || vOverview)(); }
+  catch (e) { console.error(e); body = `<div class="notice warn" id="viewError">This page couldn't be drawn: ${esc((e && e.message) || String(e))}. Reload the app; if it keeps happening, send a screenshot of this.</div>`; }
+  $('#view').innerHTML = (S.dbState === 'none' ? `<div class="notice warn">This view can't reach storage, so nothing here can be saved. Open the page from claude.ai to log sessions.</div>` : '') + body;
   for (const id of open) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
   ttDaysScroll(daysX);
   if (resumed && !resumed.done && S.sessions.length + S.clubs.length) {
@@ -1334,7 +1339,7 @@ function vCourses() {
   const sort = courseSort(), list = sortedCourses(sort);
   // One row (2.44.0): the sort, the map, and on the right where distances are from.
   h += `<div class="courseBar">${S.courses.length > 1 ? `<div class="seg" id="courseSort">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>` : ''}${S.courses.some(hasCoords) ? `<button data-go="courses:view=map" id="cmOpen" aria-label="View on a map"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span class="long">View on a map</span><span class="short">Map</span></button>` : ''}<button class="quiet" id="homeLink" data-act="setHome">${home() ? `Distances from ${esc(home().label || 'your location')} — change` : 'Set your location to see distances'}</button></div>`;
-  if (window.HoleMap) HoleMap.icons();   // starts icons.json; its arrival redraws through mapArrived
+  if (window.HoleMap && HoleMap.icons) HoleMap.icons();   // starts icons.json; its arrival redraws through mapArrived
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
     const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.filter(isSolo).map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
@@ -1346,7 +1351,8 @@ function vCourses() {
 // whole course from its map file, north up, only when the map is linked, so an
 // unlinked course doesn't show a map it isn't using; otherwise its initials in
 // the same tile. Built into icons.json by the map build; nothing stored here.
-const courseIcon = c => (window.HoleMap ? HoleMap.iconTile(c.map && c.map.id ? c.map.id : null, c.name, { size: 56 }) : '');
+// An older holemap.js (a cached copy) has no icons: the list then draws without them.
+const courseIcon = c => (window.HoleMap && HoleMap.iconTile ? HoleMap.iconTile(c.map && c.map.id ? c.map.id : null, c.name, { size: 56 }) : '');
 // Sorting the course list. Default: closest first when his location is set
 // (and at least one course has coordinates), otherwise most recently added.
 // A choice he makes is kept in settings.

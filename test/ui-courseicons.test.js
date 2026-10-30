@@ -32,3 +32,18 @@ test('a linked course shows its map\'s picture, the rest their initials, left of
   assert.equal(none.textContent, 'NP', 'initials, golf words left out');
   assert.ok(row('Ghost Park').querySelector('svg.hm-icon-none'), 'a map id with no picture falls back to initials');
 });
+
+test('an older holemap.js without icons still draws the list; a page that fails says why', () => {
+  // 2.47.1: with a cached holemap.js from before icons, HoleMap.icons() threw, and the Courses tab
+  // kept showing the last page (or nothing), which looked like the app hanging.
+  const keep = app.E('({ icons: HoleMap.icons, iconTile: HoleMap.iconTile })');
+  app.E('delete HoleMap.icons; delete HoleMap.iconTile');
+  try {
+    app.go('overview'); app.go('courses');
+    assert.ok(row('Bexley Golf Club'), 'the list is drawn');
+    assert.equal(app.$$('#view .item svg.hm-icon').length, 0, 'without pictures');
+    app.E("window.__v = vCourses; vCourses = () => { throw new Error('test failure') }");
+    app.go('courses');
+    assert.match(app.text('#viewError'), /This page couldn't be drawn: test failure/);
+  } finally { app.E('vCourses = window.__v'); app.win.HoleMap.icons = keep.icons; app.win.HoleMap.iconTile = keep.iconTile; app.go('courses'); }
+});

@@ -1,3 +1,7 @@
+## 2.47.1 — 2026-10-30
+- Courses: the tab could stay stuck on the page you were on (or blank) instead of showing the list. A cached copy of an older map file was being used with the new app; each update now loads its own files fresh, and the list still draws if a file is out of date.
+- If a page ever fails to draw, it now says so on screen with the reason, instead of looking frozen.
+
 ## 2.47.0 — 2026-10-30
 - Courses: each course in the list now has a small picture of the whole course at the left, drawn from its map: the outline, fairways, water and greens, north up. A course without a linked map shows its initials in the same tile.
 

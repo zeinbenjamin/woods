@@ -532,6 +532,17 @@ Each of these cost real debugging time. Don't reintroduce them.
   export); then `applyImport` runs per file with "File i of n" progress, and a
   file that fails part-way is named and the sheet stays open. `ui-import-many`
   covers three courses and a stray, and only wrong files refused.
+- **The page's scripts carry the build** (2.47.1, the Courses tab stuck on the
+  last page, or blank, on his desktop after 2.47.0): with a cached `holemap.js`
+  from before 2.46.0, `HoleMap.icons()` threw inside `vCourses`, and `render()`
+  had lit the tab before the throw, so the old page stayed and it read as a
+  hang. Most likely a cache along the way (Cloudflare's or the browser's) gave
+  an old copy despite `no-cache`; not confirmed. Now `index.html` asks for
+  `platform.js?v=__APP_BUILD__` and `holemap.js?v=__APP_BUILD__`, and `sendIndex`
+  fills `<version>-<commit>`, so each build's scripts have their own address;
+  the list guards for an older HoleMap (no pictures, no throw); and `render()`
+  catches a view that throws and shows `#viewError` with the message. The
+  harness inlines the tags by that pattern and fails if they lose the build.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -1791,7 +1802,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 401 tests, about 45s.
+`npm test` — 402 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,

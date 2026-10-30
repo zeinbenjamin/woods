@@ -202,7 +202,10 @@ app.get('/healthz', (_req, res) => res.json({ ok: true, version: VERSION, commit
 // placeholders reach the device unfilled.
 const INDEX_HTML = readFileSync(join(here, '..', 'web', 'index.html'), 'utf8')
   .replace('content="__APP_VERSION__"', `content="${VERSION}"`)
-  .replace('content="__APP_COMMIT__"', `content="${COMMIT}"`);
+  .replace('content="__APP_COMMIT__"', `content="${COMMIT}"`)
+  // The page's own scripts under a name per build, so no cache along the way (the
+  // browser's, Cloudflare's) can hand an old holemap.js to a new page (2.47.1).
+  .replaceAll('__APP_BUILD__', encodeURIComponent(`${VERSION}-${COMMIT}`));
 // The app shell (page, shim, hole maps, manifest) is revalidated on every load, or a
 // phone keeps the old app after a redeploy. no-cache still allows a cheap
 // 304 via the ETag. The shim must never lag the page it was written for.
