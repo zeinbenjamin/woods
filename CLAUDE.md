@@ -1606,7 +1606,7 @@ themes the ball data contradicted as often as agreed. All from the readings'
 wording, derived on every draw, nothing stored; the cross-reading stays the
 real read across them. The timeline's rows open the swing's card
 (`reelCard`), as the feed's caption does, with one link on to the session.
-*▶ Watch n* (`#reelsOpen`, 2.50.0; was *Watch: n videos*) sits beside the heading in a `.spread`
+*▶ Watch* (`#reelsOpen`, 2.50.0; was *Watch: n videos*; the count stays in its `aria-label`) sits beside the heading in a `.spread`
 (2.45.0, he asked), as Range's, Rounds' and Courses' buttons do.
 
 **A reading across the readings** (2.24.0, he asked for the cross-reading

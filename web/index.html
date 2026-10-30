@@ -3686,7 +3686,7 @@ function vSwings() {
   const sws = swingHistory();
   const vids = sws.filter(sw => sw.video).length;
   // The feed's button sits beside the heading, as Range's, Rounds' and Courses' do (2.45.0, he asked).
-  let h = vids ? `<div class="spread"><h1>Swings</h1><button class="primary" id="reelsOpen" data-go="swings:view=reels" aria-label="Watch ${plural(vids, 'video')}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Watch ${vids}</button></div>` : `<h1>Swings</h1>`;
+  let h = vids ? `<div class="spread"><h1>Swings</h1><button class="primary" id="reelsOpen" data-go="swings:view=reels" aria-label="Watch ${plural(vids, 'video')}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Watch</button></div>` : `<h1>Swings</h1>`;
   if (!sws.length) return h + `<div class="empty"><p>No swings on file yet. Add a video to a range session or a round and it appears here.</p></div>`;
   const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length;

@@ -155,7 +155,7 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   await app.api.put('sessions', 'r_sep', { ...r, swings: [{ id: 'sw_d', view: 'face', club: '5W', frames: [{ asset: f1, t: 0.05 }], video: vid, addedOn: '2026-09-14' }] });
   await app.waitFor(() => app.E(`reelSwings('').length`) === 3, { what: 'videos' });
   app.go('swings');
-  assert.equal(app.text('#view [data-go="swings:view=reels"]'), 'Watch 3');
+  assert.equal(app.text('#view [data-go="swings:view=reels"]'), 'Watch', 'just the word; a number read as videos');
   assert.equal(app.$('#reelsOpen').getAttribute('aria-label'), 'Watch 3 videos');
   // 2.45.0: beside the heading, top right, as on Range, Rounds and Courses.
   assert.equal(app.$('#reelsOpen').parentElement, app.$('#view h1').parentElement, 'on the heading\'s row');

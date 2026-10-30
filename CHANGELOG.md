@@ -2,7 +2,7 @@
 - Courses: the top is two rows now. *Find a tee time* is the one button beside the heading, with *Add course* as a small + next to it. The sort says *Newest* instead of *Recently added*, the map is a pin icon, and *From Home ›* sits at the end of the same row.
 - Rounds: *Play* starts a round with GPS (it was *Start round*). *Add past round* replaces *New round* and the screenshots link: it asks whether to type the round in or read it from screenshots.
 - The penalty link on Rounds is shorter: *Penalty report · 14 strokes*.
-- Swings: one short line under the heading (how many swings, the months they span, how many are read), and *▶ Watch 42* as the button. The note that readings are interpretations moved to the foot of the page.
+- Swings: one short line under the heading (how many swings, the months they span, how many are read), and *▶ Watch* as the button. The note that readings are interpretations moved to the foot of the page.
 - Range sessions name the speed column *Club speed*, which is what Carry reads and stores (never ball speed).
 
 ## 2.49.1 — 2026-10-30
