@@ -28,6 +28,9 @@
 //                                file; holemap.js lends them to 16)
 //   holes: { "1": { tees: [osm id | {id, half: "nearest"}], green: osm id, via?: fairway id } }
 //                                for courses OSM has no hole lines for
+//   shapes: false                the boundary only: OSM's shapes are another layout's
+//                                (Chatswood, rebuilt as Newgreens), so none is drawn
+//                                or sets a lie until OSM maps the course as it is
 //   holes: "marks"               no hole lines anywhere: only the boundary (and
 //                                any shapes), so the course has a fixed origin;
 //                                its holes are drawn in the app from GPS marks.
@@ -166,7 +169,7 @@ function build(id) {
   const treePts = [], pins = [];
   for (const f of geo) {
     const p = f.properties, fid = idOf(f), g = f.geometry;
-    if (fid === src.osm.course) continue;
+    if (fid === src.osm.course || src.shapes === false) continue;
     // A tee mapped as a point (no box drawn): kept as a point, so the card
     // check can measure to it. It never sets a lie: it has no shape.
     if (p.golf === 'tee' && g.type === 'Point') { if (src.holes !== 'marks') push({ k: 'teept', c: P(g.coordinates) }, fid); continue; }

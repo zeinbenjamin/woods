@@ -1210,6 +1210,20 @@ scorecard sets every length.
   tagged like a road; Riverlands (closed), Dural and Helensburgh (ranges),
   Pittwater Golf Centre, two unnamed outlines, "Stirling Drive". The area
   sweep found no other course. **The queue left:** a Melbourne tiering.
+  **Chatswood** (2.43.2): rebuilt by the club as Newgreens Chatswood, 12
+  holes, reopened May 2026 (the Carry chat's `imports/chatswood.json`, par
+  44, 2,871 m). OSM still has the old 18-hole layout (pars differ on 4, 8,
+  11), so the source is `holes: "marks"` with **`shapes: false`**: the
+  outline and origin only, no old greens or bunkers setting lies. Rebuild
+  from OSM when it has the new holes. **Pairing from the card** (asked
+  2026-10-30, to do course by course as he plays them, not as a sweep):
+  where OSM has greens and tees but no hole lines, a hole can be paired with
+  its tee box and green from the routing and the card's lengths and added
+  as a hand mapping (`holes: {...}` or `addHoles`), shown on a contact
+  sheet and confirmed by him before it is committed, as The Coast's 4 and
+  14 were. Worth it at Eastlake, Ryde Parramatta, Cabramatta, North Ryde,
+  Wakehurst, Warringah, Macquarie Links (18 unnumbered lines), Leonay,
+  Marrickville, Roseville; Manly's 14 needs only the card's length.
 
 ## The course batch (2026-10-28)
 
