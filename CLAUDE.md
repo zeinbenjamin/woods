@@ -122,6 +122,7 @@ server/teetimes.js  reads a course's public MiClub tee-time pages on request
 web/index.html      the app, one file, ~3,200 lines
 web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
+web/vendor/leaflet/ Leaflet 1.9.4 for Courses on a map (loaded when opened)
 web/course-maps/    built map files, one per course, + index.json (committed)
 course-maps/        map sources: src/<id>.json (card, mapping, origin), osm/<id>.geojson
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
@@ -934,6 +935,31 @@ built from a known time; an assertion on a random `uid()` failed the 1.7.0
 publish exactly that 1 time in 50. Unknowns (no coordinates / no date) go last,
 A–Z, and the list says so.
 
+**One row, and the map** (2.44.0, he asked): the sort, *View on a map*
+(`#cmOpen`, a pin icon and "Map" under 480px so it fits beside the sort) and
+the location link (`#homeLink`, `margin-left: auto`) are one `.courseBar`, which
+wraps on a phone with the location on its own line, still on the right.
+**The map** (`vCourseMap`, `courses:view=map`): a pin per course with
+`lat`/`lng`, coloured by `access(c)` (green public, `--ink-3` members, `--flag`
+closed, paper not known), home as a square, the courses with no location
+counted under it (`#cmMissing`); a pin's popup (`cmPopup`) has the name,
+suburb, distance, access tag and *Open course*. Leaflet 1.9.4 is vendored in
+`web/vendor/leaflet/` (BSD-2, its LICENSE beside it) and loaded only when the
+map opens (`cmLoad`); tiles are CARTO's light or dark basemap of OSM data
+(`cmTiles`, following the theme), so opening the map asks
+`basemaps.cartocdn.com` for the tiles of the area shown (nothing of his, and
+nothing else, is sent; the free tier covers personal use). This container
+can't reach CARTO, so the tiles were never seen loading here: the first open on
+the phone is the test. **The map is one element kept across redraws** (`cm.el`,
+put back into the page's `#cmMap` slot by `courseMapLifecycle()` after every
+render, `invalidateSize`), so a poll can't reset where he panned or close a pin;
+pins redraw only when the courses, home or theme change (`cm.key`). Leaflet
+keeps clicks inside a popup to itself, so *Open course* gets its own handler on
+`popupopen`. `ui-coursemap` loads the real Leaflet into jsdom (with a
+`createSVGRect` stub, which jsdom lacks): the row, the pins and colours, home,
+the escaped popup, the same element and zoom after a redraw, a pin opening its
+course, and no button without a placed course.
+
 ## Estimated handicap
 
 `handicap()` (memoised, never stored) replays every round in date order under
@@ -1710,7 +1736,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 389 tests, about 45s.
+`npm test` — 393 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1813,6 +1839,8 @@ fixture would let the reading be pinned.
   video feed with a stand-in observer),
   `ui-import-many` (Import a backup with many files: one question, a stray
   named and skipped, only wrong files refused),
+  `ui-coursemap` (Courses on a map: the one row, pins by who can play, home,
+  the map kept across a redraw, a pin opening its course),
   `ui-theme` (Appearance: System, Light, Dark; the root attribute, the
   stored copy, a setting from another phone),
   `ui-sg` (strokes gained: the table and allowance by hand, a hole adding
