@@ -29,9 +29,18 @@ test('the sort, the map and where distances are from share one row, the location
   app.go('courses');
   const bar = app.$('.courseBar');
   assert.deepEqual([...bar.children].map(e => e.id), ['courseSort', 'cmOpen', 'homeLink']);
-  assert.match(app.text('#homeLink'), /Distances from Home — change/);
+  assert.match(app.text('#homeLink'), /^From Home ›$/);
   assert.match(app.win.document.querySelector('style').textContent, /\.courseBar #homeLink \{ margin-left: auto;/, 'pushed to the right');
   assert.equal(app.$('#cmOpen').getAttribute('aria-label'), 'View on a map');
+  // 2.50.0, he found the top crowded on his phone: the map is an icon, the sort says Newest,
+  // and the heading has one button (Find a tee time) with Add course as an icon beside it.
+  assert.equal(app.text('#cmOpen'), '', 'an icon, no words');
+  assert.deepEqual(app.$$('#courseSort button').map(b => b.textContent), ['Closest', 'Newest', 'A–Z']);
+  const head = app.$('#view h1').parentElement;
+  assert.deepEqual(app.$$('button', head).map(b => b.id), ['addCourse', 'ttOpen']);
+  assert.equal(app.$('#addCourse').getAttribute('aria-label'), 'Add course');
+  assert.equal(app.$('#addCourse').dataset.act, 'newCourse');
+  assert.ok(app.$('#ttOpen').classList.contains('primary'));
 });
 
 test('the map: a pin per placed course coloured by who can play, home, and the courses it can\'t place', async () => {

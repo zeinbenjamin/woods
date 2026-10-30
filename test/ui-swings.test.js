@@ -27,7 +27,10 @@ after(() => app && app.stop());
 
 test('the timeline lists every swing newest first, flagged range or course, with the date and the fix', () => {
   app.go('swings');
-  assert.match(app.text('#swingBasis'), /4 swings from 3 sessions, 3 Aug 2026 to 19 Oct 2026; 3 read/);
+  // 2.50.0: one short line; the caveat at the foot of the page.
+  assert.equal(app.text('#swingBasis'), '4 swings · Aug 2026 – Oct 2026 · 3 read');
+  assert.match(app.text('#swingCaveat'), /Readings are interpretations, not measurements/);
+  assert.equal(app.$('#view').lastElementChild, app.$('#swingCaveat'));
   const rows = app.$$('#swingTimeline .swrow');
   assert.equal(rows.length, 4);
   assert.deepEqual(rows.map(r => r.querySelector('.t').textContent.replace(/\s+/g, ' ').trim()), ['19 Oct 2026 range 7i Down the line', '19 Oct 2026 range 7i Face on', '14 Sept 2026 course 5W Face on', '3 Aug 2026 range 7i Down the line']);
@@ -152,7 +155,8 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   await app.api.put('sessions', 'r_sep', { ...r, swings: [{ id: 'sw_d', view: 'face', club: '5W', frames: [{ asset: f1, t: 0.05 }], video: vid, addedOn: '2026-09-14' }] });
   await app.waitFor(() => app.E(`reelSwings('').length`) === 3, { what: 'videos' });
   app.go('swings');
-  assert.match(app.text('#view [data-go="swings:view=reels"]'), /Watch: 3 videos/);
+  assert.equal(app.text('#view [data-go="swings:view=reels"]'), 'Watch', 'just the word; a number read as videos');
+  assert.equal(app.$('#reelsOpen').getAttribute('aria-label'), 'Watch 3 videos');
   // 2.45.0: beside the heading, top right, as on Range, Rounds and Courses.
   assert.equal(app.$('#reelsOpen').parentElement, app.$('#view h1').parentElement, 'on the heading\'s row');
   assert.ok(app.$('#reelsOpen').parentElement.classList.contains('spread'));

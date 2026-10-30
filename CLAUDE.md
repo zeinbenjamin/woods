@@ -666,7 +666,8 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   audit's link was `liverpool.miclub.com.au`, which doesn't resolve; the club
   is Oak Point (merged with Kogarah) and books on `oakpoint.miclub.com.au`
   (3000000, seen in search results), so `imports/liverpool.json` carries that.
-  *Find a tee time* moved beside *Add course* on the heading's row.
+  *Find a tee time* moved beside *Add course* on the heading's row (and is the heading's one
+  button since 2.50.0, *Add course* an icon beside it).
   **TeeNet is no shortcut** (checked 2026-10-30, he asked): MiClub's own
   listing (`clubshare.miclub.com.au/teenet`) shows only clubs that opted in,
   and its full list, served with the page, has three: Huntingdale and
@@ -786,6 +787,23 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 `ACTIONS.setTheme` in Settings' *Appearance* section (`#appearance`, after
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
+
+## Page headings (2.50.0)
+
+He found the tops of Courses, Rounds and Swings crowded on his phone and the
+Swings intro wordy. The rule since: **a heading carries one primary button**,
+with anything rarer as an icon (`.iconBtn`, 36px, `aria-label` and `title`) or
+folded into a sheet, and at most one row under it before the list.
+- Courses: `#addCourse` (+ icon, `newCourse`) and `#ttOpen` (primary); the
+  `.courseBar` is the sort (*Closest / Newest / A–Z*), the map pin and
+  `#homeLink` (*From Home ›*, or *Set location ›*), one row at 390px.
+- Rounds: `#addPastRound` (`ACTIONS.addPastRound`, a sheet of two `.choice`
+  buttons: *Type it in* → `newRound`, *From screenshots* → `roundsFromImages`)
+  and `#playOpen` (*Play*, `startPlay`). The penalty link only when there are
+  penalties.
+- Swings: `#swingBasis` is `n swings · Mon YYYY – Mon YYYY · all read`
+  (`monthLabel`), the caveat is `#swingCaveat`, the page's last element.
+Checked in Chromium at 390px, light and dark: one row each, no sideways scroll.
 
 ## The Overview
 
@@ -964,7 +982,7 @@ out and counted, never treated as clean.
 ## Courses list order
 
 `courseSort()` / `sortedCourses()`: Closest (straight-line km from `home`),
-Recently added, A–Z; the choice is `settings.courseSort`. Default is Closest
+Recently added (labelled *Newest* since 2.50.0), A–Z; the choice is `settings.courseSort`. Default is Closest
 when his location is set and a course has coordinates, else Recently added.
 "When added" (`addedAt`) is `course.created`, stamped on new courses, or the
 time `uid()` put in an app-made id — only if the id also contains a digit,
@@ -976,7 +994,7 @@ publish exactly that 1 time in 50. Unknowns (no coordinates / no date) go last,
 A–Z, and the list says so.
 
 **One row, and the map** (2.44.0, he asked): the sort, *View on a map*
-(`#cmOpen`, a pin icon and "Map" under 480px so it fits beside the sort) and
+(`#cmOpen`, a pin icon; just the icon since 2.50.0) and
 the location link (`#homeLink`, `margin-left: auto`) are one `.courseBar`, which
 wraps on a phone with the location on its own line, still on the right.
 **The map** (`vCourseMap`, `courses:view=map`): a pin per course with
@@ -1443,7 +1461,7 @@ round there has moved.
 ## Play mode (2.1.0)
 
 Asked for 2026-10-19 ("built with GPS from the start"): logging during the
-round instead of afterwards from 18Birdies. Rounds → *Start round*
+round instead of afterwards from 18Birdies. Rounds → *Play* (*Start round* before 2.50.0)
 (`startPlay`), or *Play: hole n* on today's round page. The view is
 `vPlay` under `rounds` with `sub.play`; the hole logger's tap, lie, club,
 putt and penalty handlers run unchanged, because the sub still has `hole`.
@@ -1514,7 +1532,8 @@ screens: date (DD/MM/YYYY), club and course name, course par, tee (sometimes
 with its length), a score per hole with each nine's total, gross/net, and other
 players below (only his own scores are on the summary). No per-hole par, putts
 or fairways there; those are on its full scorecard. So: Rounds → *Add past rounds
-from screenshots* (`#roundsFromImages`, `ACTIONS.roundsFromImages`), built like
+from screenshots* (`#roundsFromImages`, `ACTIONS.roundsFromImages`; since 2.50.0 a choice
+in the *Add past round* sheet, `#addPastRound`), built like
 *Range data from screenshots*, up to `ROUND_IMAGES_MAX` (60).
 
 - **One reading per screenshot** (`readRoundImages`, `ROUND_READ_PARALLEL` 3 at a
@@ -1587,7 +1606,7 @@ themes the ball data contradicted as often as agreed. All from the readings'
 wording, derived on every draw, nothing stored; the cross-reading stays the
 real read across them. The timeline's rows open the swing's card
 (`reelCard`), as the feed's caption does, with one link on to the session.
-*Watch: n videos* (`#reelsOpen`) sits beside the heading in a `.spread`
+*▶ Watch* (`#reelsOpen`, 2.50.0; was *Watch: n videos*; the count stays in its `aria-label`) sits beside the heading in a `.spread`
 (2.45.0, he asked), as Range's, Rounds' and Courses' buttons do.
 
 **A reading across the readings** (2.24.0, he asked for the cross-reading
@@ -1883,7 +1902,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 408 tests, about 45s.
+`npm test` — 409 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
