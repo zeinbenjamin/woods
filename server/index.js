@@ -11,6 +11,7 @@ import { db, listDocs, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, mergeCou
   DATA_DIR, DB_FILE, BACKUP_BEFORE_2, ownerEmail, ownerCounts, ownerLastWrite, ownerAssets, assetTotals } from './db.js';
 import { requireUser, requireMonitor, authMode, monitorConfigured } from './auth.js';
 import { analyse, parseJson } from './anthropic.js';
+import { teeTimes, readFilters } from './teetimes.js';
 import { VERSION, COMMIT, CHANGELOG } from './version.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -131,6 +132,19 @@ app.get('/_blob/:id', signedIn, (req, res) => {
   });
   if (!inline) res.set('Content-Disposition', `attachment; filename="${file}"`);
   res.sendFile(file, { root: ASSET_DIR, dotfiles: 'deny', acceptRanges: true, cacheControl: false });
+});
+
+/* ---------- tee times ----------
+   What a course's own booking site shows as free on a day (server/teetimes.js).
+   Before the document routes: /api/:collection/:id would take it otherwise.
+   Read-only: nothing is booked, stored or sent but the date and the rate. */
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+app.get('/api/teetimes/:courseId', async (req, res) => {
+  const date = String(req.query.date || '');
+  if (!DAY.test(date) || Number.isNaN(Date.parse(date))) return res.status(400).json({ error: 'bad_date', message: 'date must be YYYY-MM-DD' });
+  const course = getDoc('courses', req.user, req.params.courseId);
+  if (!course) return res.status(404).json({ error: 'not found' });
+  res.set('Cache-Control', 'no-store').json({ course: course.id, ...await teeTimes(course, date, readFilters(req.query)) });
 });
 
 /* ---------- documents ---------- */
