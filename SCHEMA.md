@@ -351,6 +351,10 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
                   "j": [[0.512, 0.231, 0.98] /* × 33, MediaPipe's order: x, y as 0..1 of the frame, visibility */] } ]
   },                                  // j: null where no body was found. A measurement of each frame, like the frames; every measure is derived on each draw.
                                       // Matched to `frames` by asset: a frame removed later drops out. Import remaps the assets.
+  "shot": { "hole": 7, "i": 0 },      // 2.56.0, optional: the shot this swing hit. On a round, the hole and the shot's index on it
+                                      // (follows its shot when an earlier one is deleted; removed with it). At the range,
+                                      // { "block": "b_…", "i": 2, "carry": 164.8, "total": 178.2 }: found by carry and total if the block is
+                                      // re-pasted. A reference only: what the shot did is read from the shot on every draw.
   "video": "<asset id>|null",        // null when over the 60 MB cap (20 before 2.25.0)
   "analysis": { /* free-form; see keys below */ },
   "analysedOn": "2026-09-24",

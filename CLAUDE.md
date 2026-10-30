@@ -790,6 +790,41 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## This swing's own shot (2.56.0)
+
+He asked (2026-10-31, after asking whether it was worth it: the main value is a reading
+checked against that very ball, not only the club's averages): `swing.shot` (SCHEMA.md)
+ties a swing to the shot it hit, a reference only. Round: `{hole, i}`; `applyHoleUpdate`
+runs `retagSwings` in the same write, so a tag follows its shot by identity when an
+earlier one is deleted (`indexOf` of the old shot object in the new list), stays when
+shots are edited or moved in place, and is removed with its shot (`removeShot`, *Undo*,
+*Clear hole*). Range: `{block, i, carry, total}`; `swingShot` takes shot `i` if its
+carry and total still match (`sameShot`), else the one shot in the block that does, else
+`{gone: true}`, which the card says ("no longer in this session"), never a guess. A
+re-paste keeps the tag; nothing is rewritten.
+- **What it says** (`swingShotText`, derived on each draw): course, the hole, shot and its
+  kind (`SHOT_KIND`, the shot records' rule: a par 3's tee shot is an approach), club,
+  from, how far it went (`shotLen`), where it finished, metres left, penalty; range, carry,
+  total, side, face and path, smash, strike class (`classify` in the same pool as the block
+  page). A course shot logged with another club than the swing says so (`shotClubNote`).
+- **Where:** the swing card (`swingShotSection`, `#ws_<id>`: *Which shot was this? →*
+  only where the session has shots; *Change*); the sheet (`tagSwingShot`: the swing's club
+  first in `#tagShots`, the rest folded in `#tagOther`, *Not tied to a shot*); the reading's
+  prompt (`swingShotContext`, "THIS SWING'S OWN SHOT", with the club's range stock total
+  beside a course shot, and `ball_data` judged against it first); *filmed* on the hole's
+  shot list and the block's shot table (`filmedShots`); *Filmed* (`#goalFilmed`) on a
+  finding's page for swings whose shot is in its `recs` (tee misses only, penalties by the
+  shot's tick) or, for a strike finding, a tagged low runner or top of that club
+  (`goalSwings`); the timeline row and the feed's card (`#reelShot`); *(course)* on pose
+  trend points.
+- Shots carry no time, so nothing is matched automatically; picking from the club's
+  shots is the way. Two swings can share a shot (face-on and down the line together).
+- `ui-swingshot` (6): tagging a course and a range swing, the text against the app's own
+  geometry and his 5W numbers, the prompt, a tag following a deleted shot and going with
+  its own, a re-pasted block, untying, the finding's page, the timeline and card; 16
+  mutations caught (one survived at first: no par 3 in the round; added). Checked in
+  Chromium at 390px, light and dark: no sideways scroll.
+
 ## The body, measured (2.55.0)
 
 He asked (2026-10-31, after the mockup at https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK)
@@ -2053,7 +2088,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 458 tests, about 45s.
+`npm test` — 464 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2105,6 +2140,8 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags
+  following their shot, the prompt, filmed marks, the finding's page.
 - `ui-pose.test.js` (12) — the body, measured: a stand-in detector with hand-made
   joints, face-on and down-the-line measures by hand, mirrored clips, unsure joints,
   trends, the reading's prompt, a model that can't run, the import.

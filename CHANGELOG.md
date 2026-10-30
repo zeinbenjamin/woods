@@ -1,3 +1,10 @@
+## 2.56.0 — 2026-10-31
+- A swing can be tied to the shot it hit. On a swing card, *Which shot was this?* lists that round's or session's shots, the swing's club first. Pick one and the card says what that ball did: the hole, the club, how far it went, where it finished. A range shot also shows its carry, total, side, face, path, smash and strike.
+- A swing reading is told what its own shot did, and judges the swing against that ball first and the club's averages second.
+- The shot shows as *filmed* in the hole's shot list and in a block's shot table. A filmed shot behind a practice finding (a tee shot into the trees, a low runner) shows under *Filmed* on that finding's page, so you can see what the miss looked like.
+- Delete an earlier shot and the tag moves with its shot. Delete the tagged shot itself and the swing says it's no longer tied, never a guess. A re-pasted range block finds the same ball by its carry and total.
+- In each club's body measures on the Swings page, swings filmed on the course are marked *(course)*.
+
 ## 2.55.0 — 2026-10-31
 - Swings can now be measured. *Measure the body* on a swing finds your joints on each of its frames, on your phone, with a pose model that runs in the browser (nothing is sent anywhere). The swing card then shows the skeleton over Address, Top, Impact and Finish, and what the camera can measure:
   - Face-on: hip sway at the top, where the hips are at impact, head drift from address to impact, and the lead arm at the top.
