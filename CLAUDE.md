@@ -1469,6 +1469,49 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   under trees and how a phone browser treats Cloudflare's offline errors
   are the first round's test.
 
+## Rounds from screenshots (2.48.0)
+
+He had 31 past rounds in 18Birdies (2026-10-30) and sent two of its summary
+screens: date (DD/MM/YYYY), club and course name, course par, tee (sometimes
+with its length), a score per hole with each nine's total, gross/net, and other
+players below (only his own scores are on the summary). No per-hole par, putts
+or fairways there; those are on its full scorecard. So: Rounds → *Add past rounds
+from screenshots* (`#roundsFromImages`, `ACTIONS.roundsFromImages`), built like
+*Range data from screenshots*, up to `ROUND_IMAGES_MAX` (60).
+
+- **One reading per screenshot** (`readRoundImages`, `ROUND_READ_PARALLEL` 3 at a
+  time, "Read n of N"), `roundImagePrompt()`: kind (summary, scorecard, other),
+  date as shown, club, course, tee, course par, gross, row totals, player,
+  holes (score, and putts/par only where labelled); the first golfer's row only;
+  nothing added up or filled in.
+- **Cleaning** (`normaliseRoundRead`, no I/O): the date day-first (`roundDateFrom`;
+  14/05 proves 18Birdies on his phone is day-first) or ISO, else null and said;
+  a future date warned; scores 1–15, else left out and said; the holes against
+  the screen's gross and each row total; the course by name (`matchCourse`:
+  `plainName` of the club, the course or both against Carry's, exact first,
+  else one unique containing match), the tee against the card's (`teeOn`,
+  case ignored, else the primary and said), the screen's course par and per-hole
+  par against the card's, holes the card lacks.
+- **Joining** (`mergeRoundReads`): a scorecard for the same day and matched
+  course joins that round (its putts; a score differing between the two is
+  warned); otherwise it is a round of its own. "Other" screens and failed
+  readings are named under *Left out*. A round Carry already has for that course
+  and day (`dupe`) comes unticked; two in the batch alike are warned.
+- **Review** (`openRoundReview`): per round the screenshots, course select, date,
+  tee, scores as one line per nine (`scoreLines`/`parseScoreLines`: `1-9: 5 5 3
+  …`, a dash for a hole not played; a wrong count is refused, never guessed),
+  putts when read, a live line (holes, strokes, the screen's total, to par on
+  Carry's card), warnings.
+- **Saved** as `score_only` rounds whose holes are `holesForTee(c, tee)` (pars
+  and metres from Carry's card, never the screenshot) with `strokes` and
+  `putts`, and `fromImages` (SCHEMA.md); the round page shows them
+  (`roundSourceSection`, `#roundSource`). `sessionAssets` and the import's
+  remap now carry a round's `fromImages`, so export, import and delete keep
+  the screenshots with it.
+- **Not yet run against Claude on his screenshots**: `ui-rounds-images` stubs
+  the reply, hand-made from his two screens (Lane Cove 46 over 9, Bexley 123
+  with 63/60). The first real batch is the test; a misread shows in review.
+
 ## Swing history (2.23.0)
 
 Asked for 2026-10-28 ("a tab specifically for swings showcasing a timeline
@@ -1802,7 +1845,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 402 tests, about 45s.
+`npm test` — 405 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1910,6 +1953,9 @@ fixture would let the reading be pinned.
   `ui-import-many` (Import a backup with many files: one question, a stray
   named and skipped, only wrong files refused),
   `ui-courseicons` (a linked course's picture in the list, initials otherwise),
+  `ui-rounds-images` (rounds from 18Birdies screenshots: day-first dates, the
+  course and tee matched, totals checked, a scorecard joining its summary, the
+  review, pars from Carry's card, the screenshots kept, a duplicate unticked),
   `ui-coursemap` (Courses on a map: the one row, pins by who can play, home,
   the map kept across a redraw, a pin opening its course),
   `ui-theme` (Appearance: System, Light, Dark; the root attribute, the

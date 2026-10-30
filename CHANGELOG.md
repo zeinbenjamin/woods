@@ -1,3 +1,8 @@
+## 2.48.0 — 2026-10-30
+- Rounds → Add past rounds from screenshots: pick screenshots of past rounds from 18Birdies (or another scoring app), as many as 60 at a time. Claude reads each one's date, course, tee and hole scores, and a full scorecard screenshot after a round's summary adds its putts.
+- Every round is shown beside its screenshots to check before anything is saved: fix any number, pick the course if Carry couldn't match it, or untick a round. A round you already have for that course and day comes unticked.
+- Pars and lengths come from the course's card in Carry. The rounds count for your handicap, scoring trend and course history, and the screenshots stay with each round.
+
 ## 2.47.1 — 2026-10-30
 - Courses: the tab could stay stuck on the page you were on (or blank) instead of showing the list. A cached copy of an older map file was being used with the new app; each update now loads its own files fresh, and the list still draws if a file is out of date.
 - If a page ever fails to draw, it now says so on screen with the reason, instead of looking frozen.
