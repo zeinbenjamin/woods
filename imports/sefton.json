@@ -15,7 +15,7 @@
       "lng": 151.0099,
       "tee": "men",
       "notes": "18 holes, par 54, 2,539 m off the men tees. Lengths in metres; tee sets: men (men is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Eighteen par 3s.",
-      "source": "Card: Hole19 (men's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23646417, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Hole19 (men's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/23646417, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://leisureandaquatics.cbcity.nsw.gov.au/venues/sefton-golf-course.aspx).",
       "holes": [
         {
           "n": 1,
@@ -179,7 +179,9 @@
           },
           "si": 6
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Council course: book by phoning the clubhouse."
     }
   ],
   "sessions": [],

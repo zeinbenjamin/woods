@@ -15,7 +15,7 @@
       "lng": 150.96344,
       "tee": "blue",
       "notes": "18 holes, par 72, 5,955 m off the blue tees. Lengths in metres; tee sets: blue, white, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 72 / 128, white 71 / 126, red 74 / 132. Cross-check: Hole19 shows a different, longer card ('black (l)', par 74, 6,213 m) that does not match this one hole for hole; not reconciled.",
-      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/223482137, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/223482137, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://castlehill.miclub.com.au/guests/bookings/ViewPublicCalendar.msp).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 8
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://castlehill.miclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

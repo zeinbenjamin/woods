@@ -15,7 +15,7 @@
       "lng": 151.32959,
       "tee": "ladies",
       "notes": "9 holes, par 32, 1,700 m off the ladies tees. Lengths in metres; tee sets: ladies (ladies is the primary: the first men's set the card lists, the only set the source shows). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Hole19 shows a single 'ladies' set of nine holes played twice (par 32 a nine, 64 for 18); no men's lengths were found. Hole19 reviews call it a 9-hole course. Hole19's stroke index on the nine is the odd numbers of an 18-hole index (9, 1, 15, ...), so none is stored.",
-      "source": "Card: Hole19 (the only set it shows, labelled ladies, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4335011, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Hole19 (the only set it shows, labelled ladies, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4335011, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/17227-avalon-golf-course/search).",
       "holes": [
         {
           "n": 1,
@@ -89,7 +89,9 @@
             "ladies": 120
           }
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/17227-avalon-golf-course/search"
     }
   ],
   "sessions": [],

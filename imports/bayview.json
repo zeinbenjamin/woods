@@ -15,7 +15,7 @@
       "lng": 151.29591,
       "tee": "blue",
       "notes": "18 holes, par 71, 5,581 m off the blue tees. Lengths in metres; tee sets: blue, white, red, yellow (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 71 / 128, white 68 / 128. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's black column (5,582 m) has different pars from the other four sets on seven holes, so it looks like a different routing and is left out.",
-      "source": "Card: Golfify (blue, white, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2981993, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2981993, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://bayviewgc.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 10
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://bayviewgc.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000"
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 151.27506,
       "tee": "blue",
       "notes": "18 holes, par 71, 5,885 m off the blue tees. Lengths in metres; tee sets: blue, white, red, yellow (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 71 / 131, white 71 / 131. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Hole 14 is 378 m off the blue tees here; the hole-maps chat's map has two 14ths (299 and 376 m) and this card points at the longer one.",
-      "source": "Card: Golfify (blue, white, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/7894056, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/7894056, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.manlygolf.com.au/).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 11
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: visitors by arrangement with the golf shop."
     }
   ],
   "sessions": [],

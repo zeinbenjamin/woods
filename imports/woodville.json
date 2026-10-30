@@ -15,7 +15,7 @@
       "lng": 150.99574,
       "tee": "ladies",
       "notes": "18 holes, par 72, 5,053 m off the ladies tees. Lengths in metres; tee sets: ladies (ladies is the primary: the first men's set the card lists, the only set the source shows). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Hole19 shows only a ladies' set (par 72, 5,053 m); its text says the men's course is par 71 over 5,567 m, which was not found hole by hole.",
-      "source": "Card: Hole19 (the only set it shows, labelled ladies, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/176410925, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Hole19 (the only set it shows, labelled ladies, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/176410925, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/16259-woodville-golf-course/search).",
       "holes": [
         {
           "n": 1,
@@ -179,7 +179,9 @@
           },
           "si": 11
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/16259-woodville-golf-course/search"
     }
   ],
   "sessions": [],

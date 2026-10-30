@@ -15,7 +15,7 @@
       "lng": 151.14606,
       "tee": "men",
       "notes": "18 holes, par 65, 4,600 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: men 65 / 107, ladies 67 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (men's and women's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174916298, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (men's and women's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/174916298, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.gordongolfcourse.com.au/cms/online-public-bookings/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,11 @@
           },
           "si": 8
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.gordongolfcourse.com.au/guests/ListBookingEvents.msp?booking_resource_id=187",
+      "prereg": true,
+      "bookingNote": "Council course: register as a public member and pay online; also by phone, 9498 1277."
     }
   ],
   "sessions": [],

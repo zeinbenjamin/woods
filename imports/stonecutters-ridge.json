@@ -15,7 +15,7 @@
       "lng": 150.86214,
       "tee": "blue",
       "notes": "18 holes, par 71, 6,257 m off the blue tees. Lengths in metres; tee sets: blue, red, white, gold (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 73 / 134, red 73 / 126, white 72 / 127, gold 69 / 126. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, white, gold and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4257469, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white, gold and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4257469, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://stonecutters.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?mobile=true&selectedDate=2024-11-30).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 5
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://stonecutters.miclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

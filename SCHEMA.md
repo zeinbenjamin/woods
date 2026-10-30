@@ -60,6 +60,10 @@ values. Measured numbers are derived from shots and never written back.
   "website": "…", "bookingUrl": "…",
   "lat": -32.7795, "lng": 151.418,   // for distance-from-home only
   "bookable": true, "prereg": false, "walkable": true,
+                                     // bookable: true public (anyone can book), false private
+                                     // (members and guests), absent not known (2.39.0: never read as private)
+  "closed": true,                    // optional (2.39.0): the course has shut; neither public nor private
+  "bookingNote": "Register as a public member first.",  // optional (2.39.0): how to book, one line
   "feeWeekday": 45, "feeWeekend": 55,
   "created": 1790000000000,          // ms, set when added in the app (1.7.0 on); older app-made
                                      // ids carry the time too (uid), hand-made ids don't

@@ -14,8 +14,8 @@
       "lat": -33.93841,
       "lng": 151.15757,
       "tee": "blue",
-      "notes": "18 holes, par 68, 5,244 m off the blue tees. Lengths in metres; tee sets: blue, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 72 / 128. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify gives 18 holes; the hole-maps chat's map has 15 lines with 1, 2 and 10 played twice as 16, 17 and 18.",
-      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2031564, ODbL, © OpenStreetMap contributors).",
+      "notes": "18 holes, par 68, 5,244 m off the blue tees. Lengths in metres; tee sets: blue, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 72 / 128. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify gives 18 holes; the hole-maps chat's map has 15 lines with 1, 2 and 10 played twice as 16, 17 and 18. Closed March 2025 (land sold; club merged with Liverpool as Oak Point; web search, 2026-10-29). Kept so the map and any history still resolve.",
+      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/2031564, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.australiangolfdigest.com.au/kogarah-golf-club-members-devastated-by-closure-of-popular-sydney-course/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 3
         }
-      ]
+      ],
+      "closed": true,
+      "bookingNote": "Closed in March 2025: the land was sold and the club merged with Liverpool as Oak Point."
     }
   ],
   "sessions": [],

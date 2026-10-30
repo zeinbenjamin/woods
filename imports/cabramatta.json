@@ -15,7 +15,7 @@
       "lng": 150.91569,
       "tee": "men",
       "notes": "18 holes, par 70, 5,879 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: men 71.8 / 127, ladies 74.7 / 134. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/173696662, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/173696662, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://cabragolf.com.au/social-golf/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 2
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Visitors on set times: ring the pro shop, 02 9602 1516."
     }
   ],
   "sessions": [],

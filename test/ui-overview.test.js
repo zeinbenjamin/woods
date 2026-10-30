@@ -200,7 +200,7 @@ test('a course page puts its holes and rounds first, with booking, fees and rati
   await new Promise(r => setTimeout(r, 300));   // the course page fetches the map index; let it land before the app closes
   const info = app.$('#courseInfo');
   assert.ok(info && !info.open, 'folded');
-  assert.match(info.textContent, /Booking/);
+  assert.match(info.textContent, /Who can play/);
   const order = app.$$('#view h2, #view #courseInfo').map(x => x.id || x.textContent);
   assert.ok(order.includes('Rounds here') && order.indexOf('Rounds here') < order.indexOf('courseInfo'), `rounds before the course details: ${order}`);
 });

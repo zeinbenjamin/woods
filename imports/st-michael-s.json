@@ -15,7 +15,7 @@
       "lng": 151.24679,
       "tee": "white",
       "notes": "18 holes, par 70, 5,826 m off the white tees. Lengths in metres; tee sets: white, blue, red (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 72.5 / 133, blue 74.5 / 138, red 75.5 / 133. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (white, blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4237795, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (white, blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4237795, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.stmichaelsgolfclub.com.au/visitors).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 14
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Visitors 7 days at set times; timesheets open 8 days ahead at 4pm. Golf shop (02) 9326 8000 ext 1 or golfbookings@stmichaelsgolf.com.au."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 151.11914,
       "tee": "blue",
       "notes": "18 holes, par 69, 5,307 m off the blue tees. Lengths in metres; tee sets: blue, yellow, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 67 / 125, yellow 65 / 116, red 71 / 123. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, yellow and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/186092217, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, yellow and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/186092217, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.northrydegolfclub.com.au/).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 15
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://northryde.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000"
     }
   ],
   "sessions": [],

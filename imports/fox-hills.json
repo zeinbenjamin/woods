@@ -15,7 +15,7 @@
       "lng": 150.93402,
       "tee": "blue",
       "notes": "18 holes, par 69, 5,528 m off the blue tees. Lengths in metres; tee sets: blue, white, red, yellow (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 67 / 126, red 72 / 128. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, white, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/7592402, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/7592402, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://foxhillsgolfclub.com.au/social-golf/).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 7
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Public 7 days at set times: request a tee time from the pro shop, (02) 9631 7689. No walk-ups."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 150.94697,
       "tee": "white",
       "notes": "18 holes, par 67, 4,395 m off the white tees. Lengths in metres; tee sets: white, red (white is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 67 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Lengths are round numbers (280, 300, 100 ...): the source card looks estimated rather than measured.",
-      "source": "Card: Golfify (white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/106856639, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/106856639, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.golffinder.com.au/?p=15937).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 2
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Public course; booking essential, by phone (no online booking found)."
     }
   ],
   "sessions": [],

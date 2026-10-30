@@ -15,7 +15,7 @@
       "lng": 151.09708,
       "tee": "members",
       "notes": "18 holes, par 71, 5,951 m off the members tees. Lengths in metres; tee sets: members, ladies (members is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: members 73 / 128, ladies 75 / 136. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (members' and women's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175659424, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (members' and women's, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175659424, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://play.concordgolfclub.com.au/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,10 @@
           },
           "si": 3
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingUrl": "https://play.concordgolfclub.com.au/",
+      "bookingNote": "Visitors who are members of a recognised club book through play.concordgolfclub.com.au."
     }
   ],
   "sessions": [],

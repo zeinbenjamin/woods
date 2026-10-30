@@ -15,7 +15,7 @@
       "lng": 151.116,
       "tee": "blue",
       "notes": "18 holes, par 70, 5,494 m off the blue tees. Lengths in metres; tee sets: blue, white, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 70 / 70, red 71 / 73. Cross-check: Hole19's blue card agrees hole for hole on par, metres and stroke index (par 70, 5,494 m).",
-      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4336031, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4336031, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://asquith.miclub.com.au/cms/public-bookings).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,11 @@
           },
           "si": 1
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://asquith.miclub.com.au/cms/public-bookings",
+      "prereg": true,
+      "bookingNote": "Register as a public member on the booking site first; the pro shop (9477 1403) also takes social times."
     }
   ],
   "sessions": [],

@@ -15,7 +15,7 @@
       "lng": 151.01742,
       "tee": "men",
       "notes": "18 holes, par 69, 5,644 m off the men tees. Lengths in metres; tee sets: men, ladies (men is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: men 65 / 113, ladies 73 / 125. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/173777049, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (men's and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/173777049, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://muirfield.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?bookingResourceId=).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 18
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://muirfield.miclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

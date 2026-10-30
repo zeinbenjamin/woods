@@ -15,7 +15,7 @@
       "lng": 151.24209,
       "tee": "black",
       "notes": "18 holes, par 72, 6,112 m off the black tees. Lengths in metres; tee sets: black, white, ladies (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 73 / 136, white 71 / 131, ladies 75 / 133. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Holes 15 and 16 swap par between the black (par 5 then 3) and white (par 3 then 4) sets on Golfify; pars here are the black tees'.",
-      "source": "Card: Golfify (black, white and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175535033, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (black, white and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/175535033, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.wakehurstgolf.com.au/guests/bookings/ViewPublicCalendar.msp).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 7
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://www.wakehurstgolf.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

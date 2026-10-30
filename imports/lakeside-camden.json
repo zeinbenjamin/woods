@@ -15,7 +15,7 @@
       "lng": 150.78565,
       "tee": "black",
       "notes": "18 holes, par 72, 6,514 m off the black tees. Lengths in metres; tee sets: black, blue, gold, red, purple (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on TheGrint: black 74.1 / 131, blue 73.4 / 130, gold 70.7 / 129, red 73.4 / 124. Cross-check: Hole19's purple card agrees on par and stroke index; its text puts the course at 5,357 to 6,488 m against TheGrint's 5,356 to 6,514 m. TheGrint's printed totals (6,201, 5,834 and 5,356 m) are its yard totals converted; the holes add to 6,200, 5,833 and 5,355.",
-      "source": "Card: TheGrint (black, blue, gold and red, metres read from its yard-and-metre cells) and Hole19 (the purple set), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/5078960, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: TheGrint (black, blue, gold and red, metres read from its yard-and-metre cells) and Hole19 (the purple set), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/5078960, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://camdenlakeside.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?mobile=true&selectedDate=%24%7BaltDateTimeStr%7D).",
       "holes": [
         {
           "n": 1,
@@ -251,7 +251,9 @@
           },
           "si": 1
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingUrl": "https://camdenlakeside.miclub.com.au/guests/bookings/ViewPublicCalendar.msp"
     }
   ],
   "sessions": [],

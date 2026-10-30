@@ -15,7 +15,7 @@
       "lng": 151.15297,
       "tee": "blue",
       "notes": "18 holes, par 72, 6,080 m off the blue tees. Lengths in metres; tee sets: blue, red, white, green (blue is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, white, red and green, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4185306, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue, white, red and green, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4185306, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.where2golf.com/australia/the-killara-golf-club/).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 4
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: guests of members, reciprocal enquiry form, corporate Thursdays."
     }
   ],
   "sessions": [],

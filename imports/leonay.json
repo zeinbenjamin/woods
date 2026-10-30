@@ -15,7 +15,7 @@
       "lng": 150.64968,
       "tee": "blue",
       "notes": "18 holes, par 67, 5,023 m off the blue tees. Lengths in metres; tee sets: blue, ladies (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 67 / 113, ladies 69 / -. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6530751, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/6530751, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://leonaygolfclub.com.au/golf/social-golf/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 9
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Public 7 days: call the pro shop, 02 4735 5300."
     }
   ],
   "sessions": [],

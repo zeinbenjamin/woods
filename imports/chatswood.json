@@ -14,8 +14,8 @@
       "lat": -33.79918,
       "lng": 151.16213,
       "tee": "black",
-      "notes": "18 holes, par 65, 4,372 m off the black tees. Lengths in metres; tee sets: black, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 63 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify numbers 18 holes (nine played twice, par 65); the hole-maps chat notes OSM's 11 and 12 may be 3 and 9.",
-      "source": "Card: Golfify (black and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/181570673, ODbL, © OpenStreetMap contributors).",
+      "notes": "18 holes, par 65, 4,372 m off the black tees. Lengths in metres; tee sets: black, red (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 63 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify numbers 18 holes (nine played twice, par 65); the hole-maps chat notes OSM's 11 and 12 may be 3 and 9. The course was rebuilt as Newgreens Chatswood, 12 holes, opened May 2026 (web search, 2026-10-29): this 18-hole card is probably the old layout and wants checking against the new club card.",
+      "source": "Card: Golfify (black and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/181570673, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.agfg.com.au/article/dodici-and-tempo-tee-off-at-sydneys-bold-new-lifestyle-destination-newgreens-chatswood).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 4
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Rebuilt as Newgreens Chatswood (12 holes, opened May 2026): book a tee time on the club site."
     }
   ],
   "sessions": [],

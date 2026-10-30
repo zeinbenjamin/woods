@@ -15,7 +15,7 @@
       "lng": 150.87716,
       "tee": "black",
       "notes": "18 holes, par 72, 6,208 m off the black tees. Lengths in metres; tee sets: black, blue, red, gold (black is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: black 73 / 113, blue 72 / 138, red 75 / 113. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. The hole-maps chat's map has 18 unnumbered lines; this card gives the numbering a check once holes are marked.",
-      "source": "Card: Golfify (black, blue, red and gold, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4079647, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (black, blue, red and gold, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/4079647, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.where2golf.com/australia/macquarie-links-international-golf-club).",
       "holes": [
         {
           "n": 1,
@@ -233,7 +233,9 @@
           },
           "si": 3
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: visitors hosted by a member (some listings disagree). Pro shop 02 8796 5811."
     }
   ],
   "sessions": [],

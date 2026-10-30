@@ -15,7 +15,7 @@
       "lng": 150.69593,
       "tee": "blue",
       "notes": "18 holes, par 72, 6,256 m off the blue tees. Lengths in metres; tee sets: blue, red (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 72 / 127, red 75 / 133. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/173450798, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (blue and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/173450798, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://penrithgolfclub.com.au/social-golf/).",
       "holes": [
         {
           "n": 1,
@@ -197,7 +197,9 @@
           },
           "si": 12
         }
-      ]
+      ],
+      "bookable": true,
+      "bookingNote": "Social golf 7 days at set times: call the pro shop, (02) 4736 1613. No walk-ups."
     }
   ],
   "sessions": [],

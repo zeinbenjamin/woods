@@ -15,7 +15,7 @@
       "lng": 151.12715,
       "tee": "black",
       "notes": "18 holes, par 71, 6,169 m off the black tees. Lengths in metres; tee sets: black, red, white (black is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (black, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/12733778, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (black, white and red, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap relation/12733778, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.golffinder.com.au/?p=15704).",
       "holes": [
         {
           "n": 1,
@@ -215,7 +215,9 @@
           },
           "si": 18
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: guests of members, reciprocals and corporate days."
     }
   ],
   "sessions": [],

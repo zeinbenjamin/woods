@@ -1275,7 +1275,7 @@ function vCourses() {
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
     const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.filter(isSolo).map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
-    return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${[esc(c.suburb || ''), played.length ? 'played ' + played.length : '', distanceLabel(c) ? `${distanceLabel(c)} away` : ''].filter(Boolean).join(' · ')}${c.bookable ? ' <span class="tag green">public booking</span>' : ''}${c.prereg ? ' <span class="tag">pre-register</span>' : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
+    return `<button class="item" data-go="courses:courseId:${c.id}"><div class="spread"><div><div class="t">${esc(c.name)}</div><div class="s">${[esc(c.suburb || ''), played.length ? 'played ' + played.length : '', distanceLabel(c) ? `${distanceLabel(c)} away` : ''].filter(Boolean).join(' · ')}${accessTag(c)}${c.prereg && !c.closed ? ' <span class="tag">pre-register</span>' : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
   }).join('') + `</div>` + (tail ? `<p class="small muted" id="courseSortNote">${sort === 'near' ? `${plural(tail, 'course')} with no location on ${tail === 1 ? 'its' : 'their'} card ${tail === 1 ? 'is' : 'are'} listed last, A–Z. Add a latitude and longitude to place ${tail === 1 ? 'it' : 'them'}.` : `${plural(tail, 'course')} added before the app kept the date ${tail === 1 ? 'is' : 'are'} listed last, A–Z.`}</p>` : '') : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
   return h;
 }
@@ -1324,8 +1324,8 @@ function vCourse() {
   h += courseMapSection(c);
   h += artConvertSection(c);
   // Booking, fees, ratings and notes: one tap away, not between him and the holes.
-  const info = [c.bookable ? 'public booking' : c.bookable === false ? 'members or guests' : '', c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : '', Object.keys(c.ratings || {}).length ? 'rated' : ''].filter(Boolean).join(' · ');
-  h += fold('courseInfo', 'Course information', esc(info), `<dl class="kv"><dt>Booking</dt><dd>${c.bookable ? 'Public, no member needed' : c.bookable === false ? 'Members or guests only' : 'Unknown'}${c.prereg ? '. Needs pre-registration' : ''}${/^https?:\/\//i.test(c.bookingUrl || '') ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>
+  const info = [ACCESS_LABEL[access(c)] || '', c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : '', Object.keys(c.ratings || {}).length ? 'rated' : ''].filter(Boolean).join(' · ');
+  h += fold('courseInfo', 'Course information', esc(info), `<dl class="kv"><dt>Who can play</dt><dd id="courseAccess">${ACCESS_TEXT[access(c)] || 'Not known'}${c.prereg && !c.closed ? '. Needs pre-registration' : ''}${/^https?:\/\//i.test(c.bookingUrl || '') ? ` <a href="${esc(c.bookingUrl)}" target="_blank" rel="noopener">Book</a>` : ''}</dd>${c.bookingNote ? `<dt>Booking</dt><dd id="courseBookingNote">${esc(c.bookingNote)}</dd>` : ''}
     ${c.feeWeekday || c.feeWeekend ? `<dt>Green fee</dt><dd>${c.feeWeekday ? '$' + c.feeWeekday + ' weekday' : ''}${c.feeWeekday && c.feeWeekend ? ', ' : ''}${c.feeWeekend ? '$' + c.feeWeekend + ' weekend' : ''}</dd>` : ''}
     ${Object.keys(c.ratings || {}).length ? `<dt>Ratings</dt><dd id="courseRatings">${Object.entries(c.ratings).map(([t, r]) => `${esc(t)}: ${fmt(r.cr, 1)} / slope ${r.slope}`).join(' · ')}</dd>` : ''}
     ${c.walkable != null ? `<dt>Walking</dt><dd>${c.walkable ? 'Walkable' : 'Cart advised'}</dd>` : ''}${c.transport ? `<dt>Getting there</dt><dd>${esc(c.transport)}</dd>` : ''}${c.notes ? `<dt>Notes</dt><dd>${esc(c.notes)}</dd>` : ''}</dl>`);
@@ -1425,6 +1425,14 @@ sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); })
 const val = (root, name) => { const el = root.querySelector(`[name="${name}"]`); if (!el) return null; if (el.type === 'checkbox') return el.checked; const v = el.value.trim(); return v === '' ? null : el.type === 'number' ? Number(v) : v; };
 const field = (label, name, type = 'text', value = '', attrs = '') => `<label>${label}<input type="${type}" name="${name}" value="${esc(value ?? '')}" ${attrs}></label>`;
 const selectF = (label, name, opts, value) => `<label>${label}<select name="${name}">${opts.map(([v, t]) => `<option value="${esc(v)}" ${v === value ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
+/* Who can play: public (anyone can book), private (members and guests),
+   closed, or not known. Stored as `bookable` true/false and `closed`; an
+   unset `bookable` stays unset, never read as private. */
+const ACCESS_TEXT = { public: 'Public: anyone can book', private: 'Private: members and guests', closed: 'Closed' };
+const ACCESS_LABEL = { public: 'public', private: 'private', closed: 'closed' };
+const access = c => c.closed ? 'closed' : c.bookable === true ? 'public' : c.bookable === false ? 'private' : null;
+const accessTag = c => { const a = access(c); return a ? ` <span class="tag${a === 'public' ? ' green' : a === 'closed' ? ' flag' : ''}">${ACCESS_LABEL[a]}</span>` : ''; };
+const accessFields = a => ({ bookable: a === 'public' ? true : a === 'private' ? false : null, closed: a === 'closed' || undefined });
 const checkF = (label, name, checked) => `<label class="check"><input type="checkbox" name="${name}" ${checked ? 'checked' : ''}>${label}</label>`;
 
 /* Parse pasted shots. One shot per line: carry, total, optional speed.
@@ -1494,11 +1502,12 @@ function courseForm(c = {}) {
   ${field('Name', 'name', 'text', c.name)}
   <div class="grid2">${field('Suburb', 'suburb', 'text', c.suburb)}${field('State', 'state', 'text', c.state || 'NSW')}</div>
   ${field('Tee these distances are from', 'tee', 'text', primaryTee(c) === 'default' ? '' : primaryTee(c), 'placeholder="white, blue, black…"')}
-  ${checkF('Public booking, no member needed', 'bookable', c.bookable)}
+  ${selectF('Who can play', 'access', [['', 'Not known'], ...Object.entries(ACCESS_TEXT)], access(c) || '')}
   ${checkF('Needs pre-registration on their booking site', 'prereg', c.prereg)}
   ${checkF('Walkable', 'walkable', c.walkable)}
   <div class="grid2">${field('Green fee weekday $', 'feeWeekday', 'number', c.feeWeekday)}${field('Green fee weekend $', 'feeWeekend', 'number', c.feeWeekend)}</div>
   ${field('Booking link', 'bookingUrl', 'url', c.bookingUrl)}
+  ${field('How to book', 'bookingNote', 'text', c.bookingNote, 'placeholder="Phone the pro shop, register first…"')}
   <div class="grid2">${field('Latitude', 'lat', 'number', c.lat, 'step="0.0001"')}${field('Longitude', 'lng', 'number', c.lng, 'step="0.0001"')}</div>
   ${field('Getting there', 'transport', 'text', c.transport)}
   <label>Notes<textarea name="notes" style="min-height:60px">${esc(c.notes || '')}</textarea></label>
@@ -1784,7 +1793,7 @@ async function saveCourse(root, c) {
   const rt = readRatings(root, c, tee); if (rt.error) { toast(rt.error); return false; }
   const near = S.courses.find(x => x.id !== c.id && x.name && name && x.name.toLowerCase().replace(/[^a-z]/g, '') === name.toLowerCase().replace(/[^a-z]/g, ''));
   if (near && !await confirmAsk(`"${near.name}" is already in your courses. Add this as a second one?`, 'Add anyway')) return false;
-  const doc = { ...c, v: SCHEMA_VERSION, tee, name, suburb: val(root, 'suburb'), state: val(root, 'state'), bookable: val(root, 'bookable'), prereg: val(root, 'prereg'), walkable: val(root, 'walkable'), feeWeekday: val(root, 'feeWeekday'), feeWeekend: val(root, 'feeWeekend'), bookingUrl: val(root, 'bookingUrl'), lat: val(root, 'lat'), lng: val(root, 'lng'), transport: val(root, 'transport'), notes: val(root, 'notes'), ratings: rt.ratings, // Keep everything the form doesn't edit (artwork, outline shape, stroke
+  const doc = { ...c, v: SCHEMA_VERSION, tee, name, suburb: val(root, 'suburb'), state: val(root, 'state'), ...accessFields(val(root, 'access')), prereg: val(root, 'prereg'), walkable: val(root, 'walkable'), feeWeekday: val(root, 'feeWeekday'), feeWeekend: val(root, 'feeWeekend'), bookingUrl: val(root, 'bookingUrl'), bookingNote: val(root, 'bookingNote'), lat: val(root, 'lat'), lng: val(root, 'lng'), transport: val(root, 'transport'), notes: val(root, 'notes'), ratings: rt.ratings, // Keep everything the form doesn't edit (artwork, outline shape, stroke
 // index); only par and metres come from the inputs.
     holes: readHoles(root, n, false).map(h => { const { par, metres, si, n: _n, ...keep } = (c.holes || []).find(x => x.n === h.n) || {}; return { ...keep, ...h, tees: { ...(keep.tees || {}), ...(h.metres == null ? {} : { [tee]: h.metres }) } }; }) };
   const sis = doc.holes.filter(h => h.si != null).map(h => h.si);

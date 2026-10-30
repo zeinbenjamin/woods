@@ -15,7 +15,7 @@
       "lng": 151.26638,
       "tee": "championship",
       "notes": "18 holes, par 72, 6,344 m off the championship tees. Lengths in metres; tee sets: championship (championship is the primary: the first men's set the card lists). No handicap rating stored: the source shows none. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify's one set may predate the 2024 to 2025 Championship course redesign; BlueGolf holds only a placeholder card. The stroke index runs 1 to 18 in hole order and looks like a placeholder.",
-      "source": "Card: Golfify (championship, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4354373, ODbL, © OpenStreetMap contributors).",
+      "source": "Card: Golfify (championship, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4354373, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (inferred from directory listings, not the club, https://www.golffinder.com.au/?p=15709).",
       "holes": [
         {
           "n": 1,
@@ -179,7 +179,9 @@
           },
           "si": 18
         }
-      ]
+      ],
+      "bookable": false,
+      "bookingNote": "Private: members and invited guests; reciprocals Fridays only."
     }
   ],
   "sessions": [],

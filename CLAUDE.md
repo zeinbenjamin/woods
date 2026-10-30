@@ -520,6 +520,34 @@ Each of these cost real debugging time. Don't reintroduce them.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
+## Who can play (2.39.0)
+
+He asked, after the tee-times booking audit of 2026-10-29, for the app to show
+whether a course is public or private. `access(c)` is `closed` (`c.closed`),
+`public` (`bookable === true`), `private` (`bookable === false`) or null (not
+known); `accessTag` puts it in the Courses list (green public, plain private,
+red closed), and Course information says it under *Who can play* with
+`bookingNote` (how to book) under *Booking*. The form's `access` choice
+replaced the "Public booking" checkbox, which stored `false` (private) for
+every course saved with access unknown; `accessFields` keeps an unknown one
+unset. `ui-access` covers it.
+
+**The booking audit** (2026-10-29): three agents found how the public books
+each of the 91 NAS courses, by web search (club sites and miclub.com.au are
+blocked from this container, so no booking page was opened here). 38 MiClub
+public calendars, 8 GolfNow, 1 each Quick18 (Lane Cove), BRS Golf (Barnwell
+Park), golf-booking.com (Hurstville), 2 the club's own; 12 phone or email,
+20 members/guests/reciprocal only, 2 walk-up (Bondi, Botany), 1 enquiry form
+(The Lakes), 1 closed (Kogarah), 4 unknown. The 77 batch imports carry the
+result (`bookable`, `bookingUrl` where the URL itself was seen, `prereg`
+where the site says to register, `bookingNote`), each `source` ending
+"booking: web search of 2026-10-29 (seen | inferred …, <where>)". The other
+10 courses have no import and were left for him to edit in the app; Bexley,
+Bondi, Massey Park and Moore Park (stored links already) weren't touched,
+since three of those files are behind the NAS (map links, ratings). The
+tee-times idea this was for: a MiClub reader would cover 38 of the 51
+courses bookable online, GolfNow 8 more; not built.
+
 ## Appearance (2.37.0)
 
 He asked for a toggle: System, Light, Dark. `settings.theme` (SCHEMA.md;
@@ -1468,7 +1496,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 356 tests, about 45s.
+`npm test` — 361 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
