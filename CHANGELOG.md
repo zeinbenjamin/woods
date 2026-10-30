@@ -1,3 +1,7 @@
+## 2.40.0 — 2026-10-30
+- Carry can now read the free tee times on a MiClub booking site (38 of the courses, Bexley and Moore Park among them): each rate for the day (18 holes, 9 holes, late rates), its price, and every time with how many spots are left. Nothing in the app shows them yet. The search screen comes next.
+- Nothing is booked and nothing about you is sent: Carry asks the club's public page for a date, the same as opening it in a browser.
+
 ## 2.39.0 — 2026-10-30
 - Every course now says who can play it: a green "public" tag in the Courses list, "private" for members and guests, "closed" for a course that's gone. The course page says the same under Course information, with how to book (register first, phone the pro shop, walk up).
 - The course form asks "Who can play": Public, Private, Closed or Not known. Saving a course whose access wasn't known used to mark it members only; it now stays not known.

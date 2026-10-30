@@ -118,6 +118,7 @@ server/index.js     routes, static hosting
 server/auth.js      Cloudflare Access sign-in: the JWT check, req.user
 server/db.js        SQLite: JSON documents + asset metadata
 server/anthropic.js the Messages API call — the only place the key exists
+server/teetimes.js  reads a course's public MiClub tee-time pages on request
 web/index.html      the app, one file, ~3,200 lines
 web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
@@ -547,6 +548,47 @@ Bondi, Massey Park and Moore Park (stored links already) weren't touched,
 since three of those files are behind the NAS (map links, ratings). The
 tee-times idea this was for: a MiClub reader would cover 38 of the 51
 courses bookable online, GolfNow 8 more; not built.
+
+## Tee times (2.40.0)
+
+He asked (2026-10-29, "similar to myteetimes"): filter tee times by distance,
+day, time, holes and players, with booking left to the club's site. The booking
+audit (*Who can play*) found 38 of the 51 online-bookable courses on MiClub,
+so the reader is MiClub's. `server/teetimes.js`, called by
+`GET /api/teetimes/:courseId?date=YYYY-MM-DD[&from=HH:MM&to=HH:MM&holes=9|18&players=n]`
+(signed in, before the document routes):
+
+- **The pages** (read 2026-10-30 from Bexley through a page reader; this
+  container can't reach MiClub): `ViewPublicCalendar.msp?booking_resource_id=R&selectedDate=D`
+  lists each rate (`feeGroupRow`, `data-feeid`, `eighteenHoles`/`nineHole`,
+  an `<h3>` name) with a cell per day from D (price, `cell-promotion` for a
+  special, `cell-na` and no date when not offered); each offered cell links
+  to `ViewPublicTimesheet.msp?bookingResourceId=R&selectedDate=D&feeGroupId=F`,
+  whose `row-time` rows carry the time (`<h3>01:04 pm</h3>`), the tee, the
+  fees, and a cell per spot, `cell-available` or `cell-taken`. Both public,
+  no login. Copies are in `test/fixtures/` (scripts stripped by the reader).
+- **Which courses:** `miclubSource(bookingUrl)`: a `*.miclub.com.au` host or
+  a path under `/guests/bookings/`; the resource id from the link, else
+  3000000 (`guessed`), and a calendar that won't parse under a guess says to
+  store the full link. Gordon's and Richmond's `ListBookingEvents.msp` links
+  are tried the same way, unverified.
+- **Honesty:** a page that isn't a calendar or timesheet is `unreadable`, an
+  error or timeout (10 s) is `unreachable`, a non-MiClub link `unsupported`,
+  each with a message; never an empty list. Times are filtered here, after
+  the read, and only those with a spot free (and enough for `players`) are
+  returned, with `listed` saying how many the sheet had.
+- **Asking politely:** pages are fetched only when someone searches, at most
+  6 rates per course and day, one at a time, with a `Carry/1` user agent;
+  each page is kept in memory `TEETIMES_TTL_MS` (5 min; errors 1 min) and a
+  fetch in progress is shared. Nothing is stored, and the request to the club
+  carries only the date and the rate.
+- **Not checked live from Carry itself** (the container is blocked): the
+  first search on the NAS is the test. If MiClub refuses a server (bot
+  protection, a captcha: the calendar page carries an invisible reCAPTCHA,
+  apparently for the login), it shows as unreachable or unreadable.
+- **Next:** the search screen (Courses → *Tee times*: day, time window, 9/18,
+  players, distance from `home`, one request per course so results fill in
+  as they come), then GolfNow (8 courses).
 
 ## Appearance (2.37.0)
 
@@ -1496,7 +1538,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 361 tests, about 45s.
+`npm test` — 369 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -1513,6 +1555,10 @@ fixture would let the reading be pinned.
   `/api/version`, the stamped page, and `/api/analyse` against a fake
   Anthropic API (`ANTHROPIC_BASE_URL`). `test/access.js` is a stand-in
   Cloudflare: a real RSA key, its certs endpoint, and JWTs signed with it.
+- `teetimes.test.js` (8) — the MiClub reader against Bexley's real calendar
+  and timesheet (`test/fixtures/`), which links are MiClub, the filters, and
+  the route against a stand-in MiClub: rates, times, the cache expiring,
+  unsupported, unreachable, a bad date, sign-in.
 - `versioning.test.js` (7) — the changelog format and its agreement with
   `package.json` and the lockfile, the PR gate, the release notes, and
   that publishing runs the tests first.
@@ -1678,7 +1724,8 @@ In rough order of value:
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
 
-Deliberately out of scope: booking integration, anything that sends his
+Deliberately out of scope: booking (searching tee times is in, 2.40.0: see
+*Tee times*; the booking stays on the club's site), anything that sends his
 data anywhere — with one exception he chose on 2026-10-19: **Cloudflare
 Tunnel** for off-LAN https (README, *Off the LAN*), because Play mode needs
 GPS and a phone only gives GPS to an https page. Access in front, and since
