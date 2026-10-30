@@ -64,6 +64,10 @@ test('the page is called Overview: the answer first, the detail folded behind on
   assert.deepEqual(app.$$('nav.tabs button').map(b => b.textContent), ['Swings', 'Range', 'Overview', 'Rounds', 'Courses'], 'five tabs, Overview in the middle');
   assert.ok(app.$('nav.tabs button[data-tab="overview"]').classList.contains('home'), 'Overview is marked out as the home tab');
   assert.ok(app.$('#settingsBtn'), 'Settings is behind the gear');
+  // 2.49.1: a line drawing in the text colour, never the emoji.
+  assert.ok(app.$('#settingsBtn svg[aria-hidden="true"] circle'), 'the gear is drawn');
+  assert.ok(!/⚙/.test(app.$('#settingsBtn').textContent), 'no emoji gear');
+  assert.equal(app.$('#settingsBtn svg').getAttribute('stroke'), 'currentColor');
   assert.ok(app.$$('#view details.fold').every(d => d.id), 'every fold keeps its state across redraws');
 });
 

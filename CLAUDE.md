@@ -805,7 +805,10 @@ import, signed in. Courses stays a tab because a course page is history
 (`calibrationSection`) is a fold under *The detail* on the Overview with
 `calibrationTeaser()` as its one number; the Overview's Gapping shows the
 filter as one line (`rangeFilterLine`, `#rangeFilterLine`) that opens
-Settings. A saved tab of `bag` opens Settings.
+Settings. A saved tab of `bag` opens Settings. The gear is an inline line SVG (2.49.1, he
+asked, as the feed's sound icon went in 2.27.0): eight teeth and a hollow
+centre in `currentColor`, stroke 1.6, never the ⚙ emoji, which drew as a
+cartoon in some fonts.
 
 The home screen (`vOverview`). 2.5.0 reorganised it from a review he
 brought (a UI/UX write-up, Release 1 "Reduce the noise": the answer first,
