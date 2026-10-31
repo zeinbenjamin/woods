@@ -1,3 +1,13 @@
+## 2.73.0 — 2026-10-31
+- A course page now says when the course's stored location is more than 300 m from where its map puts it, and offers one tap to use the map's. Randwick's was 1.8 km out, in Matraville; Hunter Valley, Hurstville, Lane Cove, Barnwell Park and other early courses are off too. The location places the pin, sorts Closest, sets tee-time distances, picks the course when you start Play, and checks GPS marks.
+- Courses has a search box: type a name, a suburb, or public / private.
+- Courses and Rounds each have a line under the heading saying what's there, like the Swings page. Range's "holes traced · range shots" line moved up under its heading.
+- Range: Plan session sits beside New session at the top; How this is ranked is a quiet toggle after What the readings couldn't see; the "more items" toggle sits above the divider.
+- Overview: no Recent section, no Full list button and no basis note under Next practice. Distance gaps moved into The detail. Strokes gained and Strike profile now follow Face, path and strike, in that order. The gaps under a section's last row are even.
+## 2.72.1 — 2026-11-01
+
+- Liverpool's course map is named Oak Point Golf Club, as the club now trades and as its course is in the list.
+
 ## 2.72.0 — 2026-11-01
 - Find a tee time now reads Lane Cove's own booking site (Quick18): each time shows its spots free and price, and tapping it opens that exact time on the club's site to book. Members' rates are left out. Lane Cove's booking link needs to be `https://lanecove.quick18.com` for this (it's currently misspelt).
 - A club whose public calendar lists nothing at all (Camden, Castle Hill, Cronulla, Richmond this week) now says so, instead of "couldn't be read".

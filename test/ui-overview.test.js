@@ -47,17 +47,16 @@ const tiles = sel => app.$$(`${sel} .ftile`).map(t => [t.querySelector('b').text
 
 test('the page is called Overview: the answer first, the detail folded behind one tap each', () => {
   assert.equal(app.text('#view h1'), 'Overview');
-  assert.deepEqual(app.$$('#view h2').map(x => x.textContent), ['Current form', 'Next practice', 'Gapping', 'Scoring trend', 'The detail', 'Recent']);
+  assert.deepEqual(app.$$('#view h2').map(x => x.textContent), ['Current form', 'Next practice', 'Gapping', 'Scoring trend', 'The detail'], 'no Recent since 2.73.0 (he asked)');
   // 2.5.0: the specialised analysis is still all here, folded, each row showing its one number.
   const folds = app.$$('#view .folds > details');
-  assert.deepEqual(folds.map(d => d.id), ['ovBreakdown', 'ovApproaches', 'ovPutting', 'ovCalibration', 'ovStrokesGained', 'ovEvidence']);
+  assert.deepEqual(folds.map(d => d.id), ['gapPanel', 'ovBreakdown', 'ovApproaches', 'ovPutting', 'ovCalibration', 'ovEvidence']);
   assert.ok(folds.every(d => !d.open), 'closed until tapped');
-  assert.deepEqual(folds.map(d => d.querySelector('summary').textContent.trim()), [
+  assert.deepEqual(folds.slice(1).map(d => d.querySelector('summary').textContent.trim()), [
     'Where your game is being tested Approach: 67% missed the green',
     'Approach distances most often 140–159m',
     'Putting 2.06 a hole · 2 three-putts',
     'Range vs course PW −50m on the course',
-    'Strokes gained needs 3 fully traced rounds, you have 1',
     'Evidence 18 holes of shot data, 33 range shots, 2 scorecard-only rounds (not used)',
   ]);
   assert.ok(app.$('#rangeFilterLine [data-go="settings"]'), 'the range filter is one line by the numbers it filters, with the controls in Settings');
@@ -101,7 +100,8 @@ test('next practice: the top priority as one action with its evidence; the next 
   assert.ok(rows.every(r => /n=\d+|early signal|emerging|consistent/.test(r.textContent)), 'each says what it stands on');
   const keys = app.J('rankedPractice().now.slice(1, 3).map(x => x.key)');
   assert.deepEqual(rows.map(r => r.dataset.go), keys.map(k => `range:goal=${k}`), 'the reasoning is a tap away, on that finding\'s own page');
-  assert.ok(app.$('#view .basis'), 'the line saying it is worked out fresh is still there');
+  // 2.73.0 (he asked): no Full list button or basis line under it; the Range tab carries the basis under its heading.
+  assert.equal(app.$('#view .basis'), null); assert.doesNotMatch(app.text('#view'), /Full list and evidence/);
 });
 
 test('gapping keeps the ladder and says how much each club rests on', () => {
@@ -109,6 +109,10 @@ test('gapping keeps the ladder and says how much each club rests on', () => {
   assert.deepEqual(rungs, [['5W', '147', '12 shots · consistent · middle half at 147m'], ['7i', '130', '6 shots · emerging · middle half at 130m'], ['9i', '128', '3 shots · early signal'], ['PW', '80', '12 shots · consistent · middle half at 80m']],
     'a spread only from 5 shots; every shot the same reads "at", not "147–147"');
   assert.equal(app.$('#strikeProfile').open, false, 'strike profile is folded away, not lost');
+  // 2.73.0 (he asked): the ladder's folds are patterns, face and path, strokes gained, then strike profile.
+  const after = []; for (let e = app.$('#beliefGap') || app.$('#view .ladder'); e && e.tagName !== 'H2'; e = e.nextElementSibling) if (e.id) after.push(e.id);
+  assert.deepEqual(after.filter(id => ['ovPatterns', 'ovDelivery', 'ovStrokesGained', 'strikeProfile'].includes(id)), ['ovPatterns', 'ovDelivery', 'ovStrokesGained', 'strikeProfile'].filter(id => app.$('#' + id)));
+  assert.ok(app.$('#ovStrokesGained') && app.$('#strikeProfile'));
 });
 
 test('distance gaps are flagged only against his own typical gap', () => {
@@ -166,12 +170,9 @@ test('evidence: what everything above stands on', () => {
   assert.deepEqual(tiles('#evidenceTiles'), [['33', 'range shots', ''], ['18', 'shot-level holes', ''], ['3', 'rounds', '2 scorecard only'], ['0', 'swing analyses', '']]);
 });
 
-test('recent: a few one-line items that open the session', () => {
-  const items = app.$$('#recentList .recent');
-  assert.equal(items.length, 3);
-  assert.deepEqual(items.map(i => i.dataset.go), ['rounds:sessionId:r_c', 'rounds:sessionId:r_b', 'range:sessionId:s1']);
-  assert.match(items[1].textContent, /Bravo GC · 45 \(\+9, 9 holes\)/);
-  assert.match(items[2].textContent, /Range · Barton Park · 33 shots/);
+test('no Recent section (2.73.0, he asked): the tabs list them', () => {
+  assert.equal(app.$('#recentList'), null);
+  assert.doesNotMatch(app.text('#view'), /All rounds →|All range sessions →/);
   assert.equal(app.$$('#view .scorestrip').length, 0, 'no score strips on the Overview');
 });
 
@@ -210,4 +211,18 @@ test('a course page puts its holes and rounds first, with booking, fees and rati
   assert.match(info.textContent, /Who can play/);
   const order = app.$$('#view h2, #view #courseInfo').map(x => x.id || x.textContent);
   assert.ok(order.includes('Rounds here') && order.indexOf('Rounds here') < order.indexOf('courseInfo'), `rounds before the course details: ${order}`);
+});
+
+test('2.73.0: the Range and Rounds pages say what they are built from under the heading; Plan session at the top; How this is ranked a quiet toggle', () => {
+  app.go('range');
+  assert.match(app.text('#rangeBasis'), /^18 holes traced · 33 range shots · newest /);
+  assert.equal(app.$('#view .spread h1').nextElementSibling.querySelector('#planOpen + [data-act="newRange"]') != null, true, 'Plan session left of New session');
+  assert.equal(app.text('#planOpen'), 'Plan session');
+  assert.doesNotMatch(app.text('#view'), /Plan a range session from this/);
+  const checks = app.$$('#listChecks > details').map(d => d.id);
+  assert.equal(checks[checks.length - 1], 'rankHow', 'after the list\'s other checks');
+  assert.ok(app.$('#rankHow').classList.contains('qfold') && /The rules, so you can disagree/.test(app.$('#rankHow').textContent));
+  app.go('rounds');
+  assert.match(app.text('#roundsBasis'), /^3 rounds · .* · 3 courses · 1 traced$/);
+  app.go('overview');
 });

@@ -55,10 +55,9 @@ const NO_CARD = ['brighton-lakes', 'del-rio', 'fairfield-city', 'hawkesbury-wate
   'orchard-hills', 'shortees', 'sylvania-par-3'];
 
 // A course whose club has a new name the map file hasn't caught up with. The map belongs to the
-// hole-maps chat; the course record carries the club's own name. Empty since Chatswood's map took
-// the name Newgreens Chatswood (its old layout's shapes dropped until OSM has the new one).
-// Courses whose club trades under another name than the map's (OpenStreetMap's).
-const RENAMED = { liverpool: 'Oak Point Golf Club' };
+// hole-maps chat; the course record carries the club's own name. Empty since Liverpool's map took
+// the name Oak Point Golf Club, as Chatswood's took Newgreens Chatswood.
+const RENAMED = {};
 test('every course map has an import, or is on the NAS already, or has no card worth storing', () => {
   const maps = JSON.parse(readFileSync(new URL('../web/course-maps/index.json', import.meta.url)));
   const missing = maps.map(m => m.id).filter(id => !ON_NAS.includes(id) && !NO_CARD.includes(id) && !files.includes(`${id}.json`));

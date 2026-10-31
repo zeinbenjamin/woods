@@ -34,7 +34,9 @@ test('Current form, the trend and course history use his own rounds; the team ro
   app.go('overview');
   assert.match(app.text('#formTiles'), /51\+18.*Lane Cove, 18 Oct 2026/s, 'last score is his last solo round, not the 24');
   assert.doesNotMatch(app.text('#view .trend'), /−9/, 'no team bar on the trend');
-  assert.match(app.text('#recentList'), /25 Oct 2026 · Lane Cove · 24/, 'Recent still lists it');
+  app.go('rounds');
+  assert.ok(app.$$('#view .list .item').some(b => /Lane Cove/.test(b.textContent) && /24/.test(b.textContent)), 'Rounds still lists it');
+  app.go('overview');
   assert.equal(app.J('puttingStats().holes'), 27, 'putts from the three solo rounds, not the team one');
   assert.equal(app.J('shotRecords().length'), 0, 'the team round\'s traced shots are not evidence');
   assert.equal(app.J("practiceItems().find(x => x.key === 'penalty') || null"), null, 'its penalty makes no practice item');
