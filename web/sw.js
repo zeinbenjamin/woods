@@ -57,12 +57,33 @@ async function networkFirst(request, cacheName, key) {
   }
 }
 
+// What changed since a time (2.59.0): straight to the network, never answered from the phone (without
+// signal the page keeps what it has). A good answer is folded into the whole copy kept for opening
+// without signal, so that copy stays as current as the page, not as it was when the app opened.
+async function deltaThrough(request, path) {
+  const res = await fetch(request);
+  if (!keepable(res)) return res;
+  try {
+    const cache = await caches.open(DATA), kept = await cache.match(path);
+    if (kept) {
+      const delta = await res.clone().json(), whole = await kept.json();
+      const ids = new Set(delta.ids || []), byId = new Map((whole.docs || []).filter(d => ids.has(d.id)).map(d => [d.id, d]));
+      for (const d of delta.docs || []) byId.set(d.id, d);
+      const docs = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      const headers = new Headers(kept.headers); headers.set('x-carry-kept', new Date().toISOString());
+      await cache.put(path, new Response(JSON.stringify({ docs, t: delta.t || whole.t || null }), { status: 200, headers }));
+    }
+  } catch (e) { /* the kept copy stays as it was; the next whole load refreshes it */ }
+  return res;
+}
+
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;              // map tiles and other sites: the browser's own way
   if (req.mode === 'navigate') return event.respondWith(networkFirst(req, SHELL, '/'));
+  if (DATA_PATHS.includes(url.pathname) && url.searchParams.has('since')) return event.respondWith(deltaThrough(req, url.pathname));
   if (DATA_PATHS.includes(url.pathname)) return event.respondWith(networkFirst(req, DATA));
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_blob/') || url.pathname === '/sw.js') return;   // live only
   if (SHELL_URLS.includes(url.pathname + url.search)) return event.respondWith(networkFirst(req, SHELL));

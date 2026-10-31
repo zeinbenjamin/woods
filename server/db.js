@@ -77,13 +77,41 @@ db.exec(`
   );
 `);
 
-const now = () => new Date().toISOString();
+// Each write's time is later than every one before it (2.59.0): the page asks for what changed
+// since the latest time it holds, so a clock stepping back must not slip a write in behind it.
+let lastNow = null;
+const now = () => {
+  if (lastNow === null) lastNow = db.prepare('SELECT MAX(updated_at) AS t FROM docs').get().t || '';
+  let t = new Date().toISOString();
+  if (t <= lastNow) t = new Date(Date.parse(lastNow) + 1).toISOString();
+  return (lastNow = t);
+};
 // Whose row a document is: '' for the shared collections, the person otherwise.
 const ownerOf = (collection, user) => (SHARED.has(collection) ? '' : user);
 
 export const listDocs = (collection, user) =>
   db.prepare('SELECT id, body FROM docs WHERE collection = ? AND owner = ? ORDER BY id').all(collection, ownerOf(collection, user))
     .map(r => ({ id: r.id, ...JSON.parse(r.body) }));
+
+// A collection and the time of its latest change, read together (2.59.0), so the page can ask
+// for only what changed after it next time.
+export const listDocsStamped = db.transaction((collection, user) => {
+  const owner = ownerOf(collection, user);
+  return { docs: listDocs(collection, user), t: db.prepare('SELECT MAX(updated_at) AS t FROM docs WHERE collection = ? AND owner = ?').get(collection, owner).t || null };
+});
+// What changed since a time the page holds (2.59.0): the documents written at or after it (at, not
+// after: two writes in the same millisecond can't slip between reads; one sent twice is harmless),
+// every id still there so a deletion is seen, and the latest time. One read, so the three agree.
+// Before this, every save brought the whole collection back on the next poll (about 690 KB of
+// sessions with a season of data, after each shot marked in Play mode).
+export const listDocsSince = db.transaction((collection, user, since) => {
+  const owner = ownerOf(collection, user);
+  return {
+    docs: db.prepare('SELECT id, body FROM docs WHERE collection = ? AND owner = ? AND updated_at >= ? ORDER BY id').all(collection, owner, since).map(r => ({ id: r.id, ...JSON.parse(r.body) })),
+    ids: db.prepare('SELECT id FROM docs WHERE collection = ? AND owner = ? ORDER BY id').all(collection, owner).map(r => r.id),
+    t: db.prepare('SELECT MAX(updated_at) AS t FROM docs WHERE collection = ? AND owner = ?').get(collection, owner).t || null,
+  };
+});
 
 export const getDoc = (collection, user, id) => {
   const r = db.prepare('SELECT body FROM docs WHERE collection = ? AND owner = ? AND id = ?').get(collection, ownerOf(collection, user), id);

@@ -7,7 +7,7 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync, unlinkSync, existsSync, statSync, statfsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { db, listDocs, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, mergeCourseMarks, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR, COLLECTIONS,
+import { db, listDocs, listDocsStamped, listDocsSince, getDoc, putDoc, deleteDoc, courseRoundsOfOthers, mergeCourseMarks, recordAsset, getAsset, deleteAsset, stamps, ASSET_DIR, COLLECTIONS,
   DATA_DIR, DB_FILE, BACKUP_BEFORE_2, ownerEmail, ownerCounts, ownerLastWrite, ownerAssets, assetTotals } from './db.js';
 import { requireUser, requireMonitor, authMode, monitorConfigured } from './auth.js';
 import { analyse, parseJson } from './anthropic.js';
@@ -149,7 +149,14 @@ app.get('/api/teetimes/:courseId', async (req, res) => {
 
 /* ---------- documents ---------- */
 app.get('/api/stamps', (req, res) => res.json(stamps(req.user)));
-app.get('/api/:collection', (req, res) => res.json({ docs: listDocs(collectionOf(req), req.user) }));
+// Whole, with the time of its latest change; or, with ?since=<that time>, only what changed (2.59.0).
+const SINCE = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{1,3})?Z$/;
+app.get('/api/:collection', (req, res) => {
+  const col = collectionOf(req), since = req.query.since;
+  if (since === undefined) return res.json(listDocsStamped(col, req.user));
+  if (typeof since !== 'string' || !SINCE.test(since)) return res.status(400).json({ error: 'since must be a time the server gave' });
+  return res.json(listDocsSince(col, req.user, since));
+});
 app.get('/api/:collection/:id', (req, res) => {
   const doc = getDoc(collectionOf(req), req.user, req.params.id);
   return doc ? res.json(doc) : res.status(404).json({ error: 'not found' });

@@ -148,7 +148,19 @@ relational-ready.
 
 The browser polls `/api/stamps` every 5s and refetches only collections
 whose stamp moved. Local writes notify listeners immediately, so the UI
-never waits for a poll.
+never waits for a poll. **Only what changed** (2.59.0): a collection comes with `t`,
+the time of its latest change (`listDocsStamped`), and the poll asks
+`/api/<collection>?since=<t>` (`listDocsSince`: documents written at or after it, every
+id so a deletion is seen, the new `t`, one read). Before, every save, every shot
+marked in Play mode, brought the whole collection back (about 690 KB of sessions with
+a season of data), and start-up downloaded everything twice. Write times only go
+forward (`now()` in `db.js`, from the database's latest at start), so a clock stepping
+back can't hide a write. The shim keeps the server's copy (`server`, `since`), redraws
+only when a document really differs or went, and drops a refresh that crossed a save
+of its own (`writes`), so an answer from before the save can't put the old copy back.
+The service worker passes `?since=` straight to the network and folds a good answer
+into the whole copy it keeps (`deltaThrough`), so opening without signal shows what
+the page last had; `carryRefetch` asks for the whole collection.
 
 ## Who works on what
 
@@ -416,7 +428,19 @@ Each of these cost real debugging time. Don't reintroduce them.
   and applies each change to the latest copy; two quick taps used to start
   from the same stale round and the second save dropped the first shot.
 - **Derived numbers are memoised per data state** (`memoised()`, keyed on
-  the identity of `S.sessions`, `S.clubs`, `S.courses`, `S.settings`). A
+  the identity of `S.sessions`, `S.clubs`, `S.courses`, `S.settings`, `mapEpoch`
+  and, since 2.59.0, `today()`, since recency and freshness count whole local days).
+  **2.59.0, measured** (he asked for a performance review; Chromium, 390px, CPU 4x
+  slower, a season of 30 traced rounds, 20 Trackman sessions, 45 measured swings):
+  `rankedPractice` and `strokesGainedRecent` were rebuilt on every draw (35-70% of the
+  Overview, Range and round pages; each shot's `clubFit` scanned every session through
+  `rangeBlocksFor`), now memoised, as is `rangeBlocksFor`; a map's holes are kept per
+  course object (`hmCached`, a WeakMap, reset by `mapEpoch`; undefined while a file
+  loads is never kept), and their drawings per hole and marks (`hmSvg`). Overview 288 →
+  ~50 ms a draw, Range 244 → ~20, a round 168 → ~45, a course page 390 → ~160 (the rest
+  is the browser building 18 maps). `regressions` counts the rebuilds and `ui-visuals`
+  the map asks; both fail on the old code. Results are read, never changed in place:
+  keep it so, or the cache serves the change to every later draw. A
   season of data used to cost 2.3s a render (8,600 club-stat recomputes).
   So those arrays must always be *replaced*, never mutated in place, or
   the cache goes stale. A **course map arriving** is a change of data state
@@ -2139,7 +2163,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 469 tests, about 45s.
+`npm test` — 473 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,

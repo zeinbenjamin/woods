@@ -109,6 +109,18 @@ test('with a season of data, each club\'s numbers are worked out once per change
   for (const tab of ['overview', 'range', 'overview', 'range']) app.go(tab);
   const per = (performance.now() - t0) / 4;
   assert.ok(per < 500, `${per.toFixed(0)}ms a screen`);
+  // 2.59.0: the practice list and recent strokes gained are worked out once per data state too, not on
+  // every draw (they were 35-70% of the Overview, Range and round pages with a season of data).
+  const built = app.E(`(() => { let n = 0, m = 0; const rp = rankedPracticeUncached, sg = strokesGainedRecentUncached;
+    rankedPracticeUncached = () => (n++, rp()); strokesGainedRecentUncached = () => (m++, sg());
+    try { S.sessions = S.sessions.slice(); for (const t of ['overview', 'range', 'overview', 'range', 'rounds']) go(t); go('rounds', { sessionId: 'rs3' }); return [n, m]; }
+    finally { rankedPracticeUncached = rp; strokesGainedRecentUncached = sg; } })()`);
+  assert.deepEqual(JSON.parse(JSON.stringify(built)), [1, 1], 'once each for six screens');
+  // A new day works them out again: recency and freshness count whole local days.
+  const days = app.E(`(() => { let n = 0; const rp = rankedPracticeUncached; rankedPracticeUncached = () => (n++, rp());
+    const RealDate = Date; try { rankedPractice(); Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [2099, 0, 1])); } static now() { return new RealDate(2099, 0, 1).getTime(); } };
+      rankedPractice(); rankedPractice(); return n; } finally { Date = RealDate; rankedPracticeUncached = rp; } })()`);
+  assert.equal(days, 1, 'the day is part of what the cache follows');
   // And a change still shows up: the cache follows the data.
   const before = app.E(`clubStats('7i').n`);
   await app.api.put('sessions', 'ss_new', { id: 'ss_new', v: 2, type: 'range', date: daysAgo(0), blocks: [{ id: 'bn', seq: 1, club: '7i', swing: 'full', shots: [{ carry: 120, total: 130 }] }] });

@@ -99,6 +99,24 @@ test('his data: kept as it last loaded, answered from the phone only without sig
   await assert.rejects(w.fire('fetch', w.req('/api/clubs')), TypeError, 'nothing kept: the app sees no signal, as before');
 });
 
+test('a change since the last poll is folded into the kept copy, never kept on its own or answered offline (2.59.0)', async () => {
+  const w = loadWorker();
+  const json = o => basic(JSON.stringify(o));
+  w.net.answer = () => json({ docs: [{ id: 'a', v: 1 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }], t: '2026-10-31T00:00:00.000Z' });
+  await w.fire('fetch', w.req('/api/sessions'));                                   // the whole copy, at start-up
+  // b changed, c deleted, d added: the network's answer goes to the page as it came.
+  const delta = { docs: [{ id: 'b', v: 2 }, { id: 'd', v: 1 }], ids: ['a', 'b', 'd'], t: '2026-10-31T00:05:00.000Z' };
+  w.net.answer = () => json(delta);
+  const res = await w.fire('fetch', w.req('/api/sessions?since=2026-10-31T00%3A00%3A00.000Z'));
+  assert.deepEqual(await res.json(), delta);
+  assert.equal([...w.stores.get('carry-data').keys()].filter(k => k.includes('since')).length, 0, 'never kept under its own address');
+  // Without signal: a change can't be asked for, and the whole copy is current.
+  w.net.online = false;
+  await assert.rejects(w.fire('fetch', w.req('/api/sessions?since=2026-10-31T00%3A05%3A00.000Z')), TypeError);
+  const kept = await (await w.fire('fetch', w.req('/api/sessions'))).json();
+  assert.deepEqual(kept, { docs: [{ id: 'a', v: 1 }, { id: 'b', v: 2 }, { id: 'd', v: 1 }], t: '2026-10-31T00:05:00.000Z' });
+});
+
 test('what is never kept: polls, tee times, the monitor, stored files, writes, the worker itself, other sites', async () => {
   const w = loadWorker();
   w.net.answer = () => basic('x');
