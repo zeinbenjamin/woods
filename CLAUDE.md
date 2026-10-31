@@ -829,6 +829,22 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## The hook, the body fold, analyse all (2.69.0)
+
+He sent a screenshot of a hook he traced (ball, peak up and right, landing just left of the peak but right of the ball)
+drawn as a fade with a flat cut back at the top, and his own red line over it. `tracerSegs` levelled at the peak heading
+toward the landing *as seen from the ball* (`sign(land − ball)`); it now heads where the ball goes *after* the peak
+(`sign(land − peak)`, the ball's side only when the two are level), so the rise bulges a little past the peak and
+turns over, as his line did. `ui-tracer` checks his taps: past the peak the line only moves left. **The body** is one
+quiet fold, `#bodyAll_<id>`, "The body, measured · 16 of 16 frames · 2D · impact as marked · 6 measures", holding the
+four positions and every measure (the old *Every measure* fold went into it); the earlier-model notice stays on the card.
+**Analyse all** (he asked for the measure-all button back after the model change): `swingsToAnalyse()` (frames and no
+reading, no pose or `poseOld`, a reading without `ties` where `poseContext`/`swingShotContext` give something to tie, or
+`analysedView` ≠ `view`); the Swings page's `#analyseAll` "Analyse n swings" runs `analyseOne` (the card's Analyse,
+split out) for each in turn, `#analyseNote` saying which of n; an error stops it and says after how many. Temporary,
+at his word: with none needed it isn't shown. `#measureAll` stays beside it (quiet, also only while needed) for
+measuring alone, which costs no reading. `ui-swingsum` (5).
+
 ## One row of buttons, the notes at the foot (2.68.0)
 
 He sent three screenshots of the 2.67.0 card: buttons in four places (*Redraw the shot*, *Move the ball*, *Measure
@@ -2375,7 +2391,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 507 tests, about 45s.
+`npm test` — 508 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2432,7 +2448,7 @@ fixture would let the reading be pinned.
   restored; deleting returns; the Swings card's Play video and read-only body.
 - `ui-trace.test.js` (6) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
   a slow-motion clip, swings measured by the earlier model, repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
-- `ui-swingsum.test.js` (4) — the swing card's summary: the four rows from hand-made joints, a tied shot and a
+- `ui-swingsum.test.js` (5) — the swing card's summary: the four rows from hand-made joints, a tied shot and a
   reading with `ties`, an older reading's hint, the plane's misses, the one picture and either switch off, the prompt
   asking `ties` only with something to tie, the Swings card read-only.
 - `ui-tracer.test.js` (6) — the shot tracer: the three taps and the shape, the ball skipped when set and taken

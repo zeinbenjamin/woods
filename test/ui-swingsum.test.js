@@ -42,7 +42,7 @@ const FRESH = swing('sw_new', '7i'), JOINTS = FRESH.pose.frames.map(f => f.j);
 delete FRESH.pose;
 before(async () => {
   app = await startApp({ intercept: async (url, o) => {
-    if (/\/_blob\/sw_newf\d+$/.test(url)) return new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'content-type': 'image/webp' } });
+    if (/\/_blob\/\w+$/.test(url)) return new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'content-type': 'image/webp' } });
     if (!url.endsWith('/api/analyse')) return null;
     seen = JSON.parse(o.body);
     return new Response(JSON.stringify({ text: '{}', json: { one_thing: 'Stay in your posture', ties: 'The hands rising fits the hips moving in.' }, usage: {} }), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -130,7 +130,28 @@ test('one button: Analyse measures the body first when it isn\'t measured, then 
   assert.deepEqual(app.$$('#swingMoreList .choice b').map(b => b.textContent), ['Move the ball', 'Measure the body again', 'Change angle', 'Delete this swing']);
   app.$('#sheetInner [data-close]').click();
   // The quiet folds at the foot, in order; the credit for the reading is in What Claude saw.
-  assert.deepEqual(app.$$('#sf_sw_all > details').map(d => d.id), ['seen_sw_all', 'drawn_sw_all', 'bodyAll_sw_all', 'ptr_sw_all', 'frames_sw_all']);
+  assert.deepEqual(app.$$('#sf_sw_all > details').map(d => d.id), ['seen_sw_all', 'bodyAll_sw_all', 'drawn_sw_all', 'ptr_sw_all', 'frames_sw_all']);
   assert.match(app.text('#seen_sw_all'), /a reading, not a measurement/);
   assert.match(app.text('#drawn_sw_all'), /Dotted: from the 16 frames only[\s\S]*The ball's flight is a drawing from your taps[\s\S]*The club isn't tracked/);
+});
+
+test('the body is one quiet fold with the positions and every measure; the Swings page analyses everything that needs it', async () => {
+  app.go('range', { sessionId: S1 });
+  const body = app.$('#bodyAll_sw_all');
+  assert.ok(body && body.tagName === 'DETAILS' && !body.open);
+  assert.equal(app.text('#bodyAll_sw_all summary'), 'The body, measured · 16 of 16 frames · 2D · impact as marked · 6 measures');
+  assert.deepEqual(app.$$('#bodyAll_sw_all figcaption').map(f => f.textContent), ['Address', 'Top', 'Impact', 'Finish']);
+  assert.equal(app.$$('#bodyAll_sw_all .dlines li').length, 6);
+  assert.equal(app.$$('#view .swing > .pose').length, 0, 'not on the card itself');
+  // Analyse everything that needs it: never read, unmeasured, or read without "how it fits together".
+  const need = app.J(`swingsToAnalyse().map(w => w.id).sort()`);
+  assert.deepEqual(need, ['sw_bare', 'sw_old'], 'sw_all and sw_new have measures and ties; sw_bare was never read, sw_old has no ties');
+  app.go('swings');
+  assert.equal(app.text('#analyseAll'), 'Analyse 2 swings');
+  app.win.carryPose = { async detect() { return { w: 1000, h: 1000, joints: null }; } };
+  app.click('#analyseAll');
+  await app.waitFor(async () => { const d = await app.api.get('sessions', S1); return ['sw_bare', 'sw_old'].every(id => d.swings.find(w => w.id === id).analysis.ties); }, { what: 'both read' });
+  await app.waitFor(() => !app.$('#analyseAll'), { what: 'redrawn' });
+  assert.equal(app.$('#analyseNote'), null, 'temporary: gone once every swing is up to date');
+  assert.equal(app.$('#measureAll'), null);
 });

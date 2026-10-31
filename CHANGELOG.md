@@ -1,3 +1,8 @@
+## 2.69.0 — 2026-10-31
+- The shot tracer draws hooks and draws properly: over the top, the line now heads the way the ball went after its peak. Before, a ball that came down left of its peak but still right of where it started was drawn as a fade with a flat cut back at the top.
+- The body, measured (the four positions and every measure) is now one quiet toggle at the bottom of the swing card, its count in the title.
+- The Swings page has an "Analyse n swings" button again. It works through every swing that needs it: any never read, measured with the old body model, or read without "how it fits together". Each is measured on your phone where needed, then read by Claude, one at a time. It disappears once every swing is up to date.
+
 ## 2.68.0 — 2026-10-31
 - One row of buttons on a swing card: Analyse, Play video, Trace the shot and More…. Moving the ball, measuring again, tracing the hands, changing the angle and deleting are under More….
 - Analyse now does both jobs: if the body isn't measured yet, it measures it on your phone first, then Claude reads the swing with those measurements. There's no separate Measure button any more.

@@ -3898,6 +3898,29 @@ Answer as JSON with exactly these keys, keeping to the word limits:
 
 At most three observations, the one behind the fix first. "ball_data" is "agrees" only when what you see would produce ${swingShotContext(sw, session) ? "this swing's own shot first, and the strike mix above second" : 'the strike mix above'}. Be restrained: only claim what the frames support; put anything you are unsure of at low confidence or in cannot_tell. Do not invent measurements or angles. Prefer "I cannot see that from here" over a guess.`;
 }
+const ANALYSE_ERR = { unavailable: "Analysis needs Claude, and this server can't reach it — check ANTHROPIC_API_KEY on the server.", rate_limited: 'Too many requests just now — wait a moment and try again.', frames_unreadable: "Couldn't load the stored frames.", invalid_json: 'Claude replied but not in the expected format. Try again.' };
+// One swing's whole job (2.68.0): the body measured first when it isn't, or was by an earlier model, so the reading gets
+// the measures; then Claude reads it. say(text) reports progress. {ok, unmeasured} or {error}.
+async function analyseOne(sid, wid, say = () => {}) {
+  const sw0 = swingsOf(session(sid)).find(x => x.id === wid);
+  let unmeasured = false;
+  if (sw0 && (sw0.frames || []).length && (!sw0.pose || poseOld(sw0))) {
+    say('Loading the pose model…');
+    const mr = await measureAndSave(sid, wid, (i, n) => say(`Measuring the body: frame ${i} of ${n}…`), (i, n, ph) => say(`${ph === 'fill' ? 'Filling in the downswing' : 'Tracing the hands from the video'}: ${i} of ${n}…`));
+    if (mr.error === 'model') unmeasured = true;
+    say('Reading the frames…');
+  }
+  const res = await analyseSwing(sid, wid, ({ text }) => say(text.slice(-400)));
+  if (res.error) return { error: res.error };
+  const s = session(sid);
+  // Read in the app this time, so drop any earlier "read in a chat" credit.
+  const swings = swingsOf(s).map(x => { if (x.id !== wid) return x; const { analysedIn, ...rest } = x; return { ...rest, analysis: res.data, analysedOn: today(), analysedView: x.view }; });
+  return { ok: await save('sessions', sid, { ...s, swings }), unmeasured };
+}
+// Swings an analysis would change: never read, body unmeasured or by an earlier model, a reading without "how it fits
+// together" where there's something to fit, or read under another camera angle.
+const swingsToAnalyse = () => allSwings().filter(sw => (sw.frames || []).length && (!sw.analysis || !sw.pose || poseOld(sw)
+  || (!sw.analysis.ties && (poseContext(sw) || swingShotContext(sw, sw.session))) || (sw.analysedView && sw.analysedView !== sw.view)));
 async function analyseSwing(sessionId, swingId, onText) {
   const s = session(sessionId), sw = swingsOf(s).find(x => x.id === swingId);
   if (!sw) return { error: 'gone' };
@@ -4193,7 +4216,7 @@ function poseSection(sw, s, { readOnly = false, plane = true, fold = false, bare
   if (!m && readOnly) return `<p class="small muted" id="poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Measure the body</i> is on its ${s.type === 'round' ? 'round' : 'session'}'s page.</p>`;
   if (!m) return `<div class="row-actions" style="margin-top:6px"><button data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure the body</button><span class="small muted">Finds the joints on each frame, on this phone.</span></div><div id="pm_${sw.id}"></div>`;
   const vals = poseValues(m);
-  let h = `${poseOld(sw) ? `<p class="small notice" id="poseOld_${sw.id}">Measured with the earlier body model, which misplaced the wrists from behind. ${readOnly ? 'Measure it again on its page.' : 'Measure again for the hands where they really were.'}</p>` : ''}<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
+  let h = `${poseOld(sw) && !bare ? `<p class="small notice" id="poseOld_${sw.id}">Measured with the earlier body model, which misplaced the wrists from behind. ${readOnly ? 'Measure it again on its page.' : 'Measure again for the hands where they really were.'}</p>` : ''}<div class="pose" id="pose_${sw.id}"><div class="small"${bare ? ' hidden' : ''}><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
   h += `<div class="posePos">${POSE_POS.map(([k, label]) => { const i = m.keys && m.keys[k]; const f = i == null ? null : m.frames[i]; return f ? `<figure><div class="pf"><img src="/_blob/${f.asset}" alt="${label}" loading="lazy">${poseFrameSvg(f)}</div><figcaption>${label}</figcaption></figure>` : ''; }).join('')}</div>`;
   const sayV = x => x.v == null ? x.why || 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
   // No body on any frame says so; a view the measures don't cover says that, never both.
@@ -4556,7 +4579,7 @@ function tracerPts(sw) {
 // cubic Béziers, leaving the ball nearly straight up, level at the peak (heading the way the ball finished), then
 // falling to where it came down, steepest at the end.
 function tracerSegs([a, p, d]) {
-  const dir = Math.sign(d[0] - a[0]) || Math.sign(d[0] - p[0]) || 1, run = Math.max(Math.abs(d[0] - a[0]) * 0.4, 0.1 * Math.abs(a[1] - p[1])) * dir;
+  const dir = Math.sign(d[0] - p[0]) || Math.sign(d[0] - a[0]) || 1, run = Math.max(Math.abs(d[0] - a[0]) * 0.4, 0.1 * Math.abs(a[1] - p[1])) * dir;
   return [[a, [a[0] + 0.15 * (p[0] - a[0]), a[1] + 0.6 * (p[1] - a[1])], [p[0] - run * 0.6, p[1]], p],
     [p, [p[0] + run * 0.6, p[1]], [d[0] - 0.12 * (d[0] - p[0]), p[1] + 0.45 * (d[1] - p[1])], d]];
 }
@@ -4726,17 +4749,19 @@ function swingSummary(sw, s, { readOnly = false, pre = '' } = {}) {
 function swingFolds(sw, s, { pre = '' } = {}) {
   const a = sw.analysis, m = sw.pose ? poseMeasures(sw) : null, out = [];
   if (a && a.one_thing) out.push(readingSeen(sw, s, a, pre));
+  // The body, measured (2.69.0, he asked): the four positions and every measure in one fold.
+  if (m) {
+    const vals = poseValues(m), pos = poseSection(sw, s, { readOnly: true, plane: false, bare: true }).replace(/ id="/g, ` id="${pre}`);
+    const sayV = x => x.v == null ? x.why || 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
+    const list = m.found && vals.length && m.square !== false ? `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>` : '';
+    out.push(qfold(`${pre}bodyAll_${sw.id}`, 'The body, measured', `· ${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · too few to rely on'}${vals.length ? ` · ${plural(vals.length, 'measure')}` : ''}`, pos + list));
+  }
   // How the lines were drawn: the hands' source, the tracer's, the plane's camera.
   const notes = [];
   if (m && m.view === 'dtl' && m.keys && m.plane && overlayOn('plane')) { const d = traceData(sw, m); if (d) notes.push(traceNote(sw, d).replace(' id="traceNote_', ` id="${pre}traceNote_`)); }
   if (tracerPts(sw)) notes.push(`<p class="small muted" id="${pre}tracerNote_${sw.id}">The ball's flight is a drawing from your taps, not a measurement${sw.tracer && sw.tracer.on ? `, traced ${dateLabel(sw.tracer.on)}` : ''}.${!pre && !swingShot(sw, s) && sessionHasShots(s) ? ' Tie the swing to its shot (above) for the real distances.' : ''}</p>`);
   if (m && m.view === 'dtl' && m.keys && sw.ball && !m.plane) notes.push(`<p class="small muted" id="${pre}planeOff_${sw.id}">${m.inLine === false ? esc(planeCamera(m)) : 'The swing plane isn\'t measurable: the hands or shoulders at address weren\'t found surely enough, or the ball is above them.'}</p>`);
   if (notes.length) out.push(qfold(`${pre}drawn_${sw.id}`, 'How the lines were drawn', '', notes.join('') + '<p class="small muted">The club isn\'t tracked.</p>'));
-  const vals = poseValues(m);
-  if (m && m.found && vals.length && m.square !== false) {
-    const sayV = x => x.v == null ? x.why || 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
-    out.push(qfold(`${pre}bodyAll_${sw.id}`, 'Every measure', `· ${vals.length}`, `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>`));
-  }
   const tr = m && m.keys ? poseTraces(m) : '';
   if (tr) out.push(qfold(`${pre}ptr_${sw.id}`, 'Across the swing', '', tr + (POSE_GUIDE[m.view] ? `<p class="small muted" id="${pre}poseGuide_${sw.id}">Dotted: a guide at the top and impact${m.plane ? ', and for the plane coming down too; its band is the V, from the shaft line to the shoulder line' : ''}. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '')));
   if (!pre && sw.pose && (sw.frames || []).length) out.push(qfold(`frames_${sw.id}`, 'Frames', `· ${sw.frames.length}`, `<div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div><div class="small muted">Tap a frame to remove it.</div>`));
@@ -4769,7 +4794,7 @@ function swingCard(sw, s, opts = {}) {
     ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet. <i>Analyse</i> measures the body on this phone, then Claude reads the frames against it and your ball data for this club.</div>`}
     ${tracerSection(sw, s, false, true)}
     ${m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, false, true) : ''}
-    ${poseSection(sw, s, { plane: false, bare: true })}
+    ${poseOld(sw) ? `<p class="small notice" id="poseOld_${sw.id}">Measured with the earlier body model, which misplaced the wrists from behind. Analyse again for the hands where they really were.</p>` : ''}
     ${sw.pose ? '' : strip}
     ${swingFolds(sw, s)}
     <div class="row-actions">
@@ -5077,9 +5102,14 @@ function vSwings() {
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length;
   const span = [monthLabel(swingDate(sws[sws.length - 1])), monthLabel(swingDate(sws[0]))].filter(Boolean);
   const unmeasured = sws.filter(sw => (sw.frames || []).length && !sw.pose).length, old = sws.filter(sw => (sw.frames || []).length && sw.pose && poseOld(sw)).length;
-  const measureAll = unmeasured || old ? `<div class="row-actions" style="margin:0 0 8px"><button id="measureAll" data-act="measureAll">${old ? `Measure ${plural(unmeasured + old, 'swing')} with the new model` : `Measure the body on ${plural(unmeasured, 'swing')}`}</button></div><div id="measureNote" class="small muted"></div>` : '';
+  const measureAll = unmeasured || old ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" id="measureAll" data-act="measureAll">${old ? `Measure ${plural(unmeasured + old, 'swing')} with the new model` : `Measure the body on ${plural(unmeasured, 'swing')}`}</button></div><div id="measureNote" class="small muted"></div>` : '';
+  // Analyse them all (2.69.0): measure where needed, then read, one at a time; each reading is a call on the server's key.
+  const want = swingsToAnalyse().length, withFrames = sws.filter(sw => (sw.frames || []).length).length;
+  // Only while there's something to do (he asked: temporary): gone once every swing is up to date.
+  const analyseAll = want ? `<div class="row-actions" style="margin:0 0 8px" id="analyseAllRow"><button class="primary" id="analyseAll" data-act="analyseAll">Analyse ${plural(want, 'swing')}</button></div>
+    <div id="analyseNote" class="small muted">${want === withFrames ? 'None read with the new body model and the measures yet' : `${withFrames - want} of ${withFrames} are up to date`}. Each is measured on this phone where needed, then read by Claude: ${plural(want, 'reading')}, one at a time.</div>` : '';
   h += `<p class="small muted" id="swingBasis">${[plural(sws.length, 'swing'), [...new Set(span)].join(' – '), read === sws.length ? 'all read' : `${read} read`].filter(Boolean).join(' · ')}</p>`;
-  h += measureAll;
+  h += analyseAll + measureAll;
   h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
     const c = swingClubSummary(club, sws), name = club || 'No club';
     const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
@@ -5277,7 +5307,7 @@ function reelCardHtml(sw, s) {
   const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
   const play = sw.video ? `<button class="primary" data-act="reelPlay" data-vid="${esc(sw.video)}" data-sid="${s.id}" data-wid="${sw.id}" id="reelPlay">Play video</button>` : '';
   const m = sw.pose ? poseMeasures(sw) : null;
-  const pose = (sw.frames || []).length ? `<div id="reelPose">${(tracerSection(sw, s, true, true) + (m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, true, true) : '') + poseSection(sw, s, { readOnly: true, plane: false, bare: true })).replace(/ id="/g, ' id="rc_')}${sw.pose ? '' : `<p class="small muted" id="rc_poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Analyse</i> on its ${s.type === 'round' ? 'round' : 'session'}'s page measures it.</p>`}${swingFolds(sw, s, { pre: 'rc_' })}</div>` : '';
+  const pose = (sw.frames || []).length ? `<div id="reelPose">${(tracerSection(sw, s, true, true) + (m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, true, true) : '')).replace(/ id="/g, ' id="rc_')}${sw.pose ? '' : `<p class="small muted" id="rc_poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Analyse</i> on its ${s.type === 'round' ? 'round' : 'session'}'s page measures it.</p>`}${swingFolds(sw, s, { pre: 'rc_' })}</div>` : '';
   return `<div class="spread"><h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>${play}</div>
     <div id="reelVideo"></div>
     <p class="muted small">${[esc(w.label), esc(VIEWS[sw.view] || 'Other angle'), sw.note ? esc(sw.note) : ''].filter(Boolean).join(' · ')}</p>
@@ -5375,25 +5405,23 @@ Object.assign(ACTIONS, {
     const box = document.getElementById('an_' + d.wid); if (!box) return;
     box.innerHTML = `<div class="analysis"><div class="small muted" id="prog_${d.wid}">Thinking…</div></div>`;
     const prog = document.getElementById('prog_' + d.wid);
-    // One button (2.68.0): the body is measured first when it isn't yet, so the reading is given the measures.
-    const sw0 = swingsOf(session(d.sid)).find(x => x.id === d.wid);
-    let unmeasured = false;
-    if (sw0 && (sw0.frames || []).length && (!sw0.pose || poseOld(sw0))) {
-      const say = t => { if (prog) prog.textContent = t; };
-      say('Loading the pose model…');
-      const mr = await measureAndSave(d.sid, d.wid, (i, n) => say(`Measuring the body: frame ${i} of ${n}…`), (i, n, ph) => say(`${ph === 'fill' ? 'Filling in the downswing' : 'Tracing the hands from the video'}: ${i} of ${n}…`));
-      if (mr.error === 'model') unmeasured = true;
-      say('Reading the frames…');
+    const r = await analyseOne(d.sid, d.wid, t => { if (prog) prog.textContent = t; });
+    if (r.error) { box.innerHTML = `<div class="notice warn">${esc(ANALYSE_ERR[r.error] || 'Analysis failed.')} <span class="muted small">(${esc(r.error)})</span></div>`; return; }
+    if (r.ok) { if (r.unmeasured) toast('Read without body measures: the pose model can\'t run in this browser'); render(); }
+  },
+  // Every swing that needs it, one at a time (2.69.0, he asked after the heavy model: "measuring/analysing ALL the swings again").
+  async analyseAll(d) {
+    const todo = swingsToAnalyse();
+    const note = t => { const b = document.getElementById('analyseNote'); if (b) b.textContent = t; };
+    document.querySelectorAll('[data-act="analyseAll"]').forEach(b => { b.disabled = true; });
+    let done = 0, blind = 0;
+    for (let i = 0; i < todo.length; i++) {
+      const sw = todo[i], head = `Swing ${i + 1} of ${todo.length} (${sw.club || 'no club'}, ${dateLabel(swingDate(sw))}): `;
+      const r = await analyseOne(sw.session.id, sw.id, t => note(head + t));
+      if (r.error) { note(`${head}${ANALYSE_ERR[r.error] || 'analysis failed'} Stopped after ${plural(done, 'swing')}.`); document.querySelectorAll('[data-act="analyseAll"]').forEach(b => { b.disabled = false; }); return; }
+      if (r.ok) done++; if (r.unmeasured) blind++;
     }
-    const res = await analyseSwing(d.sid, d.wid, ({ text }) => { if (prog) prog.textContent = text.slice(-400); });
-    if (res.error) {
-      const msg = { unavailable: "Analysis needs Claude, and this server can't reach it — check ANTHROPIC_API_KEY on the server.", rate_limited: 'Too many requests just now — wait a moment and try again.', frames_unreadable: "Couldn't load the stored frames.", invalid_json: 'Claude replied but not in the expected format. Try again.' }[res.error] || 'Analysis failed.';
-      box.innerHTML = `<div class="notice warn">${esc(msg)} <span class="muted small">(${esc(res.error)})</span></div>`; return;
-    }
-    const s = session(d.sid);
-    // Read in the app this time, so drop any earlier "read in a chat" credit.
-    const swings = swingsOf(s).map(x => { if (x.id !== d.wid) return x; const { analysedIn, ...rest } = x; return { ...rest, analysis: res.data, analysedOn: today(), analysedView: x.view }; });
-    if (await save('sessions', d.sid, { ...s, swings })) { if (unmeasured) toast('Read without body measures: the pose model can\'t run in this browser'); render(); }
+    toast(`Analysed ${plural(done, 'swing')}${blind ? `, ${blind} without body measures` : ''}`); render();
   },
   async deleteSwing(d) {
     if (!await confirmAsk('Delete this swing and its frames?')) return;
