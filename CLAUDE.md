@@ -584,6 +584,15 @@ Each of these cost real debugging time. Don't reintroduce them.
   the list guards for an older HoleMap (no pictures, no throw); and `render()`
   catches a view that throws and shows `#viewError` with the message. The
   harness inlines the tags by that pattern and fails if they lose the build.
+- **The swing overlays don't rely on `vector-effect`** (2.69.1, his iPad: a swing picture all sand, frame and lines
+  hidden). The plane (`.planeSv`, viewBox the frame's aspect × 1), the tracer (`.trShot`) and the skeleton (`.poseSk`)
+  drew in a viewBox 1 tall with stroke widths in pixels kept by `non-scaling-stroke`; that browser dropped it, so the
+  tracer's 9-unit landing dot was nine frames wide. Reproduced in Chromium by switching the property off. Widths are now
+  in the frame's own units (about .0045 for 3 px on a 670 px frame), and the tracer draws in the frame's aspect
+  (`trShotSvg`, `tracerInner(…, ar)`, `frameAr`; the video overlay's `data-ar`, updated on `loadedmetadata`) so its dots
+  stay round. Checked in Chromium with `vector-effect` forced off everywhere: the card, the skeletons, the playing clip
+  draw as before. The hole maps and *Across the swing* keep `vector-effect` (their viewBoxes are large: dropping it
+  would thin a line, not cover the picture). Why that iPad dropped it isn't known.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -2391,7 +2400,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 508 tests, about 110s.
+`npm test` — 509 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2451,7 +2460,7 @@ fixture would let the reading be pinned.
 - `ui-swingsum.test.js` (5) — the swing card's summary: the four rows from hand-made joints, a tied shot and a
   reading with `ties`, an older reading's hint, the plane's misses, the one picture and either switch off, the prompt
   asking `ties` only with something to tie, the Swings card read-only.
-- `ui-tracer.test.js` (6) — the shot tracer: the three taps and the shape, the ball skipped when set and taken
+- `ui-tracer.test.js` (7) — the shot tracer: the overlays in the frame's own units (no `vector-effect`), the three taps and the shape, the ball skipped when set and taken
   back, the flight's shape, the tied shot's numbers (course and range), its own switch, the playing clip.
 - `ui-plane.test.js` (5) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
   swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list, the hands

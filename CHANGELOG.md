@@ -1,3 +1,6 @@
+## 2.69.1 — 2026-10-31
+- Fixed a swing picture that could fill with solid sand colour on some devices (seen on an iPad), hiding the frame, the swing plane and the traced shot. The skeletons on the four position photos had the same weakness and are fixed too.
+
 ## 2.69.0 — 2026-10-31
 - The shot tracer draws hooks and draws properly: over the top, the line now heads the way the ball went after its peak. Before, a ball that came down left of its peak but still right of where it started was drawn as a fade with a flat cut back at the top.
 - The body, measured (the four positions and every measure) is now one quiet toggle at the bottom of the swing card, its count in the title.

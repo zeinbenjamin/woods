@@ -203,3 +203,18 @@ test('on the playing clip: nothing before impact, the ball flying out after it, 
   app.$('#sheetInner [data-close]').click();
   app.win.localStorage.removeItem('carry.overlays');
 });
+
+test('the overlays draw in the frame\'s own units, never trusting vector-effect (2.69.1, his iPad: the picture all sand)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8').match(/<style>([\s\S]*?)<\/style>/)[1];
+  const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(m => [m[1].trim(), m[2]]);
+  const ours = rules.filter(([sel]) => /\.(planeSv|trShot|poseSk|pl-[a-z]+|ts-[a-z]+)\b/.test(sel) && !/\.pl-pick/.test(sel));
+  assert.ok(ours.length > 10);
+  for (const [sel, body] of ours) {
+    assert.doesNotMatch(body, /vector-effect/, `${sel}: a browser can drop it`);
+    const w = /stroke-width:\s*([\d.]+)/.exec(body);
+    if (w) assert.ok(+w[1] < 0.05, `${sel}: stroke-width ${w[1]} in a frame 1 tall would cover the picture`);
+  }
+  // The tracer draws in the frame's aspect, so a round dot is round.
+  assert.match(app.E(`trShotSvg(tracerInner([[0.5, 0.5], [0.6, 0.4]], 1, 0.5625), 0.5625)`), /viewBox="0 0 0\.563 1"[\s\S]*d="M0\.2813,0\.5000L0\.3375,0\.4000"/);
+});
