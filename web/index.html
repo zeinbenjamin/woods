@@ -104,6 +104,11 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .pl-pick { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #F4F7F3; border: 2.5px solid #C96A6A; box-sizing: border-box; }
 .planeTag { position: absolute; left: 8px; top: 8px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(11,16,11,.8); color: #9BD3A8; border: 1px solid #6DB37F; }
 .planeKey { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; } .planeKey i { display: inline-block; width: 16px; height: 0; vertical-align: middle; margin-right: 5px; border-top: 2px dashed; }
+.pl-thru { fill: none; stroke: #B9C2BB; stroke-opacity: .85; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.pl-back.sparse, .pl-down.sparse, .pl-thru.sparse, .pl-under.sparse { stroke-dasharray: 0.1 7; }
+.pl-head { fill: #F4F7F3; stroke: #0B100B; stroke-width: 1.5; } .planeKey .k-thru { border-top: 3px solid #B9C2BB; }
+.trBox { position: relative; aspect-ratio: var(--ar); width: 100%; } .trBox video { display: block; width: 100%; height: 100%; } .trOv { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.reel { container-type: size; } .reel .trBox { width: min(100cqw, calc(100cqh * var(--ar))); } #reelVideo .trBox { width: min(100%, calc(62vh * var(--ar))); margin: 2px auto 10px; } #reelVideo .trBox video { margin: 0; max-height: none; }
 .planeKey .k-shaft { border-color: #8FC3E8; } .planeKey .k-sh { border-color: #AA96BD; } .planeKey .k-back { border-top: 3px solid #6DB37F; } .planeKey .k-down { border-top: 3px solid #F4F7F3; box-shadow: 0 0 0 1px rgba(11,16,11,.5); }
 .ballPick { cursor: crosshair; margin: 8px auto; } #ballDot { position: absolute; inset: 0; pointer-events: none; }
 .switch { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0; border: 0; background: none; color: var(--ink-2); font-size: 14px; font-weight: 500; }
@@ -3928,6 +3933,9 @@ function poseModel() {
       const im = new Image(); im.src = src; await im.decode();
       const r = lm.detect(im), L = r && r.landmarks && r.landmarks[0];
       return { w: im.naturalWidth, h: im.naturalHeight, joints: L ? L.map(p => [p.x, p.y, p.visibility ?? 1]) : null };
+    }, async detectCanvas(cv) {
+      const r = lm.detect(cv), L = r && r.landmarks && r.landmarks[0];
+      return { w: cv.width, h: cv.height, joints: L ? L.map(p => [p.x, p.y, p.visibility ?? 1]) : null };
     } };
   })().catch(e => { poseLoad = null; throw e; });
   return poseLoad;
@@ -3982,6 +3990,7 @@ function poseMeasures(sw) {
   const A = fr[a], hipA = midP(P(A, PJ.lHip), P(A, PJ.rHip)), shA = midP(P(A, PJ.lSh), P(A, PJ.rSh));
   const series = {}, out = { found, of: fr.length, reliable, view: sw.view, keys, impFrom, frames: fr, series,
     impactSure: imp != null && (impFrom === 'marked' || (near(imp, imp - 1) && near(imp, imp + 1))) };
+  out.hands = fr.map(handP);
   if (sw.view === 'face') {
     const dir = Math.sign(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]) || 1;            // the lead shoulder's side is the target's
     const hipW = Math.abs(P(A, PJ.lHip)[0] - P(A, PJ.rHip)[0]), shW = Math.abs(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]), noseA = P(A, PJ.nose);
@@ -4002,7 +4011,6 @@ function poseMeasures(sw) {
     series.bend = fr.map(f => { if (!body(f)) return null; const h = midP(P(f, PJ.lHip), P(f, PJ.rHip)), sh = midP(P(f, PJ.lSh), P(f, PJ.rSh)); return Math.atan2((sh[0] - h[0]) * ball, h[1] - sh[1]) * 180 / Math.PI; });
     series.headUp = fr.map(f => { const n = P(f, PJ.nose); return n && torso ? 100 * (noseA[1] - n[1]) / torso : null; });
     const hA = handP(A);
-    out.hands = fr.map(handP);
     series.handsUp = fr.map((f, i) => out.hands[i] && hA && torso ? 100 * (hA[1] - out.hands[i][1]) / torso : null);
     /* The swing plane (2.63.0, he asked with the shot tracer mockup): from the ball he tapped, the shaft line
        through the hands at address and the shoulder line through the shoulders' middle, the V between them;
@@ -4184,19 +4192,24 @@ const planeCamera = m => m.shGap == null ? '' : m.inLine
   ? `At address your shoulders overlap (${fmt(100 * m.shGap)}% of your torso apart), so the camera was behind your hands, along the line.`
   : `At address your shoulders are ${fmt(100 * m.shGap)}% of your torso apart, so the camera wasn't behind your hands along the line. Off the line the plane's lines tilt, so they aren't drawn: film from behind the hands, pointing down the target line.`;
 // The address frame with the V, the shaft and shoulder lines run to the frame's edge, and the hands' path.
-function planeSvg(m) {
-  const p = m.plane, ar = (m.aspect || 1), far = q => { const dx = q[0] - p.ball[0], dy = q[1] - p.ball[1], l = Math.hypot(dx, dy) || 1; return [p.ball[0] + 3 * dx / l, p.ball[1] + 3 * dy / l]; };
+function planeSvg(m, d) {
+  const ar = (m.aspect || 1);
+  return `<svg class="planeSv" viewBox="0 0 ${ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true">${planeLines(m.plane)}${traceInner(d).html}${planeDots(d, m)}</svg>`;
+}
+// The V: the shaft and shoulder lines from the ball, run to the frame's edge.
+function planeLines(p) {
+  if (!p) return '';
+  const far = q => { const dx = q[0] - p.ball[0], dy = q[1] - p.ball[1], l = Math.hypot(dx, dy) || 1; return [p.ball[0] + 3 * dx / l, p.ball[1] + 3 * dy / l]; };
   const S = far(p.hands), H = far(p.shoulders), pt = q => `${q[0].toFixed(3)},${q[1].toFixed(3)}`;
-  const k = m.keys, path = (a, b) => m.hands.slice(a, b + 1).filter(Boolean).map(pt).join(' ');
-  const offImp = (poseValues(m).find(x => x.k === 'handsImpact') || {}).off;
-  const dot = (i, cls) => i != null && m.hands[i] ? `<circle class="${cls}" cx="${m.hands[i][0].toFixed(3)}" cy="${m.hands[i][1].toFixed(3)}" r="0.012"/>` : '';
-  return `<svg class="planeSv" viewBox="0 0 ${ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true">
-    <polygon class="pl-vee" points="${pt(p.ball)} ${pt(S)} ${pt(H)}"/>
+  return `<polygon class="pl-vee" points="${pt(p.ball)} ${pt(S)} ${pt(H)}"/>
     <line class="pl-shaft" x1="${p.ball[0].toFixed(3)}" y1="${p.ball[1].toFixed(3)}" x2="${S[0].toFixed(3)}" y2="${S[1].toFixed(3)}"/>
-    <line class="pl-sh" x1="${p.ball[0].toFixed(3)}" y1="${p.ball[1].toFixed(3)}" x2="${H[0].toFixed(3)}" y2="${H[1].toFixed(3)}"/>
-    ${k.top != null ? `<polyline class="pl-under" points="${path(k.address, k.top)}"/><polyline class="pl-back" points="${path(k.address, k.top)}"/>` : ''}
-    ${k.top != null && k.impact != null ? `<polyline class="pl-under" points="${path(k.top, k.impact)}"/><polyline class="pl-down" points="${path(k.top, k.impact)}"/>` : ''}
-    ${dot(k.top, 'pl-top')}${dot(k.impact, offImp ? 'pl-imp off' : 'pl-imp')}<circle class="pl-ball" cx="${p.ball[0].toFixed(3)}" cy="${p.ball[1].toFixed(3)}" r="0.01"/></svg>`;
+    <line class="pl-sh" x1="${p.ball[0].toFixed(3)}" y1="${p.ball[1].toFixed(3)}" x2="${H[0].toFixed(3)}" y2="${H[1].toFixed(3)}"/>`;
+}
+function planeDots(d, m) {
+  const offImp = (poseValues(m).find(x => x.k === 'handsImpact') || {}).off;
+  const dot = (q, cls) => q ? `<circle class="${cls}" cx="${q[0].toFixed(3)}" cy="${q[1].toFixed(3)}" r="0.012"/>` : '';
+  const b = m.plane && m.plane.ball;
+  return dot(traceAt(d, d.cuts[1]), 'pl-top') + dot(traceAt(d, d.cuts[2]), offImp ? 'pl-imp off' : 'pl-imp') + (b ? `<circle class="pl-ball" cx="${b[0].toFixed(3)}" cy="${b[1].toFixed(3)}" r="0.01"/>` : '');
 }
 function planeSection(sw, s, m, readOnly) {
   const A = m.frames[m.keys.address], move = readOnly ? '' : `<button class="quiet" data-act="planeBall" data-sid="${s.id}" data-wid="${sw.id}">${sw.ball ? 'Move the ball' : 'Tap the ball'}</button>`;
@@ -4204,11 +4217,17 @@ function planeSection(sw, s, m, readOnly) {
   if (!m.plane) return `<div class="plane" id="plane_${sw.id}"><div class="small"><b>Swing plane</b></div><p class="small muted" id="planeOff_${sw.id}">${m.inLine === false ? planeCamera(m) : 'Not measurable: the hands or shoulders at address weren\'t found surely enough, or the ball is above them.'}</p>${move ? `<div class="row-actions">${move}</div>` : ''}</div>`;
   const on = overlayOn('plane');
   // Cropped top to bottom to the swing: from a little above the highest hands, head or shoulders to a little under the ball.
-  const ar = (sw.pose && sw.pose.aspect) || 1, ys = [m.plane.ball[1], m.plane.shoulders[1], ...m.hands.slice(m.keys.address, (m.keys.impact ?? m.keys.address) + 1).filter(Boolean).map(h => h[1])];
+  const d = traceData(sw, m), ar = d.ar, ys = [m.plane.ball[1], m.plane.shoulders[1], ...d.runs.flat().map(q => q.p[1])];
   const y0 = Math.max(0, Math.min(...ys) - 0.08), y1 = Math.min(1, m.plane.ball[1] + 0.1), ch = Math.max(0.2, y1 - y0);
-  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar })}</div><span class="planeTag">Measured · your hands, 2D</span></div>
-    <div class="planeKey small muted"><span><i class="k-shaft"></i>Shaft line</span><span><i class="k-sh"></i>Shoulder line</span><span><i class="k-back"></i>Hands going back</span><span><i class="k-down"></i>Coming down</span></div>` : '';
-  return `<div class="plane" id="plane_${sw.id}"><div class="spread">${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}<span class="small muted">your hands; the club isn't tracked</span></div>${pic}${move ? `<div class="row-actions" style="margin-top:4px">${move}</div>` : ''}</div>`;
+  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar }, d)}</div><span class="planeTag">Measured · your hands, 2D</span></div>
+    <div class="planeKey small muted"><span><i class="k-shaft"></i>Shaft line</span><span><i class="k-sh"></i>Shoulder line</span><span><i class="k-back"></i>Hands going back</span><span><i class="k-down"></i>Coming down</span><span><i class="k-thru"></i>After impact</span></div>` : '';
+  const trace = !readOnly && !d.dense && sw.video ? `<button class="quiet" data-act="traceSwing" data-sid="${s.id}" data-wid="${sw.id}">Trace the hands from the video</button>` : '';
+  return `<div class="plane" id="plane_${sw.id}"><div class="spread">${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}<span class="small muted">your hands; the club isn't tracked</span></div>${pic}${on ? traceNote(sw, d) : ''}${move || trace ? `<div class="row-actions" style="margin-top:4px">${trace}${move}</div>` : ''}<div id="tr_${sw.id}"></div></div>`;
+}
+// Where the line came from, said under it.
+function traceNote(sw, d) {
+  if (d.dense) return `<p class="small muted" id="traceNote_${sw.id}">The hands from ${d.n} frames of the video${d.fps ? `, about ${fmt(d.fps)} a second` : ''}; the line is smoothed between them${d.runs.length > 1 ? ', and broken where the hands weren\'t found surely' : ''}.</p>`;
+  return `<p class="small muted" id="traceNote_${sw.id}">Dotted: from the ${d.m.frames.length} frames only, so the line between them is drawn, not measured.${sw.video ? ' Trace the hands from the video for the real path.' : ' No video is stored for this swing to trace.'}</p>`;
 }
 // One tap on the ball, on the address frame; the camera check beside it, from the same frame.
 ACTIONS.planeBall = function (d) {
@@ -4259,12 +4278,173 @@ function poseTrendHtml(club, swings) {
     return `<tr data-k="${t.k}"><td><b>${esc(t.name)}</b><div class="small muted">${esc(VIEWS[t.view])}</div></td><td class="num"><b>${fmt(z.v)}${u(t)}</b><div class="small muted">${dateLabel(z.date)}${z.course ? ' · course' : ''}</div></td><td class="num">${ch == null ? '<span class="muted">–</span>' : `${ch > 0 ? '+' : ch < 0 ? '−' : ''}${fmt(Math.abs(ch))}${u(t)}<div class="small muted">since ${monthLabel(a.date)}</div>`}</td><td class="num n">${t.pts.length}</td></tr>`; };
   return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing</b></div><div class="scroll"><table class="ptrend" id="ptrend_${esc(club)}"><thead><tr><th></th><th>Latest</th><th>Change</th><th>Swings</th></tr></thead><tbody>${tr.map(row).join('')}</tbody></table></div>`;
 }
-async function measureAndSave(sid, wid, onFrame) {
+async function measureAndSave(sid, wid, onFrame, onTrace) {
   const s = session(sid), sw = s && swingsOf(s).find(x => x.id === wid); if (!sw) return { error: 'gone' };
   let pose; try { pose = await measureFrames(sw.frames || [], onFrame); } catch (e) { return { error: 'model', message: e && e.message }; }
+  // With its video stored, the hands are traced from the clip too (2.64.0); a clip that won't decode keeps the frames alone.
+  let track = null, traceErr = null;
+  if (sw.video) { try { track = await traceHands(sw, onTrace); } catch (e) { traceErr = (e && e.message) || 'unreadable'; } }
   const now = session(sid);
-  return { ok: await save('sessions', sid, { ...now, swings: swingsOf(now).map(x => x.id === wid ? { ...x, pose } : x) }), pose };
+  return { ok: await save('sessions', sid, { ...now, swings: swingsOf(now).map(x => x.id === wid ? { ...x, pose, ...(track ? { track } : {}) } : x) }), pose, track, traceErr };
 }
+/* ---------- the hands traced from the video (2.64.0) ----------
+   He asked for the hand line to be smooth like the tracers on golf videos. The 16 frames give the downswing
+   two or three points, so a smooth line through them would be drawn, not measured: with the video stored,
+   the clip is seeked about every 1/60 s across the frames' span (at most TRACK_MAX), the frame actually shown
+   taken from requestVideoFrameCallback's mediaTime (a 30 fps clip repeats a frame between two seeks; the
+   repeat is skipped), and the pose model run on each. Stored as `swing.track` (SCHEMA.md): the two wrists,
+   rounded like the pose. The same rules as frame extraction: never at exactly 0, wait until painted. */
+const TRACK_MAX = 90, TRACK_STEP = 1 / 60, TRACK_MIN = 8;
+async function videoFrames(src, times, onFrame) {
+  const vid = document.createElement('video');
+  vid.preload = 'auto'; vid.muted = true; vid.playsInline = true; vid.src = src;
+  await new Promise((res, rej) => { vid.onloadedmetadata = res; vid.onerror = () => rej(new Error('unreadable')); });
+  if (vid.readyState < 2) await new Promise(res => { const done = () => { vid.onloadeddata = null; res(); }; vid.onloadeddata = done; setTimeout(done, 1500); });
+  if (!vid.videoWidth) throw new Error('unreadable');
+  const dur = isFinite(vid.duration) ? vid.duration : 1e9, scale = Math.min(1, 640 / Math.max(vid.videoWidth, vid.videoHeight));
+  const cv = document.createElement('canvas'); cv.width = Math.round(vid.videoWidth * scale); cv.height = Math.round(vid.videoHeight * scale);
+  const cx = cv.getContext('2d'), th = document.createElement('canvas'); th.width = th.height = 16;
+  const tx = th.getContext('2d', { willReadFrequently: true });
+  // A seek that lands on the frame already shown paints nothing new, so the browser never calls back (found in
+  // Chromium on his 30 fps Long Reef clip: every repeat waited out the timeout and counted as a frame). No call
+  // within 150 ms and the same 16-pixel thumbnail as before: a repeat, skipped.
+  let prev = null;
+  for (let i = 0; i < times.length; i++) {
+    const target = Math.max(0.05, Math.min(times[i], dur - 0.02));
+    const shown = await new Promise(res => {
+      let done = false; const fin = (t, fresh) => { if (!done) { done = true; vid.onseeked = null; res({ t, fresh }); } };
+      vid.onseeked = () => {
+        if (vid.requestVideoFrameCallback) { vid.requestVideoFrameCallback((now, md) => fin(md && md.mediaTime != null ? md.mediaTime : target, true)); setTimeout(() => fin(target, false), 150); }
+        else setTimeout(() => fin(target, false), 60);
+      };
+      vid.currentTime = Math.abs(vid.currentTime - target) < 0.001 ? target + 0.001 : target;
+      setTimeout(() => fin(target, false), 1200);
+    });
+    let same = false;
+    try { tx.drawImage(vid, 0, 0, 16, 16); const px = tx.getImageData(0, 0, 16, 16).data; same = !shown.fresh && prev && px.every((v, k) => v === prev[k]); prev = px; } catch (e) {}
+    if (same) { await onFrame(null, null, i); continue; }
+    cx.drawImage(vid, 0, 0, cv.width, cv.height);
+    await onFrame(shown.t, cv, i);
+  }
+  vid.removeAttribute('src'); vid.load();
+}
+async function traceHands(sw, onStep) {
+  const fr = sw.frames || []; if (!sw.video || fr.length < 2) return null;
+  const t0 = fr[0].t, t1 = fr[fr.length - 1].t, span = t1 - t0; if (!(span > 0)) return null;
+  const n = Math.min(TRACK_MAX, Math.max(2, Math.round(span / TRACK_STEP) + 1));
+  const times = Array.from({ length: n }, (_, i) => t0 + span * i / (n - 1));
+  const model = await poseModel(), pts = []; let last = null;
+  await (window.carryVideoFrames || videoFrames)('/_blob/' + sw.video, times, async (t, cv, i) => {
+    if (onStep) onStep(i + 1, n);
+    if (t == null || (last != null && Math.abs(t - last) < 0.004)) return;   // the same decoded frame again
+    last = t;
+    const r = await (model.detectCanvas ? model.detectCanvas(cv) : model.detect(cv)), j = r && r.joints;
+    const q = k => j && j[k] ? [r3(j[k][0]), r3(j[k][1]), Math.round(j[k][2] * 100) / 100] : [0, 0, 0];
+    pts.push([r3(t), ...q(PJ.lWr), ...q(PJ.rWr)]);
+  });
+  return pts.length >= TRACK_MIN ? { by: POSE_BY, on: today(), pts } : null;
+}
+// Centripetal Catmull-Rom as cubic Béziers (Yuksel, Schaefer and Keyser): the curve goes through every point and,
+// unlike the plain kind, doesn't loop or overshoot where points bunch up, as they do at the top.
+function crSegs(P) {
+  const out = [], d = (a, b) => Math.sqrt(Math.hypot(b[0] - a[0], b[1] - a[1]));
+  for (let i = 0; i < P.length - 1; i++) {
+    const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+    let d1 = d(p0, p1), d2 = d(p1, p2), d3 = d(p2, p3);
+    if (d2 < 1e-9) { out.push([p1, p1, p2, p2]); continue; }
+    if (d1 < 1e-9) d1 = d2; if (d3 < 1e-9) d3 = d2;   // at an end, as if the line carried on
+    const b1 = [0, 1].map(k => (d1 * d1 * p2[k] - d2 * d2 * p0[k] + (2 * d1 * d1 + 3 * d1 * d2 + d2 * d2) * p1[k]) / (3 * d1 * (d1 + d2)));
+    const b2 = [0, 1].map(k => (d3 * d3 * p1[k] - d2 * d2 * p3[k] + (2 * d3 * d3 + 3 * d3 * d2 + d2 * d2) * p2[k]) / (3 * d3 * (d3 + d2)));
+    out.push([p1, b1, b2, p2]);
+  }
+  return out;
+}
+// The hands' path for drawing: from the video when traced, else the 16 frames (`dense` false: drawn dotted, since
+// the line between them is drawn, not measured). Runs break where the model wasn't sure, and on the video where
+// points are further apart in time than 3.5 steps, never bridged. `cuts` are the four positions' times.
+function traceData(sw, m = poseMeasures(sw)) {
+  if (!m || !m.keys || !m.hands) return null;
+  const ar = (sw.pose && sw.pose.aspect) || 1, k = m.keys, T = i => i == null || !m.frames[i] ? null : m.frames[i].t;
+  const tr = sw.track && Array.isArray(sw.track.pts) && sw.track.pts.length >= TRACK_MIN ? sw.track.pts : null;
+  let pts, gap = Infinity;
+  if (tr) {
+    pts = tr.map(q => { const l = q[3] >= POSE_VIS ? [q[1] * ar, q[2]] : null, r = q[6] >= POSE_VIS ? [q[4] * ar, q[5]] : null; return { t: q[0], p: l && r ? midP(l, r) : l || r }; });
+    const st = pts.slice(1).map((q, i) => q.t - pts[i].t).filter(x => x > 0).sort((a, b) => a - b);
+    gap = 3.5 * (st[st.length >> 1] || 0.02);
+  } else pts = m.frames.map((f, i) => ({ t: f.t, p: m.hands[i] }));
+  const runs = []; let cur = [];
+  for (const q of pts) {
+    if (!q.p || (cur.length && q.t - cur[cur.length - 1].t > gap)) { if (cur.length) runs.push(cur); cur = []; if (!q.p) continue; }
+    cur.push(q);
+  }
+  if (cur.length) runs.push(cur);
+  const span = tr ? tr[tr.length - 1][0] - tr[0][0] : 0, cuts = [T(k.address), T(k.top), T(k.impact), T(k.finish)];
+  // Traced, the top and impact come from the trace (the hands highest, then lowest after it) where the 16 frames
+  // are coarse: his unmarked Long Reef clip's "impact" frame was already into the follow-through. A marked impact
+  // stays where he put it. Only for drawing; the measures keep the frames.
+  if (tr && cuts[1] != null) {
+    const ok = pts.filter(q => q.p), hi = cuts[2] != null ? cuts[2] : cuts[3];
+    const top = ok.filter(q => q.t >= cuts[0] && q.t <= hi).reduce((b, q) => !b || q.p[1] < b.p[1] ? q : b, null);
+    if (top) cuts[1] = top.t;
+    if (sw.impact != null && m.impFrom === 'marked') cuts[2] = Math.max(cuts[1], sw.impact);
+    else { const low = ok.filter(q => q.t > cuts[1] && q.t <= cuts[3]).reduce((b, q) => !b || q.p[1] > b.p[1] ? q : b, null); if (low) cuts[2] = low.t; }
+  }
+  // The model's points jitter a few pixels frame to frame; traced, each is drawn as a 1-2-3-2-1 average of its
+  // neighbours in the run (the ends with what they have), for the drawing only.
+  const W = [1, 2, 3, 2, 1], calm = r => r.map((q, i) => { let x = 0, y = 0, w = 0; W.forEach((k, j) => { const o = r[i + j - 2]; if (o) { x += k * o.p[0]; y += k * o.p[1]; w += k; } }); return { t: q.t, p: [x / w, y / w] }; });
+  return { ar, dense: !!tr, n: tr ? pts.filter(q => q.p).length : null, fps: tr && span > 0 ? (tr.length - 1) / span : null,
+    runs: tr ? runs.map(calm) : runs, cuts, plane: m.plane || null, m };
+}
+// The path's markup, whole (tNow null) or as far as the clip has got: going back green, coming down white,
+// after impact grey; each Bézier belongs to the part its middle falls in, so the colours meet without a kink.
+function traceInner(d, tNow = null) {
+  const cls = { back: 'pl-back', down: 'pl-down', thru: 'pl-thru' }, f = v => v.toFixed(4), sp = d.dense ? '' : ' sparse';
+  const phase = t => d.cuts[1] == null || t < d.cuts[1] ? 'back' : d.cuts[2] == null || t < d.cuts[2] ? 'down' : 'thru';
+  let under = '', over = '', head = null;
+  for (const run of d.runs) {
+    if (tNow != null && run[0].t > tNow + 1e-6) continue;
+    head = tNow == null ? run[run.length - 1] : run.filter(q => q.t <= tNow + 1e-6).pop();
+    const segs = crSegs(run.map(q => q.p));
+    let ph = null, path = '';
+    const flush = () => { if (path) { under += `<path class="pl-under${sp}" d="${path}"/>`; over += `<path class="${cls[ph]}${sp}" d="${path}"/>`; } path = ''; };
+    segs.forEach(([a, b1, b2, b], i) => {
+      if (tNow != null && run[i + 1].t > tNow + 1e-6) return;
+      const p = phase((run[i].t + run[i + 1].t) / 2);
+      if (p !== ph || !path) { flush(); ph = p; path = `M${f(a[0])},${f(a[1])}`; }
+      path += `C${f(b1[0])},${f(b1[1])} ${f(b2[0])},${f(b2[1])} ${f(b[0])},${f(b[1])}`;
+    });
+    flush();
+  }
+  return { html: under + over, head };
+}
+// The point of the path nearest a time, for the dots at the top and impact.
+/* On the playing clip (2.64.0, the tracers he showed): the video and an SVG of the same box, so the drawing sits
+   on the picture whatever the bars around it. While it plays the line draws itself up to the clip's time, the
+   hands as a dot; paused, the whole line (his choice, 2026-10-31). Under the *Swing plane* switch, like the
+   card's drawing; the V only where the ball is tapped and the camera in line. */
+function traceVideoHtml(sw, s, videoHtml) {
+  if (!overlayOn('plane') || !sw.pose) return videoHtml;
+  const d = traceData(sw); if (!d || !d.runs.length) return videoHtml;
+  return `<div class="trBox" style="--ar:${d.ar.toFixed(3)}">${videoHtml}<svg class="planeSv trOv" data-sid="${s.id}" data-wid="${sw.id}" viewBox="0 0 ${d.ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true"></svg></div>`;
+}
+function traceDraw(svg, d, tNow) {
+  const tr = traceInner(d, tNow), h = tr.head && tNow != null ? `<circle class="pl-head" cx="${tr.head.p[0].toFixed(3)}" cy="${tr.head.p[1].toFixed(3)}" r="0.014"/>` : '';
+  svg.innerHTML = planeLines(d.plane) + tr.html + (tNow == null ? planeDots(d, d.m) : h);
+}
+function wireTrace(root) {
+  if (!root) return;
+  root.querySelectorAll('svg.trOv').forEach(svg => {
+    const v = svg.parentNode.querySelector('video'), s = session(svg.dataset.sid), sw = s && swingsOf(s).find(w => w.id === svg.dataset.wid);
+    const d = sw && traceData(sw); if (!v || !d) return;
+    const draw = () => traceDraw(svg, d, v.paused || v.ended ? null : v.currentTime);
+    let raf = 0;
+    const tick = () => { draw(); raf = v.paused || v.ended ? 0 : requestAnimationFrame(tick); };
+    v.addEventListener('play', () => { if (!raf) raf = requestAnimationFrame(tick); });
+    ['pause', 'seeked', 'ended'].forEach(ev => v.addEventListener(ev, draw));
+    draw();
+  });
+}
+const traceAt = (d, t) => { let best = null; if (t == null) return null; for (const r of d.runs) for (const q of r) if (!best || Math.abs(q.t - t) < Math.abs(best.t - t)) best = q; return best && best.p; };
 /* ---------- views ---------- */
 // A reading as a coach gives it: the one fix, why, a feel, a drill, how to
 // know it's working. Everything behind it is one tap down. Readings from
@@ -4653,7 +4833,7 @@ function vReels() {
     <div class="reelsTop"><button class="reelsClose" data-act="navBack" data-tab="swings" data-sub="" aria-label="Back"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
       const bg = swingFrame(sw);
-      return `<section class="reel" data-i="${i}">${bg ? `<img class="reelBg" src="/_blob/${bg.asset}" alt="" aria-hidden="true" loading="lazy">` : ''}<video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
+      return `<section class="reel" data-i="${i}">${bg ? `<img class="reelBg" src="/_blob/${bg.asset}" alt="" aria-hidden="true" loading="lazy">` : ''}${traceVideoHtml(sw, sw.session, `<video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>`)}
         <div class="reelFlash" aria-hidden="true"></div>
         <div class="reelBottom"><button class="reelInfo" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
           <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>${a && a.one_thing ? `<div class="fix">${esc(a.one_thing)}</div>` : '<div class="s">not read yet</div>'}
@@ -4673,6 +4853,7 @@ function reelsLifecycle() {
   if (root) window.scrollTo(0, 0);
   if (reelsObs) { reelsObs.disconnect(); reelsObs = null; }
   if (!root) reelsSound = false;
+  if (root) wireTrace(root);
   if (!root || typeof IntersectionObserver !== 'function') return;
   const vids = [...root.querySelectorAll('video[data-reel]')];
   vids.forEach(v => { v.muted = !reelsSound; });
@@ -4807,7 +4988,7 @@ function wireSwingForm(root, sessionId) {
 // carry rc_ so they can't meet the same swing's on a page.
 function reelCardHtml(sw, s) {
   const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
-  const play = sw.video ? `<button class="primary" data-act="reelPlay" data-vid="${esc(sw.video)}" id="reelPlay">Play video</button>` : '';
+  const play = sw.video ? `<button class="primary" data-act="reelPlay" data-vid="${esc(sw.video)}" data-sid="${s.id}" data-wid="${sw.id}" id="reelPlay">Play video</button>` : '';
   const pose = (sw.frames || []).length ? `<div id="reelPose">${poseSection(sw, s, { readOnly: true }).replace(/ id="/g, ' id="rc_')}</div>` : '';
   return `<div class="spread"><h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>${play}</div>
     <div id="reelVideo"></div>
@@ -4832,7 +5013,9 @@ Object.assign(ACTIONS, {
     const box = $('#reelVideo'), btn = $('#reelPlay'); if (!box || !btn) return;
     if (box.firstChild) { box.innerHTML = ''; btn.textContent = 'Play video'; return; }
     document.querySelectorAll('#reels video').forEach(v => v.pause());
-    box.innerHTML = `<video src="/_blob/${esc(d.vid)}" controls playsinline autoplay></video>`;
+    const s = d.sid && session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid), vh = `<video src="/_blob/${esc(d.vid)}" controls playsinline autoplay></video>`;
+    box.innerHTML = sw ? traceVideoHtml(sw, s, vh) : vh;
+    wireTrace(box);
     const v = box.querySelector('video'); if (v.play) Promise.resolve(v.play()).catch(() => {});
     btn.textContent = 'Hide video';
   },
@@ -4870,9 +5053,20 @@ Object.assign(ACTIONS, {
     const box = document.getElementById('pm_' + d.wid);
     const say = t => { const b = document.getElementById('pm_' + d.wid); if (b) b.innerHTML = `<div class="small muted">${esc(t)}</div>`; };
     say('Loading the pose model…');
-    const res = await measureAndSave(d.sid, d.wid, (i, n) => say(`Measuring frame ${i} of ${n}…`));
+    const res = await measureAndSave(d.sid, d.wid, (i, n) => say(`Measuring frame ${i} of ${n}…`), (i, n) => say(`Tracing the hands from the video: ${i} of ${n}…`));
     if (res.error) { const b = document.getElementById('pm_' + d.wid) || box; if (b) b.innerHTML = `<div class="notice warn">${res.error === 'model' ? `The pose model couldn't run in this browser${res.message ? ` (${esc(res.message)})` : ''}. It needs WebAssembly with SIMD: Safari 16.4 or later, or a recent Chrome.` : 'That swing is gone.'}</div>`; return; }
-    if (res.ok) { toast('Body measured'); render(); }
+    if (res.ok) { toast(res.traceErr ? 'Body measured; the video couldn\'t be traced here' : 'Body measured'); render(); }
+  },
+  async traceSwing(d) {
+    const s = session(d.sid), sw = s && swingsOf(s).find(x => x.id === d.wid); if (!sw) return;
+    const say = (t, warn) => { const b = document.getElementById('tr_' + d.wid); if (b) b.innerHTML = `<div class="small ${warn ? 'notice warn' : 'muted'}">${esc(t)}</div>`; };
+    say('Loading the pose model…');
+    let track;
+    try { track = await traceHands(sw, (i, n) => say(`Tracing the hands from the video: ${i} of ${n}…`)); }
+    catch (e) { say(e && e.message === 'unreadable' ? 'This browser can\'t decode the video (an iPhone clip from Photos opens in Safari). The dotted line from the frames stays.' : `The pose model couldn't run here${e && e.message ? ` (${e.message})` : ''}.`, true); return; }
+    if (!track) { say('Too few frames of the video to trace.', true); return; }
+    const ok = await queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => w.id === sw.id ? { ...w, track } : w) }); });
+    if (ok) { toast('Hands traced'); render(); }
   },
   async measureAll() {
     const todo = allSwings().filter(sw => (sw.frames || []).length && !sw.pose);
@@ -4919,7 +5113,8 @@ Object.assign(ACTIONS, {
   },
   playSwing(d) {
     const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw || !sw.video) return;
-    openSheet(`<h2>${esc(VIEWS[sw.view] || 'Swing')}${sw.club ? ' · ' + esc(sw.club) : ''}</h2><div class="bigmap" style="max-width:360px"><video src="/_blob/${sw.video}" controls playsinline loop style="width:100%;border-radius:var(--r)"></video></div>`);
+    openSheet(`<h2>${esc(VIEWS[sw.view] || 'Swing')}${sw.club ? ' · ' + esc(sw.club) : ''}</h2><div class="bigmap" style="max-width:360px">${traceVideoHtml(sw, s, `<video src="/_blob/${sw.video}" controls playsinline loop style="width:100%;border-radius:var(--r)"></video>`)}</div>`);
+    wireTrace(sheetInner);
   },
 });
 

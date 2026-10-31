@@ -829,6 +829,40 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## The hands traced from the video (2.64.0)
+
+He asked (2026-10-31, with two screenshots of pro swing tracers): the swing plane's hand line smooth like those.
+Told first what they are (hands, clubhead and ball; the club isn't tracked here) and the issues (phone time, the
+clip's own frame rate, blur at impact, swings without video, smoothing that can lie, drawing on the playing video,
+storage); he said go. **Traced:** with `sw.video`, `measureAndSave` (and *Trace the hands from the video*,
+`ACTIONS.traceSwing`, for swings measured before) runs `traceHands`: about every `TRACK_STEP` (1/60 s) across the
+frames' span, at most `TRACK_MAX` (90) seeks, by `videoFrames` (the extraction rules: never at 0, wait until
+painted). The frame actually shown is `requestVideoFrameCallback`'s `mediaTime`; **a seek onto the frame already
+shown paints nothing, so the browser never calls back** (found on his 30 fps Long Reef clip: each repeat waited the
+1.2 s timeout and counted as a frame, 170 s and "50 a second"): no call in 150 ms and the same 16-pixel thumbnail
+is a repeat, skipped. The pose model runs on each (`detectCanvas`), and `swing.track` (SCHEMA.md) keeps the two
+wrists per point; fewer than `TRACK_MIN` (8) stores nothing. A clip the browser can't decode keeps the frames
+(`traceErr`, said on the card). **Drawn** (`traceData`, on every draw): the points' hands (both wrists, or the
+sure one), runs broken where neither is sure or points are over 3.5 steps apart, never bridged; each traced point
+averaged 1-2-3-2-1 with its neighbours (model jitter, drawing only); the top and impact for the colours from the
+trace (hands highest, then lowest), a marked impact kept; `crSegs` (centripetal Catmull-Rom as Béziers: through
+every point, no loops where points bunch at the top); `traceInner` colours each Bézier by the part its middle falls
+in (`pl-back`, `pl-down`, `pl-thru` after impact, grey). Without a trace, the 16 frames dotted (`.sparse`) with
+`#traceNote_<id>` saying it's drawn, not measured. **On the playing clip** (`traceVideoHtml`, `wireTrace`): the
+video in a `.trBox` of the pose's aspect with an SVG over it, so the drawing sits on the picture (in the feed the
+box is sized by container units in `.reel`); playing, it draws to `currentTime` with the hands as `.pl-head`;
+paused, whole (his choice). In the swing's sheet (`playSwing`), the card's *Play video* (`reelPlay`) and the feed;
+off with the *Swing plane* switch. Measures still come from the 16 frames. **On his data** (Chromium, the real
+model on his two driver clips, H.264): Long Reef 52 frames at about 31 a second (a 30 fps clip), the 30 Oct one 84
+at about 47 (a 58 fps clip, 90 seeks); both lost the wrists for about 0.15 s after impact (blur) and broke there.
+At his marked impact (30 Oct) the model's wrists sit on his hands at belt height, checked frame by frame against
+ffmpeg's frames, so the 36% high is real. **Time:** 70–90 s here, on a container with no GPU (SwiftShader); a
+phone's GPU should be much faster, not yet measured: his first trace is the test. `ui-trace` (4): the smoothing,
+the trace against a stand-in 30 fps clip and a stand-in model (repeats, a lost and a half-lost stretch), the note,
+the colours' cuts, measuring with a video, an undecodable clip, the overlay part and whole, the feed, the switch;
+16 mutations caught (three survived at first: a loose bunching check, the wired overlay never played, no one-wrist
+stretch; all tightened).
+
 ## The swing plane (2.63.0)
 
 He asked (2026-10-31, with the shot tracer mockup at https://claude.ai/artifact/6NRpduNMeXDGSb7bJMxto9; boards
@@ -2236,7 +2270,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 490 tests, about 45s.
+`npm test` — 494 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2291,6 +2325,8 @@ fixture would let the reading be pinned.
 - `ui-nav.test.js` (10) — back goes where he came from: each way into a round, session, block, finding,
   course, Settings and the feed; hole to hole sideways; a circle; a tab afresh; a deleted page skipped; folds
   restored; deleting returns; the Swings card's Play video and read-only body.
+- `ui-trace.test.js` (4) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
+  repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
 - `ui-plane.test.js` (4) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
   swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list.
 - `ui-bodyfaults.test.js` (3) — the measured body in the practice list: a finding from most recent swings,
