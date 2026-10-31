@@ -829,6 +829,31 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## The shot tracer, by hand (2.66.0)
+
+He asked (2026-10-31, "let's add the shot tracer now"), the traced version of the mockup's boards
+(https://claude.ai/artifact/6NRpduNMeXDGSb7bJMxto9); the measured tracer (calibration taps, the bay's peak height) is
+later. **Stored:** `swing.tracer = {peak, land, shape?, on}` (SCHEMA.md), 0..1 of the frame, the ball being `swing.ball`
+(shared with the swing plane, so a plane's tap is reused). **The sheet** (`ACTIONS.traceShot`): the ball on the address
+frame (skipped when set, *Back* still reaches it), then the peak and the landing on the last frame (where the sky is
+clear of him), then the shape (`SHOT_SHAPES`, tapped again to take back); *Redraw the shot* starts from what was
+stored. **The flight** (`tracerSegs`): two cubic Béziers, out of the ball near straight up, level at the peak heading
+the way it finished (`run` from the sideways travel, at least a tenth of the height), steepest at the end. Not
+`crSegs`: a spline through three taps made a V at the peak on his 30 Oct driver. `tracerSamples` gives points along it;
+`tracerInner` draws all or part (dotted sand on a dark underlay, `vector-effect: non-scaling-stroke`, a round-capped
+zero-length stroke for the ball and the landing, so dots stay round in a stretched 0..1 viewBox). **The card**
+(`tracerSection`, before the body): its switch, the last frame cropped top to bottom to the flight when the pose gives
+the aspect, *Traced by you · Fade*, and `tracerNumbers` when the swing is tied to its shot (`swingShot`): course, went,
+finished and left to the green from the hole map; range, the bay's carry, total and side (or "left or right: not
+measured here"). Untied with shots in the session, it says to tie it. "A drawing from your taps, not a measurement."
+**On the clip** (`traceVideoHtml`, `wireTrace`): an `svg.trShot` over the video beside the plane's `svg.trOv`, either
+alone; it flies from `tracerStart` (his impact mark, else the trace's impact cut, else whole) over `TRACER_DRAW` (1.2 s,
+less if the clip ends first), whole when paused; with no pose the box takes the video's own aspect on
+`loadedmetadata`. **`svg.trShot.trShot`** outranks `.bigmap svg { height: auto }`, which the swing sheet's video sits in
+(found in Chromium: the tracer drew square, from the ball's height up). **Switch:** `overlaySwitch('tracer', ...)`, its
+own key in `carry.overlays`. The Swings card shows it read-only (`rc_` ids). Checked in Chromium on his 30 Oct driver
+(tied to hole 17: 221 m, rough, 229 m left), the card and the playing clip. `ui-tracer` (6); 14 mutations caught.
+
 ## The heavy model (2.65.0)
 
 He drew his own hand path over the 3 Aug 7i (2026-10-31), and it disagreed with Carry's on the way back. Checked frame
@@ -920,7 +945,7 @@ unmarked clips are 0.1–0.5 s apart and a driver read 39% high from a follow-th
 impact instead). **Drawn** by `planeSection`/`planeSvg` over the address frame, cropped top to bottom to the swing
 (`.planeCrop`), the paths with a dark underlay; the *Swing plane* switch (`overlaySwitch`, `ACTIONS.toggleOverlay`,
 `localStorage` `carry.overlays`, default on) hides the drawing on this phone, the measures stay. The shot tracer
-will get its own switch beside it. Off the line: `#planeOff_<id>` says why, nothing drawn. *Across the swing* has
+has its own switch beside it (2.66.0). Off the line: `#planeOff_<id>` says why, nothing drawn. *Across the swing* has
 *Hands against the plane* (the V at the top and coming down) and *Hands height*. Plane faults reach the practice
 list through `bodyItems` with `BODY_DRILL` entries, and the reading's prompt through `poseContext`. On his data:
 Long Reef D (19 Oct) and the 30 Oct D, both inside the V at the top and coming down; the 30 Oct swing (impact
@@ -2309,7 +2334,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 497 tests, about 45s.
+`npm test` — 503 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2366,6 +2391,8 @@ fixture would let the reading be pinned.
   restored; deleting returns; the Swings card's Play video and read-only body.
 - `ui-trace.test.js` (6) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
   a slow-motion clip, swings measured by the earlier model, repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
+- `ui-tracer.test.js` (6) — the shot tracer: the three taps and the shape, the ball skipped when set and taken
+  back, the flight's shape, the tied shot's numbers (course and range), its own switch, the playing clip.
 - `ui-plane.test.js` (5) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
   swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list, the hands
   under heavy (a hidden wrist from 0.3, two that disagree).

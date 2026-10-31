@@ -1,3 +1,9 @@
+## 2.66.0 — 2026-10-31
+- Shot tracer: on a swing card, *Trace the shot* takes three taps (the ball, where it peaked, where it came down) and the shape you saw, and draws the ball's flight over the finish frame like the tracers on golf videos. If you've already tapped the ball for the swing plane, Carry starts from there.
+- When the swing is tied to its shot, the real numbers sit beside the line: on the course, how far it went, where it finished and what was left to the green, from the hole map; at the range, the bay's carry, total and side. The line itself is labelled as your drawing, not a measurement.
+- On the playing video the ball flies out from impact; paused, the whole flight shows. It's in the swing's sheet, the card's *Play video* and the feed.
+- *Shot tracer* has its own switch beside *Swing plane*, so you can show either, both or neither.
+
 ## 2.65.1 — 2026-10-31
 - The swing plane works again on down-the-line swings measured with the new model. It is more cautious than the old one about hands it can't see clearly, and from behind your wrists are always partly hidden, so Carry was throwing away hands that were in the right place. That left some swings with no plane and gaps in the hand line.
 - When the model's two wrists disagree, Carry now trusts the one it's surer of rather than averaging them, since both hands are on the grip.

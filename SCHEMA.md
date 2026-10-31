@@ -348,6 +348,11 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "ball": { "x": 0.55, "y": 0.71 },   // 2.63.0: where he tapped the ball on the address frame, 0..1 of the frame (x across, y down); a
                                       // measurement by hand like `impact`. The swing plane (V, hands against it) is derived from it and
                                       // the pose on every draw, never stored. Absent = not tapped.
+  "tracer": {                         // 2.66.0, optional: the shot tracer, drawn by him on the last frame (the ball is `ball`
+    "peak": { "x": 0.75, "y": 0.10 },   // above, shared with the swing plane). peak = where the ball was highest, land = where it
+    "land": { "x": 0.84, "y": 0.50 },   // came down or left the picture, 0..1 of the frame like `ball`; shape = what he saw
+    "shape": "hook|draw|straight|fade|slice", "on": "2026-10-31"   // (absent = not said). A drawing, not a measurement: the curve and
+  },                                  // the numbers beside it (the tied shot's) are worked out on every draw. Absent = not traced.
   "track": {                          // 2.64.0, optional: the hands traced from the stored video, made with the pose
     "by": "mediapipe-0.10.35-heavy", "on": "2026-10-31",   // (or *Trace the hands from the video*). A measurement, like the pose;
     "pts": [ [1.067, 0.29, 0.393, 0.83, 0.271, 0.39, 0.89] ]   // the drawing is derived from it on every draw.
