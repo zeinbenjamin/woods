@@ -136,6 +136,7 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text
 th { font-weight: 500; color: var(--ink-3); font-size: 12px; white-space: normal; line-height: 1.2; } th:first-child, td:first-child { text-align: left; padding-left: 0; } th:last-child, td:last-child { padding-right: 0; }
 td.num { font-family: var(--cond); font-weight: 600; font-size: 16px; } .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; } tr.flag td { color: var(--flag); }
 .tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--rule); vertical-align: middle; }
+.tag.acc-public { background: var(--score-1); color: #2b2416; border-color: transparent; } .tag.acc-private { background: var(--cm-members); color: #221c2b; border-color: transparent; } .tag.acc-closed { background: var(--score-3); color: #fff; border-color: transparent; }
 .tag.green { background: var(--green-soft); color: var(--green); border-color: transparent; } .tag.flag { background: var(--flag-soft); color: var(--flag); border-color: transparent; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; } .chip { font: 600 13px var(--cond); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
 a.chip { text-decoration: none; display: inline-flex; gap: 5px; align-items: baseline; } .chip small { font: 400 12px var(--body); color: var(--ink-3); }
@@ -296,7 +297,7 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .filmstrip { display: flex; gap: 4px; overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
 .filmstrip img { height: 132px; width: auto; border-radius: 4px; flex: 0 0 auto; background: var(--paper-2); }
 .analysis { border-left: 3px solid var(--green); padding: 8px 10px; margin: 8px 0 0; background: var(--paper-2); border-radius: 0 var(--r) var(--r) 0; }
-.swshot { margin: 4px 0 8px; } details.frames > summary { cursor: pointer; margin: 2px 0 6px; } details.frames[open] > summary { margin-bottom: 8px; } .swshot button.quiet { padding: 2px 6px; }
+.swshot { margin: 4px 0 8px; } .qfolds { margin: 18px 0 4px; display: grid; gap: 8px; } details.qfold > summary { cursor: pointer; } details.qfold > summary span { color: var(--ink-3); } details.qfold[open] > summary { margin-bottom: 6px; } details.qfold .qbody { padding-left: 14px; } details.frames > summary { cursor: pointer; margin: 2px 0 6px; } details.frames[open] > summary { margin-bottom: 8px; } .swshot button.quiet { padding: 2px 6px; }
 .analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
 .analysis .one.long { font: 500 14px/1.35 var(--body); }
 .analysis .obs { font-size: 13px; margin: 3px 0; }
@@ -1061,6 +1062,9 @@ function vOverview() {
   return h;
 }
 // A section folded to one line: its title and the single number worth seeing.
+// The quiet toggle (2.60.0, he asked: like *Across the swing* and *What Claude saw*): a small grey
+// line with the disclosure triangle, for what sits under a list rather than beside it.
+const qfold = (id, title, teaser, body) => body ? `<details class="qfold" id="${id}"><summary class="small muted">${title}${teaser ? ` <span>${teaser}</span>` : ''}</summary><div class="qbody">${body}</div></details>` : '';
 const fold = (id, title, teaser, body) => body ? `<details class="sec fold" id="${id}"><summary><span><b>${title}</b>${teaser ? ` <span class="small muted">${teaser}</span>` : ''}</span></summary>${body}</details>` : '';
 const unhead = html => html.replace(/^<h2>[^<]*<\/h2>/, '');
 function overviewMore() {
@@ -1130,7 +1134,7 @@ function overviewWork() {
     </div>`;
   const rows = items.slice(1, 3).map((it, i) => `<button class="wrow k-${it.kind}" data-go="range:goal=${esc(it.key)}"><span class="wn">${i + 2}</span><span><span class="wt">${esc(it.title)}</span>
       <span class="small muted">${evidence(it)}</span>${doThis(it) || how(it) ? `<span class="small wa">→ ${doThis(it) || how(it)}</span>` : ''}${goalProgress(it) ? `<span class="small progress">${esc(progressText(it))}</span>` : ''}</span><span class="chev">›</span></button>`).join('');
-  return `<h2>Next practice</h2>${hero}` + (rows ? `<h3>Also costing you</h3><div class="work">${rows}</div>` : '') +
+  return `<h2>Next practice</h2>${hero}` + (rows ? fold('alsoCosting', 'Also costing you', `${plural(items.slice(1, 3).length, 'more item')}`, `<div class="work">${rows}</div>`) : '') +
     `<div class="row-actions"><button class="quiet" data-go="range">Full list and evidence →</button></div>` + basisShort();
 }
 
@@ -2037,7 +2041,8 @@ const selectF = (label, name, opts, value) => `<label>${label}<select name="${na
 const ACCESS_TEXT = { public: 'Public: anyone can book', private: 'Private: members and guests', closed: 'Closed' };
 const ACCESS_LABEL = { public: 'public', private: 'private', closed: 'closed' };
 const access = c => c.closed ? 'closed' : c.bookable === true ? 'public' : c.bookable === false ? 'private' : null;
-const accessTag = c => { const a = access(c); return a ? ` <span class="tag${a === 'public' ? ' green' : a === 'closed' ? ' flag' : ''}">${ACCESS_LABEL[a]}</span>` : ''; };
+// In the map pins' colours (2.60.0, he asked): sand public, lavender private, red closed (CM_COLOUR).
+const accessTag = c => { const a = access(c); return a ? ` <span class="tag acc-${a}">${ACCESS_LABEL[a]}</span>` : ''; };
 const accessFields = a => ({ bookable: a === 'public' ? true : a === 'private' ? false : null, closed: a === 'closed' || undefined });
 const checkF = (label, name, checked) => `<label class="check"><input type="checkbox" name="${name}" ${checked ? 'checked' : ''}>${label}</label>`;
 
@@ -3245,7 +3250,7 @@ function listReviewSection() {
   const verdict = settled >= 4 && v.quietWithout >= v.quietAfter ? 'Findings have gone quiet as often without range work as with it: what this list ranks may not be what range time fixes, or it is picking up noise. The costs below are the thing to doubt.'
     : settled >= 4 ? 'Findings have gone quiet more often after range work than without it. That is consistent with the list pointing at the right things; it is not proof the practice did it.'
     : 'Too few findings have resolved either way to say whether this list is pointing at the right things. It will say so here when there are enough.';
-  return fold('listReview', 'Is this list right?', teaser, `<p class="small">${esc(verdict)}</p><div id="listReviewRows">` +
+  return qfold('listReview', 'Is this list right?', teaser, `<p class="small">${esc(verdict)}</p><div id="listReviewRows">` +
     v.rows.map(r => `<div class="qitem"><b>${esc(r.title)}</b> <span class="small muted">${esc(KIND_LABEL[r.kind] || '')}</span><div class="small muted">${esc(r.outcome)} · ${r.days ? `on the list ${plural(r.days, 'day')}` : 'seen on one day'}${r.practised ? ` · range work ${dateLabel(r.practised)}` : ''}</div></div>`).join('') +
     `</div><p class="small muted">"Quiet after range work" means its club and swing were hit at the range after it first showed up, and it has gone quiet since; it says what happened, not that the practice caused it. Faded: unseen for over ${STALE_AFTER} days.</p>`);
 }
@@ -3270,7 +3275,7 @@ function readingBlindSpots() {
 function blindSpotsSection() {
   const views = readingBlindSpots(); if (!views.length) return '';
   const total = views.reduce((n, v) => n + v.n, 0), blind = views.reduce((n, v) => n + v.blind, 0);
-  return fold('blindSpots', "What the readings couldn't see", `${blind} of ${plural(total, 'reading')}`, `<div id="blindSpotRows">` + views.map(v => `<div class="qitem"><b>${esc(VIEWS[v.view] || 'Other angle')}</b>: ${v.blind} of ${plural(v.n, 'reading')} said what the angle or frames couldn't answer.${v.said.length ? `<ul class="small">${v.said.slice(0, 6).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>`).join('') +
+  return qfold('blindSpots', "What the readings couldn't see", `${blind} of ${plural(total, 'reading')}`, `<div id="blindSpotRows">` + views.map(v => `<div class="qitem"><b>${esc(VIEWS[v.view] || 'Other angle')}</b>: ${v.blind} of ${plural(v.n, 'reading')} said what the angle or frames couldn't answer.${v.said.length ? `<ul class="small">${v.said.slice(0, 6).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</div>`).join('') +
     `</div><p class="small muted">A thing that keeps coming up is a question for the camera angle or the frames (a tighter trim, the other view), not the swing. Readings are interpretations; what they couldn't see is the honest part.</p>`);
 }
 // His assumed carries against what the range measures: the clearest
@@ -3336,8 +3341,8 @@ function practiceSection(limit) {
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     // Quiet lately sits with the list's two checks, one quiet group of rows (2.58.0, he asked).
-    (() => { const q = quiet.length ? fold('quietList', 'Quiet lately', `${plural(quiet.length, 'item')}, left out of the plan`, quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')) : '';
-      const g = q + listReviewSection() + blindSpotsSection(); return g ? `<div class="folds" id="listChecks" style="margin-top:16px">${g}</div>` : ''; })() +
+    (() => { const q = quiet.length ? qfold('quietList', 'Quiet lately', `${plural(quiet.length, 'item')}, left out of the plan`, quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')) : '';
+      const g = q + listReviewSection() + blindSpotsSection(); return g ? `<div class="qfolds" id="listChecks">${g}</div>` : ''; })() +
     (now.some(x => x.block) ? `<div class="row-actions" style="margin-top:18px"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
 }
 // One line for the fold: the biggest difference that counts, or how many taps to check.
@@ -5299,7 +5304,7 @@ const cmFill = c => cmVar(CM_COLOUR[access(c) || 'unknown']);
 const cm = { el: null, map: null, layer: null, tiles: null, dark: null, key: null, loading: null, kind: null, home: null, glLoading: null };
 function vCourseMap() {
   const placed = S.courses.filter(hasCoords), missing = S.courses.length - placed.length;
-  const key = [['public', 'Public'], ['private', 'Members'], ['closed', 'Closed'], [null, 'Not known']];
+  const key = [['public', 'Public'], ['private', 'Private'], ['closed', 'Closed'], [null, 'Not known']];   // 'Private', as the list's tags say it (2.60.0, his word)
   return `<button class="quiet" data-go="courses" style="padding-left:0">‹ Courses</button>
   <h1>Courses on a map</h1>
   <p class="small muted" id="cmCount">${plural(placed.length, 'course')}${home() && hasCoords(home()) ? `, and ${esc(home().label || 'your location')}` : ''}. Tap a pin for the course.</p>
@@ -5725,15 +5730,15 @@ function rangeFilter() {
   const ranges = S.sessions.filter(s => s.type === 'range'), left = ranges.filter(s => s.excluded).length;
   const noBall = ranges.filter(s => !s.ballType).length;
   const chips = (act, key, opts, cur) => `<div class="chips" style="margin:6px 0">${opts.map(([v, l]) => `<button class="chip" data-act="${act}" data-${key}="${v}" aria-pressed="${cur === v}">${l}</button>`).join('')}</div>`;
-  const summary = rangeFilterSummary();
-  return `<details class="sec filters" id="rangeFilter"><summary><b>Range numbers:</b> <span class="small">${esc(summary)}</span></summary>
+  // Shown open in Settings (2.60.0, he asked: it's a settings page, nothing to fold away).
+  return `<div class="filters" id="rangeFilter">
     <label>When</label>${windowPicker()}
     <label>Weighting</label>${chips('setWeighting', 'v', WEIGHTINGS, weighting())}
     <p class="small muted">Recent shots: a shot ${DISTANCE_HALF_LIFE} days old counts half as much as one from today, so a swing change shows up without deleting anything.</p>
     <label>Balls</label>${chips('setBalls', 'v', BALLS, ballFilter())}
     ${noBall && ballFilter() !== 'all' ? `<p class="small muted">${plural(noBall, 'session')} didn't record the ball type, so only counts under All balls.</p>` : ''}
-    ${left ? `<p class="small muted">${plural(left, 'session')} left out by hand — open one in Range to count it again.</p>` : ''}
-  </details>`;
+    ${left ? `<p class="small muted" id="rangeLeftOut">${plural(left, 'session')} left out by hand — open one in Range to count it again.</p>` : ''}
+  </div>`;
 }
 const windowPicker = () => `<div class="chips" style="margin:6px 0">${WINDOWS.map(([v, l]) => `<button class="chip" data-act="setWindow" data-w="${v}" aria-pressed="${(settings().window || 'all') === v}">${l}</button>`).join('')}</div>`;
 

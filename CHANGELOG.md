@@ -1,3 +1,9 @@
+## 2.60.0 — 2026-10-31
+- Settings shows *Range numbers* open: no toggle to tap first.
+- On the Overview, *Also costing you* is a toggle, closed until you want it.
+- On the Range list, *Quiet lately*, *Is this list right?* and *What the readings couldn't see* are small grey toggles, like *Across the swing* and *What Claude saw*.
+- On the Courses list, the public, private and closed tags are in the map's pin colours: sand, lavender and red. Members-only courses are called *private* on the list and on the map's key.
+
 ## 2.59.0 — 2026-10-31
 - Faster with a season of data: the Overview, Range list and round pages draw about 4 to 10 times faster, and a course page about twice as fast. Nothing you see has changed, only how often the app works it out.
 - After a save (every shot marked in Play mode), the app now fetches only what changed, a few KB instead of the whole history, which matters on mobile data. Opening the app no longer downloads everything twice.

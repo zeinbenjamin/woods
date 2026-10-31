@@ -24,9 +24,12 @@ const tags = name => [...row(name).querySelectorAll('.tag')].map(t => [t.textCon
 
 test('the Courses list tags each course public, private or closed, and nothing when not known', () => {
   app.go('courses');
-  assert.deepEqual(tags('Public GC'), [['public', 'tag green'], ['pre-register', 'tag']]);
-  assert.deepEqual(tags('Private GC'), [['private', 'tag']]);
-  assert.deepEqual(tags('Closed GC'), [['closed', 'tag flag']], 'a closed course does not say pre-register');
+  // 2.60.0 (he asked): the map pins' colours, and 'private' in both places.
+  assert.deepEqual(tags('Public GC'), [['public', 'tag acc-public'], ['pre-register', 'tag']]);
+  assert.deepEqual(tags('Private GC'), [['private', 'tag acc-private']]);
+  assert.deepEqual(tags('Closed GC'), [['closed', 'tag acc-closed']], 'a closed course does not say pre-register');
+  const css = app.doc.querySelector('style').textContent;
+  for (const [a, v] of Object.entries(app.J('CM_COLOUR'))) if (a !== 'unknown') assert.match(css, new RegExp(`\\.tag\\.acc-${a} \\{ background: var\\(${v}\\)`), `${a}: the pin's colour`);
   assert.deepEqual(tags('Unknown GC'), []);
 });
 

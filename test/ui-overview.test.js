@@ -93,6 +93,9 @@ test('next practice: the top priority as one action with its evidence; the next 
   assert.equal(hero.querySelector('.nt').textContent, `${top[0].b.club} at ${top[0].b.target}m`);
   assert.match(hero.textContent, new RegExp(`For: ${top[0].title.replace(/[()]/g, '.')} · .*n=\\d+`));
   assert.ok(hero.querySelector('[data-act="planSession"]'), 'the plan is the call to action');
+  // 2.60.0 (he asked): Also costing you is a toggle under the next practice.
+  assert.ok(app.$('#alsoCosting') && app.$('#alsoCosting').tagName === 'DETAILS' && app.$('#alsoCosting').contains(app.$('#view .wrow')));
+  assert.match(app.text('#alsoCosting summary'), /^Also costing you 2 more items$/);
   const rows = app.$$('#view .wrow');
   assert.deepEqual(rows.map(r => r.querySelector('.wt').textContent), top.slice(1).map(x => x.title), 'the existing ranking, not a new one');
   assert.ok(rows.every(r => /n=\d+|early signal|emerging|consistent/.test(r.textContent)), 'each says what it stands on');
