@@ -85,17 +85,20 @@ test('beside it, the real numbers: the hole map\'s on the course, the bay\'s at 
   app.go('rounds', { sessionId: R });
   const x = app.J(`(() => { const x = swingShot(session('${R}').swings[0], session('${R}')); return { len: x.len, left: x.left }; })()`);
   assert.ok(x.len > 0 && x.left > 0);
-  assert.deepEqual(tiles('#tracerNums_sw_d'), [`${Math.round(x.len)} m went`, 'Trees finished', `${Math.round(x.left)} m left to the green`]);
-  assert.match(app.text('#tracer_sw_d'), /Hole 1, tee shot: the numbers are measured on the hole map, where you marked the ball\. The line's shape is your drawing\./);
+  assert.deepEqual(tiles('#shotNums_sw_d'), [`${Math.round(x.len)} m went`, 'Trees finished', `${Math.round(x.left)} m left to the green`]);
+  // 2.67.0: the numbers are the card's summary, beside the shape he traced and the shot's own line.
+  assert.ok(app.$('#sumBall_sw_d #shotNums_sw_d'));
+  assert.match(app.text('#sumBall_sw_d > b'), /^The ball · fade, traced$/);
+  assert.match(app.text('#sumBall_sw_d #ws_sw_d'), /^This swing's shot: Hole 1, shot 1 \(tee shot\): D from 300 m/);
   // Range: carry and total from the bay, and the side where the bay gave one.
   app.go('range', { sessionId: RG });
-  assert.deepEqual(tiles('#tracerNums_sw_5'), ['164.8 m carry, from the bay', '178.2 m total, from the bay', '12.1 m right side, from the bay']);
+  assert.deepEqual(tiles('#shotNums_sw_5'), ['164.8 m carry, from the bay', '178.2 m total, from the bay', '12.1 m right side, from the bay']);
   assert.equal(app.text('#tracer_sw_5 .tracerTag'), 'Traced by you · Draw');
-  assert.deepEqual(tiles('#tracerNums_sw_i'), ['122 m carry, from the bay', '133 m total, from the bay', '– left or right: not measured here']);
+  assert.deepEqual(tiles('#shotNums_sw_i'), ['122 m carry, from the bay', '133 m total, from the bay', '– left or right: not measured here']);
   assert.equal(app.text('#tracer_sw_i .tracerTag'), 'Traced by you', 'no shape picked, none said');
   // Not tied: no numbers; where the session has shots, it says how to get them; with none, it doesn't.
-  assert.equal(app.$('#tracerNums_sw_v'), null);
-  assert.match(app.text('#tracerNote_sw_v'), /Tie the swing to its shot \(above\) for the real distances beside it\./);
+  assert.equal(app.$('#shotNums_sw_v'), null);
+  assert.match(app.text('#tracerNote_sw_v'), /Tie the swing to its shot \(above\) for the real distances\./);
   app.go('range', { sessionId: NONE });
   assert.ok(app.$('#tracer_sw_x .tracerPic'));
   assert.doesNotMatch(app.text('#tracerNote_sw_x'), /Tie the swing/);
@@ -143,7 +146,8 @@ test('its own switch, apart from the swing plane\'s; the Swings card shows it wi
   assert.equal(app.$('#tracerSw_sw_5').getAttribute('aria-checked'), 'true');
   app.click('#tracerSw_sw_5');
   assert.equal(app.win.localStorage.getItem('carry.overlays'), '{"tracer":false}');
-  assert.ok(!app.$('#tracer_sw_5 .tracerPic') && !app.$('#tracerNums_sw_5') && !app.$('#tracer_sw_i .tracerPic'), 'off for every swing');
+  assert.ok(!app.$('#tracer_sw_5 .tracerPic') && !app.$('#tracer_sw_i .tracerPic'), 'off for every swing');
+  assert.ok(app.$('#shotNums_sw_5'), 'the shot\'s numbers are the ball\'s, not the drawing\'s: they stay');
   assert.equal(app.$('#tracerSw_sw_5').getAttribute('aria-checked'), 'false');
   assert.ok(app.$('#tracer_sw_5 [data-act="traceShot"]'), 'it can still be redrawn');
   assert.equal(app.E(`overlayOn('plane')`), true, 'the plane untouched');
@@ -153,7 +157,7 @@ test('its own switch, apart from the swing plane\'s; the Swings card shows it wi
   assert.match(ro, /trShot/); assert.doesNotMatch(ro, /traceShot/);
   assert.equal(app.E(`tracerSection(session('${R}').swings[1], session('${R}'), true)`), '', 'untraced: nothing on the Swings card');
   app.act('reelCard', { sid: RG, wid: 'sw_5' });
-  assert.ok(app.$('#sheetInner #rc_tracer_sw_5 svg.trShot') && app.$('#sheetInner #rc_tracerNums_sw_5'));
+  assert.ok(app.$('#sheetInner #rc_tracer_sw_5 svg.trShot') && app.$('#sheetInner #rc_shotNums_sw_5'));
   app.$('#sheetInner [data-close]').click();
 });
 

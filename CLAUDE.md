@@ -829,6 +829,29 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## This swing, in one place (2.67.0)
+
+He found the swing card's parts each talking about their own thing (screenshots of his Georges River 5i and Long Reef
+driver: the reading, the tracer with its tiles, the body, the plane, one after another); asked whether they could be
+combined, he said build it. **The summary** (`swingSummary`, `#sum_<id>`, `.swsum`, after the header): four rows
+(`.sumrow`, `#sumBall_`/`sumBody_`/`sumPlane_`/`sumFix_<id>`), each only when there's something for it: **the ball**
+(the tied shot's tiles, `tracerNumbers` now `#shotNums_<id>`, moved here from the tracer since they're the ball's, not
+the drawing's, and `swingShotSection`; the label says the traced shape; untied, the *Which shot was this?* question);
+**the body** (`n of m outside the guide:` named by `BODY_SHORT`, the measures with a guide, plane ones apart; too few
+frames says so); **the plane** (`planeSay`'s first clause, one phrase when the top and coming down agree, a miss in
+`.offg`); **the fix** (`swingReading(…, {fold: true})`: the one thing, `analysis.ties` as *How it fits together*, and
+why/feel/drill/check in `#how_<id>`, What Claude saw as before). **`ties`** (SCHEMA.md) is asked of new readings only
+when there are measures or a tied shot (`poseContext || swingShotContext`), 30 words: which measured positions and the
+shot the fix accounts for, and where they disagree. A judgement left to the reading, not matched in code; older
+readings get `#tiesHint_<id>` ("Analyse again…"). **One picture:** with both switches on and a plane to draw
+(`planeDrawsShot`), the traced flight goes on the plane's address frame (the camera doesn't move, so the taps' 0..1
+hold), the crop widened to its peak, `Shot traced by you · Draw` at the bottom, both switches on the plane's row
+(`.switches`), *Redraw the shot* beside *Move the ball*; `tracerSection` draws nothing then. Either switch off and the
+other draws its own picture as before. **Folded:** every measure (`#bodyAll_<id>`, `poseSection(…, {fold: true})`),
+Across the swing and the frames; `poseSection(…, {plane: false})` on the card, which draws the plane itself after the
+tracer. The Swings tab's card carries the summary read-only, ids `rc_`. Measured on his data (Chromium, 390px, same
+cards before and after): the 30 Oct driver 2,437 → 1,747 px, Long Reef's driver 1,902 → 1,526. `ui-swingsum` (3); 12 mutations caught.
+
 ## The shot tracer, by hand (2.66.0)
 
 He asked (2026-10-31, "let's add the shot tracer now"), the traced version of the mockup's boards
@@ -2334,7 +2357,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 503 tests, about 45s.
+`npm test` — 506 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2391,6 +2414,9 @@ fixture would let the reading be pinned.
   restored; deleting returns; the Swings card's Play video and read-only body.
 - `ui-trace.test.js` (6) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
   a slow-motion clip, swings measured by the earlier model, repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
+- `ui-swingsum.test.js` (3) — the swing card's summary: the four rows from hand-made joints, a tied shot and a
+  reading with `ties`, an older reading's hint, the plane's misses, the one picture and either switch off, the prompt
+  asking `ties` only with something to tie, the Swings card read-only.
 - `ui-tracer.test.js` (6) — the shot tracer: the three taps and the shape, the ball skipped when set and taken
   back, the flight's shape, the tied shot's numbers (course and range), its own switch, the playing clip.
 - `ui-plane.test.js` (5) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
