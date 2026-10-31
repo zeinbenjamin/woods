@@ -838,6 +838,14 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## The card's order (2.70.0)
+
+He asked (with screenshots of his driver and a 7i card): the picture first (the switches and the frame, right under
+the header), then the summary (ball, body, plane, fix), then the quiet folds, then the buttons. `swingCard` and
+`reelCardHtml` (`#reelPose` is now the picture alone, above `#reelCard`; the `rc_` folds follow it). The tied shot's
+line is `swingShotName`: which shot, plus what the tiles have no room for (a penalty; a range shot's face, path,
+smash and strike), since the full `swingShotText` repeated the tiles. The reading's prompt keeps `swingShotText`.
+
 ## The hook, the body fold, analyse all (2.69.0)
 
 He sent a screenshot of a hook he traced (ball, peak up and right, landing just left of the peak but right of the ball)

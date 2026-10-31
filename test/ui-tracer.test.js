@@ -90,7 +90,7 @@ test('beside it, the real numbers: the hole map\'s on the course, the bay\'s at 
   // 2.67.0: the numbers are the card's summary, beside the shape he traced and the shot's own line.
   assert.ok(app.$('#sumBall_sw_d #shotNums_sw_d'));
   assert.match(app.text('#sumBall_sw_d > b'), /^The ball · fade, traced$/);
-  assert.match(app.text('#sumBall_sw_d #ws_sw_d'), /^This swing's shot: Hole 1, shot 1 \(tee shot\): D from 300 m/);
+  assert.match(app.text('#sumBall_sw_d #ws_sw_d'), /^This swing's shot: Hole 1, shot 1 \(tee shot\)\. Change$/);
   // Range: carry and total from the bay, and the side where the bay gave one.
   app.go('range', { sessionId: RG });
   assert.deepEqual(tiles('#shotNums_sw_5'), ['164.8 m carry, from the bay', '178.2 m total, from the bay', '12.1 m right side, from the bay']);

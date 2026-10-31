@@ -1,3 +1,7 @@
+## 2.70.0 — 2026-10-31
+- A swing card now opens with its picture (the switches and the frame with the plane and the shot drawn), then the ball, body, plane and fix, then the quiet folds, then the buttons. The Swings tab's card follows the same order.
+- A swing tied to its shot no longer repeats the tiles above it: it names the shot (hole and shot number, or which shot in the range block, with face, path and smash) and leaves went, finished and left to the green, or carry and total, to the tiles.
+
 ## 2.69.1 — 2026-10-31
 - Fixed a swing picture that could fill with solid sand colour on some devices (seen on an iPad), hiding the frame, the swing plane and the traced shot. The skeletons on the four position photos had the same weakness and are fixed too.
 

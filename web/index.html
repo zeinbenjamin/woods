@@ -4793,11 +4793,11 @@ function swingCard(sw, s, opts = {}) {
       <span class="small muted">${sw.frames.length} frames${sw.impact != null ? `, packed around impact at ${sw.impact.toFixed(1)} s` : frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
     ${a && sw.analysedView && sw.analysedView !== sw.view ? `<div class="notice small" id="angleNote_${sw.id}">This reading was made when the clip was marked ${esc(VIEWS[sw.analysedView] || sw.analysedView)}. Analyse again to read it as ${esc(VIEWS[sw.view] || sw.view)}.</div>` : ''}
+    ${tracerSection(sw, s, false, true)}
+    ${m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, false, true) : ''}
     ${swingSummary(sw, s)}
     ${a && !a.one_thing ? swingReading(sw, s, a, { fold: true }) : ''}
     ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet. <i>Analyse</i> measures the body on this phone, then Claude reads the frames against it and your ball data for this club.</div>`}
-    ${tracerSection(sw, s, false, true)}
-    ${m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, false, true) : ''}
     ${poseOld(sw) ? `<p class="small notice" id="poseOld_${sw.id}">Measured with the earlier body model, which misplaced the wrists from behind. Analyse again for the hands where they really were.</p>` : ''}
     ${sw.pose ? '' : strip}
     ${swingFolds(sw, s)}
@@ -4860,6 +4860,16 @@ function swingShot(sw, s, hs) {
   if ((b.swing || 'full') === 'full') { const all = shotsWithSession(b.club, s), k = all.findIndex(x => x.blockId === b.id && x.idx === i); if (k >= 0) prof = classify(all)[k]; }
   return { where: 'range', b, i, sh: shots[i], n: shots.length, prof };
 }
+/* The tied shot named without the numbers the ball's tiles already show (2.70.0, he asked: the sentence
+   repeated went, finished and left): which shot it was, and what the tiles have no room for. */
+function swingShotName(x) {
+  if (x.where === 'course') return `Hole ${x.h.n}, shot ${x.i + 1} (${SHOT_KIND[x.kind].toLowerCase()})${x.sh.penalty ? ', cost a penalty' : ''}.`;
+  const sh = x.sh, more = [];
+  if (sh.faceAngle != null && sh.clubPath != null) more.push(`face ${faceLabel(sh.faceAngle)}, path ${pathLabel(sh.clubPath)}`);
+  if (sh.ballSpeed != null && sh.speed) more.push(`smash ${(sh.ballSpeed / sh.speed).toFixed(2)}`);
+  if (x.prof) more.push(PROF_WORD[x.prof]);
+  return `Shot ${x.i + 1} of ${x.n} in the ${x.b.club} block${more.length ? ': ' + more.join('; ') : ''}.`;
+}
 function swingShotText(x) {
   if (x.where === 'course') {
     const sh = x.sh;
@@ -4891,7 +4901,7 @@ function swingShotSection(sw, s) {
   if (!x) return `<div class="swshot small" id="ws_${sw.id}">${btn('Which shot was this? →')} <span class="muted">Tie it to the ball it hit, and the reading is checked against that shot.</span></div>`;
   if (x.gone) return `<div class="swshot small" id="ws_${sw.id}"><span class="muted">The shot this swing was tied to is no longer in this ${s.type === 'round' ? 'round' : 'session'}.</span> ${can ? btn('Tie it again') : ''}</div>`;
   const note = shotClubNote(sw, x);
-  return `<div class="swshot small" id="ws_${sw.id}"><b>This swing's shot:</b> ${esc(swingShotText(x))}${note ? ` <span class="muted">${esc(note)}</span>` : ''} ${btn('Change')}</div>`;
+  return `<div class="swshot small" id="ws_${sw.id}"><b>This swing's shot:</b> ${esc(swingShotName(x))}${note ? ` <span class="muted">${esc(note)}</span>` : ''} ${btn('Change')}</div>`;
 }
 // A round's shots were edited: tags follow their shot, and go when it does.
 function retagSwings(swings, n, before, after) {
@@ -5311,11 +5321,15 @@ function reelCardHtml(sw, s) {
   const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
   const play = sw.video ? `<button class="primary" data-act="reelPlay" data-vid="${esc(sw.video)}" data-sid="${s.id}" data-wid="${sw.id}" id="reelPlay">Play video</button>` : '';
   const m = sw.pose ? poseMeasures(sw) : null;
-  const pose = (sw.frames || []).length ? `<div id="reelPose">${(tracerSection(sw, s, true, true) + (m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, true, true) : '')).replace(/ id="/g, ' id="rc_')}${sw.pose ? '' : `<p class="small muted" id="rc_poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Analyse</i> on its ${s.type === 'round' ? 'round' : 'session'}'s page measures it.</p>`}${swingFolds(sw, s, { pre: 'rc_' })}</div>` : '';
+  // The card's order (2.70.0, he asked): the picture, then the ball, body, plane and fix, then the quiet folds.
+  const fr = (sw.frames || []).length;
+  const pic = fr ? `<div id="reelPose">${(tracerSection(sw, s, true, true) + (m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, true, true) : '')).replace(/ id="/g, ' id="rc_')}</div>` : '';
+  const pose = fr ? `${sw.pose ? '' : `<p class="small muted" id="rc_poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Analyse</i> on its ${s.type === 'round' ? 'round' : 'session'}'s page measures it.</p>`}${swingFolds(sw, s, { pre: 'rc_' })}` : '';
   return `<div class="spread"><h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>${play}</div>
     <div id="reelVideo"></div>
     <p class="muted small">${[esc(w.label), esc(VIEWS[sw.view] || 'Other angle'), sw.note ? esc(sw.note) : ''].filter(Boolean).join(' · ')}</p>
-    ${(() => { const x = swingShot(sw, s); return x && !x.gone ? `<p class="small" id="reelShot"><b>This swing's shot:</b> ${esc(swingShotText(x))}</p>` : ''; })()}
+    ${pic}
+    ${(() => { const x = swingShot(sw, s); return x && !x.gone ? `<p class="small" id="reelShot"><b>This swing's shot:</b> ${esc(swingShotName(x))}</p>` : ''; })()}
     <div class="swing" id="reelCard">${swingSummary(sw, s, { readOnly: true, pre: 'rc_' })}${a && a.one_thing ? '' : a ? swingReading(sw, s, a, { fold: true, pre: 'rc_' }) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
     ${pose}
     <div class="row-actions"><button data-act="reelOpen" data-go-session="${go}">Open the ${s.type === 'round' ? 'round' : 'session'} →</button></div>`;
