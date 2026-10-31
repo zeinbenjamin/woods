@@ -59,7 +59,9 @@ test('the Overview says what each number rests on, and the panel says how shots 
   assert.equal(rung.querySelector('.conf').textContent, '5 shots · counts like 4 recent · early signal · middle half 100–130m');   // 100, 100, 100, 130, 130: 25th and 75th percentiles
   assert.match(app.text('#rangeFilterLine'), /^All time · recent shots count more · all balls · change$/, 'one line on the Overview, the controls in Settings');
   app.go('settings');
-  assert.match(app.text('#rangeFilter summary'), /^Range numbers: All time · recent shots count more · all balls$/);
+  // 2.60.0: shown, not folded (it's the settings page); the chips pressed say how shots are counted.
+  assert.equal(app.$('#rangeFilter').tagName, 'DIV');
+  assert.deepEqual(app.$$('#rangeFilter .chip[aria-pressed="true"]').map(b => b.textContent), ['All time', 'Recent shots count more', 'All balls']);
 });
 
 test('"every shot the same" gives the plain median over the whole window', async () => {
@@ -97,7 +99,7 @@ test('a session left out by hand stops counting, but its own page still shows it
   app.go('range');
   assert.match(app.text('#view'), /left out/);
   app.go('settings');
-  assert.match(app.text('#rangeFilter summary'), /· 1 left out$/);
+  assert.match(app.text('#rangeLeftOut'), /^1 session left out by hand/);
   app.go('range', { sessionId: 's_new' });
   app.click('#leftOut [data-act="toggleExclude"]');
   await app.waitFor(async () => (await app.api.get('sessions', 's_new')).excluded === false, { what: 'counted again' });

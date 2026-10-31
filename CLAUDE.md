@@ -592,8 +592,9 @@ Each of these cost real debugging time. Don't reintroduce them.
 He asked, after the tee-times booking audit of 2026-10-29, for the app to show
 whether a course is public or private. `access(c)` is `closed` (`c.closed`),
 `public` (`bookable === true`), `private` (`bookable === false`) or null (not
-known); `accessTag` puts it in the Courses list (green public, plain private,
-red closed), and Course information says it under *Who can play* with
+known); `accessTag` puts it in the Courses list (since 2.60.0 in the map pins' colours,
+`.tag.acc-<access>`: sand public, lavender private, red closed; he asked, and
+chose *private* over *members* on both the tags and the map's key), and Course information says it under *Who can play* with
 `bookingNote` (how to book) under *Booking*. The form's `access` choice
 replaced the "Public booking" checkbox, which stored `false` (private) for
 every course saved with access unknown; `accessFields` keeps an unknown one
@@ -1088,8 +1089,8 @@ app tested its own governing numbers; the second loop lived in the chats.
 What moved into the app, all derived on every draw, nothing stored:
 
 - **Is this list right?** (`listReview()`, fold `#listReview` on the Range
-  list after *Quiet lately*, which is a fold row in the same `#listChecks` group since
-  2.58.0): for every finding with dated evidence (not
+  list after *Quiet lately*; since 2.60.0 the three are `qfold`s in `.qfolds#listChecks`,
+  the small grey disclosure toggle of *Across the swing* and *What Claude saw*, he asked): for every finding with dated evidence (not
   measure items or video readings), its outcome: `quiet after range work`
   (its club and swing hit at the range after it first appeared,
   `practisedSince(block, firstSeen)`), `quiet without range work`, `faded`
@@ -1141,7 +1142,7 @@ happened, not what to plan on. `weightedMean` scales weights against the
 largest one so equal weights give exactly the plain mean — without that,
 same-day shots came out as 125.25000000000001.
 
-The filters live in the "Range numbers" panel in Settings (2.13.0; 2.5.0 put it in the Overview's Gapping section, which now shows it as one line).
+The filters live in the "Range numbers" section in Settings (2.13.0; 2.5.0 put it in the Overview's Gapping section, which now shows it as one line), shown open, `div#rangeFilter`, since 2.60.0 (he asked: no toggle on a settings page). The Overview's *Also costing you* is a fold (`#alsoCosting`) since 2.60.0 too.
 
 ## Penalty report
 

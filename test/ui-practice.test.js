@@ -143,7 +143,8 @@ test('the list shows the top five with freshness, the rest folded, and the quiet
   assert.match(app.text('#quietList summary'), new RegExp(`Quiet lately ${quiet.length} items, left out of the plan`));
   assert.match(app.text('#quietList'), /D off the tee: .*Not seen in 8 chances/s);
   // 2.58.0 (he asked): Quiet lately is a row like the list's two checks, in the same group.
-  assert.ok(app.$('#quietList').matches('details.fold') && app.$('#quietList').parentElement.id === 'listChecks');
+  // 2.60.0 (he asked): the quiet toggle, like Across the swing, with the list's two checks.
+  assert.ok(['quietList', 'listReview', 'blindSpots'].filter(id => app.$('#' + id)).every(id => app.$('#' + id).matches('details.qfold') && app.$('#' + id).parentElement.id === 'listChecks'));
   assert.match(app.text('#view'), /recent evidence first \(60 days old counts half\)/);
   assert.match(app.text('#view'), /worked on/, 'the practised item is tagged');
 });

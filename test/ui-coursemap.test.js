@@ -54,6 +54,7 @@ test('the map: a pin per placed course coloured by who can play, home, and the c
   assert.deepEqual([css('--score-1'), css('--cm-members'), css('--score-3')].map(c => c.toUpperCase()), ['#D7B66D', '#AA96BD', '#C96A6A']);
   assert.deepEqual(app.$$('.cmKey i').map(i => i.getAttribute('style')).slice(0, 4),
     ['background:var(--score-1)', 'background:var(--cm-members)', 'background:var(--score-3)', 'background:var(--ink-3)'], 'the legend says the same');
+  assert.deepEqual(app.$$('.cmKey span').map(s => s.textContent).slice(0, 4), ['Public', 'Private', 'Closed', 'Not known'], "the list's words (2.60.0)");
   assert.equal(app.E(`cm.layer.getLayers().filter(l => !l.options.fillColor).length`), 1, 'home');
   assert.match(app.text('#cmCount'), /3 courses, and Home/);
   assert.match(app.text('#cmMissing'), /1 course with no location on its card isn't on the map/);
