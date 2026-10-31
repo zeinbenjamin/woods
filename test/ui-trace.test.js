@@ -72,7 +72,8 @@ test('traced from the video: the frames a 30 fps clip shows, each once, the hand
   app.go('range', { sessionId: 's1' });
   assert.match(app.text('#traceNote_sw_a'), /^Dotted: from the 16 frames only, so the line between them is drawn, not measured\. Trace the hands from the video for the real path\.$/);
   assert.ok(app.$('#plane_sw_a path.pl-back.sparse'));
-  app.click('#plane_sw_a [data-act="traceSwing"]');
+  app.click('#view [data-act="swingMore"][data-wid="sw_a"]');
+  app.click('#swingMoreList [data-act="traceSwing"]');
   await app.waitFor(async () => (await doc('s1')).swings.find(w => w.id === 'sw_a').track, { what: 'traced' });
   const tr = (await doc('s1')).swings.find(w => w.id === 'sw_a').track;
   // 90 seeks over 0.05..1.55 s land on 46 distinct 1/30 s frames: 2/30 to 47/30.
@@ -91,7 +92,9 @@ test('traced from the video: the frames a 30 fps clip shows, each once, the hand
   assert.deepEqual(d.cuts, [+(2 / 30).toFixed(3), +(22 / 30).toFixed(3), 1.15, +(47 / 30).toFixed(3)]);
   assert.deepEqual(app.J(`traceData({ ...session('s1').swings.find(w => w.id === 'sw_a'), impact: null }).cuts`), [+(2 / 30).toFixed(3), +(22 / 30).toFixed(3), +(34 / 30).toFixed(3), +(47 / 30).toFixed(3)]);
   assert.ok(!app.$('#plane_sw_a path.sparse'), 'solid now');
-  assert.ok(!app.$('#plane_sw_a [data-act="traceSwing"]'), 'nothing more to trace');
+  app.click('#view [data-act="swingMore"][data-wid="sw_a"]');
+  assert.ok(!app.$('#swingMoreList [data-act="traceSwing"]'), 'nothing more to trace');
+  app.$('#sheetInner [data-close]').click();
   // The colours change at the top and impact: green to the top, white to impact, grey after.
   const segs = sel => app.$$(`#plane_sw_a path.${sel}`).reduce((n, p) => n + (p.getAttribute('d').match(/C/g) || []).length, 0);
   assert.equal(segs('pl-back') + segs('pl-down') + segs('pl-thru'), 27 + 15);
@@ -108,12 +111,15 @@ test('measuring a swing with a video traces it too; a clip that won\'t decode ke
   const bad = await app.E(`measureAndSave('s1', 'sw_bad')`);
   assert.ok(bad.ok && !bad.track && bad.traceErr === 'unreadable');
   assert.ok(!(await doc('s1')).swings.find(w => w.id === 'sw_bad').track);
-  await app.waitFor(() => app.$('#plane_sw_bad [data-act="traceSwing"]'), { what: 'drawn' });
-  app.click('#plane_sw_bad [data-act="traceSwing"]');
+  await app.waitFor(() => app.$('#plane_sw_bad .planePic'), { what: 'drawn' });
+  app.click('#view [data-act="swingMore"][data-wid="sw_bad"]');
+  app.click('#swingMoreList [data-act="traceSwing"]');
   await app.waitFor(() => /can't decode the video/.test(app.text('#tr_sw_bad')), { what: 'said' });
   // No video at all: dotted, and says there's nothing to trace.
   assert.match(app.text('#traceNote_sw_novid'), /No video is stored for this swing to trace\.$/);
-  assert.ok(!app.$('#plane_sw_novid [data-act="traceSwing"]'));
+  app.click('#view [data-act="swingMore"][data-wid="sw_novid"]');
+  assert.ok(!app.$('#swingMoreList [data-act="traceSwing"]'));
+  app.$('#sheetInner [data-close]').click();
 });
 
 test('on the playing clip: the line draws itself to the clip\'s time, whole when paused, and the switch takes it away', async () => {

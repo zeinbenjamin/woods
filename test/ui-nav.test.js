@@ -176,7 +176,7 @@ test('the Swings tab\'s card: Play video at the top right plays the clip in the 
   // a swing with no video and no measured body
   app.$('#swingTimeline .swrow[data-wid="sw_s"]').click();
   assert.equal(app.$('#reelPlay'), null, 'no video, no button');
-  assert.match(app.text('#sheetInner'), /The body isn't measured on this swing yet: Measure the body is on its session's page/);
+  assert.match(app.text('#sheetInner'), /The body isn't measured on this swing yet: Analyse on its session's page measures it/);
   app.$('#sheetInner [data-close]').click();
 });
 

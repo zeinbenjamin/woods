@@ -1,3 +1,8 @@
+## 2.68.0 — 2026-10-31
+- One row of buttons on a swing card: Analyse, Play video, Trace the shot and More…. Moving the ball, measuring again, tracing the hands, changing the angle and deleting are under More….
+- Analyse now does both jobs: if the body isn't measured yet, it measures it on your phone first, then Claude reads the swing with those measurements. There's no separate Measure button any more.
+- The notes have moved to quiet toggles at the bottom of the card: What Claude saw (with when it was read), how the lines were drawn, every measure, across the swing, and the frames.
+
 ## 2.67.0 — 2026-10-31
 - A swing card now opens with the whole story in four rows: the ball (how far it went and where it finished, plus the shape you traced), the body (how many measures are outside the guide, and which), the plane (where your hands were against the V), and the fix.
 - New readings also say how it all fits together: which measured positions and which shot the fix accounts for, and where they disagree. Older readings say to analyse again to get this.
