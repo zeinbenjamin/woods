@@ -345,8 +345,21 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "addedOn": "2026-09-24", "duration": 6.4,
   "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below; 16 since 2.18.0 (8 before), even across the trim, or packed around `impact`
   "impact": 1.02,                     // 2.26.0: where he marked the club meeting the ball, s from the clip's start; null or absent = not marked, frames even
+  "ball": { "x": 0.55, "y": 0.71 },   // 2.63.0: where he tapped the ball on the address frame, 0..1 of the frame (x across, y down); a
+                                      // measurement by hand like `impact`. The swing plane (V, hands against it) is derived from it and
+                                      // the pose on every draw, never stored. Absent = not tapped.
+  "tracer": {                         // 2.66.0, optional: the shot tracer, drawn by him on the last frame (the ball is `ball`
+    "peak": { "x": 0.75, "y": 0.10 },   // above, shared with the swing plane). peak = where the ball was highest, land = where it
+    "land": { "x": 0.84, "y": 0.50 },   // came down or left the picture, 0..1 of the frame like `ball`; shape = what he saw
+    "shape": "hook|draw|straight|fade|slice", "on": "2026-10-31"   // (absent = not said). A drawing, not a measurement: the curve and
+  },                                  // the numbers beside it (the tied shot's) are worked out on every draw. Absent = not traced.
+  "track": {                          // 2.64.0, optional: the hands traced from the stored video, made with the pose
+    "by": "mediapipe-0.10.35-heavy", "on": "2026-10-31",   // (or *Trace the hands from the video*). A measurement, like the pose;
+    "pts": [ [1.067, 0.29, 0.393, 0.83, 0.271, 0.39, 0.89] ]   // the drawing is derived from it on every draw.
+  },                                  // Each point: [t s in the clip, lead wrist x, y, sure, trail wrist x, y, sure], 0..1 of the
+                                      // frame like the pose; one per distinct video frame across the frames' span, at most 90.
   "pose": {                           // 2.55.0, optional: the body found on each frame by the pose model, in the browser
-    "by": "mediapipe-0.10.35-lite", "on": "2026-10-31", "aspect": 1.5,   // aspect = frame width / height, so x and y share a scale
+    "by": "mediapipe-0.10.35-heavy", "on": "2026-10-31", "aspect": 1.5,   // aspect = frame width / height, so x and y share a scale; "by" was "-lite" before 2.65.0 (measured again on asking)
     "frames": [ { "asset": "<frame asset id>", "t": 0.05,
                   "j": [[0.512, 0.231, 0.98] /* × 33, MediaPipe's order: x, y as 0..1 of the frame, visibility */] } ]
   },                                  // j: null where no body was found. A measurement of each frame, like the frames; every measure is derived on each draw.
@@ -371,7 +384,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 evidence, confidence}]` (at most three since 2.11.0), `matches_ball_data`,
 `cannot_tell[]`; since 2.18.0, on down-the-line readings only, `wrist{top:
 cupped|flat|bowed|cannot tell, lead_arm_parallel: held|opening|released|cannot
-tell, frames}`. Older readings may have `positions[]`, `drill{name, why}`,
+tell, frames}`; since 2.67.0, when the swing has body measures or a tied
+shot, `ties` (a sentence: which measured positions and which shot the fix
+accounts for, and where they disagree). Older readings may have `positions[]`, `drill{name, why}`,
 and `notes` + `parsed: false` when prose was pasted instead of JSON.
 
 **Frame `t` is never 0.** Seeking a video to exactly zero yields an

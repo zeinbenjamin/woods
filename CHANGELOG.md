@@ -1,7 +1,82 @@
-## 2.61.0 — 2026-11-01
+## 2.72.0 — 2026-11-01
 - Find a tee time now reads Lane Cove's own booking site (Quick18): each time shows its spots free and price, and tapping it opens that exact time on the club's site to book. Members' rates are left out. Lane Cove's booking link needs to be `https://lanecove.quick18.com` for this (it's currently misspelt).
 - A club whose public calendar lists nothing at all (Camden, Castle Hill, Cronulla, Richmond this week) now says so, instead of "couldn't be read".
 - Castle Hill is now marked private (its own site says so), and Camden's and Richmond's booking notes say their public calendars were empty, once their imports are loaded again.
+
+## 2.71.0 — 2026-10-31
+- Once you open Play on today's round, GPS keeps running while you look at other pages, so the next hole doesn't start without a fix. It stops when you tap End round or Finish round, once every hole is done, or at midnight.
+- The screen stays on for that round too, and is kept on again when you come back to Carry from another app.
+- With the phone locked, GPS still stops: a browser can't keep it going then (see the native app plan).
+
+## 2.70.0 — 2026-10-31
+- A swing card now opens with its picture (the switches and the frame with the plane and the shot drawn), then the ball, body, plane and fix, then the quiet folds, then the buttons. The Swings tab's card follows the same order.
+- A swing tied to its shot no longer repeats the tiles above it: it names the shot (hole and shot number, or which shot in the range block, with face, path and smash) and leaves went, finished and left to the green, or carry and total, to the tiles.
+
+## 2.69.1 — 2026-10-31
+- Fixed a swing picture that could fill with solid sand colour on some devices (seen on an iPad), hiding the frame, the swing plane and the traced shot. The skeletons on the four position photos had the same weakness and are fixed too.
+
+## 2.69.0 — 2026-10-31
+- The shot tracer draws hooks and draws properly: over the top, the line now heads the way the ball went after its peak. Before, a ball that came down left of its peak but still right of where it started was drawn as a fade with a flat cut back at the top.
+- The body, measured (the four positions and every measure) is now one quiet toggle at the bottom of the swing card, its count in the title.
+- The Swings page has an "Analyse n swings" button again. It works through every swing that needs it: any never read, measured with the old body model, or read without "how it fits together". Each is measured on your phone where needed, then read by Claude, one at a time. It disappears once every swing is up to date.
+
+## 2.68.0 — 2026-10-31
+- One row of buttons on a swing card: Analyse, Play video, Trace the shot and More…. Moving the ball, measuring again, tracing the hands, changing the angle and deleting are under More….
+- Analyse now does both jobs: if the body isn't measured yet, it measures it on your phone first, then Claude reads the swing with those measurements. There's no separate Measure button any more.
+- The notes have moved to quiet toggles at the bottom of the card: What Claude saw (with when it was read), how the lines were drawn, every measure, across the swing, and the frames.
+
+## 2.67.0 — 2026-10-31
+- A swing card now opens with the whole story in four rows: the ball (how far it went and where it finished, plus the shape you traced), the body (how many measures are outside the guide, and which), the plane (where your hands were against the V), and the fix.
+- New readings also say how it all fits together: which measured positions and which shot the fix accounts for, and where they disagree. Older readings say to analyse again to get this.
+- The traced shot and the swing plane are drawn on one picture, with both switches above it. Turn either off and the other keeps its own picture.
+- Why, feel and drill, what Claude saw, every body measure and the frames are folded under the summary, so the card is about a quarter shorter and the summary is the first thing you read.
+
+## 2.66.0 — 2026-10-31
+- Shot tracer: on a swing card, *Trace the shot* takes three taps (the ball, where it peaked, where it came down) and the shape you saw, and draws the ball's flight over the finish frame like the tracers on golf videos. If you've already tapped the ball for the swing plane, Carry starts from there.
+- When the swing is tied to its shot, the real numbers sit beside the line: on the course, how far it went, where it finished and what was left to the green, from the hole map; at the range, the bay's carry, total and side. The line itself is labelled as your drawing, not a measurement.
+- On the playing video the ball flies out from impact; paused, the whole flight shows. It's in the swing's sheet, the card's *Play video* and the feed.
+- *Shot tracer* has its own switch beside *Swing plane*, so you can show either, both or neither.
+
+## 2.65.1 — 2026-10-31
+- The swing plane works again on down-the-line swings measured with the new model. It is more cautious than the old one about hands it can't see clearly, and from behind your wrists are always partly hidden, so Carry was throwing away hands that were in the right place. That left some swings with no plane and gaps in the hand line.
+- When the model's two wrists disagree, Carry now trusts the one it's surer of rather than averaging them, since both hands are on the grip.
+
+## 2.65.0 — 2026-10-31
+- A more accurate body model. From behind, the old one often put your wrists on your forearm instead of your hands, so the hand line ran too close to your body going back. Carry now uses MediaPipe's largest pose model, which found your hands where the video shows them.
+- It's a bigger one-time download (about 31 MB) the first time you measure, and measuring takes a few times longer.
+- Swings measured with the old model say so on their card. *Measure n swings with the new model* on the Swings page redoes them all in one go, hand trace included.
+
+## 2.64.1 — 2026-10-31
+- The hand line now works on slow-motion clips. It traced them too thinly (the downswing got about ten points), which drew a line of corners. Now the whole swing is traced and the downswing filled in frame by frame.
+- Where the line changes colour (the top, and impact) now comes from how your hands actually move, so it's right whatever the clip's speed. Before, it could switch to "coming down" halfway down.
+- To redo a swing traced before this, use *Measure again*.
+
+## 2.64.0 — 2026-10-31
+- The hand line is smooth now, like the tracers on golf videos. *Measure the body* also traces your hands through the stored video, on every frame the clip has across the swing, not just the 16 pictures, and draws one smooth line from address to the finish: green going back, white coming down, grey after impact.
+- The line draws itself over the clip as it plays, in the swing's video and in the Swings feed, with your hands as a dot, and shows whole when paused. The *Swing plane* switch turns it off.
+- Swings measured before this have *Trace the hands from the video* on the card. A swing with no stored video keeps a dotted line from its 16 frames, labelled as drawn between frames, not measured.
+- The line breaks where the model loses your hands in the blur at speed, rather than guessing across the gap. Measurements still come from the 16 frames as before.
+
+## 2.63.0 — 2026-10-31
+- Swing plane on down-the-line swings. After *Measure the body*, tap *Tap the ball* and tap the ball once on the address frame. Carry draws the V from the ball (the shaft line through your hands at address, the shoulder line through your shoulders), with your hands going back in green and coming down in white.
+- Three new measures: your hands at the top and coming down, against the V (inside it, flatter under the shaft line, or steeper over the shoulder line), and your hands' height at impact against address.
+- The sheet checks the camera first: if your shoulders don't overlap at address, the phone wasn't behind your hands, so the plane isn't drawn and Carry says why.
+- A *Swing plane* switch on the card hides or shows the drawing on this phone. The measures stay listed either way.
+- Plane faults feed the practice list like the other body measures, with their own drills.
+- Hands height at impact needs impact marked on the trim (or frames close together there). Otherwise the frame taken as impact can be the follow-through, so it asks you to mark it instead of giving a wrong number.
+- The body measures now find the top and impact when only one wrist is visible, as often happens down the line.
+
+## 2.62.0 — 2026-10-31
+- The practice list now uses the measured body. A measure outside its guide on most of a club's recent swings from one camera angle (at least 3 of the last 5) becomes a finding, such as hips moving toward the ball at impact on your driver.
+- When the same club already has a finding from the ball data, the body fault backs it up on that card ("body, measured") and adds to its weight, rather than being listed twice. On its own it gets its own card, with a drill and a note that the guides are rules of thumb.
+- A finding's page lists the measure for each swing behind it, and *How this is ranked* shows the rule.
+- Only swings where the body was found on most frames, filmed square on, count. Like any finding, a body fault goes quiet once enough swings come back inside the guide.
+
+## 2.61.0 — 2026-10-31
+- Back buttons now take you to the page you came from, named for it: a round opened from the Swings tab goes back to Swings, a finding opened from the Overview goes back to the Overview, and Settings goes back to the page you opened it on. The page comes back as you left it, scrolled to the same place with the same sections open.
+- Moving from hole to hole doesn't add to the way back: back from any hole goes to the round, then to wherever you opened the round from.
+- Tapping a tab starts afresh. Deleting a round, session, block or course takes you back to where you were before it.
+- A swing's card on the Swings tab has *Play video* at the top right, which plays the clip in the card, and shows the measured body under the reading: the four positions, the measures and *Across the swing*.
 
 ## 2.60.1 — 2026-10-31
 - *Across the swing* now runs across the swing's real time, address to finish, so frames packed around impact no longer squeeze the backswing to one side.

@@ -119,13 +119,13 @@ server/index.js     routes, static hosting
 server/auth.js      Cloudflare Access sign-in: the JWT check, req.user
 server/db.js        SQLite: JSON documents + asset metadata
 server/anthropic.js the Messages API call — the only place the key exists
-server/teetimes.js  reads a course's public MiClub tee-time pages on request
+server/teetimes.js  reads a course's public MiClub, TeeItUp or Quick18 tee-time pages on request
 web/index.html      the app, one file, ~3,200 lines
 web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
 web/vendor/maplibre/ MapLibre GL 4.7.1: Courses on a map, drawn as a yardage book (loaded when opened)
 web/vendor/leaflet/ Leaflet 1.9.4: the same map's fallback without WebGL
-web/vendor/mediapipe/ MediaPipe Pose Landmarker (lite) and its wasm: the body, measured on swing frames
+web/vendor/mediapipe/ MediaPipe Pose Landmarker (heavy since 2.65.0) and its wasm: the body, measured on swing frames
 web/course-maps/    built map files, one per course, + index.json (committed)
 course-maps/        map sources: src/<id>.json (card, mapping, origin), osm/<id>.geojson
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
@@ -584,6 +584,15 @@ Each of these cost real debugging time. Don't reintroduce them.
   the list guards for an older HoleMap (no pictures, no throw); and `render()`
   catches a view that throws and shows `#viewError` with the message. The
   harness inlines the tags by that pattern and fails if they lose the build.
+- **The swing overlays don't rely on `vector-effect`** (2.69.1, his iPad: a swing picture all sand, frame and lines
+  hidden). The plane (`.planeSv`, viewBox the frame's aspect × 1), the tracer (`.trShot`) and the skeleton (`.poseSk`)
+  drew in a viewBox 1 tall with stroke widths in pixels kept by `non-scaling-stroke`; that browser dropped it, so the
+  tracer's 9-unit landing dot was nine frames wide. Reproduced in Chromium by switching the property off. Widths are now
+  in the frame's own units (about .0045 for 3 px on a 670 px frame), and the tracer draws in the frame's aspect
+  (`trShotSvg`, `tracerInner(…, ar)`, `frameAr`; the video overlay's `data-ar`, updated on `loadedmetadata`) so its dots
+  stay round. Checked in Chromium with `vector-effect` forced off everywhere: the card, the skeletons, the playing clip
+  draw as before. The hole maps and *Across the swing* keep `vector-effect` (their viewBoxes are large: dropping it
+  would thin a line, not cover the picture). Why that iPad dropped it isn't known.
 - **App listens on 1818** (8080 was taken on his box). It's `PORT`-driven
   everywhere including the healthcheck.
 
@@ -812,8 +821,48 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   course Carry can't read shows its `bookingNote` and link ("members and
   guests" when private); a closed course, or one with no way to book, has no
   fold. `ui-courseteetimes` (4) against the stand-in MiClub.
-- **Next:** the other TeeItUp courses' first searches, and a way to store a course's MiClub id when
-  its link has none (Massey Park's calendar shows nothing publicly).
+- **Every link checked live** (2026-11-01, he asked; an agent read each calendar
+  through a page reader for Wed 4 Nov, since the NAS's search can't be seen from
+  here): 34 of the 40 MiClub links list prices, and the assumed course id
+  3000000 worked on every one stored without an id (Asquith, Bankstown,
+  Stonecutters Ridge and 12 more), so **no course needs an id of its own: the
+  planned "store a MiClub id" was dropped**. Massey Park's 3000000 now lists
+  public rates (18 Holes $44.50), so its "lists no rates" answer is gone. No
+  public calendar: Camden, Castle Hill (now castlehillcountryclub.com.au, "one of
+  Sydney's leading private golf clubs": `imports/castle-hill.json` is private),
+  Cronulla (already private), Richmond (empty all week; the club says call);
+  Gordon's pages didn't answer the reader (they read normally in 2.41.3). Those
+  empty calendars are a page of their own, "No rows meeting selected criteria"
+  with no days, which `parseCalendar` read as unreadable; now `[]`, so they
+  say "lists no rates at all". Cells with no price read "Not Available",
+  "Unavailable" (North Ryde), "Contact Pro Shop" (Antill Park), "Timesheets
+  open 7 days prior" (The Coast), "Bookings Not Yet Opened" (Woollahra); a day
+  is only taken when its cell links to a timesheet, so all are skipped. The NAS
+  still holds Liverpool's dead `liverpool.miclub.com.au` (the fixed import isn't
+  loaded). TeeItUp: Bardwell Valley (81 times) and Marrickville (61) list times;
+  Avalon and Palm Beach showed none on either day tried.
+- **Quick18, Lane Cove** (2.72.0, he asked): `<club>.quick18.com/teetimes/searchmatrix?teedate=YYYYMMDD`
+  (Sagacity Golf), a plain page, no login: `matrixTable`, a column per rate
+  (`matrixHdrSched`), a row per time with `mtrxTeeTimes`, `matrixPlayers` ("1 to
+  4 players", "1 or 2 players", "1 player": the most it can still take) and a
+  `matrixsched` cell per rate (`mtrxPrice` and a Select link to book that time,
+  or `mtrxInactive`); a full time isn't listed. `quick18Source` takes the host
+  or the `/teetimes/searchmatrix` path (as MiClub's path test, so the tests can
+  serve it); `parseQuick18` drops **member rates** (a membership the search
+  can't know of; Lane Cove's after 5:30 pm is members only). Each time carries
+  its own `url`, and the page's chip links `t.url` before the rate's. The fixture
+  is Lane Cove's real sheet for 4 Nov (`test/fixtures/quick18-matrix.html`,
+  through a page reader, tables only, verbatim). Lane Cove's NAS link is
+  misspelt (`lanecove.quic18.com`): he sets `https://lanecove.quick18.com`.
+- **Hurstville is not read** (2026-11-01): golf-booking.com (G24 Group, Poland)
+  fills its sheet in by script; a browser run found the course's ids
+  (`data-courseid` 17299, `HURG`), times and spots without a login, but **no
+  prices until a booking is started**, and the script files it named weren't
+  at those addresses, so the API wasn't found. Its terms (s.VI.3) bar copying
+  its databases beyond permitted use and limit non-club users to non-profit
+  use; no clause on automated reading as GolfNow's has. Put to him.
+- **Next:** a second source per course (resellers), once the links are settled
+  (he agreed, 2026-10-31).
 
 ## Appearance (2.37.0)
 
@@ -828,6 +877,214 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 `ACTIONS.setTheme` in Settings' *Appearance* section (`#appearance`, after
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
+
+## The card's order (2.70.0)
+
+He asked (with screenshots of his driver and a 7i card): the picture first (the switches and the frame, right under
+the header), then the summary (ball, body, plane, fix), then the quiet folds, then the buttons. `swingCard` and
+`reelCardHtml` (`#reelPose` is now the picture alone, above `#reelCard`; the `rc_` folds follow it). The tied shot's
+line is `swingShotName`: which shot, plus what the tiles have no room for (a penalty; a range shot's face, path,
+smash and strike), since the full `swingShotText` repeated the tiles. The reading's prompt keeps `swingShotText`.
+
+## The hook, the body fold, analyse all (2.69.0)
+
+He sent a screenshot of a hook he traced (ball, peak up and right, landing just left of the peak but right of the ball)
+drawn as a fade with a flat cut back at the top, and his own red line over it. `tracerSegs` levelled at the peak heading
+toward the landing *as seen from the ball* (`sign(land − ball)`); it now heads where the ball goes *after* the peak
+(`sign(land − peak)`, the ball's side only when the two are level), so the rise bulges a little past the peak and
+turns over, as his line did. `ui-tracer` checks his taps: past the peak the line only moves left. **The body** is one
+quiet fold, `#bodyAll_<id>`, "The body, measured · 16 of 16 frames · 2D · impact as marked · 6 measures", holding the
+four positions and every measure (the old *Every measure* fold went into it); the earlier-model notice stays on the card.
+**Analyse all** (he asked for the measure-all button back after the model change): `swingsToAnalyse()` (frames and no
+reading, no pose or `poseOld`, a reading without `ties` where `poseContext`/`swingShotContext` give something to tie, or
+`analysedView` ≠ `view`); the Swings page's `#analyseAll` "Analyse n swings" runs `analyseOne` (the card's Analyse,
+split out) for each in turn, `#analyseNote` saying which of n; an error stops it and says after how many. Temporary,
+at his word: with none needed it isn't shown. `#measureAll` stays beside it (quiet, also only while needed) for
+measuring alone, which costs no reading. `ui-swingsum` (5).
+
+## One row of buttons, the notes at the foot (2.68.0)
+
+He sent three screenshots of the 2.67.0 card: buttons in four places (*Redraw the shot*, *Move the ball*, *Measure
+again*, the bottom row), the "hands from n frames" note in the middle, *What Claude saw* under the fix, and asked what
+the difference between Analyse and Measure was. **Analyse does both**: `ACTIONS.analyseSwing` measures first
+(`measureAndSave`, the trace too) when the swing has no pose or one by an earlier model (`poseOld`), then reads, so the
+reading gets `poseContext`; a model that can't run reads without and toasts so. **One row** at the card's foot: *Analyse*,
+*Play video*, *Trace/Redraw the shot*, *More…* (`ACTIONS.swingMore`, `#swingMoreList`: tap/move the ball, measure the body
+again, trace the hands from the video, change angle, delete; measuring and tracing close the sheet and report on the
+card's `pm_`/`tr_`). The sections draw bare (`tracerSection(…, bare)`, `planeSection(…, bare)`, `poseSection({bare})`):
+pictures and switches only; no ball means no plane section (tapping it is in More, or the tracer's first tap).
+**Quiet folds** at the foot (`swingFolds`, `.qfolds#sf_<id>`, the `qfold` style of the Range list's checks): *What
+Claude saw* (`readingSeen`, with the "read from frames… a reading, not a measurement" credit, which left the fix; its
+row label says *The fix · a reading*), *How the lines were drawn* (`#drawn_<id>`: `traceNote`, the tracer's note with
+when it was traced, the plane's camera when off the line, "the club isn't tracked"), *Every measure*, *Across the
+swing*, *Frames*. The Swings card has the same foot, `rc_` ids. `ui-swingsum` (4) covers the row, More and the folds,
+and Analyse measuring then reading.
+
+## This swing, in one place (2.67.0)
+
+He found the swing card's parts each talking about their own thing (screenshots of his Georges River 5i and Long Reef
+driver: the reading, the tracer with its tiles, the body, the plane, one after another); asked whether they could be
+combined, he said build it. **The summary** (`swingSummary`, `#sum_<id>`, `.swsum`, after the header): four rows
+(`.sumrow`, `#sumBall_`/`sumBody_`/`sumPlane_`/`sumFix_<id>`), each only when there's something for it: **the ball**
+(the tied shot's tiles, `tracerNumbers` now `#shotNums_<id>`, moved here from the tracer since they're the ball's, not
+the drawing's, and `swingShotSection`; the label says the traced shape; untied, the *Which shot was this?* question);
+**the body** (`n of m outside the guide:` named by `BODY_SHORT`, the measures with a guide, plane ones apart; too few
+frames says so); **the plane** (`planeSay`'s first clause, one phrase when the top and coming down agree, a miss in
+`.offg`); **the fix** (`swingReading(…, {fold: true})`: the one thing, `analysis.ties` as *How it fits together*, and
+why/feel/drill/check in `#how_<id>`, What Claude saw as before). **`ties`** (SCHEMA.md) is asked of new readings only
+when there are measures or a tied shot (`poseContext || swingShotContext`), 30 words: which measured positions and the
+shot the fix accounts for, and where they disagree. A judgement left to the reading, not matched in code; older
+readings get `#tiesHint_<id>` ("Analyse again…"). **One picture:** with both switches on and a plane to draw
+(`planeDrawsShot`), the traced flight goes on the plane's address frame (the camera doesn't move, so the taps' 0..1
+hold), the crop widened to its peak, `Shot traced by you · Draw` at the bottom, both switches on the plane's row
+(`.switches`), *Redraw the shot* beside *Move the ball*; `tracerSection` draws nothing then. Either switch off and the
+other draws its own picture as before. **Folded:** every measure (`#bodyAll_<id>`, `poseSection(…, {fold: true})`),
+Across the swing and the frames; `poseSection(…, {plane: false})` on the card, which draws the plane itself after the
+tracer. The Swings tab's card carries the summary read-only, ids `rc_`. Measured on his data (Chromium, 390px, same
+cards before and after): the 30 Oct driver 2,437 → 1,747 px, Long Reef's driver 1,902 → 1,526. `ui-swingsum` (3); 12 mutations caught.
+
+## The shot tracer, by hand (2.66.0)
+
+He asked (2026-10-31, "let's add the shot tracer now"), the traced version of the mockup's boards
+(https://claude.ai/artifact/6NRpduNMeXDGSb7bJMxto9); the measured tracer (calibration taps, the bay's peak height) is
+later. **Stored:** `swing.tracer = {peak, land, shape?, on}` (SCHEMA.md), 0..1 of the frame, the ball being `swing.ball`
+(shared with the swing plane, so a plane's tap is reused). **The sheet** (`ACTIONS.traceShot`): the ball on the address
+frame (skipped when set, *Back* still reaches it), then the peak and the landing on the last frame (where the sky is
+clear of him), then the shape (`SHOT_SHAPES`, tapped again to take back); *Redraw the shot* starts from what was
+stored. **The flight** (`tracerSegs`): two cubic Béziers, out of the ball near straight up, level at the peak heading
+the way it finished (`run` from the sideways travel, at least a tenth of the height), steepest at the end. Not
+`crSegs`: a spline through three taps made a V at the peak on his 30 Oct driver. `tracerSamples` gives points along it;
+`tracerInner` draws all or part (dotted sand on a dark underlay, `vector-effect: non-scaling-stroke`, a round-capped
+zero-length stroke for the ball and the landing, so dots stay round in a stretched 0..1 viewBox). **The card**
+(`tracerSection`, before the body): its switch, the last frame cropped top to bottom to the flight when the pose gives
+the aspect, *Traced by you · Fade*, and `tracerNumbers` when the swing is tied to its shot (`swingShot`): course, went,
+finished and left to the green from the hole map; range, the bay's carry, total and side (or "left or right: not
+measured here"). Untied with shots in the session, it says to tie it. "A drawing from your taps, not a measurement."
+**On the clip** (`traceVideoHtml`, `wireTrace`): an `svg.trShot` over the video beside the plane's `svg.trOv`, either
+alone; it flies from `tracerStart` (his impact mark, else the trace's impact cut, else whole) over `TRACER_DRAW` (1.2 s,
+less if the clip ends first), whole when paused; with no pose the box takes the video's own aspect on
+`loadedmetadata`. **`svg.trShot.trShot`** outranks `.bigmap svg { height: auto }`, which the swing sheet's video sits in
+(found in Chromium: the tracer drew square, from the ball's height up). **Switch:** `overlaySwitch('tracer', ...)`, its
+own key in `carry.overlays`. The Swings card shows it read-only (`rc_` ids). Checked in Chromium on his 30 Oct driver
+(tied to hole 17: 221 m, rough, 229 m left), the card and the playing clip. `ui-tracer` (6); 14 mutations caught.
+
+## The heavy model (2.65.0)
+
+He drew his own hand path over the 3 Aug 7i (2026-10-31), and it disagreed with Carry's on the way back. Checked frame
+by frame on his clip (backswing and downswing frames at the same heights, laid over each other, then the three
+MediaPipe pose models on the same four frames, `scratchpad/cmp.png`): **lite put his wrists on his trail forearm going
+back**, about 70 px from the glove (from behind, against the sky, his hands are on the far side of his body); `full`
+was better but missed one; **heavy landed on the glove**. Smoothing can't fix wrong points, so the model was the fix.
+Told the cost (31 MB once, about 3x slower here: 230-490 ms a frame on this CPU against lite's 80), he chose heavy.
+`POSE_BY` is `mediapipe-0.10.35-heavy`; the lite file is gone from the repo. **Old measurements:** `poseOld(sw)` (a
+pose or trace by an earlier MediaPipe model; hand-made test poses aren't) shows `#poseOld_<id>` on the card, and the
+Swings page's `#measureAll` takes those too ("Measure n swings with the new model"), so his whole history can be
+redone in one go; trends would otherwise mix models. `ui-trace` covers the note and the re-measure (pose old, trace
+old). Not testable in jsdom: that the heavy file loads and runs, checked in Chromium on his 7i.
+**The hands under heavy** (2.65.1): measured again with heavy, his 7i lost its plane ("not measurable") and its line
+broke into 12 pieces. Heavy's per-joint score is *visibility* (is it seen), not whether the position is right, and down
+the line the wrists are hidden behind each other and the body: at address lead 0.02, trail 0.41, both under `POSE_VIS`;
+92 of 356 traced frames had no wrist over 0.5. The positions were still on the glove. So the hands alone
+(`handFrom`, used by `poseMeasures`' `handP`, the trace's `handOf` and `traceData`) take a wrist from `HAND_VIS` (0.3),
+and two wrists over `HAND_APART` (0.06 of the frame) apart give the surer one, not the middle (both hands hold the grip,
+so one is wrong); every other joint keeps 0.5. His 7i after: the plane back (top inside the V, 65° against 55-67°), 292
+traced points in 6 runs, the backswing up behind and the downswing nearer his body, as his own drawing had it; a
+zigzag at chest height on the way down is the model in the fastest, blurriest frames. Coming down isn't measured on it:
+its 8 old frames have none between the top and impact. `ui-plane` (5) checks the rule and the plane from one wrist.
+Also fixed a race in `ui-pose`'s measure-all test (it checked before the page's redraw; the full suite caught it once).
+
+## The hands traced from the video (2.64.0)
+
+He asked (2026-10-31, with two screenshots of pro swing tracers): the swing plane's hand line smooth like those.
+Told first what they are (hands, clubhead and ball; the club isn't tracked here) and the issues (phone time, the
+clip's own frame rate, blur at impact, swings without video, smoothing that can lie, drawing on the playing video,
+storage); he said go. **Traced:** with `sw.video`, `measureAndSave` (and *Trace the hands from the video*,
+`ACTIONS.traceSwing`, for swings measured before) runs `traceHands`: about every `TRACK_STEP` (1/60 s) across the
+frames' span, at most `TRACK_MAX` (90) seeks, by `videoFrames` (the extraction rules: never at 0, wait until
+painted). The frame actually shown is `requestVideoFrameCallback`'s `mediaTime`; **a seek onto the frame already
+shown paints nothing, so the browser never calls back** (found on his 30 fps Long Reef clip: each repeat waited the
+1.2 s timeout and counted as a frame, 170 s and "50 a second"): no call in 150 ms and the same 16-pixel thumbnail
+is a repeat, skipped. The pose model runs on each (`detectCanvas`), and `swing.track` (SCHEMA.md) keeps the two
+wrists per point; fewer than `TRACK_MIN` (8) stores nothing. A clip the browser can't decode keeps the frames
+(`traceErr`, said on the card). **Drawn** (`traceData`, on every draw): the points' hands (both wrists, or the
+sure one), runs broken where neither is sure or points are over 3.5 steps apart, never bridged; each traced point
+averaged 1-2-3-2-1 with its neighbours (model jitter, drawing only); the top and impact for the colours from the
+trace (hands highest, then lowest), a marked impact kept; `crSegs` (centripetal Catmull-Rom as Béziers: through
+every point, no loops where points bunch at the top); `traceInner` colours each Bézier by the part its middle falls
+in (`pl-back`, `pl-down`, `pl-thru` after impact, grey). Without a trace, the 16 frames dotted (`.sparse`) with
+`#traceNote_<id>` saying it's drawn, not measured. **On the playing clip** (`traceVideoHtml`, `wireTrace`): the
+video in a `.trBox` of the pose's aspect with an SVG over it, so the drawing sits on the picture (in the feed the
+box is sized by container units in `.reel`); playing, it draws to `currentTime` with the hands as `.pl-head`;
+paused, whole (his choice). In the swing's sheet (`playSwing`), the card's *Play video* (`reelPlay`) and the feed;
+off with the *Swing plane* switch. Measures still come from the 16 frames. **On his data** (Chromium, the real
+model on his two driver clips, H.264): Long Reef 52 frames at about 31 a second (a 30 fps clip), the 30 Oct one 84
+at about 47 (a 58 fps clip, 90 seeks); both lost the wrists for about 0.15 s after impact (blur) and broke there.
+At his marked impact (30 Oct) the model's wrists sit on his hands at belt height, checked frame by frame against
+ffmpeg's frames, so the 36% high is real. **Time:** 70–90 s here, on a container with no GPU (SwiftShader); a
+phone's GPU should be much faster, not yet measured: his first trace is the test. `ui-trace` (4): the smoothing,
+the trace against a stand-in 30 fps clip and a stand-in model (repeats, a lost and a half-lost stretch), the note,
+the colours' cuts, measuring with a video, an undecodable clip, the overlay part and whole, the feed, the switch;
+16 mutations caught (three survived at first: a loose bunching check, the wired overlay never played, no one-wrist
+stretch; all tightened).
+**Slow motion** (2.64.1, his phone screenshot of the 3 Aug 7i: a line of corners): that clip is slow motion, the
+swing filling 2 to 12 s of 13 (first read here as an untrimmed clip; a strip of its frames at 2 a second settled it),
+so 90 looks across the span gave the downswing about ten, and every rule in seconds was wrong for it. Now nothing is in
+seconds: the first look covers the whole span every `TRACK_STEP` or, when longer, `TRACK_MAX` (240) evenly; the
+downswing is the hands' fastest drop over a 60th of the points (`swingPhases`), the top the highest raw point walking
+back until the hands are 30% of the swing's height below it, impact the same forward; and when the downswing had looks
+less often than `TRACK_FINE` (1/50 s) it is filled at `TRACK_STEP` (`TRACK_FILL` 120 more), unless the first look met
+the same frame twice (it had every frame already). The colours' cuts in `traceData` come from `swingPhases` too (a
+marked impact kept). Two first tries failed on his clip and are not to be repeated: a coarse "biggest drop" finder
+(it found the hands coming down after the finish) and a same-wrists dedupe (a still address can repeat). The note no
+longer gives a frame rate (the looks are uneven). His 7i (H.264 copy, since Chromium here can't play HEVC): 233 frames,
+top at 6.1 s and impact 8.2 s, the backswing, downswing and finish where the clip shows them; the two drivers' cuts
+unchanged. `ui-trace` (5): a slow-motion stand-in with the model's wobble, every downswing frame present, the cuts, no
+fill on a 30 fps clip.
+
+## The swing plane (2.63.0)
+
+He asked (2026-10-31, with the shot tracer mockup at https://claude.ai/artifact/6NRpduNMeXDGSb7bJMxto9; boards
+8–10), and that plane faults feed the practice list. Down the line only, from the stored pose plus one tap:
+`swing.ball` (SCHEMA.md), set in the sheet `ACTIONS.planeBall` on the address frame (capped at 58vh tall, the
+camera check above it). In `poseMeasures` (dtl): `handP` (both wrists' middle, or the one over `POSE_VIS`; since
+this release the top and impact are found that way too, so a hidden wrist no longer loses them), `m.hands`,
+`series.handsUp`; `m.shGap` = the shoulders' horizontal gap at address over the torso, `m.inLine` under
+`PLANE_INLINE` (0.2, a judgement: about 15° off the line); with a ball and in line, `m.plane = {ball, side,
+shaft, shoulder}` (degrees up from the ball, on the golfer's side) and `series.plane` for every frame's hands.
+`keys.down` is the frame nearest halfway in time from the top to impact. Measures (`POSE_MEASURES.dtl`):
+`planeTop`, `planeDown` (band = the V, `vee` in `POSE_GUIDE`; worded by `planeSay`: inside, under the shaft line
+"flatter", over the shoulder line "steeper"; left out of `poseValues` without `m.plane`), `handsImpact` (±10% of
+the torso, `sure`: only when `m.impactSure`, impact marked or frames within `IMPACT_SURE` 0.06 s either side; his
+unmarked clips are 0.1–0.5 s apart and a driver read 39% high from a follow-through frame, so it says to mark
+impact instead). **Drawn** by `planeSection`/`planeSvg` over the address frame, cropped top to bottom to the swing
+(`.planeCrop`), the paths with a dark underlay; the *Swing plane* switch (`overlaySwitch`, `ACTIONS.toggleOverlay`,
+`localStorage` `carry.overlays`, default on) hides the drawing on this phone, the measures stay. The shot tracer
+has its own switch beside it (2.66.0). Off the line: `#planeOff_<id>` says why, nothing drawn. *Across the swing* has
+*Hands against the plane* (the V at the top and coming down) and *Hands height*. Plane faults reach the practice
+list through `bodyItems` with `BODY_DRILL` entries, and the reading's prompt through `poseContext`. On his data:
+Long Reef D (19 Oct) and the 30 Oct D, both inside the V at the top and coming down; the 30 Oct swing (impact
+marked) has hands 36% high at impact, with the hips 29% toward the ball. `ui-plane` (4): the angles by hand, a
+hidden wrist, steep and off-line swings, the card, switch and sheet, impact not caught, the practice list; 15
+mutations caught (one survived at first: both test wrists identical; a hidden-wrist swing added, which found the
+key-position bug above).
+
+## Body faults in the practice list (2.62.0)
+
+He asked (2026-10-31, with the shot tracer and swing plane mockup): plane faults and the other body measures should
+feed the practice list. `bodyItems()` (in `practiceItems`, after `swingItems`): per club and camera angle, the
+reliable, square-on measured swings (`poseMeasures`: `reliable`, `square !== false`) in date order; for each
+`POSE_MEASURES` measure with a guide, a finding `body:<club>:<measure>` once it is outside the guide (`off` from
+`poseValues`) on at least `BODY_MIN` (3) of the last `BODY_RECENT` (5) and at least half of them. Evidence is each
+outside swing at `COST.body` (0.15, a judgement like the other costs); every measured swing is a chance, so it goes
+quiet by the same rule as any finding once swings come back inside. **It ranks like a swing reading**: beside a
+ball-data finding whose block is the same club it joins that finding as `support` and adds half its weight
+(`rankedPracticeUncached`, `leans`), never its own drill; alone it is listed with `kind: 'body'` (`.pcard.k-body`),
+a drill from `BODY_DRILL` and "2D, from the frames; the guides are rules of thumb." The host's card says it in one
+`.bodysup` line; the finding's page (*The evidence*) lists each swing's value and whether it was outside;
+`#rankRules` states the rule from the same constants. On his data: D, 5W and 7i hips toward the ball at impact
+(5 of 5 each), D and 5W forward bend lost, 7i head height (4 of 5). Derived on every draw, nothing stored.
+`ui-bodyfaults` (3) works hand-made down-the-line joints; 8 mutations caught (one survived at first: every test
+swing in a finding was outside, so all chances counting as misses passed; a 3-of-4 club added).
 
 ## This swing's own shot (2.56.0)
 
@@ -868,9 +1125,9 @@ re-paste keeps the tag; nothing is rewritten.
 
 He asked (2026-10-31, after the mockup at https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK)
 for pose estimation before the course overlay. **The model:** MediaPipe Pose
-Landmarker, lite float16 v1, with `@mediapipe/tasks-vision` 0.10.35 (Apache-2.0),
+Landmarker, heavy float16 v1 since 2.65.0 (lite before; see *The heavy model*), with `@mediapipe/tasks-vision` 0.10.35 (Apache-2.0),
 vendored in `web/vendor/mediapipe/` (17 MB: `vision_bundle.mjs`, the SIMD wasm only,
-`pose_landmarker_lite.task`; `LICENSE.txt` says where each came from), loaded by
+`pose_landmarker_heavy.task`, 31 MB, so about 42 MB in all; `LICENSE.txt` says where each came from), loaded by
 `import()` on first use (`poseModel`: GPU, else CPU) and run in the browser on the
 swing's stored frames. No outside host, nothing sent. Without WebAssembly SIMD (iOS
 before 16.4) it says so. Checked in Chromium on MediaPipe's own sample photo: 33
@@ -966,6 +1223,29 @@ worker in a `vm` against stand-in caches and network, plus the server's stamped 
 and the status line; checked in Chromium against a local server: opened once with
 signal, offline reload showed his session and the note, a save waited, back online
 it reached the server and the note cleared.
+
+## Back goes where he came from (2.61.0)
+
+He asked (2026-10-31, after a round opened from the Swings tab went back to Rounds): "the back button should
+reflect the page the user was previously on, not just the default of origination". Every `go()` notes the page
+it leaves in `navStack` (tab, sub, scroll, open folds, the feed's place; at most `NAV_MAX` 30), and `back(tab,
+sub, label)` is now `data-act="navBack"`: the last page in the trail that still exists (`navPrev`, skipping a
+deleted round, course or block, `navExists`), named by `navLabel`, restored as left; with no trail (a fresh
+start, a tab tapped), the page's parent as before. Rules: a **sideways** step, between two pages of one kind
+(`navKind`: same tab, view, round, course, block or finding, hole or not, Play or not; a filter such as the
+feed's club or a day doesn't count) replaces rather than stacks, so back from hole 7 is the round, not hole 6;
+going to a page **already in the trail** returns to it (`navPush` truncates), so a circle can't grow; a **tab**
+tapped resets the trail (`go(…, {nav: 'reset'})`); **finishing Play** replaces (`nav: 'replace'`), so the play
+page isn't one to come back to; **deleting** (block, session, round, course) returns with `navBack`. Settings has
+a back only when opened over a page (the gear); the feed's chevron, the course map's back, and every page's
+back go the same way. The trail rides the sign-in trip's resume. `ui-nav` (10) walks the real links (14
+mutations caught, one survived at first: the delete test couldn't tell the previous page from the parent;
+rewritten). **Audited in Chromium on his data** (a scratchpad crawler, every kind of link from each tab, three
+pages deep, through the Swings cards): each page's back names the page left and lands on it.
+**The Swings tab's card** (2.61.0, same ask): *Play video* at the top right of `reelCardHtml` (`reelPlay`, the
+clip in the card with controls, the feed behind paused; again hides it), and the measured body after the
+reading (`poseSection(sw, s, {readOnly: true})`: no measure buttons, ids prefixed `rc_`; unmeasured says where
+to measure it).
 
 ## Page headings (2.50.0)
 
@@ -1701,6 +1981,15 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   The hole logger now refuses an outline or artwork tap on a hole holding
   map shots it can't place (also the case after unlinking a map), so frames
   never mix. A course with no map file is unchanged.
+- **GPS for the whole round** (2.71.0, the hole-maps chat's note of 2026-10-31 from the native-app
+  plan, `docs/native-app.md`, both picked by him): opening Play on a round dated today stores it as
+  the round being played (`carry.playing` in localStorage, `{id, day}`, per phone, so a reload keeps
+  it). `gpsWanted()` is Play open, or `playingRound()`: that round, still today, not every hole
+  `holeDone`. `playLifecycle()` keeps `watchPosition` and the Wake Lock on every page while it holds,
+  and arms a timer for local midnight (`armMidnight`); *End round here* / *Finish round*
+  (`finishPlay`) clears it. `visibilitychange` takes the Wake Lock again when Carry comes back to
+  the front. A locked phone still stops a browser's GPS; only the native app can carry on then.
+  `ui-play` (19).
 - **Not measured on a real course yet.** Distances are checked against
   hand-worked geometry and the globe (haversine) in `ui-play`, but phone GPS
   under trees and how a phone browser treats Cloudflare's offline errors
@@ -2168,7 +2457,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 473 tests, about 45s.
+`npm test` — 514 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2196,6 +2485,9 @@ fixture would let the reading be pinned.
   asked until it's opened, today then tomorrow once today's times have gone, a
   day picked staying on the course page, players, a redraw asking nothing new,
   an unreadable course's booking note, no fold for a closed course.
+- `quick18.test.js` (4) — the Quick18 reader on Lane Cove's real sheet: links, a
+  rate per column, members left out, spots, each time's own link, hand-made rows
+  for the other players wordings, and the route against a stand-in.
 - `teeitup.test.js` (4) — the TeeItUp reader on a hand-made answer (see
   *Tee times*): links, Sydney times, cents, spots, the route asking with the
   alias, unreadable and refused answers keeping a sample.
@@ -2220,6 +2512,21 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `ui-nav.test.js` (10) — back goes where he came from: each way into a round, session, block, finding,
+  course, Settings and the feed; hole to hole sideways; a circle; a tab afresh; a deleted page skipped; folds
+  restored; deleting returns; the Swings card's Play video and read-only body.
+- `ui-trace.test.js` (6) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
+  a slow-motion clip, swings measured by the earlier model, repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
+- `ui-swingsum.test.js` (5) — the swing card's summary: the four rows from hand-made joints, a tied shot and a
+  reading with `ties`, an older reading's hint, the plane's misses, the one picture and either switch off, the prompt
+  asking `ties` only with something to tie, the Swings card read-only.
+- `ui-tracer.test.js` (7) — the shot tracer: the overlays in the frame's own units (no `vector-effect`), the three taps and the shape, the ball skipped when set and taken
+  back, the flight's shape, the tied shot's numbers (course and range), its own switch, the playing clip.
+- `ui-plane.test.js` (5) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
+  swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list, the hands
+  under heavy (a hidden wrist from 0.3, two that disagree).
+- `ui-bodyfaults.test.js` (3) — the measured body in the practice list: a finding from most recent swings,
+  unreliable swings left out, joining a ball finding as support or standing alone, the card, the page, the rules.
 - `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags
   following their shot, the prompt, filmed marks, the finding's page.
 - `ui-pose.test.js` (17) — the body, measured (the guide and changing the angle since 2.57.0): a stand-in detector with hand-made
@@ -2390,7 +2697,7 @@ In rough order of value:
    modelled handicap allowance, and letting the practice list use it (he
    asked for read-only first).
 2. **Pose estimation on swing frames** shipped in 2.55.0 (see *The body,
-   measured*). He wanted it **before** stage 2 of the shot patterns (2026-10-31),
+   measured*); its faults feed the practice list (2.62.0) and the swing plane is drawn from it (2.63.0). He wanted it **before** stage 2 of the shot patterns (2026-10-31),
    mockup first: https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK
    (a skeleton on each frame, a chart per measure across the 16 frames, faults
    session by session; one camera is 2D, so face-on measures sway and head
@@ -2415,6 +2722,16 @@ In rough order of value:
    lie rules (water and OB on carry, the rest on total), other clubs one tap away,
    the armed club never changed. Later, a course pattern from logged approaches set
    against the range one. Mockups: https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh.
+
+6. **A native iPhone / Android app** (parked by him 2026-10-31; the plan is in
+   `docs/native-app.md`). Why: a web page loses GPS when the phone locks, so
+   Play mode starts cold on every unlock; only a native app can track while
+   locked, as 18Birdies does. The route: Capacitor around the existing app
+   (phases: accounts and the Access sign-in check → a shell loading the NAS →
+   background GPS through `platform.js` → Android → build pipeline). The two web
+   changes he picked to go first shipped in 2.71.0: GPS for the whole of today's
+   round rather than only the Play view, and the screen kept awake for that round
+   (see *Play mode*).
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.

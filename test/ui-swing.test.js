@@ -276,17 +276,21 @@ const COACHED = { one_thing: 'Swing out to the right through the ball', why: 'Fr
   ball_data: 'agrees', matches_ball_data: 'Explains the low runners.', observations: [{ what: 'Club exits left', evidence: 'frames 5–7', confidence: 'high' }],
   cannot_tell: ['Face angle at impact'] };
 
-test('a reading shows the one fix, why, feel, drill and how to know; the detail is folded', async () => {
+test('a reading shows the one fix in the card\'s summary; why, feel, drill and how to know one tap down; the detail folded', async () => {
   const s = await app.api.get('sessions', 's_sw');
   await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: COACHED, analysedOn: '2026-10-24' }] });
   await app.waitFor(() => app.E(`session('s_sw').swings[0].analysis.feel`) === COACHED.feel, { what: 'poll' });
   app.go('range', { sessionId: 's_sw' });
-  const cues = app.$$('#view .analysis > .cue').map(e => e.textContent);
+  // 2.67.0: the fix is the summary's last row; why, feel, drill and check fold under it.
+  assert.ok(app.$('#sumFix_sw_1 .analysis .one'));
+  const how = app.$('#how_sw_1'); assert.ok(how && how.tagName === 'DETAILS' && !how.open);
+  assert.equal(how.querySelector('summary').textContent, 'Why, feel and drill');
+  const cues = app.$$('#how_sw_1 > .cue').map(e => e.textContent);
   assert.deepEqual(cues, ['Why ' + COACHED.why, 'Feel Hands out toward right field', 'Drill Gate stick — Stick outside the ball; club exits right of it.', 'Working when Ball starts straight and stops cutting']);
   assert.equal(app.text('#view .analysis .one'), COACHED.one_thing);
   const seen = app.$('#seen_sw_1');
   assert.ok(seen && seen.tagName === 'DETAILS' && !seen.open, 'what Claude saw is one tap down, with an id so it stays open across redraws');
-  assert.equal(seen.querySelector('summary').textContent, 'What Claude saw (1)');
+  assert.equal(seen.querySelector('summary').textContent, 'What Claude saw · 1', 'a quiet fold at the card\'s foot (2.68.0)');
   assert.match(seen.textContent, /Club exits left[\s\S]*Against your ball data: Explains the low runners\.[\s\S]*Can't tell from this angle: Face angle at impact/);
   assert.equal(app.$$('#view .analysis > .obs').length, 0, 'no observations on the card itself');
 });
@@ -298,7 +302,7 @@ test('an older, longer reading keeps its text but folds everything but the fix',
   await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: old, analysedOn: '2026-09-26' }] });
   await app.waitFor(() => app.E(`session('s_sw').swings[0].analysedOn`) === '2026-09-26', { what: 'poll' });
   app.go('range', { sessionId: 's_sw' });
-  assert.deepEqual(app.$$('#view .analysis > .cue').map(e => e.textContent), ['Drill Alignment stick gate drill'], 'no why/feel/check invented for it');
+  assert.deepEqual(app.$$('#view .analysis .cue').map(e => e.textContent), ['Drill Alignment stick gate drill'], 'no why/feel/check invented for it');
   const seen = app.$('#seen_sw_1');
   assert.equal(seen.querySelectorAll('.obs').length, 4);
   assert.match(seen.textContent, /Why this drill: The out-to-in exit is the cause\./);
@@ -334,7 +338,7 @@ test('a reading\'s wrist answer shows under what Claude saw', async () => {
   await app.waitFor(() => app.E(`session('s_sw').swings[0].analysedOn`) === '2026-10-26', { what: 'poll' });
   app.go('range', { sessionId: 's_sw' });
   assert.match(app.text('#seen_sw_1'), /Wrist: flat at the top; released with the lead arm parallel on the way down \(frames 7 and 10\)/);
-  assert.doesNotMatch(app.text('#view .analysis > .cue'), /Wrist/, 'not on the card itself');
+  assert.doesNotMatch(app.$$('#view .analysis .cue').map(e => e.textContent).join(' '), /Wrist/, 'not with the fix');
   await app.api.put('sessions', 's_sw', { ...s, swings: [{ ...s.swings[0], analysis: COACHED, analysedOn: '2026-10-24' }] });
   await app.waitFor(() => app.E(`session('s_sw').swings[0].analysedOn`) === '2026-10-24', { what: 'poll' });
 });

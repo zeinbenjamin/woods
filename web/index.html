@@ -88,13 +88,50 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; } .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
 .check { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 15px; color: var(--ink); } .check input { width: 18px; height: 18px; margin: 0; }
 .courseBar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; } .courseBar #homeLink { margin-left: auto; margin-right: -8px; } .courseBar .seg button { height: 36px; }
-.choices { display: grid; gap: 8px; margin: 4px 0 8px; } .choice { display: grid; gap: 2px; text-align: left; padding: 12px 14px; } .choice b { font-weight: 600; }
+.choices { display: grid; gap: 8px; margin: 4px 0 8px; } .choice.danger b { color: var(--flag); } .choice { display: grid; gap: 2px; text-align: left; padding: 12px 14px; } .choice b { font-weight: 600; }
 #reelsOpen { display: inline-flex; align-items: center; gap: 6px; }
 .pose { margin: 8px 0 4px; } .posePos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
 .posePos figure { margin: 0; } .posePos figcaption { font-size: 11.5px; color: var(--ink-3); text-align: center; margin-top: 2px; }
 .pf { position: relative; border-radius: 6px; overflow: hidden; background: var(--paper-2); } .pf img { display: block; width: 100%; height: auto; }
-.poseSk { position: absolute; inset: 0; width: 100%; height: 100%; } .poseSk line { stroke: #F4F1E6; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linecap: round; }
-.poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .8; vector-effect: non-scaling-stroke; }
+.poseSk { position: absolute; inset: 0; width: 100%; height: 100%; } .poseSk line { stroke: #F4F1E6; stroke-width: .012; stroke-linecap: round; }
+.poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .004; }
+.plane { margin: 10px 0 4px; } .planePic { margin-top: 6px; max-width: 420px; } .planeCrop { position: absolute; left: 0; width: 100%; } .planeCrop img { width: 100%; height: 100%; } .planeSv { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* 2.69.1: widths in the frame's own units (1 = its height), not non-scaling-stroke, which a browser can drop
+   (his iPad: a 9-unit dot painted the whole picture sand). About 0.0045 is 3 px on a 670 px frame. */ .pl-vee { fill: #6DB37F; fill-opacity: .14; stroke: none; }
+.pl-shaft, .pl-sh { stroke-width: .003; stroke-dasharray: .0105 .0075; } .pl-shaft { stroke: #8FC3E8; } .pl-sh { stroke: #AA96BD; }
+.pl-under { fill: none; stroke: #0B100B; stroke-opacity: .5; stroke-width: .009; stroke-linejoin: round; stroke-linecap: round; }
+.pl-back, .pl-down { fill: none; stroke-width: .0045; stroke-linejoin: round; stroke-linecap: round; } .pl-back { stroke: #6DB37F; } .pl-down { stroke: #F4F7F3; }
+.pl-top, .pl-ball { fill: #F4F7F3; stroke: #0B100B; stroke-width: .0022; } .pl-imp { fill: #F4F7F3; stroke: #0B100B; stroke-width: .0022; } .pl-imp.off { fill: var(--score-3); }
+.pl-pick { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #F4F7F3; border: 2.5px solid #C96A6A; box-sizing: border-box; }
+.planeTag { position: absolute; left: 8px; top: 8px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(11,16,11,.8); color: #9BD3A8; border: 1px solid #6DB37F; }
+.planeKey { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; } .planeKey i { display: inline-block; width: 16px; height: 0; vertical-align: middle; margin-right: 5px; border-top: 2px dashed; }
+.pl-thru { fill: none; stroke: #B9C2BB; stroke-opacity: .85; stroke-width: .0045; stroke-linejoin: round; stroke-linecap: round; }
+.pl-back.sparse, .pl-down.sparse, .pl-thru.sparse, .pl-under.sparse { stroke-dasharray: .00015 .0105; }
+.pl-head { fill: #F4F7F3; stroke: #0B100B; stroke-width: .0022; } .planeKey .k-thru { border-top: 3px solid #B9C2BB; }
+.swsum { margin: 8px 0 10px; border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; }
+.sumrow { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 9px 12px; border-top: 1px solid var(--rule); } .sumrow:first-child { border-top: 0; }
+.sumrow > b { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; padding-top: 2px; }
+.sumrow .tsTiles { margin-top: 0; } .sumrow .swshot { margin: 6px 0 0; } .sumrow .analysis { margin: 0; padding: 0; border: 0; background: none; }
+.sumrow .ties { margin-top: 6px; } .planeTag.tagLow { top: auto; bottom: 8px; }
+@media (max-width: 420px) { .sumrow { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+.tracer { margin: 10px 0 4px; } .switches { display: flex; flex-wrap: wrap; gap: 4px 18px; } .tracerPic { margin-top: 6px; max-width: 420px; } .tracerPic > img { width: 100%; display: block; }
+/* svg.trShot.trShot: outranks `.bigmap svg { height: auto }`, which the swing sheet's video sits in (the tracer drew square). */
+svg.trShot.trShot { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .trShot * { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.ts-under { stroke: #0B100B; stroke-opacity: .45; stroke-width: .0105; } .ts-line { stroke: #D7B66D; stroke-width: .0052; stroke-dasharray: .0015 .0105; }
+.ts-ball { stroke: #F4F7F3; stroke-width: .0165; } .ts-land { stroke: #D7B66D; stroke-width: .0135; }
+.tracerTag { color: #D7B66D; border-color: #D7B66D; } .tracerPic { position: relative; }
+.tsTiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; } .tsTile { background: var(--paper-2); border-radius: 8px; padding: 8px 10px; }
+.tsTile b { display: block; font-size: 18px; } .tsTile span { font-size: 11.5px; color: var(--ink-2); }
+.trPick { position: relative; display: inline-block; cursor: crosshair; margin: 8px 0; max-width: 100%; } .trPick img { display: block; max-width: 100%; max-height: 58vh; }
+.trDots { position: absolute; inset: 0; pointer-events: none; }
+.trBox { position: relative; aspect-ratio: var(--ar); width: 100%; } .trBox video { display: block; width: 100%; height: 100%; } .trOv { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.reel { container-type: size; } .reel .trBox { width: min(100cqw, calc(100cqh * var(--ar))); } #reelVideo .trBox { width: min(100%, calc(62vh * var(--ar))); margin: 2px auto 10px; } #reelVideo .trBox video { margin: 0; max-height: none; }
+.planeKey .k-shaft { border-color: #8FC3E8; } .planeKey .k-sh { border-color: #AA96BD; } .planeKey .k-back { border-top: 3px solid #6DB37F; } .planeKey .k-down { border-top: 3px solid #F4F7F3; box-shadow: 0 0 0 1px rgba(11,16,11,.5); }
+.ballPick { cursor: crosshair; margin: 8px auto; } #ballDot { position: absolute; inset: 0; pointer-events: none; }
+.switch { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0; border: 0; background: none; color: var(--ink-2); font-size: 14px; font-weight: 500; }
+.switch .knob { width: 36px; height: 22px; border-radius: 999px; background: var(--rule); position: relative; flex: none; transition: background .15s; }
+.switch .knob::after { content: ''; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); transition: left .15s; }
+.switch[aria-checked="true"] { color: var(--ink); } .switch[aria-checked="true"] .knob { background: var(--green); } .switch[aria-checked="true"] .knob::after { left: 17px; }
 .ptrace { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 8px; align-items: center; margin: 4px 0; } .ptrace .lab { font-size: 11.5px; color: var(--ink-3); line-height: 1.25; } .ptrace .lab b { display: block; font: 600 13px var(--cond); color: var(--ink); }
 .ptrace .trbox { position: relative; height: 64px; } .ptrace svg { display: block; width: 100%; height: 100%; overflow: visible; } .ptrace svg * { vector-effect: non-scaling-stroke; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-guide { fill: none; stroke: var(--ink-2); stroke-width: 1.3; stroke-dasharray: 3 3; opacity: .7; } .tr-band { position: absolute; width: 12px; transform: translateX(-50%); box-sizing: border-box; border: 1px dashed var(--ink-2); background: color-mix(in srgb, var(--green) 10%, transparent); opacity: .8; pointer-events: none; } .tr-off { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--flag); box-shadow: 0 0 0 1px var(--paper); pointer-events: none; } .ptrace.off .lab b { color: var(--flag); } .dlines .offg { color: var(--flag); font-weight: 600; } .traxis { margin-top: -2px; } .tr-row { position: relative; height: 13px; } .tr-row.two { height: 25px; } .tr-alab { position: absolute; top: 0; transform: translateX(-50%); font: 500 10.5px/1.2 var(--body); color: var(--ink-3); white-space: nowrap; pointer-events: none; } .tr-alab.l { transform: none; } .tr-alab.r { transform: translateX(-100%); } .tr-alab.lo { top: 12px; }
 table.ptrend { margin: 4px 0 8px; } table.ptrend td { vertical-align: top; } table.ptrend td:first-child { white-space: normal; text-align: left; } table.ptrend td .small { font-weight: 400; }
@@ -235,7 +272,7 @@ a.chip { text-decoration: none; display: inline-flex; gap: 5px; align-items: bas
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + var(--safe-b) + 14px); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: var(--r); font-size: 13px; z-index: 9; opacity: 0; transition: opacity .15s; pointer-events: none; } .toast.show { opacity: 1; }
 .hole-grid { display: grid; grid-template-columns: 36px 52px 1fr 1fr; gap: 6px 8px; align-items: center; font-size: 14px; } .hole-grid input { padding: 7px 8px; text-align: right; } .hole-grid .h { color: var(--ink-3); font-size: 12px; }
 dialog.sheet { border: 0; padding: 0; margin: 0; width: 100%; max-width: 720px; left: 50%; transform: translateX(-50%); top: auto; bottom: 0; max-height: calc(100% - 40px); background: var(--paper); color: var(--ink); border-radius: 14px 14px 0 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
-dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px 0; overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; }
+dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px 0; overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; } #reelVideo video { display: block; width: 100%; max-height: 62vh; background: #000; border-radius: var(--r); margin: 2px 0 10px; } #reelPose { margin: 4px 0 6px; }
 /* The row is sticky at the scrollport's bottom, so it carries the sheet's bottom padding (2.27.2): on .inner, content scrolled past under the Close button in that strip. */
 .sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; position: sticky; bottom: 0; background: var(--paper); padding: 10px 0 calc(18px + env(safe-area-inset-bottom, 0px)); } .count { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
 .stencil.art .trace { stroke: #fff; stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; opacity: .95; }
@@ -304,7 +341,7 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .analysis .cue { font-size: 14px; margin: 4px 0; }
 .analysis .seen { margin-top: 8px; }
 .analysis .seen summary { cursor: pointer; color: var(--ink-3); }
-.pcard.k-swing { border-left-color: var(--water); }
+.pcard.k-swing { border-left-color: var(--water); } .pcard.k-body { border-left-color: var(--ink-2); }
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; margin: 4px 0 6px; } .tiles.c2 { grid-template-columns: repeat(2, 1fr); } .ftile { background: var(--paper-2); border-radius: var(--r); padding: 9px 8px; text-align: center; }
 .ftile b { font-family: var(--cond); font-weight: 700; font-size: 24px; line-height: 1.05; display: block; } .ftile small { display: block; color: var(--ink-3); font-size: 12px; } .ftile em { display: block; font-style: normal; color: var(--ink-3); font-size: 11px; line-height: 1.3; margin-top: 1px; }
 .work { margin: 4px 0; } .wcard { display: grid; grid-template-columns: 28px 1fr; gap: 8px; border: 1px solid var(--rule); border-left: 4px solid var(--green); border-radius: var(--r); padding: 9px 10px; margin: 8px 0; }
@@ -515,7 +552,7 @@ function signInHop() {
   if (Date.now() - last < REHOP_GAP) return false;
   try {
     sessionStorage.setItem(REHOP_KEY, String(Date.now()));
-    sessionStorage.setItem(RESUME_KEY, JSON.stringify({ tab: S.tab, sub: S.sub, y: window.scrollY, open: [...document.querySelectorAll('#view details[id][open]')].map(d => d.id), t: Date.now() }));
+    sessionStorage.setItem(RESUME_KEY, JSON.stringify({ tab: S.tab, sub: S.sub, y: window.scrollY, open: [...document.querySelectorAll('#view details[id][open]')].map(d => d.id), nav: navStack, t: Date.now() }));
   } catch (e) { return false; }   // nowhere to note the trip: a loop guard we can't keep, so no trip
   (window.carryHop || (u => location.replace(u)))(location.pathname + location.search);
   return true;
@@ -794,12 +831,77 @@ function courseDemand() {
 }
 
 /* ---------- routing ---------- */
-function go(tab, sub = null) {
+// Back goes where he came from (2.61.0, he asked: a page's back button named its parent, so a round
+// opened from the Swings tab went back to Rounds). Every go() notes the page it leaves, with its scroll
+// and open folds, and a page's back button returns to the last one still there; with no trail (a fresh
+// start, a tab tapped) it goes to the page's parent as before. A step between two pages of one kind
+// (hole to hole, a play hole to the next) replaces rather than stacks, so back from hole 7 is the round,
+// not hole 6; going to a page already in the trail returns to it, so the trail can't grow in circles.
+const NAV_MAX = 30;
+let navStack = [];
+const navKey = (tab, sub) => tab + '|' + JSON.stringify(Object.keys(sub || {}).sort().map(k => [k, String(sub[k])]));
+// A page's kind is what it shows (the round, course, block, finding or view, and whether a hole or Play);
+// a filter on it (the feed's club, the tee times' day) or which hole is a step within the same page.
+const navKind = (tab, sub) => { const x = sub || {}; return [tab, x.view || '', x.sessionId || '', x.courseId || '', x.blockId || '', x.goal || '', x.hole != null ? 'hole' : '', x.play ? 'play' : ''].join('|'); };
+const navHere = () => ({ tab: S.tab, sub: S.sub, y: window.scrollY, open: [...document.querySelectorAll('#view details[id][open]')].map(d => d.id), reelsY: (document.getElementById('reels') || {}).scrollTop || 0 });
+function navPush(tab, sub) {
+  if (navKey(tab, sub) === navKey(S.tab, S.sub) || navKind(tab, sub) === navKind(S.tab, S.sub)) return;
+  const i = navStack.findIndex(e => navKey(e.tab, e.sub) === navKey(tab, sub));
+  if (i >= 0) { navStack = navStack.slice(0, i); return; }
+  navStack.push(navHere()); if (navStack.length > NAV_MAX) navStack.shift();
+}
+// A page in the trail that has since gone (a deleted round, course or block) is skipped.
+const navExists = e => { const x = e.sub || {};
+  return (!x.sessionId || !!session(x.sessionId)) && (!x.courseId || !!course(x.courseId)) && (!x.blockId || S.sessions.some(s => (s.blocks || []).some(b => b.id === x.blockId))); };
+function navPrev() { for (let i = navStack.length - 1; i >= 0; i--) if (navExists(navStack[i]) && navKey(navStack[i].tab, navStack[i].sub) !== navKey(S.tab, S.sub)) return i; return -1; }
+// What a page is called on the button that returns to it.
+function navLabel(e) {
+  const x = e.sub || {};
+  if (e.tab === 'overview') return 'Overview';
+  if (e.tab === 'settings') return 'Settings';
+  if (e.tab === 'swings') return x.view === 'reels' ? 'Watch' : 'Swings';
+  if (e.tab === 'range') {
+    if (x.view === 'swings' || x.view === 'reels') return 'Swings';
+    if (x.blockId) { const ss = S.sessions.find(s => (s.blocks || []).some(b => b.id === x.blockId)), b = ss && ss.blocks.find(b => b.id === x.blockId); return b ? `${b.club}${b.target ? ' to ' + b.target + 'm' : ''}` : 'Block'; }
+    if (x.goal) { const it = goalOf(x.goal); return it ? goalName(it) : 'Practice'; }
+    if (x.sessionId) { const ss = session(x.sessionId); return ss ? dateLabel(ss.date) : 'Session'; }
+    return 'Range';
+  }
+  if (e.tab === 'rounds') {
+    if (x.view === 'penalties') return 'Penalty report';
+    if (x.sessionId) { if (x.hole) return `Hole ${x.hole}`; const r = session(x.sessionId); return r ? r.courseName : 'Round'; }
+    return 'Rounds';
+  }
+  if (e.tab === 'courses') {
+    if (x.view === 'teetimes') return 'Tee times';
+    if (x.view === 'map') return 'Map';
+    if (x.courseId) { if (x.hole) return `Hole ${x.hole}`; const c = course(x.courseId); return c ? c.name : 'Course'; }
+    return 'Courses';
+  }
+  return 'Back';
+}
+// nav: 'push' (a link: note where he was), 'replace' (finishing something: the page left isn't one to come
+// back to), 'reset' (a tab: a fresh trail).
+function go(tab, sub = null, { nav = 'push' } = {}) {
+  if (nav === 'push') navPush(tab, sub); else if (nav === 'reset') navStack = [];
   S.tab = tab; S.sub = sub;
   try { localStorage.setItem('carry.tab', tab); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
-document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
+// Back to the last page in the trail, as he left it (scroll, open folds, the feed's place); without one, the
+// page's parent.
+function navBack(tab, sub = null) {
+  const i = navPrev();
+  if (i < 0) { navStack = []; return go(tab, sub, { nav: 'none' }); }
+  const e = navStack[i]; navStack = navStack.slice(0, i);
+  S.tab = e.tab; S.sub = e.sub;
+  try { localStorage.setItem('carry.tab', e.tab); } catch (err) {}
+  render();
+  for (const id of e.open || []) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
+  const r = document.getElementById('reels'); if (r && e.reelsY) r.scrollTop = e.reelsY;
+  window.scrollTo(0, e.y || 0);
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.tab, null, { nav: 'reset' })));
 function parseGo(str) {
   const i = str.indexOf(':'); if (i < 0) return [str, null];
   const tab = str.slice(0, i), rest = str.slice(i + 1);
@@ -830,6 +932,7 @@ function render() {
   ttDaysScroll(daysX);
   if (resumed && !resumed.done && S.sessions.length + S.clubs.length) {
     resumed.done = true;
+    if (Array.isArray(resumed.nav)) navStack = resumed.nav.filter(e => e && typeof e.tab === 'string');
     for (const id of resumed.open || []) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
     requestAnimationFrame(() => window.scrollTo(0, resumed.y || 0));
   }
@@ -842,7 +945,8 @@ document.addEventListener('click', e => {
   const a = e.target.closest('[data-go]'); if (a) { const [tab, sub] = parseGo(a.dataset.go); go(tab, sub); return; }
   const act = e.target.closest('[data-act]'); if (act) { const fn = ACTIONS[act.dataset.act]; if (fn) fn(act.dataset); }
 });
-const back = (tab, sub, label) => `<div class="back"><button class="quiet" data-go="${tab}${sub ? ':' + sub : ''}">‹ ${esc(label)}</button></div>`;
+// A page's back button: the page he came from when there is one, else the page's parent (tab, sub, label).
+const back = (tab, sub, label) => { const i = navPrev(); return `<div class="back"><button class="quiet" data-act="navBack" data-tab="${tab}" data-sub="${sub ? esc(sub) : ''}">‹ ${esc(i >= 0 ? navLabel(navStack[i]) : label)}</button></div>`; };
 
 /* ---------- shared visuals ---------- */
 // Dot strip: every shot's carry on one axis, coloured by strike profile, with the target marked.
@@ -1120,7 +1224,7 @@ function overviewWork() {
   if (!items.length) return `<h2>Next practice</h2><div class="empty"><p>Trace the shots on a few holes, or log a range session with shots, and your next practice appears here.</p><div class="row-actions"><button class="primary" data-go="rounds">Rounds</button><button data-go="range">Range</button></div></div>`;
   // Headline, the evidence in a number or two, one action. The reasoning is a
   // tap away on the Range tab, never in front of the answer.
-  const evidence = it => `${esc(KIND_LABEL[it.kind] || '')}${it.kind === 'swing' ? ' · read from video' : it.n ? ` · ${confidence(it.n)}, n=${it.n}` : ''}`;
+  const evidence = it => `${esc(KIND_LABEL[it.kind] || '')}${it.kind === 'swing' ? ' · read from video' : it.kind === 'body' ? ' · 2D, against rules of thumb' : it.n ? ` · ${confidence(it.n)}, n=${it.n}` : ''}`;
   // The block, in a few words: club, swing, target, and the drill's name when it has one ("Accuracy: …").
   const doThis = it => { const b = it.block; if (!b) return ''; const name = /^([^:]{3,24}):/.exec(b.intent || ''); return `${esc(b.club)}${b.swing !== 'full' ? ' ' + esc(b.swing) : ''}${b.target ? ` at ${b.target}m` : ''}${!b.target && name ? ` · ${esc(name[1])}` : ''}`; };
   const how = it => esc(it.block ? it.block.intent : it.practice || '');
@@ -1128,7 +1232,7 @@ function overviewWork() {
   const hero = `<div class="next k-${top.kind}" id="nextPractice">
       <div class="nt">${doThis(top) || esc(top.title)}</div>
       ${how(top) ? `<div class="small">${how(top)}</div>` : ''}
-      <div class="small muted nfrom">${doThis(top) ? `For: ${esc(top.title)} · ` : ''}${evidence(top)}${(top.support || []).length ? ' · the swing video agrees' : ''}</div>
+      <div class="small muted nfrom">${doThis(top) ? `For: ${esc(top.title)} · ` : ''}${evidence(top)}${(top.support || []).some(x => x.kind === 'swing') ? ' · the swing video agrees' : ''}${(top.support || []).some(x => x.kind === 'body') ? ' · the body, measured, agrees' : ''}</div>
       ${goalProgress(top) ? `<div class="small progress">${esc(progressText(top))}</div>` : ''}
       <div class="row-actions">${items.some(x => x.block) ? `<button class="primary" data-act="planSession">Plan range session →</button>` : ''}<button class="quiet" data-go="range:goal=${esc(top.key)}">${goalProgress(top) ? 'Review results' : 'Details'} →</button></div>
     </div>`;
@@ -1987,7 +2091,8 @@ function holeCheck(h) {
    range shots count, his location, the data, who's signed in. Analysis
    that used to live on the Bag tab (range vs course) is on the Overview. */
 function vSettings() {
-  let h = `<h1>Settings</h1>`;
+  // The gear opens Settings over whatever page he was on, so it has a way back to it.
+  let h = (navPrev() >= 0 ? back('overview', null, 'Overview') : '') + `<h1>Settings</h1>`;
   h += `<section class="sec" id="bag" style="margin-top:0;padding-top:0;border-top:0"><div class="spread"><h2>Bag</h2><button class="primary" data-act="newClub">Add club</button></div>
   <p class="small muted">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
   if (!S.clubs.length) h += `<div class="empty"><p>No clubs yet.</p></div>`;
@@ -2291,16 +2396,18 @@ const ACTIONS = {
   editRange(d) { const s = session(d.id); openSheet(rangeForm(s), async root => saveRange(root, s)); },
   newBlock(d) { const s = session(d.id); openSheet(blockForm(), async root => saveBlock(root, s, { id: uid('b'), seq: (s.blocks || []).length + 1 })); wireShotCount(sheetInner); },
   editBlock(d) { const s = session(d.sid), b = s.blocks.find(x => x.id === d.bid); openSheet(blockForm(b), async root => saveBlock(root, s, b)); wireShotCount(sheetInner); },
-  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const gone = s.blocks.find(b => b.id === d.bid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { const left = new Set(sessionAssets(doc)); releaseAssets(blockAssets(gone).filter(id => !left.has(id))); toast('Block deleted'); go('range', { sessionId: s.id }); } },
-  async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
+  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const gone = s.blocks.find(b => b.id === d.bid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { const left = new Set(sessionAssets(doc)); releaseAssets(blockAssets(gone).filter(id => !left.has(id))); toast('Block deleted'); navBack('range', { sessionId: s.id }); } },
+  async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); navBack(s.type === 'round' ? 'rounds' : 'range'); } },
   newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c'), created: Date.now() })); wireHoleCount(sheetInner, false, []); wireCardPaste(sheetInner); },
   editCourse(d) { const c = course(d.id); if (!c) return; openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); wireCardPaste(sheetInner, c); },
-  async deleteCourse(d) { if (!await confirmAsk('Delete this course for everyone who uses this Carry? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
+  async deleteCourse(d) { if (!await confirmAsk('Delete this course for everyone who uses this Carry? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); navBack('courses'); } },
   newClub() { openSheet(clubForm(), async root => saveClub(root, {})); },
   editClub(d) { openSheet(clubForm(clubBy(d.id)), async root => saveClub(root, clubBy(d.id))); },
 };
+// A page's back button (navBack above).
+ACTIONS.navBack = d => { const [tab, sub] = parseGo(d.tab + (d.sub ? ':' + d.sub : '')); navBack(tab, sub); };
 // Type-to-search course field. Keeps a hidden courseId input so saving and
 // scorecard prefill work exactly as they did with the dropdown.
 function coursePicker(selectedId) {
@@ -3116,7 +3223,7 @@ function practiceItems() {
     ev: pens.map(p => ({ date: p.r.date, cost: COST.penalty * holePens(p.h) })), chances: traced.map(p => ({ date: p.r.date, hit: !!holePens(p.h) })),
     title: `Penalty strokes: ${sum(pens.map(p => holePens(p.h)))} in ${plural(shotHoleCount(), 'hole')}`,
     detail: `On ${pens.map(p => 'hole ' + p.h.n).join(', ')}. Worth checking the trace to see what caused it.`, recs: pens });
-  items.push(...swingItems());
+  items.push(...swingItems(), ...bodyItems());
   return items.sort((a, b) => b.score - a.score);
 }
 
@@ -3165,7 +3272,7 @@ const PRACTICE_HALF_LIFE = 60, STALE_AFTER = 180;
 // Judgements, not measurements: shown to him under "How this is ranked" so he
 // can disagree with them, and the place to look when "Is this list right?"
 // says findings go quiet as often without range work as with it.
-const COST = { tee: { trees: .8, water: 1, bunker: .5, rough: .3 }, teeOther: .3, approach: .5, measure: .4, short: .5, threePutt: 1, penalty: .6, strike: .05 };
+const COST = { tee: { trees: .8, water: 1, bunker: .5, rough: .3 }, teeOther: .3, approach: .5, measure: .4, short: .5, threePutt: 1, penalty: .6, strike: .05, body: .15 };
 // Whole local days, as for club distances: to the millisecond, two draws moments apart
 // weighed the same evidence differently in the tenth decimal (a 2.11.3 publish failed on it).
 const ageDays = d => d ? daysAgo(d) : 0;
@@ -3205,12 +3312,15 @@ function rankedPractice() { return memoised('rankedPractice', '', () => rankedPr
 function rankedPracticeUncached() {
   const all = practiceItems().map(assessPractice), byWeight = (a, b) => b.weight - a.weight;
   let now = all.filter(x => x.status !== 'quiet');
-  for (const sw of now.filter(x => x.kind === 'swing' && x.club)) {
-    const host = now.filter(x => x.kind !== 'swing' && x.block && x.block.club === sw.club).sort(byWeight)[0];
+  // Body faults (2.62.0) join the same way: measured, but against rules of thumb, so support for the ball's
+  // own finding, adding half their weight; the host's drill stays the host's.
+  const leans = x => x.kind === 'swing' || x.kind === 'body';
+  for (const sw of now.filter(x => leans(x) && x.club)) {
+    const host = now.filter(x => !leans(x) && x.block && x.block.club === sw.club).sort(byWeight)[0];
     if (!host) continue;
     host.support = [...(host.support || []), sw];
     if (sw.agrees) host.weight += sw.weight / 2;
-    if (sw.drillName) host.block = { ...host.block, intent: `${host.block.intent}. Drill from the video: ${sw.drillName}` };
+    if (sw.kind === 'swing' && sw.drillName) host.block = { ...host.block, intent: `${host.block.intent}. Drill from the video: ${sw.drillName}` };
     now = now.filter(x => x !== sw);
   }
   return { now: now.sort(byWeight), quiet: all.filter(x => x.status === 'quiet').sort(byWeight) };
@@ -3309,7 +3419,7 @@ function calibration() {
 }
 
 /* ---------- views ---------- */
-const KIND_LABEL = { tee: 'Off the tee', approach: 'Approach', measure: 'Gapping', strike: 'Strike', short: 'Short game', putting: 'Putting', penalty: 'Penalties', swing: 'Swing video' };
+const KIND_LABEL = { tee: 'Off the tee', approach: 'Approach', measure: 'Gapping', strike: 'Strike', short: 'Short game', putting: 'Putting', penalty: 'Penalties', swing: 'Swing video', body: 'Body, measured' };
 const freshLine = it => it.note ? `<div class="fresh small ${it.status}">${it.status === 'practised' ? '<span class="tag">worked on</span> ' : ''}${esc(it.note)}</div>` : '';
 function practiceCard(it, i) {
   const b = it.block;
@@ -3323,12 +3433,14 @@ function practiceCard(it, i) {
   </details>`;
   // What's wrong, what to hit, whether it's getting better. The evidence
   // behind it (every shot, the ball data, the holes) is on the objective page.
-  const sup = (it.support || [])[0];
+  const sup = (it.support || []).find(x => x.kind === 'swing'), bodies = (it.support || []).filter(x => x.kind === 'body');
   return `<div class="pcard k-${it.kind}">
-    <div class="spread"><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span><span class="tag ${it.n >= 12 ? 'green' : ''}">${it.video ? 'read from video' : confidence(it.n) + ', n=' + it.n}</span></div>
+    <div class="spread"><span class="small muted">${i + 1}. ${KIND_LABEL[it.kind]}</span><span class="tag ${it.n >= 12 ? 'green' : ''}">${it.video ? 'read from video' : it.body ? 'body, measured' : confidence(it.n) + ', n=' + it.n}</span></div>
     <div class="pt">${esc(it.title)}</div>${freshLine(it)}${sgPhrase(it)}
     ${b ? `<div class="do"><span class="tag green">${esc(b.club)} · ${b.swing}${b.target ? ' · ' + b.target + 'm' : ''}</span> ${esc(b.intent)}</div>` : it.practice ? `<div class="do">${esc(it.practice)}</div>` : ''}
     ${sup ? `<div class="small muted sup"><span class="tag">video${sup.agrees ? ' agrees' : ''}</span> ${esc(String(sup.title).split(': ').slice(1).join(': ') || sup.title)}</div>` : ''}
+    ${bodies.length ? `<div class="small muted sup bodysup"><span class="tag">body, measured</span> ${esc(bodies.map(x => x.line).join('; '))}</div>` : ''}
+    ${it.body ? `<div class="small muted">2D, from the frames; the guides are rules of thumb.</div>` : ''}
     ${goalProgress(it) ? `<div class="small progress" style="margin-top:6px">${esc(progressText(it))}</div>` : ''}
     <div class="row-actions" style="margin-top:8px">${goalButtons(it)}</div>
   </div>`;
@@ -3339,7 +3451,7 @@ function practiceSection(limit) {
     : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
   const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
   return basisShort() + fold('rankHow', 'How this is ranked', '', `<p class="small muted">${esc(practiceBasis().text)} Recalculated every time this screen draws — there is no stored copy. Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>
-    <p class="small muted" id="rankRules">The rules, so you can disagree with them: a tee shot into water costs ${COST.tee.water}, trees ${COST.tee.trees}, a bunker ${COST.tee.bunker}, rough ${COST.tee.rough}; an approach clubbed short or a chip that misses the green ${COST.approach}; a three-putt ${COST.threePutt}; a penalty stroke ${COST.penalty}; a low runner or top on the range ${COST.strike} each. A finding goes quiet after enough clean chances that, at its old rate, it would have shown up 4 times in 5 (3 at least), or once unseen for ${STALE_AFTER} days. A club is flagged for strike at ${Math.round(STRIKE_FLAG * 100)}% low runners or tops over ${STRIKE_MIN} or more full swings. These are judgements, not measurements; "Is this list right?" below is where to check them.</p>`) +
+    <p class="small muted" id="rankRules">The rules, so you can disagree with them: a tee shot into water costs ${COST.tee.water}, trees ${COST.tee.trees}, a bunker ${COST.tee.bunker}, rough ${COST.tee.rough}; an approach clubbed short or a chip that misses the green ${COST.approach}; a three-putt ${COST.threePutt}; a penalty stroke ${COST.penalty}; a low runner or top on the range ${COST.strike} each; a swing whose body measure is outside its guide ${COST.body}, a finding once it is outside on ${BODY_MIN} of the last ${BODY_RECENT} swings of a club from one angle (and at least half), joining that club's ball finding when there is one. A finding goes quiet after enough clean chances that, at its old rate, it would have shown up 4 times in 5 (3 at least), or once unseen for ${STALE_AFTER} days. A club is flagged for strike at ${Math.round(STRIKE_FLAG * 100)}% low runners or tops over ${STRIKE_MIN} or more full swings. These are judgements, not measurements; "Is this list right?" below is where to check them.</p>`) +
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     // Quiet lately sits with the list's two checks, one quiet group of rows (2.58.0, he asked).
@@ -3532,7 +3644,8 @@ function vGoal() {
   h += goalHistory(it);
   const sup = it.support || [];
   const ev = [it.detail ? `<p class="small">${esc(it.detail)}</p>` : '', it.range ? `<p class="small muted">${esc(it.range)}</p>` : '', it.advice ? `<p class="small"><b>On course:</b> ${esc(it.advice)}</p>` : '',
-    ...sup.map(v => `<p class="small"><span class="tag">read from video</span> ${esc(v.title)}${v.agrees ? ' <span class="muted">Agrees with the ball data.</span>' : ''}${v.practice ? `<br><span class="muted">Drill: ${esc(v.practice)}</span>` : ''}</p>`)].join('');
+    ...sup.map(v => v.kind === 'body' ? `<p class="small"><span class="tag">body, measured</span> ${esc(v.line)}<br><span class="muted">${esc(v.detail)}. 2D, from the frames, against rules of thumb.</span>${v.practice ? `<br><span class="muted">Drill: ${esc(v.practice)}</span>` : ''}</p>`
+      : `<p class="small"><span class="tag">read from video</span> ${esc(v.title)}${v.agrees ? ' <span class="muted">Agrees with the ball data.</span>' : ''}${v.practice ? `<br><span class="muted">Drill: ${esc(v.practice)}</span>` : ''}</p>`)].join('');
   if (ev) h += `<h2>The evidence</h2><div id="goalEvidence">${ev}</div>`;
   const filmed = goalSwings(it);
   if (filmed.length) h += `<h2>Filmed</h2><div class="list" id="goalFilmed">` + filmed.map(({ sw, x }) => `<button class="item" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}"><div class="t">${dateLabel(swingDate(sw))} · ${esc(sw.club || x.sh.club || x.b && x.b.club || '')} <span class="muted small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div><div class="s">${esc(swingShotText(x))}</div>${sw.analysis && sw.analysis.one_thing ? `<div class="s"><b>${esc(sw.analysis.one_thing)}</b></div>` : ''}</button>`).join('') + `</div><p class="small muted">Swings tied to shots that are evidence for this: what the miss looked like.</p>`;
@@ -3778,7 +3891,8 @@ Answer as JSON with exactly these keys, keeping to the word limits:
   "feel": "the swing thought he takes to the ball (8 words or fewer)",
   "drill": { "name": "one drill (6 words or fewer)", "how": "how to do it (25 words or fewer)" },
   "check": "how he will know it is working, from ball flight or contact (15 words or fewer)",
-  "ball_data": "agrees" | "contradicts" | "unclear",${sw.view === 'dtl' ? `
+  "ball_data": "agrees" | "contradicts" | "unclear",${poseContext(sw) || swingShotContext(sw, session) ? `
+  "ties": "how it fits together (30 words or fewer): which of the MEASURED positions above${swingShotContext(sw, session) ? " and this swing's own shot" : ''} your fix accounts for, naming them; say plainly where the measures and what you see disagree",` : ''}${sw.view === 'dtl' ? `
   "wrist": { "top": "cupped" | "flat" | "bowed" | "cannot tell", "lead_arm_parallel": "held" | "opening" | "released" | "cannot tell", "frames": "which frames you read these from" },` : ''}
   "matches_ball_data": "one short sentence: does what you see explain the strike mix above?",
   "observations": [ { "what": "one specific thing you can see", "evidence": "which frame(s) show it", "confidence": "high" | "medium" | "low" } ],
@@ -3787,6 +3901,29 @@ Answer as JSON with exactly these keys, keeping to the word limits:
 
 At most three observations, the one behind the fix first. "ball_data" is "agrees" only when what you see would produce ${swingShotContext(sw, session) ? "this swing's own shot first, and the strike mix above second" : 'the strike mix above'}. Be restrained: only claim what the frames support; put anything you are unsure of at low confidence or in cannot_tell. Do not invent measurements or angles. Prefer "I cannot see that from here" over a guess.`;
 }
+const ANALYSE_ERR = { unavailable: "Analysis needs Claude, and this server can't reach it — check ANTHROPIC_API_KEY on the server.", rate_limited: 'Too many requests just now — wait a moment and try again.', frames_unreadable: "Couldn't load the stored frames.", invalid_json: 'Claude replied but not in the expected format. Try again.' };
+// One swing's whole job (2.68.0): the body measured first when it isn't, or was by an earlier model, so the reading gets
+// the measures; then Claude reads it. say(text) reports progress. {ok, unmeasured} or {error}.
+async function analyseOne(sid, wid, say = () => {}) {
+  const sw0 = swingsOf(session(sid)).find(x => x.id === wid);
+  let unmeasured = false;
+  if (sw0 && (sw0.frames || []).length && (!sw0.pose || poseOld(sw0))) {
+    say('Loading the pose model…');
+    const mr = await measureAndSave(sid, wid, (i, n) => say(`Measuring the body: frame ${i} of ${n}…`), (i, n, ph) => say(`${ph === 'fill' ? 'Filling in the downswing' : 'Tracing the hands from the video'}: ${i} of ${n}…`));
+    if (mr.error === 'model') unmeasured = true;
+    say('Reading the frames…');
+  }
+  const res = await analyseSwing(sid, wid, ({ text }) => say(text.slice(-400)));
+  if (res.error) return { error: res.error };
+  const s = session(sid);
+  // Read in the app this time, so drop any earlier "read in a chat" credit.
+  const swings = swingsOf(s).map(x => { if (x.id !== wid) return x; const { analysedIn, ...rest } = x; return { ...rest, analysis: res.data, analysedOn: today(), analysedView: x.view }; });
+  return { ok: await save('sessions', sid, { ...s, swings }), unmeasured };
+}
+// Swings an analysis would change: never read, body unmeasured or by an earlier model, a reading without "how it fits
+// together" where there's something to fit, or read under another camera angle.
+const swingsToAnalyse = () => allSwings().filter(sw => (sw.frames || []).length && (!sw.analysis || !sw.pose || poseOld(sw)
+  || (!sw.analysis.ties && (poseContext(sw) || swingShotContext(sw, sw.session))) || (sw.analysedView && sw.analysedView !== sw.view)));
 async function analyseSwing(sessionId, swingId, onText) {
   const s = session(sessionId), sw = swingsOf(s).find(x => x.id === swingId);
   if (!sw) return { error: 'gone' };
@@ -3806,7 +3943,7 @@ async function analyseSwing(sessionId, swingId, onText) {
   } catch (e) { return { error: e && e.code ? e.code : 'failed', text: e && e.text }; }
 }
 /* ---------- the body, measured (2.55.0) ----------
-   MediaPipe's Pose Landmarker (lite, vendored in web/vendor/mediapipe/, run in the
+   MediaPipe's Pose Landmarker (heavy since 2.65.0, vendored in web/vendor/mediapipe/, run in the
    browser, nothing sent anywhere) finds 33 joints on each stored frame. The joints
    are stored on the swing as `pose` (SCHEMA.md): they are a measurement of each
    frame, slow to make on a phone. Every angle, shift and trend below is worked out
@@ -3818,10 +3955,28 @@ async function analyseSwing(sessionId, swingId, onText) {
    the address frame, so a mirrored clip still reads right. Joints the model is
    unsure of (visibility under POSE_VIS) are left out, never guessed; a swing whose
    body was found in fewer than POSE_MIN_SHARE of its frames is marked unreliable. */
-const POSE_BY = 'mediapipe-0.10.35-lite';
+const POSE_BY = 'mediapipe-0.10.35-heavy';
+/* 2.65.0 (he drew his own hand path on the 3 Aug 7i, and it disagreed with Carry's): the lite model put his wrists on
+   his trail forearm going back down the line (from behind, against the sky, the hands are on the far side of the body),
+   70 px from the glove; heavy put them on it (checked frame by frame on his clip, `full` in between). He chose heavy:
+   31 MB once, about 3x slower. A swing measured or traced by an earlier model is `poseOld`: the card says so and the
+   Swings page measures them again in one go. */
+const poseOld = sw => !!((sw.pose && /^mediapipe-/.test(sw.pose.by || '') && sw.pose.by !== POSE_BY) || (sw.track && /^mediapipe-/.test(sw.track.by || '') && sw.track.by !== POSE_BY));
 const POSE_BASE = '/vendor/mediapipe/';
 const POSE_VIS = 0.5, POSE_MIN_SHARE = 0.75;
+/* The hands (2.65.1): heavy scores a wrist hidden behind the other or the body low (down the line they always are; his
+   3 Aug 7i at address: lead 0.02, trail 0.41) while still placing it on the glove, so the hands take a wrist from
+   HAND_VIS. Both hands hold the grip: two wrists further apart than HAND_APART (of the frame's height) mean one is
+   wrong, and the surer is taken rather than the middle. Every other joint keeps POSE_VIS. [x, y, sure] each, or null. */
+const HAND_VIS = 0.3, HAND_APART = 0.06;
+function handFrom(l, r, ar = 1) {
+  const L = l && l[2] >= HAND_VIS ? [l[0] * ar, l[1]] : null, R = r && r[2] >= HAND_VIS ? [r[0] * ar, r[1]] : null;
+  if (L && R) return Math.hypot(L[0] - R[0], L[1] - R[1]) <= HAND_APART ? midP(L, R) : l[2] >= r[2] ? L : R;
+  return L || R;
+}
 const POSE_SQUARE = 0.2;   // face-on: hip and shoulder width at address, each at least this share of the torso's length
+const IMPACT_SURE = 0.06;  // impact found from the hands counts as caught when the frames either side are at most this many seconds away
+const PLANE_INLINE = 0.2;  // down the line: the shoulders at address at most this share of the torso's length apart (a judgement, about 15° off the line)
 const PJ = { nose: 0, lSh: 11, rSh: 12, lEl: 13, rEl: 14, lWr: 15, rWr: 16, lHip: 23, rHip: 24, lKn: 25, rKn: 26, lAn: 27, rAn: 28 };
 const POSE_BONES = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28]];
 let poseLoad = null;
@@ -3831,12 +3986,15 @@ function poseModel() {
   if (!poseLoad) poseLoad = (async () => {
     const mp = await import(POSE_BASE + 'vision_bundle.mjs');
     const files = await mp.FilesetResolver.forVisionTasks(POSE_BASE + 'wasm');
-    const make = delegate => mp.PoseLandmarker.createFromOptions(files, { baseOptions: { modelAssetPath: POSE_BASE + 'pose_landmarker_lite.task', delegate }, runningMode: 'IMAGE', numPoses: 1 });
+    const make = delegate => mp.PoseLandmarker.createFromOptions(files, { baseOptions: { modelAssetPath: POSE_BASE + 'pose_landmarker_heavy.task', delegate }, runningMode: 'IMAGE', numPoses: 1 });
     let lm; try { lm = await make('GPU'); } catch (e) { lm = await make('CPU'); }
     return { async detect(src) {
       const im = new Image(); im.src = src; await im.decode();
       const r = lm.detect(im), L = r && r.landmarks && r.landmarks[0];
       return { w: im.naturalWidth, h: im.naturalHeight, joints: L ? L.map(p => [p.x, p.y, p.visibility ?? 1]) : null };
+    }, async detectCanvas(cv) {
+      const r = lm.detect(cv), L = r && r.landmarks && r.landmarks[0];
+      return { w: cv.width, h: cv.height, joints: L ? L.map(p => [p.x, p.y, p.visibility ?? 1]) : null };
     } };
   })().catch(e => { poseLoad = null; throw e; });
   return poseLoad;
@@ -3869,7 +4027,10 @@ function poseMeasures(sw) {
   const body = f => P(f, PJ.lSh) && P(f, PJ.rSh) && P(f, PJ.lHip) && P(f, PJ.rHip);
   const found = fr.filter(body).length, reliable = found >= POSE_MIN_SHARE * fr.length;
   const a = fr.findIndex(body); if (a < 0) return { found, of: fr.length, reliable: false, view: sw.view, frames: fr };
-  const hands = f => { const p = midP(P(f, PJ.lWr), P(f, PJ.rWr)); return p ? p[1] : null; };
+  // The hands: both wrists' middle, or the one the model is sure of (down the line one often hides behind the other;
+  // before 2.63.0 both were needed, so such a clip found no top or impact).
+  const handP = f => f && f.j ? handFrom(f.j[PJ.lWr], f.j[PJ.rWr], ar) : null;
+  const hands = f => { const p = handP(f); return p ? p[1] : null; };
   // The positions: impact as he marked it, else the hands' lowest point after the top; the top, the hands' highest before impact.
   const idx = fr.map((_, i) => i);
   let imp = null, impFrom = 'hands';
@@ -3878,9 +4039,17 @@ function poseMeasures(sw) {
   const before = i => imp == null ? i > a && i <= Math.floor(0.75 * (fr.length - 1)) : i > a && i < imp;
   for (const i of idx) if (before(i) && hands(fr[i]) != null && (top == null || hands(fr[i]) < hands(fr[top]))) top = i;
   if (imp == null && top != null) for (const i of idx) if (i > top && hands(fr[i]) != null && (imp == null || hands(fr[i]) > hands(fr[imp]))) imp = i;
-  const keys = { address: a, top, impact: imp, finish: fr.length - 1 };
+  // Coming down (2.63.0, the swing plane): the frame nearest halfway in time from the top to impact, strictly between.
+  let down = null;
+  if (top != null && imp != null && imp - top > 1) { const mid = (fr[top].t + fr[imp].t) / 2; for (let i = top + 1; i < imp; i++) if (down == null || Math.abs(fr[i].t - mid) < Math.abs(fr[down].t - mid)) down = i; }
+  const keys = { address: a, top, impact: imp, finish: fr.length - 1, down };
+  // Caught at impact: marked, or frames close enough either side that the hands' lowest frame is impact, not the
+  // follow-through (his unmarked clips are 0.1-0.5 s apart; the hands there read 39% high on a driver).
+  const near = (i, j) => fr[j] && fr[i] && fr[i].t != null && fr[j].t != null && Math.abs(fr[j].t - fr[i].t) <= IMPACT_SURE;
   const A = fr[a], hipA = midP(P(A, PJ.lHip), P(A, PJ.rHip)), shA = midP(P(A, PJ.lSh), P(A, PJ.rSh));
-  const series = {}, out = { found, of: fr.length, reliable, view: sw.view, keys, impFrom, frames: fr, series };
+  const series = {}, out = { found, of: fr.length, reliable, view: sw.view, keys, impFrom, frames: fr, series,
+    impactSure: imp != null && (impFrom === 'marked' || (near(imp, imp - 1) && near(imp, imp + 1))) };
+  out.hands = fr.map(handP);
   if (sw.view === 'face') {
     const dir = Math.sign(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]) || 1;            // the lead shoulder's side is the target's
     const hipW = Math.abs(P(A, PJ.lHip)[0] - P(A, PJ.rHip)[0]), shW = Math.abs(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]), noseA = P(A, PJ.nose);
@@ -3900,6 +4069,21 @@ function poseMeasures(sw) {
     series.hipDepth = fr.map(f => { const h = body(f) && midP(P(f, PJ.lHip), P(f, PJ.rHip)); return h && torso ? 100 * (h[0] - hipA[0]) * ball / torso : null; });
     series.bend = fr.map(f => { if (!body(f)) return null; const h = midP(P(f, PJ.lHip), P(f, PJ.rHip)), sh = midP(P(f, PJ.lSh), P(f, PJ.rSh)); return Math.atan2((sh[0] - h[0]) * ball, h[1] - sh[1]) * 180 / Math.PI; });
     series.headUp = fr.map(f => { const n = P(f, PJ.nose); return n && torso ? 100 * (noseA[1] - n[1]) / torso : null; });
+    const hA = handP(A);
+    series.handsUp = fr.map((f, i) => out.hands[i] && hA && torso ? 100 * (hA[1] - out.hands[i][1]) / torso : null);
+    /* The swing plane (2.63.0, he asked with the shot tracer mockup): from the ball he tapped, the shaft line
+       through the hands at address and the shoulder line through the shoulders' middle, the V between them;
+       each frame's hands as degrees up from the ball. Only with the camera in line: at address the two
+       shoulders overlap (PLANE_INLINE); off the line the lines tilt and it isn't drawn. The club isn't tracked. */
+    out.shGap = torso ? Math.abs(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]) / torso : null;
+    out.inLine = out.shGap == null ? null : out.shGap <= PLANE_INLINE;
+    const bl = sw.ball && isFinite(sw.ball.x) && isFinite(sw.ball.y) ? [sw.ball.x * ar, sw.ball.y] : null;
+    if (bl && hA && out.inLine) {
+      const side = Math.sign(shA[0] - bl[0]) || 1, up = q => Math.atan2(bl[1] - q[1], (q[0] - bl[0]) * side) * 180 / Math.PI;
+      out.plane = { ball: bl, side, shaft: up(hA), shoulder: up(shA), hands: hA, shoulders: shA };
+      if (out.plane.shoulder > out.plane.shaft) series.plane = out.hands.map(h => h ? up(h) : null);
+      else out.plane = null;
+    }
   }
   return out;
 }
@@ -3923,11 +4107,16 @@ const POSE_GUIDE = {
     hipDepth: { top: [-15, 5], impact: [-15, 5] },
     bend: { top: [-6, 6], impact: [-6, 6], rel: true },
     headUp: { top: [-6, 6], impact: [-6, 6] },
+    // The plane: hands inside the V at the top and coming down; at impact back near address height. Rules of thumb.
+    plane: { top: true, down: true, vee: true },
+    handsUp: { impact: [-10, 10], sure: true },
   },
 };
 // The band for a series at a position, in its units, or null where there's no guide.
 function poseBand(m, s, at) {
   const g = POSE_GUIDE[m.view] && POSE_GUIDE[m.view][s]; if (!g || !g[at]) return null;
+  if (g.vee) return m.plane ? [m.plane.shaft, m.plane.shoulder] : null;
+  if (g.sure && !m.impactSure) return null;
   if (!g.rel) return g[at];
   const a0 = m.series[s] && m.series[s][m.keys.address]; return a0 == null ? null : [a0 + g[at][0], a0 + g[at][1]];
 }
@@ -3948,13 +4137,25 @@ const POSE_MEASURES = {
     { k: 'extImpact', s: 'hipDepth', at: 'impact', name: 'Hips toward the ball at impact', unit: '% of torso length', say: v => `${fmt(Math.abs(v))}% of torso length ${v < 0 ? 'away from' : 'toward'} the ball (early extension when toward)` },
     { k: 'bendLoss', s: 'bend', at: 'impact', diff: true, name: 'Forward bend lost by impact', unit: '°', say: v => `${fmt(Math.abs(v))}° ${v < 0 ? 'more bent over' : 'more upright'} than at address` },
     { k: 'headUp', s: 'headUp', at: 'impact', name: 'Head height at impact', unit: '% of torso length', say: v => `${fmt(Math.abs(v))}% of torso length ${v < 0 ? 'lower' : 'higher'} than at address` },
+    { k: 'planeTop', s: 'plane', at: 'top', plane: true, name: 'Hands at the top, against the plane', unit: '°', say: (v, m) => planeSay(v, m) },
+    { k: 'planeDown', s: 'plane', at: 'down', plane: true, name: 'Hands coming down, against the plane', unit: '°', say: (v, m) => planeSay(v, m) },
+    { k: 'handsImpact', s: 'handsUp', at: 'impact', sure: true, name: 'Hands height at impact', unit: '% of torso length', say: v => `${fmt(Math.abs(v))}% of torso length ${v < 0 ? 'lower' : 'higher'} than at address` },
   ],
 };
+// Where the hands are against the V, in words: under the shaft line (flatter), inside, or over the shoulder line (steeper).
+function planeSay(v, m) {
+  const p = m && m.plane; if (!p) return `${fmt(v)}° up from the ball`;
+  const pair = `${fmt(v)}°; the V is ${fmt(p.shaft)}–${fmt(p.shoulder)}°`;
+  return v < p.shaft ? `${fmt(p.shaft - v)}° under the shaft line, flatter than the V (${pair})`
+    : v > p.shoulder ? `${fmt(v - p.shoulder)}° over the shoulder line, steeper than the V (${pair})`
+    : `inside the V, ${fmt(v - p.shaft)}° above the shaft line (${pair})`;
+}
 function poseValues(m) {
   if (!m || !m.keys || !POSE_MEASURES[m.view]) return [];
   return POSE_MEASURES[m.view].map(d => { const i = m.keys[d.at], ser = m.series[d.s]; let v = i == null || !ser ? null : ser[i];
     if (d.diff && v != null) { const a0 = ser[m.keys.address]; v = a0 == null ? null : a0 - v; }
-    return { ...d, v: v == null || !isFinite(v) ? null : v, off: poseOff(m, d) }; });
+    if (d.sure && !m.impactSure) return { ...d, v: null, off: null, why: 'mark impact on the trim to measure this: these frames are too far apart to catch it', say: x => d.say(x, m) };
+    return { ...d, v: v == null || !isFinite(v) ? null : v, off: poseOff(m, d), say: x => d.say(x, m) }; }).filter(d => !d.plane || m.plane);
 }
 // The skeleton over one frame, in the frame's own 0..1 positions.
 function poseFrameSvg(f) {
@@ -3968,11 +4169,11 @@ const POSE_POS = [['address', 'Address'], ['top', 'Top'], ['impact', 'Impact'], 
 // packed around a marked impact used to take a column each, so the takeaway was squeezed into a sliver.
 function poseTraces(m) {
   const defs = m.view === 'face' ? [['hip', 'Hip shift', '% of hip width, + toward the target'], ['head', 'Head', '% of shoulder width'], ['arm', 'Lead arm', '° at the elbow'], ['tilt', 'Spine tilt', '° from upright']]
-    : m.view === 'dtl' ? [['hipDepth', 'Hips toward the ball', '% of torso length'], ['bend', 'Forward bend', '° from upright'], ['headUp', 'Head height', '% of torso length']] : [];
+    : m.view === 'dtl' ? [['hipDepth', 'Hips toward the ball', '% of torso length'], ['bend', 'Forward bend', '° from upright'], ['headUp', 'Head height', '% of torso length'], ['plane', 'Hands against the plane', '° up from the ball; the band is the V'], ['handsUp', 'Hands height', '% of torso length above address']] : [];
   const W = 240, H = 56, P = 5;
   const charts = defs.map(([k, name, unit]) => {
     const v = m.series[k]; if (!v || v.every(x => x == null)) return '';
-    const bands = ['top', 'impact'].map(at => ({ at, i: m.keys[at], b: m.keys[at] == null ? null : poseBand(m, k, at) })).filter(x => x.b);
+    const bands = ['top', 'down', 'impact'].map(at => ({ at, i: m.keys[at], b: m.keys[at] == null ? null : poseBand(m, k, at) })).filter(x => x.b);
     const xs = v.filter(x => x != null).concat(...bands.map(x => x.b)), lo = Math.min(...xs), hi = Math.max(...xs), span = hi - lo || 1;
     const X = poseX(m, W, P), Y = x => P + 4 + (H - 2 * P - 8) * (1 - (x - lo) / span);
     let d = '', pen = false; v.forEach((x, i) => { if (x == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x).toFixed(1)}`; pen = true; });
@@ -3982,7 +4183,7 @@ function poseTraces(m) {
     const marks = POSE_POS.filter(([key]) => m.keys[key] != null).map(([key]) => `<line class="tr-mark" x1="${X(m.keys[key]).toFixed(1)}" x2="${X(m.keys[key]).toFixed(1)}" y1="${P}" y2="${H - P}"/>`).join('');
     // The guide: a dotted path from address (or the first band) through the middle of each band, the bands as dotted boxes,
     // and the swing's own point red where it is outside one.
-    const a0 = v[m.keys.address], start = a0 != null && !['arm'].includes(k) ? [[m.keys.address, POSE_GUIDE[m.view][k] && POSE_GUIDE[m.view][k].rel ? a0 : 0]] : [];
+    const a0 = v[m.keys.address], start = a0 != null && !['arm'].includes(k) ? [[m.keys.address, POSE_GUIDE[m.view][k] && (POSE_GUIDE[m.view][k].rel || POSE_GUIDE[m.view][k].vee) ? a0 : 0]] : [];
     const gpts = start.concat(bands.map(x => [x.i, (x.b[0] + x.b[1]) / 2]));
     const gpath = gpts.length > 1 ? `<path class="tr-guide" d="${gpts.map(([i, y], j) => `${j ? 'L' : 'M'}${X(i).toFixed(1)},${Y(y).toFixed(1)}`).join('')}"/>` : '';
     const boxes = bands.map(x => `<span class="tr-band" style="left:${px(X(x.i))};top:${py(Y(x.b[1]))};height:max(2px, ${py(Y(x.b[0]) - Y(x.b[1]))})"></span>`).join('');
@@ -4010,25 +4211,110 @@ function poseAxis(m, W, P) {
   return `<div class="ptrace traxis" aria-hidden="true"><div></div><div class="tr-row${labs.some(x => x.includes(' lo')) ? ' two' : ''}">${labs.join('')}</div></div>`;
 }
 // The swing card's body section.
-function poseSection(sw, s) {
+// readOnly (the Swings tab's card, 2.61.0): what was measured, without the buttons that measure it.
+function poseSection(sw, s, { readOnly = false, plane = true, fold = false, bare = false } = {}) {
   if (!(sw.frames || []).length) return '';
   const m = sw.pose ? poseMeasures(sw) : null;
+  if (!m && bare) return '';
+  if (!m && readOnly) return `<p class="small muted" id="poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Measure the body</i> is on its ${s.type === 'round' ? 'round' : 'session'}'s page.</p>`;
   if (!m) return `<div class="row-actions" style="margin-top:6px"><button data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure the body</button><span class="small muted">Finds the joints on each frame, on this phone.</span></div><div id="pm_${sw.id}"></div>`;
   const vals = poseValues(m);
-  let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
+  let h = `${poseOld(sw) && !bare ? `<p class="small notice" id="poseOld_${sw.id}">Measured with the earlier body model, which misplaced the wrists from behind. ${readOnly ? 'Measure it again on its page.' : 'Measure again for the hands where they really were.'}</p>` : ''}<div class="pose" id="pose_${sw.id}"><div class="small"${bare ? ' hidden' : ''}><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
   h += `<div class="posePos">${POSE_POS.map(([k, label]) => { const i = m.keys && m.keys[k]; const f = i == null ? null : m.frames[i]; return f ? `<figure><div class="pf"><img src="/_blob/${f.asset}" alt="${label}" loading="lazy">${poseFrameSvg(f)}</div><figcaption>${label}</figcaption></figure>` : ''; }).join('')}</div>`;
-  const sayV = x => x.v == null ? 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
+  const sayV = x => x.v == null ? x.why || 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
   // No body on any frame says so; a view the measures don't cover says that, never both.
   if (!m.found) h += `<p class="small muted" id="poseNone_${sw.id}">No body was found on these frames. Film with the whole body in the picture, then measure again.</p>`;
   else if (m.square === false) h += `<p class="small muted" id="poseSquare_${sw.id}">Not measured: at address the hips and shoulders are almost in line, so the camera wasn't square on to the chest. Face-on measures need the camera facing you; a clip filmed from behind or down the line can't give them.</p>`;
-  else if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>`;
+  else if (vals.length) { const ul = `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>`;
+    if (!bare) h += fold ? `<details id="bodyAll_${sw.id}"><summary class="small muted" style="cursor:pointer">Every measure · ${vals.length}</summary>${ul}</details>` : ul; }
   else h += `<p class="small muted">The skeleton is drawn, but measures need a face-on or down-the-line view: this one is "${esc(VIEWS[sw.view] || 'other')}".</p>`;
+  if (plane && m.view === 'dtl' && m.found && m.keys) h += planeSection(sw, s, m, readOnly);
   const tr = m.keys ? poseTraces(m) : '';
-  const guide = POSE_GUIDE[m.view] ? `<p class="small muted" id="poseGuide_${sw.id}">Dotted: a guide at the top and impact. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '';
-  if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}${guide}</details>`;
-  h += `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
+  const guide = POSE_GUIDE[m.view] ? `<p class="small muted" id="poseGuide_${sw.id}">Dotted: a guide at the top and impact${m.plane ? ', and for the plane coming down too; its band is the V, from the shaft line to the shoulder line' : ''}. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '';
+  if (tr && !bare) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}${guide}</details>`;
+  h += readOnly || bare ? '</div>' : `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
   return h;
 }
+/* ---------- the swing plane (2.63.0) ----------
+   Down the line, from the measured hands and shoulders and one tap on the ball (`swing.ball`, SCHEMA.md):
+   the shaft line (ball → hands at address) and the shoulder line (ball → the shoulders' middle), the V
+   between them, the hands going back (green) and coming down (white) drawn over the address frame.
+   *Swing plane* on the card shows or hides the drawing on this phone (`carry.overlays`); the measures
+   stay in the list either way. */
+const overlays = () => { try { return JSON.parse(localStorage.getItem('carry.overlays') || '{}') || {}; } catch (e) { return {}; } };
+const overlayOn = k => overlays()[k] !== false;
+ACTIONS.toggleOverlay = function (d) {
+  const o = overlays(); o[d.k] = !overlayOn(d.k);
+  try { localStorage.setItem('carry.overlays', JSON.stringify(o)); } catch (e) {}
+  render();
+};
+const overlaySwitch = (k, label, id) => { const on = overlayOn(k); return `<button class="switch" role="switch" aria-checked="${on}" id="${id}" data-act="toggleOverlay" data-k="${k}"><span class="knob" aria-hidden="true"></span>${label}</button>`; };
+const planeCamera = m => m.shGap == null ? '' : m.inLine
+  ? `At address your shoulders overlap (${fmt(100 * m.shGap)}% of your torso apart), so the camera was behind your hands, along the line.`
+  : `At address your shoulders are ${fmt(100 * m.shGap)}% of your torso apart, so the camera wasn't behind your hands along the line. Off the line the plane's lines tilt, so they aren't drawn: film from behind the hands, pointing down the target line.`;
+// The address frame with the V, the shaft and shoulder lines run to the frame's edge, and the hands' path.
+function planeSvg(m, d) {
+  const ar = (m.aspect || 1);
+  return `<svg class="planeSv" viewBox="0 0 ${ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true">${planeLines(m.plane)}${traceInner(d).html}${planeDots(d, m)}</svg>`;
+}
+// The V: the shaft and shoulder lines from the ball, run to the frame's edge.
+function planeLines(p) {
+  if (!p) return '';
+  const far = q => { const dx = q[0] - p.ball[0], dy = q[1] - p.ball[1], l = Math.hypot(dx, dy) || 1; return [p.ball[0] + 3 * dx / l, p.ball[1] + 3 * dy / l]; };
+  const S = far(p.hands), H = far(p.shoulders), pt = q => `${q[0].toFixed(3)},${q[1].toFixed(3)}`;
+  return `<polygon class="pl-vee" points="${pt(p.ball)} ${pt(S)} ${pt(H)}"/>
+    <line class="pl-shaft" x1="${p.ball[0].toFixed(3)}" y1="${p.ball[1].toFixed(3)}" x2="${S[0].toFixed(3)}" y2="${S[1].toFixed(3)}"/>
+    <line class="pl-sh" x1="${p.ball[0].toFixed(3)}" y1="${p.ball[1].toFixed(3)}" x2="${H[0].toFixed(3)}" y2="${H[1].toFixed(3)}"/>`;
+}
+function planeDots(d, m) {
+  const offImp = (poseValues(m).find(x => x.k === 'handsImpact') || {}).off;
+  const dot = (q, cls) => q ? `<circle class="${cls}" cx="${q[0].toFixed(3)}" cy="${q[1].toFixed(3)}" r="0.012"/>` : '';
+  const b = m.plane && m.plane.ball;
+  return dot(traceAt(d, d.cuts[1]), 'pl-top') + dot(traceAt(d, d.cuts[2]), offImp ? 'pl-imp off' : 'pl-imp') + (b ? `<circle class="pl-ball" cx="${b[0].toFixed(3)}" cy="${b[1].toFixed(3)}" r="0.01"/>` : '');
+}
+function planeSection(sw, s, m, readOnly, bare = false) {
+  if (bare && !sw.ball) return '';
+  if (bare) readOnly = true;
+  const A = m.frames[m.keys.address], move = readOnly ? '' : `<button class="quiet" data-act="planeBall" data-sid="${s.id}" data-wid="${sw.id}">${sw.ball ? 'Move the ball' : 'Tap the ball'}</button>`;
+  if (!sw.ball) return readOnly ? '' : `<div class="plane" id="plane_${sw.id}"><div class="small"><b>Swing plane</b> <span class="muted">Tap the ball once on the address frame and the plane is drawn from your hands.</span></div><div class="row-actions" style="margin-top:4px">${move}</div></div>`;
+  if (!m.plane) return `<div class="plane" id="plane_${sw.id}"><div class="small"><b>Swing plane</b></div><p class="small muted" id="planeOff_${sw.id}">${m.inLine === false ? planeCamera(m) : 'Not measurable: the hands or shoulders at address weren\'t found surely enough, or the ball is above them.'}</p>${move ? `<div class="row-actions">${move}</div>` : ''}</div>`;
+  const on = overlayOn('plane');
+  // Cropped top to bottom to the swing: from a little above the highest hands, head or shoulders to a little under the ball.
+  const shot = on && overlayOn('tracer') ? tracerPts(sw) : null;
+  const d = traceData(sw, m), ar = d.ar, ys = [m.plane.ball[1], m.plane.shoulders[1], ...d.runs.flat().map(q => q.p[1]), ...(shot ? shot.map(q => q[1]) : [])];
+  const y0 = Math.max(0, Math.min(...ys) - 0.08), y1 = Math.min(1, m.plane.ball[1] + 0.1), ch = Math.max(0.2, y1 - y0);
+  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar }, d)}${shot ? trShotSvg(tracerInner(tracerSamples(shot), 1, ar), ar) : ''}</div><span class="planeTag">Measured · your hands, 2D</span>${shot ? `<span class="planeTag tracerTag tagLow">Shot traced by you${tracerShape(sw) ? ` · ${tracerShape(sw)}` : ''}</span>` : ''}</div>
+    <div class="planeKey small muted"><span><i class="k-shaft"></i>Shaft line</span><span><i class="k-sh"></i>Shoulder line</span><span><i class="k-back"></i>Hands going back</span><span><i class="k-down"></i>Coming down</span><span><i class="k-thru"></i>After impact</span></div>` : '';
+  const trace = !readOnly && !d.dense && sw.video ? `<button class="quiet" data-act="traceSwing" data-sid="${s.id}" data-wid="${sw.id}">Trace the hands from the video</button>` : '';
+  const both = !!shot, redraw = both && !readOnly ? `<button class="quiet" data-act="traceShot" data-sid="${s.id}" data-wid="${sw.id}">Redraw the shot</button>` : '';
+  return `<div class="plane" id="plane_${sw.id}"><div class="spread">${both ? `<span class="switches">${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}${overlaySwitch('tracer', 'Shot tracer', `tracerSw_${sw.id}`)}</span>` : `${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}<span class="small muted">your hands; the club isn't tracked</span>`}</div>${pic}${on && !bare ? traceNote(sw, d) : ''}${both && !bare ? `<p class="small muted" id="tracerNote_${sw.id}">The hands are measured; the ball's flight is a drawing from your taps, not a measurement. The club isn't tracked.</p>` : ''}${move || trace || redraw ? `<div class="row-actions" style="margin-top:4px">${trace}${redraw}${move}</div>` : ''}${bare ? '' : `<div id="tr_${sw.id}"></div>`}</div>`;
+}
+// Where the line came from, said under it.
+function traceNote(sw, d) {
+  if (d.dense) return `<p class="small muted" id="traceNote_${sw.id}">The hands from ${d.n} frames of the video; the line is smoothed between them${d.runs.length > 1 ? ', and broken where the hands weren\'t found surely' : ''}.</p>`;
+  return `<p class="small muted" id="traceNote_${sw.id}">Dotted: from the ${d.m.frames.length} frames only, so the line between them is drawn, not measured.${sw.video ? ' Trace the hands from the video for the real path.' : ' No video is stored for this swing to trace.'}</p>`;
+}
+// One tap on the ball, on the address frame; the camera check beside it, from the same frame.
+ACTIONS.planeBall = function (d) {
+  const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid); if (!sw) return;
+  const m = poseMeasures(sw), A = m && m.keys ? m.frames[m.keys.address] : null;
+  if (!A) { toast('Measure the body first'); return; }
+  let at = sw.ball ? { ...sw.ball } : null;
+  const dotHtml = () => at ? `<span class="pl-pick" style="left:${(100 * at.x).toFixed(1)}%;top:${(100 * at.y).toFixed(1)}%"></span>` : '';
+  openSheet(`<h2>Swing plane</h2>
+    <p class="small"><b>Tap the ball.</b> <span class="muted">The one thing the body measure can't find; your hands and shoulders are already measured on every frame.</span></p>
+    <p class="small ${m.inLine === false ? 'warn' : 'muted'}" id="planeCam"><b>Camera ${m.inLine === false ? 'off the line' : 'in line'}.</b> ${esc(planeCamera(m))}</p>
+    <div class="pf ballPick" id="ballPick" style="max-width:min(100%, ${(58 * ((sw.pose && sw.pose.aspect) || 1)).toFixed(1)}vh)"><img src="/_blob/${A.asset}" alt="Address frame: tap the ball"><div id="ballDot">${dotHtml()}</div></div>`, async () => {
+    if (!at) { toast('Tap the ball first'); return false; }
+    return queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => w.id === sw.id ? { ...w, ball: at } : w) }); });
+  });
+  const pick = $('#ballPick', sheetInner);
+  pick.onclick = e => {
+    const r = pick.getBoundingClientRect(); if (!r.width || !r.height) return;
+    at = { x: r3(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))), y: r3(Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))) };
+    $('#ballDot', sheetInner).innerHTML = dotHtml();
+  };
+};
 // Measures for the reading's prompt, when the swing has been measured.
 function poseContext(sw) {
   const m = sw.pose ? poseMeasures(sw) : null, vals = poseValues(m).filter(x => x.v != null);
@@ -4057,17 +4343,353 @@ function poseTrendHtml(club, swings) {
     return `<tr data-k="${t.k}"><td><b>${esc(t.name)}</b><div class="small muted">${esc(VIEWS[t.view])}</div></td><td class="num"><b>${fmt(z.v)}${u(t)}</b><div class="small muted">${dateLabel(z.date)}${z.course ? ' · course' : ''}</div></td><td class="num">${ch == null ? '<span class="muted">–</span>' : `${ch > 0 ? '+' : ch < 0 ? '−' : ''}${fmt(Math.abs(ch))}${u(t)}<div class="small muted">since ${monthLabel(a.date)}</div>`}</td><td class="num n">${t.pts.length}</td></tr>`; };
   return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing</b></div><div class="scroll"><table class="ptrend" id="ptrend_${esc(club)}"><thead><tr><th></th><th>Latest</th><th>Change</th><th>Swings</th></tr></thead><tbody>${tr.map(row).join('')}</tbody></table></div>`;
 }
-async function measureAndSave(sid, wid, onFrame) {
+async function measureAndSave(sid, wid, onFrame, onTrace) {
   const s = session(sid), sw = s && swingsOf(s).find(x => x.id === wid); if (!sw) return { error: 'gone' };
   let pose; try { pose = await measureFrames(sw.frames || [], onFrame); } catch (e) { return { error: 'model', message: e && e.message }; }
+  // With its video stored, the hands are traced from the clip too (2.64.0); a clip that won't decode keeps the frames alone.
+  let track = null, traceErr = null;
+  if (sw.video) { try { track = await traceHands(sw, onTrace); } catch (e) { traceErr = (e && e.message) || 'unreadable'; } }
   const now = session(sid);
-  return { ok: await save('sessions', sid, { ...now, swings: swingsOf(now).map(x => x.id === wid ? { ...x, pose } : x) }), pose };
+  return { ok: await save('sessions', sid, { ...now, swings: swingsOf(now).map(x => x.id === wid ? { ...x, pose, ...(track ? { track } : {}) } : x) }), pose, track, traceErr };
 }
+/* ---------- the hands traced from the video (2.64.0) ----------
+   He asked for the hand line to be smooth like the tracers on golf videos. The 16 frames give the downswing
+   two or three points, so a smooth line through them would be drawn, not measured: with the video stored,
+   the clip is seeked about every 1/60 s across the frames' span (at most TRACK_MAX), the frame actually shown
+   taken from requestVideoFrameCallback's mediaTime (a 30 fps clip repeats a frame between two seeks; the
+   repeat is skipped), and the pose model run on each. Stored as `swing.track` (SCHEMA.md): the two wrists,
+   rounded like the pose. The same rules as frame extraction: never at exactly 0, wait until painted. */
+const TRACK_MAX = 240, TRACK_STEP = 1 / 60, TRACK_MIN = 8, TRACK_FILL = 120, TRACK_FINE = 1 / 50;
+/* Slow motion (2.64.1): his 3 Aug 7i is a slow-motion clip, the swing filling 2 to 12 s of 13, so every rule in seconds
+   was wrong for it, and 90 looks across the span gave the downswing about ten (a line of corners on his phone). Now
+   nothing is in seconds: the whole span is looked at every TRACK_STEP or, for a long clip, at up to TRACK_MAX evenly;
+   the downswing is the hands' fastest drop (`swingPhases`), the top found by walking back while the hands rise and
+   impact forward while they fall; and if the downswing was looked at less often than TRACK_FINE, it is filled in
+   at TRACK_STEP (at most TRACK_FILL more). */
+function swingPhases(xs) {
+  if (xs.length < 3) return null;
+  // Over a few points at a time (a 60th of them), so the model's jitter between frames a slow-motion clip's hands
+  // barely move across can't pass for the downswing.
+  const y = xs.map(x => x.h[1]), n = xs.length, k = Math.max(1, Math.round(n / 60));
+  let fast = -1, v = 0;
+  for (let i = 0; i + k < n; i++) { const dv = (y[i + k] - y[i]) / ((xs[i + k].t - xs[i].t) || 1e-9); if (dv > v) { v = dv; fast = i + k; } }
+  if (fast < 0) return null;
+  // Walk back from the drop until the hands are well below the highest point passed (30% of the swing's height): that
+  // was the climb up to the top, and the top is the highest raw point on the way. Impact the same, forward and lowest.
+  const amp = Math.max(...y) - Math.min(...y), gone = 0.3 * amp;
+  let top = fast, hi = y[fast];
+  for (let i = fast; i >= 0 && y[i] <= hi + gone; i--) { if (y[i] < hi) hi = y[i]; if (xs[i].h[1] < xs[top].h[1]) top = i; }
+  let low = fast, lo = y[fast];
+  for (let i = fast; i < n && y[i] >= lo - gone; i++) { if (y[i] > lo) lo = y[i]; if (xs[i].h[1] > xs[low].h[1]) low = i; }
+  return { top: xs[top].t, fast: xs[fast].t, low: xs[low].t };
+}
+const handOf = j => j ? handFrom(j[PJ.lWr], j[PJ.rWr]) : null;
+async function videoFrames(src, times, onFrame) {
+  const vid = document.createElement('video');
+  vid.preload = 'auto'; vid.muted = true; vid.playsInline = true; vid.src = src;
+  await new Promise((res, rej) => { vid.onloadedmetadata = res; vid.onerror = () => rej(new Error('unreadable')); });
+  if (vid.readyState < 2) await new Promise(res => { const done = () => { vid.onloadeddata = null; res(); }; vid.onloadeddata = done; setTimeout(done, 1500); });
+  if (!vid.videoWidth) throw new Error('unreadable');
+  const dur = isFinite(vid.duration) ? vid.duration : 1e9, scale = Math.min(1, 640 / Math.max(vid.videoWidth, vid.videoHeight));
+  const cv = document.createElement('canvas'); cv.width = Math.round(vid.videoWidth * scale); cv.height = Math.round(vid.videoHeight * scale);
+  const cx = cv.getContext('2d'), th = document.createElement('canvas'); th.width = th.height = 16;
+  const tx = th.getContext('2d', { willReadFrequently: true });
+  // A seek that lands on the frame already shown paints nothing new, so the browser never calls back (found in
+  // Chromium on his 30 fps Long Reef clip: every repeat waited out the timeout and counted as a frame). No call
+  // within 150 ms and the same 16-pixel thumbnail as before: a repeat, skipped.
+  let prev = null;
+  for (let i = 0; i < times.length; i++) {
+    const target = Math.max(0.05, Math.min(times[i], dur - 0.02));
+    const shown = await new Promise(res => {
+      let done = false; const fin = (t, fresh) => { if (!done) { done = true; vid.onseeked = null; res({ t, fresh }); } };
+      vid.onseeked = () => {
+        if (vid.requestVideoFrameCallback) { vid.requestVideoFrameCallback((now, md) => fin(md && md.mediaTime != null ? md.mediaTime : target, true)); setTimeout(() => fin(target, false), 150); }
+        else setTimeout(() => fin(target, false), 60);
+      };
+      vid.currentTime = Math.abs(vid.currentTime - target) < 0.001 ? target + 0.001 : target;
+      setTimeout(() => fin(target, false), 1200);
+    });
+    let same = false;
+    try { tx.drawImage(vid, 0, 0, 16, 16); const px = tx.getImageData(0, 0, 16, 16).data; same = !shown.fresh && prev && px.every((v, k) => v === prev[k]); prev = px; } catch (e) {}
+    if (same) { await onFrame(null, null, i); continue; }
+    cx.drawImage(vid, 0, 0, cv.width, cv.height);
+    await onFrame(shown.t, cv, i);
+  }
+  vid.removeAttribute('src'); vid.load();
+}
+async function traceHands(sw, onStep) {
+  const fr = sw.frames || []; if (!sw.video || fr.length < 2) return null;
+  const t0 = fr[0].t, t1 = fr[fr.length - 1].t, span = t1 - t0; if (!(span > 0)) return null;
+  const model = await poseModel(), frames = window.carryVideoFrames || videoFrames, src = '/_blob/' + sw.video;
+  const detect = async cv => { const r = await (model.detectCanvas ? model.detectCanvas(cv) : model.detect(cv)); return r && r.joints; };
+  const spread = (a, b, n) => Array.from({ length: n }, (_, i) => a + (b - a) * i / (n - 1));
+  const pts = [], seen = new Set(); let repeats = 0;
+  const look = async (times, ph) => {
+    let last = null;
+    await frames(src, times, async (t, cv, i) => {
+      if (onStep) onStep(i + 1, times.length, ph);
+      if (t == null || (last != null && Math.abs(t - last) < 0.004) || seen.has(r3(t))) { repeats++; return; }   // the same decoded frame again
+      last = t; seen.add(r3(t));
+      const j = await detect(cv);
+      const q = k => j && j[k] ? [r3(j[k][0]), r3(j[k][1]), Math.round(j[k][2] * 100) / 100] : [0, 0, 0];
+      pts.push([r3(t), ...q(PJ.lWr), ...q(PJ.rWr)]);
+    });
+  };
+  await look(spread(t0, t1, Math.min(TRACK_MAX, Math.max(2, Math.round(span / TRACK_STEP) + 1))), 'trace');
+  pts.sort((x, y) => x[0] - y[0]);
+  // The downswing looked at too seldom (slow motion, or a long clip): fill it in. A first look that met the same frame
+  // twice already had every frame the clip has, so there is nothing to fill.
+  const hs = pts.map(p => ({ t: p[0], h: handOf([...Array(15).fill(null), p.slice(1, 4), p.slice(4, 7)]) })).filter(x => x.h);
+  const ph = swingPhases(hs);
+  if (ph && !repeats) {
+    const inDown = hs.filter(x => x.t >= ph.top && x.t <= ph.low), step = inDown.length > 1 ? (ph.low - ph.top) / (inDown.length - 1) : Infinity;
+    if (step > TRACK_FINE) {
+      const a = ph.top, b = ph.low + (ph.low - ph.top) * 0.25;
+      await look(spread(a, Math.min(t1, b), Math.min(TRACK_FILL, Math.max(2, Math.round((Math.min(t1, b) - a) / TRACK_STEP) + 1))), 'fill');
+      pts.sort((x, y) => x[0] - y[0]);
+    }
+  }
+  return pts.length >= TRACK_MIN ? { by: POSE_BY, on: today(), pts } : null;
+}
+// Centripetal Catmull-Rom as cubic Béziers (Yuksel, Schaefer and Keyser): the curve goes through every point and,
+// unlike the plain kind, doesn't loop or overshoot where points bunch up, as they do at the top.
+function crSegs(P) {
+  const out = [], d = (a, b) => Math.sqrt(Math.hypot(b[0] - a[0], b[1] - a[1]));
+  for (let i = 0; i < P.length - 1; i++) {
+    const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+    let d1 = d(p0, p1), d2 = d(p1, p2), d3 = d(p2, p3);
+    if (d2 < 1e-9) { out.push([p1, p1, p2, p2]); continue; }
+    if (d1 < 1e-9) d1 = d2; if (d3 < 1e-9) d3 = d2;   // at an end, as if the line carried on
+    const b1 = [0, 1].map(k => (d1 * d1 * p2[k] - d2 * d2 * p0[k] + (2 * d1 * d1 + 3 * d1 * d2 + d2 * d2) * p1[k]) / (3 * d1 * (d1 + d2)));
+    const b2 = [0, 1].map(k => (d3 * d3 * p1[k] - d2 * d2 * p3[k] + (2 * d3 * d3 + 3 * d3 * d2 + d2 * d2) * p2[k]) / (3 * d3 * (d3 + d2)));
+    out.push([p1, b1, b2, p2]);
+  }
+  return out;
+}
+// The hands' path for drawing: from the video when traced, else the 16 frames (`dense` false: drawn dotted, since
+// the line between them is drawn, not measured). Runs break where the model wasn't sure, and on the video where
+// points are further apart in time than 3.5 steps, never bridged. `cuts` are the four positions' times.
+function traceData(sw, m = poseMeasures(sw)) {
+  if (!m || !m.keys || !m.hands) return null;
+  const ar = (sw.pose && sw.pose.aspect) || 1, k = m.keys, T = i => i == null || !m.frames[i] ? null : m.frames[i].t;
+  const tr = sw.track && Array.isArray(sw.track.pts) && sw.track.pts.length >= TRACK_MIN ? sw.track.pts : null;
+  let pts, gap = Infinity;
+  if (tr) {
+    pts = tr.map(q => ({ t: q[0], p: handFrom(q.slice(1, 4), q.slice(4, 7), ar) }));
+    const st = pts.slice(1).map((q, i) => q.t - pts[i].t).filter(x => x > 0).sort((a, b) => a - b);
+    gap = 3.5 * (st[st.length >> 1] || 0.02);
+  } else pts = m.frames.map((f, i) => ({ t: f.t, p: m.hands[i] }));
+  const runs = []; let cur = [];
+  for (const q of pts) {
+    if (!q.p || (cur.length && q.t - cur[cur.length - 1].t > gap)) { if (cur.length) runs.push(cur); cur = []; if (!q.p) continue; }
+    cur.push(q);
+  }
+  if (cur.length) runs.push(cur);
+  const span = tr ? tr[tr.length - 1][0] - tr[0][0] : 0, cuts = [T(k.address), T(k.top), T(k.impact), T(k.finish)];
+  // Traced, the top and impact come from the trace (the hands highest, then lowest after it) where the 16 frames
+  // are coarse: his unmarked Long Reef clip's "impact" frame was already into the follow-through. A marked impact
+  // stays where he put it. Only for drawing; the measures keep the frames.
+  // 2.64.1: from the trace's own motion, not the frames' positions (8 frames 1.6 s apart can't place either): the
+  // downswing is the hands' fastest drop between neighbours in a run; the top the hands highest in the 1.5 s before it;
+  // impact the lowest in the 0.5 s after, or his mark.
+  // 2.64.1: from the trace's own motion (`swingPhases`, no seconds, so slow motion reads the same), not the frames'
+  // positions: 8 frames 1.6 s apart can't place either. A marked impact stays where he put it.
+  if (tr) {
+    const ok = pts.filter(q => q.p), ph = ok.length > 2 && swingPhases(ok.map(q => ({ t: q.t, h: q.p })));
+    if (ph) {
+      cuts[0] = ok[0].t; cuts[1] = ph.top; cuts[3] = ok[ok.length - 1].t;
+      cuts[2] = sw.impact != null && m.impFrom === 'marked' ? Math.max(cuts[1], sw.impact) : ph.low;
+    }
+  }
+  // The model's points jitter a few pixels frame to frame; traced, each is drawn as a 1-2-3-2-1 average of its
+  // neighbours in the run (the ends with what they have), for the drawing only.
+  const W = [1, 2, 3, 2, 1], calm = r => r.map((q, i) => { let x = 0, y = 0, w = 0; W.forEach((k, j) => { const o = r[i + j - 2]; if (o) { x += k * o.p[0]; y += k * o.p[1]; w += k; } }); return { t: q.t, p: [x / w, y / w] }; });
+  return { ar, dense: !!tr, n: tr ? pts.filter(q => q.p).length : null, fps: tr && span > 0 ? (tr.length - 1) / span : null,
+    runs: tr ? runs.map(calm) : runs, cuts, plane: m.plane || null, m };
+}
+// The path's markup, whole (tNow null) or as far as the clip has got: going back green, coming down white,
+// after impact grey; each Bézier belongs to the part its middle falls in, so the colours meet without a kink.
+function traceInner(d, tNow = null) {
+  const cls = { back: 'pl-back', down: 'pl-down', thru: 'pl-thru' }, f = v => v.toFixed(4), sp = d.dense ? '' : ' sparse';
+  const phase = t => d.cuts[1] == null || t < d.cuts[1] ? 'back' : d.cuts[2] == null || t < d.cuts[2] ? 'down' : 'thru';
+  let under = '', over = '', head = null;
+  for (const run of d.runs) {
+    if (tNow != null && run[0].t > tNow + 1e-6) continue;
+    head = tNow == null ? run[run.length - 1] : run.filter(q => q.t <= tNow + 1e-6).pop();
+    const segs = crSegs(run.map(q => q.p));
+    let ph = null, path = '';
+    const flush = () => { if (path) { under += `<path class="pl-under${sp}" d="${path}"/>`; over += `<path class="${cls[ph]}${sp}" d="${path}"/>`; } path = ''; };
+    segs.forEach(([a, b1, b2, b], i) => {
+      if (tNow != null && run[i + 1].t > tNow + 1e-6) return;
+      const p = phase((run[i].t + run[i + 1].t) / 2);
+      if (p !== ph || !path) { flush(); ph = p; path = `M${f(a[0])},${f(a[1])}`; }
+      path += `C${f(b1[0])},${f(b1[1])} ${f(b2[0])},${f(b2[1])} ${f(b[0])},${f(b[1])}`;
+    });
+    flush();
+  }
+  return { html: under + over, head };
+}
+// The point of the path nearest a time, for the dots at the top and impact.
+/* On the playing clip (2.64.0, the tracers he showed): the video and an SVG of the same box, so the drawing sits
+   on the picture whatever the bars around it. While it plays the line draws itself up to the clip's time, the
+   hands as a dot; paused, the whole line (his choice, 2026-10-31). Under the *Swing plane* switch, like the
+   card's drawing; the V only where the ball is tapped and the camera in line. */
+function traceVideoHtml(sw, s, videoHtml) {
+  const d = overlayOn('plane') && sw.pose ? traceData(sw) : null, plane = !!(d && d.runs.length), shot = overlayOn('tracer') && !!tracerPts(sw);
+  if (!plane && !shot) return videoHtml;
+  // The shot tracer is drawn in the frame's own 0..1 (strokes and dots that don't stretch), so it needs no aspect;
+  // the box takes the pose's, or the video's own once it has loaded (wireTrace).
+  const ar = d ? d.ar : (sw.pose && sw.pose.aspect) || 0.5625;
+  return `<div class="trBox" style="--ar:${ar.toFixed(3)}">${videoHtml}${plane ? `<svg class="planeSv trOv" data-sid="${s.id}" data-wid="${sw.id}" viewBox="0 0 ${d.ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true"></svg>` : ''}${shot ? `<svg class="trShot" data-sid="${s.id}" data-wid="${sw.id}" data-ar="${ar.toFixed(3)}" viewBox="0 0 ${ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true"></svg>` : ''}</div>`;
+}
+function traceDraw(svg, d, tNow) {
+  const tr = traceInner(d, tNow), h = tr.head && tNow != null ? `<circle class="pl-head" cx="${tr.head.p[0].toFixed(3)}" cy="${tr.head.p[1].toFixed(3)}" r="0.014"/>` : '';
+  svg.innerHTML = planeLines(d.plane) + tr.html + (tNow == null ? planeDots(d, d.m) : h);
+}
+function wireTrace(root) {
+  if (!root) return;
+  root.querySelectorAll('.trBox').forEach(box => {
+    const v = box.querySelector('video'); if (!v) return;
+    const find = el => { const s = session(el.dataset.sid); return s && swingsOf(s).find(w => w.id === el.dataset.wid); };
+    const pl = box.querySelector('svg.trOv'), sh = box.querySelector('svg.trShot'), draws = [];
+    if (pl) { const sw = find(pl), d = sw && traceData(sw); if (d) draws.push(t => traceDraw(pl, d, t)); }
+    if (sh) { const sw = find(sh), P = sw && tracerPts(sw); if (P) { const pts = tracerSamples(P), t0 = tracerStart(sw); draws.push(t => tracerDraw(sh, pts, t, t0, v.duration)); } }
+    if (!draws.length) return;
+    if (!pl) v.addEventListener('loadedmetadata', () => { if (!v.videoWidth || !v.videoHeight) return; const a = (v.videoWidth / v.videoHeight).toFixed(3); box.style.setProperty('--ar', a); if (sh) { sh.dataset.ar = a; sh.setAttribute('viewBox', `0 0 ${a} 1`); draw(); } });
+    const draw = () => { const t = v.paused || v.ended ? null : v.currentTime; draws.forEach(f => f(t)); };
+    let raf = 0;
+    const tick = () => { draw(); raf = v.paused || v.ended ? 0 : requestAnimationFrame(tick); };
+    v.addEventListener('play', () => { if (!raf) raf = requestAnimationFrame(tick); });
+    ['pause', 'seeked', 'ended'].forEach(ev => v.addEventListener(ev, draw));
+    draw();
+  });
+}
+/* ---------- the shot tracer, by hand (2.66.0) ----------
+   He asked for a shot tracer like the ones on golf videos (2026-10-31, mockup boards 1-5, 11 and 12 at
+   https://claude.ai/artifact/6NRpduNMeXDGSb7bJMxto9). Traced by him, not measured: three taps (the ball at address,
+   shared with the swing plane as `swing.ball`; where it peaked and where it came down, on the last frame, where the sky
+   is clear of him) and the shape he saw. Stored as `swing.tracer` (SCHEMA.md); the line is the curve through the taps
+   (`crSegs`), drawn on every draw, labelled a drawing. Beside it the real numbers when the swing is tied to its shot:
+   the map's distance, lie and what was left on the course, the bay's carry and total at the range. On the clip it
+   flies out from impact over TRACER_DRAW s; paused, whole. Its own switch, *Shot tracer* (`carry.overlays`). */
+const SHOT_SHAPES = [['hook', 'Hook'], ['draw', 'Draw'], ['straight', 'Straight'], ['fade', 'Fade'], ['slice', 'Slice']];
+const TRACER_DRAW = 1.2;
+function tracerPts(sw) {
+  const t = sw && sw.tracer, b = sw && sw.ball, ok = p => p && isFinite(p.x) && isFinite(p.y);
+  return t && ok(b) && ok(t.peak) && ok(t.land) ? [[b.x, b.y], [t.peak.x, t.peak.y], [t.land.x, t.land.y]] : null;
+}
+// A ball's flight, not a spline through three dots (which made a V at the peak, tried on his 30 Oct driver): two
+// cubic Béziers, leaving the ball nearly straight up, level at the peak (heading the way the ball finished), then
+// falling to where it came down, steepest at the end.
+function tracerSegs([a, p, d]) {
+  const dir = Math.sign(d[0] - p[0]) || Math.sign(d[0] - a[0]) || 1, run = Math.max(Math.abs(d[0] - a[0]) * 0.4, 0.1 * Math.abs(a[1] - p[1])) * dir;
+  return [[a, [a[0] + 0.15 * (p[0] - a[0]), a[1] + 0.6 * (p[1] - a[1])], [p[0] - run * 0.6, p[1]], p],
+    [p, [p[0] + run * 0.6, p[1]], [d[0] - 0.12 * (d[0] - p[0]), p[1] + 0.45 * (d[1] - p[1])], d]];
+}
+// Points along the flight, so part of it can be drawn while the clip plays.
+function tracerSamples(P, n = 24) {
+  const out = [];
+  tracerSegs(P).forEach(([a, b1, b2, b], si) => { for (let k = si ? 1 : 0; k <= n; k++) { const u = k / n, v = 1 - u; out.push([0, 1].map(i => v * v * v * a[i] + 3 * v * v * u * b1[i] + 3 * v * u * u * b2[i] + u * u * u * b[i])); } });
+  return out;
+}
+// When the ball leaves: his impact mark, else the hands' impact in the trace; unknown, the line just shows whole.
+function tracerStart(sw) {
+  if (sw.impact != null) return sw.impact;
+  const d = sw.pose && traceData(sw); return d && d.cuts[2] != null ? d.cuts[2] : null;
+}
+// The flight, all of it or a fraction; a dot is a zero-length round-capped stroke, so it stays round in 0..1.
+function tracerInner(pts, frac = 1, ar = 1) {
+  const k = Math.max(1, Math.round(frac * (pts.length - 1))), part = pts.slice(0, k + 1), f = v => v.toFixed(4);
+  const d = part.map((p, i) => `${i ? 'L' : 'M'}${f(p[0] * ar)},${f(p[1])}`).join(''), h = part[part.length - 1];
+  return `<path class="ts-under" d="${d}"/><path class="ts-line" d="${d}"/><path class="${frac < 1 ? 'ts-ball' : 'ts-land'}" d="M${f(h[0] * ar)},${f(h[1])}h0"/>`;
+}
+const trShotSvg = (inner, ar) => `<svg class="trShot" viewBox="0 0 ${(+ar).toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true">${inner}</svg>`;
+const frameAr = sw => (sw.pose && sw.pose.aspect) || 0.5625;
+function tracerDraw(svg, pts, t, t0, dur) {
+  const ar = +(svg.dataset && svg.dataset.ar) || 1;
+  if (t == null || t0 == null) { svg.innerHTML = tracerInner(pts, 1, ar); return; }
+  if (t < t0) { svg.innerHTML = ''; return; }
+  const span = Math.max(0.1, Math.min(TRACER_DRAW, (isFinite(dur) && dur > t0 ? dur : Infinity) - t0));
+  svg.innerHTML = tracerInner(pts, Math.min(1, (t - t0) / span), ar);
+}
+const cap = w => w ? w[0].toUpperCase() + w.slice(1) : w;
+// The real numbers beside the drawing, from the shot the swing is tied to; nothing tied, nothing shown.
+function tracerNumbers(sw, s) {
+  const x = swingShot(sw, s); if (!x || x.gone) return '';
+  const tile = (v, label, dim) => `<div class="tsTile"><b${dim ? ' class="muted"' : ''}>${v}</b><span>${label}</span></div>`;
+  if (x.where === 'course') return `<div class="tsTiles" id="shotNums_${sw.id}">${tile(x.len == null ? '–' : `${fmt(x.len)} m`, x.len == null ? 'not measurable' : 'went', x.len == null)}${tile(x.lie && x.lie !== 'unknown' ? esc(cap(x.lie)) : '–', x.lie && x.lie !== 'unknown' ? 'finished' : 'lie not recorded', !x.lie || x.lie === 'unknown')}${tile(x.left == null || x.lie === 'green' ? '–' : `${fmt(x.left)} m`, x.lie === 'green' ? 'on the green' : 'left to the green', x.left == null || x.lie === 'green')}</div>
+`;
+  const sh = x.sh, side = sh.carrySide;
+  return `<div class="tsTiles" id="shotNums_${sw.id}">${tile(`${+sh.carry.toFixed(1)} m`, 'carry, from the bay')}${tile(`${+sh.total.toFixed(1)} m`, 'total, from the bay')}${tile(side == null ? '–' : side === 0 ? 'on line' : `${+Math.abs(side).toFixed(1)} m ${side < 0 ? 'left' : 'right'}`, side == null ? 'left or right: not measured here' : 'side, from the bay', side == null)}</div>
+`;
+}
+const tracerShape = sw => { const x = sw.tracer && SHOT_SHAPES.find(y => y[0] === sw.tracer.shape); return x ? x[1] : ''; };
+// The swing plane's picture draws the traced shot too when both are on (2.67.0): one picture, not two.
+function planeDrawsShot(sw) {
+  if (!overlayOn('plane') || !overlayOn('tracer') || !tracerPts(sw) || !sw.pose) return false;
+  const m = poseMeasures(sw); return !!(m && m.view === 'dtl' && m.found && m.keys && m.plane && m.frames[m.keys.address]);
+}
+function tracerSection(sw, s, readOnly, bare = false) {
+  if (!(sw.frames || []).length) return '';
+  if (bare && !tracerPts(sw)) return '';
+  if (bare) readOnly = true;
+  const P = tracerPts(sw), btn = readOnly ? '' : `<button class="quiet" data-act="traceShot" data-sid="${s.id}" data-wid="${sw.id}">${P ? 'Redraw the shot' : 'Trace the shot'}</button>`;
+  if (!P) return readOnly ? '' : `<div class="tracer" id="tracer_${sw.id}"><div class="small"><b>Shot tracer</b> <span class="muted">Three taps: the ball, where it peaked, where it came down.</span></div><div class="row-actions" style="margin-top:4px">${btn}</div></div>`;
+  const last = sw.frames[sw.frames.length - 1], shape = SHOT_SHAPES.find(x => x[0] === sw.tracer.shape), ar = sw.pose && sw.pose.aspect;
+  // Cropped top to bottom to the flight when the frame's shape is known (the pose has it); else the whole frame.
+  const ys = P.map(p => p[1]), y0 = Math.max(0, Math.min(...ys) - 0.06), y1 = Math.min(1, Math.max(...ys) + 0.1), ch = Math.max(0.25, y1 - y0);
+  const svg = trShotSvg(tracerInner(tracerSamples(P), 1, frameAr(sw)), frameAr(sw));
+  const img = `<img src="/_blob/${last.asset}" alt="The finish, with the traced flight" loading="lazy">`;
+  const pic = ar ? `<div class="pf tracerPic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%">${img}${svg}</div>`
+    : `<div class="pf tracerPic">${img}${svg}`;
+  const on = overlayOn('tracer'), merged = planeDrawsShot(sw);
+  if (merged) return '';
+  return `<div class="tracer" id="tracer_${sw.id}"><div class="spread">${overlaySwitch('tracer', 'Shot tracer', `tracerSw_${sw.id}`)}<span class="small muted">${merged ? 'your drawing, on the plane\'s picture below' : 'your drawing'}</span></div>
+    ${on && !merged ? `${pic}<span class="planeTag tracerTag">Traced by you${shape ? ` · ${shape[1]}` : ''}</span></div>` : ''}
+    ${bare ? '' : `<p class="small muted" id="tracerNote_${sw.id}">A drawing from your taps, not a measurement.${!readOnly && !swingShot(sw, s) && sessionHasShots(s) ? ' Tie the swing to its shot (above) for the real distances.' : ''}</p>`}
+    ${btn ? `<div class="row-actions">${btn}</div>` : ''}</div>`;
+}
+const sessionHasShots = s => s.type === 'round' ? holesOf(s).some(h => (h.shots || []).length) : (s.blocks || []).some(b => (b.shots || []).length);
+// The three taps, one step a screen; the ball step is skipped when the swing plane has it already.
+ACTIONS.traceShot = function (d) {
+  const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid); if (!sw || !(sw.frames || []).length) return;
+  const m = sw.pose ? poseMeasures(sw) : null, first = m && m.keys && m.frames[m.keys.address] || sw.frames[0], last = sw.frames[sw.frames.length - 1];
+  const st = { step: sw.ball ? 2 : 1, ball: sw.ball ? { ...sw.ball } : null, peak: sw.tracer && sw.tracer.peak ? { ...sw.tracer.peak } : null,
+    land: sw.tracer && sw.tracer.land ? { ...sw.tracer.land } : null, shape: (sw.tracer && sw.tracer.shape) || null };
+  const STEP = { 1: ['ball', 'Tap the ball', 'At address, where it sits. The line starts here.' + (sw.view === 'dtl' ? ' The swing plane uses this tap too.' : ''), first],
+    2: ['peak', 'Tap where it peaked', 'Where it was highest in the sky, as you remember it. Near enough is fine: this is your drawing, not a measurement.', last],
+    3: ['land', 'Tap where it came down', 'Or where it left the picture. The line bends through your three taps.', last] };
+  const dot = (p, cls) => p ? `<span class="${cls}" style="left:${(100 * p.x).toFixed(1)}%;top:${(100 * p.y).toFixed(1)}%"></span>` : '';
+  const draw = () => {
+    const [key, title, help, fr] = STEP[st.step], P = st.ball && st.peak && st.land ? [[st.ball.x, st.ball.y], [st.peak.x, st.peak.y], [st.land.x, st.land.y]] : null;
+    const box = $('#trSheet', sheetInner);
+    box.innerHTML = `<p class="small"><b>${title}.</b> <span class="muted">${help}</span></p>
+      <div class="trPick" id="trPick"><img src="/_blob/${fr.asset}" alt="${esc(title)}" id="trImg">${st.step === 3 && P ? `${trShotSvg(tracerInner(tracerSamples(P), 1, frameAr(sw)), frameAr(sw))}` : ''}
+      <div class="trDots">${st.step > 1 ? '' : dot(st.ball, 'pl-pick')}${st.step >= 2 ? dot(st.peak, 'pl-pick') : ''}${st.step === 3 ? dot(st.land, 'pl-pick') : ''}</div></div>
+      ${st.step === 3 ? `<div class="small muted" style="margin-top:6px">The shape you saw</div><div class="seg" id="trShapes">${SHOT_SHAPES.map(([k, l]) => `<button data-shape="${k}" aria-pressed="${st.shape === k}">${l}</button>`).join('')}</div>` : ''}
+      <div class="row-actions">${st.step > 1 ? '<button id="trBack">Back</button>' : ''}${st.step < 3 ? `<button class="primary" id="trNext"${st[key] ? '' : ' disabled'}>Next</button>` : `<button class="primary" id="trSave"${P ? '' : ' disabled'}>Save tracer</button>`}</div>`;
+    const pick = $('#trPick', box);
+    pick.onclick = e => { const r = pick.getBoundingClientRect(); if (!r.width || !r.height) return; st[key] = { x: r3(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))), y: r3(Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))) }; draw(); };
+    const b = $('#trBack', box), n = $('#trNext', box), sv = $('#trSave', box);
+    if (b) b.onclick = () => { st.step--; draw(); };
+    if (n) n.onclick = () => { st.step++; draw(); };
+    box.querySelectorAll('[data-shape]').forEach(x => { x.onclick = () => { st.shape = st.shape === x.dataset.shape ? null : x.dataset.shape; draw(); }; });
+    if (sv) sv.onclick = async () => {
+      sv.disabled = true;
+      const tracer = { peak: st.peak, land: st.land, ...(st.shape ? { shape: st.shape } : {}), on: today() };
+      const ok = await queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => w.id === sw.id ? { ...w, ball: st.ball, tracer } : w) }); });
+      if (ok) { sheet.close(); toast('Tracer saved'); render(); } else sv.disabled = false;
+    };
+  };
+  openSheet(`<h2>Shot tracer</h2><div id="trSheet"></div>`);
+  draw();
+};
+const traceAt = (d, t) => { let best = null; if (t == null) return null; for (const r of d.runs) for (const q of r) if (!best || Math.abs(q.t - t) < Math.abs(best.t - t)) best = q; return best && best.p; };
 /* ---------- views ---------- */
 // A reading as a coach gives it: the one fix, why, a feel, a drill, how to
 // know it's working. Everything behind it is one tap down. Readings from
 // before 2.11.0 have no why/feel/check, so they show the fix and the fold.
-function swingReading(sw, s, a) {
+function swingReading(sw, s, a, { fold = false, pre = '' } = {}) {
   const line = (label, text) => text ? `<div class="cue"><b>${label}</b> ${esc(text)}</div>` : '';
   const drill = a.drill && a.drill.name ? a.drill.name + (a.drill.how ? ` — ${a.drill.how}` : '') : '';
   const obs = a.observations || [], tell = a.cannot_tell || [];
@@ -4081,35 +4703,113 @@ function swingReading(sw, s, a) {
   ].join('');
   return `<div class="analysis">
       <div class="one${String(a.one_thing || '').length > 110 ? ' long' : ''}">${esc(a.one_thing || '')}</div>
-      ${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}
-      ${detail ? `<details class="seen" id="seen_${sw.id}"><summary class="small">What Claude saw${obs.length ? ` (${obs.length})` : ''}</summary>${detail}</details>` : ''}
-      <div class="small muted" style="margin-top:6px">Read from frames by Claude${sw.analysedIn === 'chat' ? ' in a chat' : ''} on ${dateLabel(sw.analysedOn || s.date)} — a reading, not a measurement.</div>
+      ${a.ties ? `<div class="small ties" id="${pre}ties_${sw.id}"><b>How it fits together:</b> ${esc(a.ties)}</div>` : ''}
+      ${fold && (a.why || a.feel || drill || a.check) ? `<details class="seen" id="${pre}how_${sw.id}"><summary class="small">Why, feel and drill</summary>${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}</details>` : `${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}`}
+      ${fold ? '' : `${detail ? `<details class="seen" id="${pre}seen_${sw.id}"><summary class="small">What Claude saw${obs.length ? ` (${obs.length})` : ''}</summary>${detail}</details>` : ''}
+      ${readCredit(sw, s)}`}
     </div>`;
 }
+const readCredit = (sw, s) => `<div class="small muted" style="margin-top:6px">Read from frames by Claude${sw.analysedIn === 'chat' ? ' in a chat' : ''} on ${dateLabel(sw.analysedOn || s.date)} — a reading, not a measurement.</div>`;
+// What Claude saw, as a quiet fold at the card's foot (2.68.0), with when it was read.
+function readingSeen(sw, s, a, pre = '') {
+  const obs = a.observations || [], tell = a.cannot_tell || [];
+  const body = [
+    obs.slice(0, 4).map(o => `<div class="obs"><span class="tag ${o.confidence === 'high' ? 'green' : ''}">${esc(o.confidence || '')}</span> <b>${esc(o.what)}</b> <span class="muted">${esc(o.evidence || '')}</span></div>`).join(''),
+    a.wrist && (a.wrist.top || a.wrist.lead_arm_parallel) ? `<div class="small" style="margin-top:6px"><b>Wrist:</b> ${esc(a.wrist.top || 'cannot tell')} at the top; ${esc(a.wrist.lead_arm_parallel || 'cannot tell')} with the lead arm parallel on the way down${a.wrist.frames ? ` <span class="muted">(${esc(a.wrist.frames)})</span>` : ''}</div>` : '',
+    a.matches_ball_data ? `<div class="small" style="margin-top:6px"><b>Against your ball data:</b> ${esc(a.matches_ball_data)}</div>` : '',
+    a.drill && a.drill.why ? `<div class="small" style="margin-top:6px"><b>Why this drill:</b> ${esc(a.drill.why)}</div>` : '',
+    tell.length ? `<div class="small muted" style="margin-top:6px">Can't tell from this angle: ${esc(tell.join('; '))}</div>` : '',
+    a.notes ? `<div class="small" style="margin-top:6px;white-space:pre-wrap">${esc(a.notes)}</div>` : '',
+  ].join('');
+  return qfold(`${pre}seen_${sw.id}`, 'What Claude saw', obs.length ? `· ${obs.length}` : '', body + readCredit(sw, s));
+}
+/* ---------- this swing, in one place (2.67.0) ----------
+   He found the card's parts each talking about their own thing (his Georges River 5i and Long Reef driver): the ball,
+   the body, the plane and the reading, never joined. The card now opens with them in four rows, all derived on each
+   draw: the ball (the tied shot's numbers, the shape he traced), the body (how many measures are outside the guide,
+   named), the plane (where the hands were against the V), and the fix with the reading's own "how it fits together"
+   (`analysis.ties`, asked of new readings; older ones say to analyse again). The rest folds under it. */
+const BODY_SHORT = { swayTop: 'hip sway at the top', hipImpact: 'hips at impact', headImpact: 'head drift', armTop: 'lead arm at the top',
+  extImpact: 'hips toward the ball', bendLoss: 'forward bend lost', headUp: 'head height', handsImpact: 'hands height at impact' };
+function swingSummary(sw, s, { readOnly = false, pre = '' } = {}) {
+  const rows = [], a = sw.analysis, x = swingShot(sw, s);
+  const row = (k, label, body) => rows.push(`<div class="sumrow" id="${pre}sum${k}_${sw.id}"><b>${label}</b><div>${body}</div></div>`);
+  const shape = tracerPts(sw) ? tracerShape(sw) : '';
+  if (x && !x.gone) row('Ball', `The ball${shape ? ` · ${shape.toLowerCase()}, traced` : ''}`, tracerNumbers(sw, s).replace(' id="shotNums_', ` id="${pre}shotNums_`) + (readOnly ? '' : swingShotSection(sw, s)));
+  else if (!readOnly && (x || swingTaggable(s))) row('Ball', `The ball${shape ? ` · ${shape.toLowerCase()}, traced` : ''}`, swingShotSection(sw, s));
+  else if (shape) row('Ball', 'The ball', `<span class="small">${esc(shape)}, as you traced it.</span>`);
+  const m = sw.pose ? poseMeasures(sw) : null, vals = poseValues(m).filter(v => v.v != null);
+  const body = vals.filter(v => !v.plane && v.off != null), off = body.filter(v => v.off);
+  if (m && body.length) row('Body', 'The body', m.reliable
+    ? `<span class="small">${off.length ? `<b class="offg">${off.length} of ${body.length}</b> outside the guide: ${esc(off.map(v => BODY_SHORT[v.k] || v.name.toLowerCase()).join(', '))}.` : `All ${body.length} inside the guide.`}</span>`
+    : `<span class="small muted">Measured on too few frames to rely on.</span>`);
+  const pl = vals.filter(v => v.plane);
+  if (pl.length) { const said = v => v.say(v.v).split(' (')[0].replace(/, \d+° above the shaft line$/, '');
+    const ws = pl.map(said), same = pl.length === 2 && ws[0] === ws[1];
+    row('Plane', 'The plane', `<span class="small">${same ? `${cap(ws[0])} at the top and coming down` : pl.map((v, i) => `${v.k === 'planeTop' ? 'At the top' : 'Coming down'}: ${v.off ? `<span class="offg">${esc(ws[i])}</span>` : esc(ws[i])}`).join(' · ')}.</span>`); }
+  if (a && a.one_thing) row('Fix', 'The fix · a reading', swingReading(sw, s, a, { fold: true, pre })
+    + (!readOnly && !a.ties && (poseContext(sw) || swingShotContext(sw, s)) ? `<p class="small muted" id="${pre}tiesHint_${sw.id}">Analyse again and it says how the ball, the body and the fix fit together.</p>` : ''));
+  return rows.length ? `<div class="swsum" id="${pre}sum_${sw.id}">${rows.join('')}</div>` : '';
+}
+/* The card's foot (2.68.0, he asked: buttons in one place, the notes as quiet toggles at the bottom). */
+function swingFolds(sw, s, { pre = '' } = {}) {
+  const a = sw.analysis, m = sw.pose ? poseMeasures(sw) : null, out = [];
+  if (a && a.one_thing) out.push(readingSeen(sw, s, a, pre));
+  // The body, measured (2.69.0, he asked): the four positions and every measure in one fold.
+  if (m) {
+    const vals = poseValues(m), pos = poseSection(sw, s, { readOnly: true, plane: false, bare: true }).replace(/ id="/g, ` id="${pre}`);
+    const sayV = x => x.v == null ? x.why || 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
+    const list = m.found && vals.length && m.square !== false ? `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>` : '';
+    out.push(qfold(`${pre}bodyAll_${sw.id}`, 'The body, measured', `· ${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · too few to rely on'}${vals.length ? ` · ${plural(vals.length, 'measure')}` : ''}`, pos + list));
+  }
+  // How the lines were drawn: the hands' source, the tracer's, the plane's camera.
+  const notes = [];
+  if (m && m.view === 'dtl' && m.keys && m.plane && overlayOn('plane')) { const d = traceData(sw, m); if (d) notes.push(traceNote(sw, d).replace(' id="traceNote_', ` id="${pre}traceNote_`)); }
+  if (tracerPts(sw)) notes.push(`<p class="small muted" id="${pre}tracerNote_${sw.id}">The ball's flight is a drawing from your taps, not a measurement${sw.tracer && sw.tracer.on ? `, traced ${dateLabel(sw.tracer.on)}` : ''}.${!pre && !swingShot(sw, s) && sessionHasShots(s) ? ' Tie the swing to its shot (above) for the real distances.' : ''}</p>`);
+  if (m && m.view === 'dtl' && m.keys && sw.ball && !m.plane) notes.push(`<p class="small muted" id="${pre}planeOff_${sw.id}">${m.inLine === false ? esc(planeCamera(m)) : 'The swing plane isn\'t measurable: the hands or shoulders at address weren\'t found surely enough, or the ball is above them.'}</p>`);
+  if (notes.length) out.push(qfold(`${pre}drawn_${sw.id}`, 'How the lines were drawn', '', notes.join('') + '<p class="small muted">The club isn\'t tracked.</p>'));
+  const tr = m && m.keys ? poseTraces(m) : '';
+  if (tr) out.push(qfold(`${pre}ptr_${sw.id}`, 'Across the swing', '', tr + (POSE_GUIDE[m.view] ? `<p class="small muted" id="${pre}poseGuide_${sw.id}">Dotted: a guide at the top and impact${m.plane ? ', and for the plane coming down too; its band is the V, from the shaft line to the shoulder line' : ''}. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '')));
+  if (!pre && sw.pose && (sw.frames || []).length) out.push(qfold(`frames_${sw.id}`, 'Frames', `· ${sw.frames.length}`, `<div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div><div class="small muted">Tap a frame to remove it.</div>`));
+  return out.length ? `<div class="qfolds" id="${pre}sf_${sw.id}">${out.join('')}</div>` : '';
+}
+// Everything rarer than analysing, playing and tracing, in one sheet.
+ACTIONS.swingMore = function (d) {
+  const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid); if (!sw) return;
+  const m = sw.pose ? poseMeasures(sw) : null, dtl = m && m.view === 'dtl' && m.keys, dd = dtl && m.plane ? traceData(sw, m) : null;
+  const c = (act, title, sub, cls = '') => `<button class="choice${cls}" data-act="${act}" data-sid="${s.id}" data-wid="${sw.id}"><b>${title}</b><span class="small muted">${sub}</span></button>`;
+  openSheet(`<h2>This swing</h2><div class="choices" id="swingMoreList">${[
+    dtl ? c('planeBall', sw.ball ? 'Move the ball' : 'Tap the ball', 'Where it sat at address: the swing plane is drawn from it.') : '',
+    sw.pose ? c('measureSwing', 'Measure the body again', 'Finds the joints on each frame again, on this phone.') : '',
+    dd && !dd.dense && sw.video ? c('traceSwing', 'Trace the hands from the video', 'Follows the hands through the clip for the real path, not just the 16 frames.') : '',
+    c('swingAngle', 'Change angle', `Marked ${esc(VIEWS[sw.view] || 'other')}. It decides which body measures can be taken.`),
+    c('deleteSwing', 'Delete this swing', 'Its frames and video go with it.', ' danger'),
+  ].join('')}</div>`);
+};
 function swingCard(sw, s, opts = {}) {
-  const a = sw.analysis;
+  const a = sw.analysis, P = tracerPts(sw), m = sw.pose ? poseMeasures(sw) : null;
+  const strip = `<div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
+    ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}`;
   return `<div class="swing">
     <div class="spread"><div><b>${esc(VIEWS[sw.view] || 'Swing')}</b>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}${a ? ' <span class="tag green">analysed</span>' : ''}</div>
       <span class="small muted">${sw.frames.length} frames${sw.impact != null ? `, packed around impact at ${sw.impact.toFixed(1)} s` : frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
-    ${swingShotSection(sw, s)}
-    ${(() => {
-      // Once the body is measured its four positions show the swing, so the strip folds away (2.58.0, he asked).
-      const strip = `<div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
-    ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}`;
-      return sw.pose && sw.frames.length ? `<details class="frames" id="frames_${sw.id}"><summary class="small muted">Frames · ${sw.frames.length}</summary>${strip}</details>` : strip;
-    })()}
-    ${poseSection(sw, s)}
     ${a && sw.analysedView && sw.analysedView !== sw.view ? `<div class="notice small" id="angleNote_${sw.id}">This reading was made when the clip was marked ${esc(VIEWS[sw.analysedView] || sw.analysedView)}. Analyse again to read it as ${esc(VIEWS[sw.view] || sw.view)}.</div>` : ''}
-    ${a ? swingReading(sw, s, a) : ''}
-    ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet — tap Analyse and Claude reads these frames against your ball data for this club.</div>`}
+    ${tracerSection(sw, s, false, true)}
+    ${m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, false, true) : ''}
+    ${swingSummary(sw, s)}
+    ${a && !a.one_thing ? swingReading(sw, s, a, { fold: true }) : ''}
+    ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet. <i>Analyse</i> measures the body on this phone, then Claude reads the frames against it and your ball data for this club.</div>`}
+    ${poseOld(sw) ? `<p class="small notice" id="poseOld_${sw.id}">Measured with the earlier body model, which misplaced the wrists from behind. Analyse again for the hands where they really were.</p>` : ''}
+    ${sw.pose ? '' : strip}
+    ${swingFolds(sw, s)}
     <div class="row-actions">
       <button class="${a ? '' : 'primary'}" data-act="analyseSwing" data-sid="${s.id}" data-wid="${sw.id}">${a ? 'Analyse again' : 'Analyse'}</button>
       ${sw.video ? `<button data-act="playSwing" data-sid="${s.id}" data-wid="${sw.id}">Play video</button>` : ''}
-      <button data-act="swingAngle" data-sid="${s.id}" data-wid="${sw.id}">Change angle</button>
-      <button class="danger" data-act="deleteSwing" data-sid="${s.id}" data-wid="${sw.id}">Delete</button>
+      ${sw.frames.length ? `<button data-act="traceShot" data-sid="${s.id}" data-wid="${sw.id}">${P ? 'Redraw the shot' : 'Trace the shot'}</button>` : ''}
+      <button data-act="swingMore" data-sid="${s.id}" data-wid="${sw.id}" aria-label="More for this swing">More…</button>
     </div>
-    <div id="an_${sw.id}"></div>
+    <div id="an_${sw.id}"></div><div id="pm_${sw.id}"></div><div id="tr_${sw.id}"></div>
   </div>`;
 }
 function swingSection(s) {
@@ -4162,6 +4862,16 @@ function swingShot(sw, s, hs) {
   if ((b.swing || 'full') === 'full') { const all = shotsWithSession(b.club, s), k = all.findIndex(x => x.blockId === b.id && x.idx === i); if (k >= 0) prof = classify(all)[k]; }
   return { where: 'range', b, i, sh: shots[i], n: shots.length, prof };
 }
+/* The tied shot named without the numbers the ball's tiles already show (2.70.0, he asked: the sentence
+   repeated went, finished and left): which shot it was, and what the tiles have no room for. */
+function swingShotName(x) {
+  if (x.where === 'course') return `Hole ${x.h.n}, shot ${x.i + 1} (${SHOT_KIND[x.kind].toLowerCase()})${x.sh.penalty ? ', cost a penalty' : ''}.`;
+  const sh = x.sh, more = [];
+  if (sh.faceAngle != null && sh.clubPath != null) more.push(`face ${faceLabel(sh.faceAngle)}, path ${pathLabel(sh.clubPath)}`);
+  if (sh.ballSpeed != null && sh.speed) more.push(`smash ${(sh.ballSpeed / sh.speed).toFixed(2)}`);
+  if (x.prof) more.push(PROF_WORD[x.prof]);
+  return `Shot ${x.i + 1} of ${x.n} in the ${x.b.club} block${more.length ? ': ' + more.join('; ') : ''}.`;
+}
 function swingShotText(x) {
   if (x.where === 'course') {
     const sh = x.sh;
@@ -4193,7 +4903,7 @@ function swingShotSection(sw, s) {
   if (!x) return `<div class="swshot small" id="ws_${sw.id}">${btn('Which shot was this? →')} <span class="muted">Tie it to the ball it hit, and the reading is checked against that shot.</span></div>`;
   if (x.gone) return `<div class="swshot small" id="ws_${sw.id}"><span class="muted">The shot this swing was tied to is no longer in this ${s.type === 'round' ? 'round' : 'session'}.</span> ${can ? btn('Tie it again') : ''}</div>`;
   const note = shotClubNote(sw, x);
-  return `<div class="swshot small" id="ws_${sw.id}"><b>This swing's shot:</b> ${esc(swingShotText(x))}${note ? ` <span class="muted">${esc(note)}</span>` : ''} ${btn('Change')}</div>`;
+  return `<div class="swshot small" id="ws_${sw.id}"><b>This swing's shot:</b> ${esc(swingShotName(x))}${note ? ` <span class="muted">${esc(note)}</span>` : ''} ${btn('Change')}</div>`;
 }
 // A round's shots were edited: tags follow their shot, and go when it does.
 function retagSwings(swings, n, before, after) {
@@ -4407,10 +5117,15 @@ function vSwings() {
   const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length;
   const span = [monthLabel(swingDate(sws[sws.length - 1])), monthLabel(swingDate(sws[0]))].filter(Boolean);
-  const unmeasured = sws.filter(sw => (sw.frames || []).length && !sw.pose).length;
-  const measureAll = unmeasured ? `<div class="row-actions" style="margin:0 0 8px"><button id="measureAll" data-act="measureAll">Measure the body on ${plural(unmeasured, 'swing')}</button></div><div id="measureNote" class="small muted"></div>` : '';
+  const unmeasured = sws.filter(sw => (sw.frames || []).length && !sw.pose).length, old = sws.filter(sw => (sw.frames || []).length && sw.pose && poseOld(sw)).length;
+  const measureAll = unmeasured || old ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" id="measureAll" data-act="measureAll">${old ? `Measure ${plural(unmeasured + old, 'swing')} with the new model` : `Measure the body on ${plural(unmeasured, 'swing')}`}</button></div><div id="measureNote" class="small muted"></div>` : '';
+  // Analyse them all (2.69.0): measure where needed, then read, one at a time; each reading is a call on the server's key.
+  const want = swingsToAnalyse().length, withFrames = sws.filter(sw => (sw.frames || []).length).length;
+  // Only while there's something to do (he asked: temporary): gone once every swing is up to date.
+  const analyseAll = want ? `<div class="row-actions" style="margin:0 0 8px" id="analyseAllRow"><button class="primary" id="analyseAll" data-act="analyseAll">Analyse ${plural(want, 'swing')}</button></div>
+    <div id="analyseNote" class="small muted">${want === withFrames ? 'None read with the new body model and the measures yet' : `${withFrames - want} of ${withFrames} are up to date`}. Each is measured on this phone where needed, then read by Claude: ${plural(want, 'reading')}, one at a time.</div>` : '';
   h += `<p class="small muted" id="swingBasis">${[plural(sws.length, 'swing'), [...new Set(span)].join(' – '), read === sws.length ? 'all read' : `${read} read`].filter(Boolean).join(' · ')}</p>`;
-  h += measureAll;
+  h += analyseAll + measureAll;
   h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
     const c = swingClubSummary(club, sws), name = club || 'No club';
     const teaser = c.read ? `${plural(c.read, 'reading')}${c.latest ? ` · latest: ${esc(c.latest.fix)}` : ''}` : `${plural(c.n, 'swing')}, none read yet`;
@@ -4448,10 +5163,10 @@ function reelSwings(club) { return swingHistory().filter(sw => sw.video && (!clu
 function vReels() {
   const club = (S.sub && S.sub.club) || '', all = swingHistory().filter(sw => sw.video), sws = reelSwings(club);
   return `<div class="reels" id="reels">
-    <div class="reelsTop"><button class="reelsClose" data-go="swings" aria-label="Back"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+    <div class="reelsTop"><button class="reelsClose" data-act="navBack" data-tab="swings" data-sub="" aria-label="Back"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
       const bg = swingFrame(sw);
-      return `<section class="reel" data-i="${i}">${bg ? `<img class="reelBg" src="/_blob/${bg.asset}" alt="" aria-hidden="true" loading="lazy">` : ''}<video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
+      return `<section class="reel" data-i="${i}">${bg ? `<img class="reelBg" src="/_blob/${bg.asset}" alt="" aria-hidden="true" loading="lazy">` : ''}${traceVideoHtml(sw, sw.session, `<video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>`)}
         <div class="reelFlash" aria-hidden="true"></div>
         <div class="reelBottom"><button class="reelInfo" data-act="reelCard" data-sid="${sw.session.id}" data-wid="${sw.id}" data-go-session="${go}"><div class="t">${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''} <span class="small">${esc(VIEWS[sw.view] || 'Other angle')}</span></div>
           <div class="s">${esc(w.label)}${sw.note ? ` · ${esc(sw.note)}` : ''}</div>${a && a.one_thing ? `<div class="fix">${esc(a.one_thing)}</div>` : '<div class="s">not read yet</div>'}
@@ -4471,6 +5186,7 @@ function reelsLifecycle() {
   if (root) window.scrollTo(0, 0);
   if (reelsObs) { reelsObs.disconnect(); reelsObs = null; }
   if (!root) reelsSound = false;
+  if (root) wireTrace(root);
   if (!root || typeof IntersectionObserver !== 'function') return;
   const vids = [...root.querySelectorAll('video[data-reel]')];
   vids.forEach(v => { v.muted = !reelsSound; });
@@ -4600,13 +5316,24 @@ function wireSwingForm(root, sessionId) {
 }
 // The caption opens the swing's own card over the feed (2.26.0, he asked:
 // the session page was too much): the reading, or "not read yet", and one
-// link to the session it was filmed in.
+// link to the session it was filmed in. Since 2.61.0 (he asked, from the Swings tab) *Play video* at the
+// top right plays the clip in the card, and the measured body follows the reading, read-only: its ids
+// carry rc_ so they can't meet the same swing's on a page.
 function reelCardHtml(sw, s) {
   const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
-  return `<h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>
+  const play = sw.video ? `<button class="primary" data-act="reelPlay" data-vid="${esc(sw.video)}" data-sid="${s.id}" data-wid="${sw.id}" id="reelPlay">Play video</button>` : '';
+  const m = sw.pose ? poseMeasures(sw) : null;
+  // The card's order (2.70.0, he asked): the picture, then the ball, body, plane and fix, then the quiet folds.
+  const fr = (sw.frames || []).length;
+  const pic = fr ? `<div id="reelPose">${(tracerSection(sw, s, true, true) + (m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, true, true) : '')).replace(/ id="/g, ' id="rc_')}</div>` : '';
+  const pose = fr ? `${sw.pose ? '' : `<p class="small muted" id="rc_poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Analyse</i> on its ${s.type === 'round' ? 'round' : 'session'}'s page measures it.</p>`}${swingFolds(sw, s, { pre: 'rc_' })}` : '';
+  return `<div class="spread"><h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>${play}</div>
+    <div id="reelVideo"></div>
     <p class="muted small">${[esc(w.label), esc(VIEWS[sw.view] || 'Other angle'), sw.note ? esc(sw.note) : ''].filter(Boolean).join(' · ')}</p>
-    ${(() => { const x = swingShot(sw, s); return x && !x.gone ? `<p class="small" id="reelShot"><b>This swing's shot:</b> ${esc(swingShotText(x))}</p>` : ''; })()}
-    <div class="swing" id="reelCard">${a ? swingReading(sw, s, a) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
+    ${pic}
+    ${(() => { const x = swingShot(sw, s); return x && !x.gone ? `<p class="small" id="reelShot"><b>This swing's shot:</b> ${esc(swingShotName(x))}</p>` : ''; })()}
+    <div class="swing" id="reelCard">${swingSummary(sw, s, { readOnly: true, pre: 'rc_' })}${a && a.one_thing ? '' : a ? swingReading(sw, s, a, { fold: true, pre: 'rc_' }) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
+    ${pose}
     <div class="row-actions"><button data-act="reelOpen" data-go-session="${go}">Open the ${s.type === 'round' ? 'round' : 'session'} →</button></div>`;
 }
 // A minimalist speaker, drawn not typed (he found the emoji tacky): waves on, a cross off.
@@ -4617,6 +5344,18 @@ Object.assign(ACTIONS, {
     const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid);
     if (!sw) return;
     openSheet(reelCardHtml({ ...sw, session: s }, s));
+  },
+  // The clip plays in the card, with its controls and sound (a tap is the gesture iOS needs); the feed behind
+  // it pauses. Tapped again, the clip goes.
+  reelPlay(d) {
+    const box = $('#reelVideo'), btn = $('#reelPlay'); if (!box || !btn) return;
+    if (box.firstChild) { box.innerHTML = ''; btn.textContent = 'Play video'; return; }
+    document.querySelectorAll('#reels video').forEach(v => v.pause());
+    const s = d.sid && session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid), vh = `<video src="/_blob/${esc(d.vid)}" controls playsinline autoplay></video>`;
+    box.innerHTML = sw ? traceVideoHtml(sw, s, vh) : vh;
+    wireTrace(box);
+    const v = box.querySelector('video'); if (v.play) Promise.resolve(v.play()).catch(() => {});
+    btn.textContent = 'Hide video';
   },
   reelOpen(d) { sheet.close(); const [tab, sub] = parseGo(d.goSession); go(tab, sub); },
   reelsSound() {
@@ -4649,15 +5388,28 @@ Object.assign(ACTIONS, {
     get = wireSwingForm(sheetInner, sid);
   },
   async measureSwing(d) {
+    if (sheet.open && document.getElementById('swingMoreList')) sheet.close();
     const box = document.getElementById('pm_' + d.wid);
     const say = t => { const b = document.getElementById('pm_' + d.wid); if (b) b.innerHTML = `<div class="small muted">${esc(t)}</div>`; };
     say('Loading the pose model…');
-    const res = await measureAndSave(d.sid, d.wid, (i, n) => say(`Measuring frame ${i} of ${n}…`));
+    const res = await measureAndSave(d.sid, d.wid, (i, n) => say(`Measuring frame ${i} of ${n}…`), (i, n, ph) => say(`${ph === 'fill' ? 'Filling in the downswing' : 'Tracing the hands from the video'}: ${i} of ${n}…`));
     if (res.error) { const b = document.getElementById('pm_' + d.wid) || box; if (b) b.innerHTML = `<div class="notice warn">${res.error === 'model' ? `The pose model couldn't run in this browser${res.message ? ` (${esc(res.message)})` : ''}. It needs WebAssembly with SIMD: Safari 16.4 or later, or a recent Chrome.` : 'That swing is gone.'}</div>`; return; }
-    if (res.ok) { toast('Body measured'); render(); }
+    if (res.ok) { toast(res.traceErr ? 'Body measured; the video couldn\'t be traced here' : 'Body measured'); render(); }
+  },
+  async traceSwing(d) {
+    if (sheet.open && document.getElementById('swingMoreList')) sheet.close();
+    const s = session(d.sid), sw = s && swingsOf(s).find(x => x.id === d.wid); if (!sw) return;
+    const say = (t, warn) => { const b = document.getElementById('tr_' + d.wid); if (b) b.innerHTML = `<div class="small ${warn ? 'notice warn' : 'muted'}">${esc(t)}</div>`; };
+    say('Loading the pose model…');
+    let track;
+    try { track = await traceHands(sw, (i, n, ph) => say(`${ph === 'fill' ? 'Filling in the downswing' : 'Tracing the hands from the video'}: ${i} of ${n}…`)); }
+    catch (e) { say(e && e.message === 'unreadable' ? 'This browser can\'t decode the video (an iPhone clip from Photos opens in Safari). The dotted line from the frames stays.' : `The pose model couldn't run here${e && e.message ? ` (${e.message})` : ''}.`, true); return; }
+    if (!track) { say('Too few frames of the video to trace.', true); return; }
+    const ok = await queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => w.id === sw.id ? { ...w, track } : w) }); });
+    if (ok) { toast('Hands traced'); render(); }
   },
   async measureAll() {
-    const todo = allSwings().filter(sw => (sw.frames || []).length && !sw.pose);
+    const todo = allSwings().filter(sw => (sw.frames || []).length && (!sw.pose || poseOld(sw)));
     const note = t => { const b = document.getElementById('measureNote'); if (b) b.textContent = t; };
     const btn = document.getElementById('measureAll'); if (btn) btn.disabled = true;
     let done = 0;
@@ -4673,15 +5425,23 @@ Object.assign(ACTIONS, {
     const box = document.getElementById('an_' + d.wid); if (!box) return;
     box.innerHTML = `<div class="analysis"><div class="small muted" id="prog_${d.wid}">Thinking…</div></div>`;
     const prog = document.getElementById('prog_' + d.wid);
-    const res = await analyseSwing(d.sid, d.wid, ({ text }) => { if (prog) prog.textContent = text.slice(-400); });
-    if (res.error) {
-      const msg = { unavailable: "Analysis needs Claude, and this server can't reach it — check ANTHROPIC_API_KEY on the server.", rate_limited: 'Too many requests just now — wait a moment and try again.', frames_unreadable: "Couldn't load the stored frames.", invalid_json: 'Claude replied but not in the expected format. Try again.' }[res.error] || 'Analysis failed.';
-      box.innerHTML = `<div class="notice warn">${esc(msg)} <span class="muted small">(${esc(res.error)})</span></div>`; return;
+    const r = await analyseOne(d.sid, d.wid, t => { if (prog) prog.textContent = t; });
+    if (r.error) { box.innerHTML = `<div class="notice warn">${esc(ANALYSE_ERR[r.error] || 'Analysis failed.')} <span class="muted small">(${esc(r.error)})</span></div>`; return; }
+    if (r.ok) { if (r.unmeasured) toast('Read without body measures: the pose model can\'t run in this browser'); render(); }
+  },
+  // Every swing that needs it, one at a time (2.69.0, he asked after the heavy model: "measuring/analysing ALL the swings again").
+  async analyseAll(d) {
+    const todo = swingsToAnalyse();
+    const note = t => { const b = document.getElementById('analyseNote'); if (b) b.textContent = t; };
+    document.querySelectorAll('[data-act="analyseAll"]').forEach(b => { b.disabled = true; });
+    let done = 0, blind = 0;
+    for (let i = 0; i < todo.length; i++) {
+      const sw = todo[i], head = `Swing ${i + 1} of ${todo.length} (${sw.club || 'no club'}, ${dateLabel(swingDate(sw))}): `;
+      const r = await analyseOne(sw.session.id, sw.id, t => note(head + t));
+      if (r.error) { note(`${head}${ANALYSE_ERR[r.error] || 'analysis failed'} Stopped after ${plural(done, 'swing')}.`); document.querySelectorAll('[data-act="analyseAll"]').forEach(b => { b.disabled = false; }); return; }
+      if (r.ok) done++; if (r.unmeasured) blind++;
     }
-    const s = session(d.sid);
-    // Read in the app this time, so drop any earlier "read in a chat" credit.
-    const swings = swingsOf(s).map(x => { if (x.id !== d.wid) return x; const { analysedIn, ...rest } = x; return { ...rest, analysis: res.data, analysedOn: today(), analysedView: x.view }; });
-    if (await save('sessions', d.sid, { ...s, swings })) render();
+    toast(`Analysed ${plural(done, 'swing')}${blind ? `, ${blind} without body measures` : ''}`); render();
   },
   async deleteSwing(d) {
     if (!await confirmAsk('Delete this swing and its frames?')) return;
@@ -4701,7 +5461,8 @@ Object.assign(ACTIONS, {
   },
   playSwing(d) {
     const s = session(d.sid), sw = swingsOf(s).find(x => x.id === d.wid); if (!sw || !sw.video) return;
-    openSheet(`<h2>${esc(VIEWS[sw.view] || 'Swing')}${sw.club ? ' · ' + esc(sw.club) : ''}</h2><div class="bigmap" style="max-width:360px"><video src="/_blob/${sw.video}" controls playsinline loop style="width:100%;border-radius:var(--r)"></video></div>`);
+    openSheet(`<h2>${esc(VIEWS[sw.view] || 'Swing')}${sw.club ? ' · ' + esc(sw.club) : ''}</h2><div class="bigmap" style="max-width:360px">${traceVideoHtml(sw, s, `<video src="/_blob/${sw.video}" controls playsinline loop style="width:100%;border-radius:var(--r)"></video>`)}</div>`);
+    wireTrace(sheetInner);
   },
 });
 
@@ -4731,6 +5492,54 @@ function swingItems() {
       practice: a.drill ? `${a.drill.name} — ${a.drill.how || a.drill.why || ''}` : null,
       block: sw.club && a.drill && a.drill.name ? { club: sw.club, swing: 'full', target: cs && cs.stockCarry ? round5(cs.stockCarry) : null, intent: `Drill: ${a.drill.name}` } : null,
       video: true, session: sw.session, club: sw.club || null, agrees, drillName: (a.drill && a.drill.name) || null });
+  }
+  return items;
+}
+
+/* The body, measured, into the loop (2.62.0, he asked: plane faults and the other body measures should feed
+   the practice list). A measure outside its guide on most of a club's recent swings from one angle is a
+   finding: at least BODY_MIN of the last BODY_RECENT reliable swings, and at least half of them. Each swing
+   outside is COST.body of evidence, fading like the rest, and every measured swing is a chance, so it goes
+   quiet by the same rule once enough swings come back inside. The joints are a measurement, but the guides
+   are rules of thumb and the link to the ball is a coaching claim: so it ranks below the ball's own misses,
+   and beside a ball-data finding for the same club it joins that one as support (rankedPractice). A face-on
+   clip not square on, or a swing with too few frames, never counts. */
+const BODY_RECENT = 5, BODY_MIN = 3;
+const BODY_DRILL = {
+  swayTop: 'A club in the ground just outside your trail hip: turn back without bumping it.',
+  hipImpact: 'Pump drill: from the top, shift the lead hip toward the target before the arms come down.',
+  headImpact: 'Head behind the ball: eyes on its back edge until it has gone.',
+  armTop: 'Shorter backswing: stop at the top where the lead arm still feels straight.',
+  extImpact: 'Bum on a wall (or a bag behind your hips) at address: still touching it through impact.',
+  bendLoss: 'Chest down through the ball: hold your forward bend until the ball has gone.',
+  headUp: 'Same height to impact: keep your eyes level with the ball until it has gone.',
+  planeTop: 'Pause at the top, filmed down the line: hands between the shaft line and the shoulder line, then swing from there.',
+  planeDown: 'Slow downswings to a pause with the hands at hip height, inside the V, then full speed.',
+  handsImpact: 'Hands back to address height: hold your posture and feel the hands pass where they started.',
+};
+function bodyItems() {
+  const by = {}, items = [];
+  for (const sw of allSwings()) {
+    if (!sw.pose || !sw.club || !POSE_MEASURES[sw.view]) continue;
+    const m = poseMeasures(sw); if (!m || !m.reliable || m.square === false) continue;
+    (by[sw.club + '|' + sw.view] = by[sw.club + '|' + sw.view] || []).push({ date: swingDate(sw), vals: poseValues(m) });
+  }
+  for (const [k, list] of Object.entries(by)) {
+    const [club, view] = k.split('|'); list.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    for (const d of POSE_MEASURES[view]) {
+      const xs = list.map(x => ({ date: x.date, v: x.vals.find(y => y.k === d.k) })).filter(x => x.date && x.v && x.v.off != null && x.v.v != null);
+      const recent = xs.slice(-BODY_RECENT), off = recent.filter(x => x.v.off);
+      if (off.length < BODY_MIN || off.length * 2 < recent.length) continue;
+      const cs = clubStats(club), angle = (VIEWS[view] || '').toLowerCase();
+      items.push({ key: `body:${club}:${d.k}`, kind: 'body', body: true, agrees: true, club, n: recent.length,
+        score: COST.body * off.length, ev: xs.filter(x => x.v.off).map(x => ({ date: x.date, cost: COST.body })),
+        chances: xs.map(x => ({ date: x.date, hit: x.v.off })),
+        title: `${d.name} · ${club}: outside the guide on ${off.length} of your last ${recent.length} ${angle} swings`,
+        line: `${d.name} outside the guide on ${off.length} of your last ${recent.length} ${angle} ${club} swings`,
+        detail: recent.slice().reverse().map(x => `${dateLabel(x.date)}: ${x.v.say(x.v.v)}${x.v.off ? ' (outside)' : ''}`).join('; '),
+        practice: BODY_DRILL[d.k] || null,
+        block: { club, swing: 'full', target: cs && cs.stockCarry ? round5(cs.stockCarry) : null, intent: `Drill: ${BODY_DRILL[d.k] || d.name}` } });
+    }
   }
   return items;
 }
@@ -5326,7 +6135,7 @@ const cm = { el: null, map: null, layer: null, tiles: null, dark: null, key: nul
 function vCourseMap() {
   const placed = S.courses.filter(hasCoords), missing = S.courses.length - placed.length;
   const key = [['public', 'Public'], ['private', 'Private'], ['closed', 'Closed'], [null, 'Not known']];   // 'Private', as the list's tags say it (2.60.0, his word)
-  return `<button class="quiet" data-go="courses" style="padding-left:0">‹ Courses</button>
+  return `<button class="quiet" data-act="navBack" data-tab="courses" data-sub="" style="padding-left:0">‹ ${esc(navPrev() >= 0 ? navLabel(navStack[navPrev()]) : 'Courses')}</button>
   <h1>Courses on a map</h1>
   <p class="small muted" id="cmCount">${plural(placed.length, 'course')}${home() && hasCoords(home()) ? `, and ${esc(home().label || 'your location')}` : ''}. Tap a pin for the course.</p>
   <div id="cmMap" role="region" aria-label="Map of the courses"></div>
@@ -6147,15 +6956,42 @@ function stopGps() {
   if (gpsWatch != null && navigator.geolocation) navigator.geolocation.clearWatch(gpsWatch);
   gpsWatch = null;
   if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+  if (playMidnight) { clearTimeout(playMidnight); playMidnight = null; }
+}
+/* GPS and the screen stay on for the whole of today's round (2.71.0, he chose it from the native-app plan,
+   docs/native-app.md: the phone lost the fix every time Carry was left, so each hole started cold). Opening
+   Play on a round dated today makes it the round being played (`carry.playing` on this phone, so a reload
+   keeps it); GPS then runs on every page until *End round* / *Finish round*, every hole is done, or local
+   midnight. A browser still stops it while the phone is locked; only a native app can keep it then. */
+const PLAYING_KEY = 'carry.playing';
+let playMidnight = null;
+function readPlaying() { try { return JSON.parse(localStorage.getItem(PLAYING_KEY) || 'null'); } catch (e) { return null; } }
+function setPlaying(v) { try { v ? localStorage.setItem(PLAYING_KEY, JSON.stringify(v)) : localStorage.removeItem(PLAYING_KEY); } catch (e) { /* per-phone only */ } }
+function playingRound() {
+  const p = readPlaying(); if (!p) return null;
+  const r = p.day === today() && session(p.id);
+  if (!r || r.type !== 'round' || r.date !== today() || holesOf(r).every(holeDone)) { setPlaying(null); return null; }
+  return r;
+}
+function gpsWanted() {
+  if (inPlay()) { const r = session(S.sub.sessionId); if (r && r.date === today() && !holesOf(r).every(holeDone)) setPlaying({ id: r.id, day: today() }); return true; }
+  return !!playingRound();
+}
+// At local midnight the round is yesterday's: look again then.
+function armMidnight() {
+  if (playMidnight) return;
+  const d = new Date(), next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 1);
+  playMidnight = setTimeout(() => { playMidnight = null; playLifecycle(); }, next - d);
 }
 // The screen stays on while playing, where the browser allows it.
 function keepAwake() {
   if (wakeLock || !navigator.wakeLock || document.hidden) return;
   navigator.wakeLock.request('screen').then(l => { wakeLock = l; l.addEventListener('release', () => { wakeLock = null; }); }).catch(() => {});
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && inPlay()) keepAwake(); });
-// Called after every render: GPS runs only while the Play view is open.
-function playLifecycle() { if (inPlay()) startGps(); else if (gpsWatch != null) stopGps(); }
+// The phone drops the screen lock when Carry goes to the background: take it again on the way back.
+document.addEventListener('visibilitychange', () => { if (!document.hidden && gpsWanted()) keepAwake(); });
+// Called after every render: GPS runs while Play is open, and for the rest of today's round.
+function playLifecycle() { if (gpsWanted()) { startGps(); armMidnight(); } else if (gpsWatch != null || wakeLock || playMidnight) stopGps(); }
 
 // Where he is on this hole's map, or why there's no answer.
 // The course's map file for the round being played, whether or not this hole is drawn:
@@ -6419,7 +7255,7 @@ Object.assign(ACTIONS, {
     await addMapShot(r, n, h, g.p, { gps: Math.round(g.acc) }, moving, h.hm ? h.hm.map : playMap());
     toast(h.hm ? 'Ball marked' : 'Ball marked — measured once the hole is drawn');
   },
-  finishPlay(d) { stopGps(); go('rounds', { sessionId: d.sid }); },
+  finishPlay(d) { setPlaying(null); stopGps(); go('rounds', { sessionId: d.sid }, { nav: 'replace' }); },
 });
 // Opening without signal (2.54.0): the service worker keeps the page and the data as
 // they last arrived and answers from them only when the network can't be reached.

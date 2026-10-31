@@ -76,14 +76,14 @@ const r3 = v => Math.round(v * 1000) / 1000;
 
 test('measuring a swing asks the model about each stored frame and keeps the joints on the swing, nothing worked out', async () => {
   app.go('range', { sessionId: 's_oct' });
-  const btn = app.$('[data-act="measureSwing"][data-wid="sw_face"]');
-  assert.ok(btn, 'a swing not measured yet offers it');
-  btn.click();
+  // 2.68.0: Analyse measures the body first; measuring is also an action of its own (More…).
+  assert.match(app.$('[data-act="analyseSwing"][data-wid="sw_face"]').closest('.swing').textContent, /Analyse measures the body on this phone/);
+  app.act('measureSwing', { sid: 's_oct', wid: 'sw_face' });
   await app.waitFor(async () => (await doc('s_oct')).swings.find(s => s.id === 'sw_face').pose, { what: 'saved' });
   assert.deepEqual(asked, fr('fa').map(f => '/_blob/' + f.asset));
   const pose = (await doc('s_oct')).swings.find(s => s.id === 'sw_face').pose;
   assert.deepEqual(Object.keys(pose).sort(), ['aspect', 'by', 'frames', 'on'], 'the joints and where they came from, no measures');
-  assert.equal(pose.by, 'mediapipe-0.10.35-lite'); assert.equal(pose.aspect, 1);
+  assert.equal(pose.by, 'mediapipe-0.10.35-heavy'); assert.equal(pose.aspect, 1);
   assert.equal(pose.frames.length, 16);
   assert.deepEqual(pose.frames[0].j[11], [0.56, 0.35, 0.99]);
   assert.equal(pose.frames[3].asset, 'fa3');
@@ -92,13 +92,13 @@ test('measuring a swing asks the model about each stored frame and keeps the joi
 test('face-on by hand: the positions from the hands, sway at the top, hips and head at impact, the lead arm', async () => {
   await app.waitFor(() => app.$('#pose_sw_face'), { what: 'card' });
   const m = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face'))`);
-  assert.deepEqual(m.keys, { address: 0, top: 7, impact: 11, finish: 15 });
+  assert.deepEqual(m.keys, { address: 0, top: 7, impact: 11, finish: 15, down: 9 });
   assert.equal(m.found, 16); assert.equal(m.reliable, true); assert.equal(m.impFrom, 'hands');
   const v = Object.fromEntries(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face'))).map(x => [x.k, x.v])`));
   near(v.swayTop, -12, 1e-6, 'sway'); near(v.hipImpact, 20, 1e-6, 'hips'); near(v.headImpact, -5, 1e-6, 'head');
   const T = Object.fromEntries(F_TOP.map(([i, x, y]) => [i, [r3(x), r3(y)]]));
   near(v.armTop, angle(T[11], T[13], T[15]), 1e-6, 'lead arm');
-  const lines = app.$$('#pose_sw_face .dlines li').map(li => li.textContent);
+  const lines = app.$$('#bodyAll_sw_face .dlines li').map(li => li.textContent);
   assert.deepEqual(lines.slice(0, 3), ['Hip sway at the top: 12% of hip width away from the target', 'Hips at impact: 20% of hip width toward the target from where they started · outside the guide', 'Head drift, address to impact: 5% of shoulder width back']);
   assert.deepEqual(app.$$('#pose_sw_face figcaption').map(f => f.textContent), ['Address', 'Top', 'Impact', 'Finish']);
   assert.ok(app.$$('#pose_sw_face .poseSk line').length >= 10, 'the skeleton over each');
@@ -109,7 +109,7 @@ test('face-on by hand: the positions from the hands, sway at the top, hips and h
 });
 
 test('a mirrored clip reads the same: the target side comes from the address frame', async () => {
-  app.$('[data-act="measureSwing"][data-wid="sw_mir"]').click();
+  app.act('measureSwing', { sid: 's_oct', wid: 'sw_mir' });
   await app.waitFor(() => app.$('#pose_sw_mir'), { what: 'mirrored measured' });
   const a = app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face'))).map(x => +x.v.toFixed(6))`);
   const b = app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_mir'))).map(x => +x.v.toFixed(6))`);
@@ -117,19 +117,19 @@ test('a mirrored clip reads the same: the target side comes from the address fra
 });
 
 test('down the line by hand: hips toward the ball, forward bend lost, head height', async () => {
-  app.$('[data-act="measureSwing"][data-wid="sw_dtl"]').click();
+  app.act('measureSwing', { sid: 's_oct', wid: 'sw_dtl' });
   await app.waitFor(() => app.$('#pose_sw_dtl'), { what: 'dtl measured' });
   const v = Object.fromEntries(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))).map(x => [x.k, x.v])`));
   const torso = Math.hypot(0.555 - 0.455, 0.355 - 0.60), deg = r => r * 180 / Math.PI;
   near(v.extImpact, 100 * 0.03 / torso, 1e-6, 'early extension');
   near(v.bendLoss, deg(Math.atan2(0.10, 0.245)) - deg(Math.atan2(0.07, 0.26)), 1e-6, 'bend lost');
   near(v.headUp, 100 * 0.01 / torso, 1e-6, 'head up');
-  assert.match(app.text('#pose_sw_dtl'), /Hips toward the ball at impact: \d+% of torso length toward the ball \(early extension when toward\)/);
-  assert.match(app.text('#pose_sw_dtl'), /Forward bend lost by impact: \d+° more upright than at address/);
+  assert.match(app.text('#bodyAll_sw_dtl'), /Hips toward the ball at impact: \d+% of torso length toward the ball \(early extension when toward\)/);
+  assert.match(app.text('#bodyAll_sw_dtl'), /Forward bend lost by impact: \d+° more upright than at address/);
 });
 
 test('joints the model is unsure of are left out; too few frames found is said, and not used for trends or readings', async () => {
-  app.$('[data-act="measureSwing"][data-wid="sw_hid"]').click();
+  app.act('measureSwing', { sid: 's_oct', wid: 'sw_hid' });
   await app.waitFor(() => app.$('#pose_sw_hid'), { what: 'hidden measured' });
   const m = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_hid'))`);
   assert.deepEqual([m.found, m.of, m.reliable], [11, 16, false]);
@@ -170,15 +170,16 @@ test('Swing history: measure the rest in one go, then each measure swing by swin
   assert.match(app.text('#measureAll'), /Measure the body on 1 swing/);
   app.click('#measureAll');
   await app.waitFor(async () => (await doc('s_sep')).swings[0].pose, { what: 'measured all' });
-  await app.waitFor(() => app.$('#ptrend_7i'), { what: 'trend' });
-  assert.equal(app.$('#measureAll'), null, 'nothing left to measure');
+  // The page redraws once the save lands, a moment after the server has it (the trend table was already there from the
+  // other swings, so waiting for it alone raced the redraw under load).
+  await app.waitFor(() => !app.$('#measureAll') && app.$('#ptrend_7i'), { what: 'redrawn: nothing left to measure' });
   // 2.58.0: one row a measure, the latest swing's value, the change since the first, how many swings.
   const sway = app.$('#ptrend_7i tr[data-k="swayTop"]');
   assert.deepEqual([...sway.children].map(td => td.textContent), ['Hip sway at the topFace on', '-12%25 Oct 2026', '0%since Sept 2026', '3']);
   // Hips at impact are measurable on the unreliable swing too (its frame 11 has hips), yet only the three reliable ones count.
   assert.equal(app.text('#ptrend_7i tr[data-k="hipImpact"] td.n'), '3', 'the unreliable one left out');
   assert.match(app.text('#ptrend_7i tr[data-k="extImpact"]'), /Hips toward the ball at impact.*Down the line/);
-  assert.equal(app.$$('#ptrend_7i tbody tr').length, 7, 'a row a measure, nothing date by date');
+  assert.equal(app.$$('#ptrend_7i tbody tr').length, 7, 'a row a measure (hands height at impact needs a marked impact: none here), nothing date by date');
 });
 
 test('a model that can\'t run says what it needs and stores nothing', async () => {
@@ -187,7 +188,7 @@ test('a model that can\'t run says what it needs and stores nothing', async () =
   await app.waitFor(() => app.E(`!!session('s_oct').swings.find(s => s.id === 'sw_new')`), { what: 'poll' });
   app.go('range', { sessionId: 's_oct' });
   fail = true;
-  app.$('[data-act="measureSwing"][data-wid="sw_new"]').click();
+  app.act('measureSwing', { sid: 's_oct', wid: 'sw_new' });
   await app.waitFor(() => /couldn't run in this browser \(no SIMD\)\. It needs WebAssembly with SIMD/.test(app.text('#pm_sw_new')), { what: 'said' });
   fail = false;
   assert.equal((await doc('s_oct')).swings.find(s => s.id === 'sw_new').pose, undefined);
@@ -211,7 +212,7 @@ test('no body on any frame says so (not that the view is wrong), and a measured 
   await app.api.put('sessions', 's_oct', { ...s, swings: s.swings.concat({ id: 'sw_none', view: 'face', club: '7i', frames: fr('no', 4), addedOn: '2026-10-25' }) });
   await app.waitFor(() => app.E(`!!session('s_oct').swings.find(s => s.id === 'sw_none')`), { what: 'poll' });
   app.go('range', { sessionId: 's_oct' });
-  app.$('[data-act="measureSwing"][data-wid="sw_none"]').click();
+  app.act('measureSwing', { sid: 's_oct', wid: 'sw_none' });
   await app.waitFor(() => app.$('#pose_sw_none'), { what: 'measured' });
   const t = app.text('#pose_sw_none');
   assert.match(t, /0 of 4 frames · 2D · too few to rely on/);
@@ -221,14 +222,19 @@ test('no body on any frame says so (not that the view is wrong), and a measured 
   // The same frames answered with a body now: Measure again replaces the joints.
   ANSWERS.no = FACE;
   asked = [];
-  const again = app.$('#pose_sw_none [data-act="measureSwing"]');
-  assert.equal(again.textContent, 'Measure again');
+  // 2.68.0: Measure again is in the card's More… sheet.
+  app.click('#view [data-act="swingMore"][data-wid="sw_none"]');
+  const again = app.$('#swingMoreList [data-act="measureSwing"]');
+  assert.match(again.textContent, /^Measure the body again/);
   again.click();
+  assert.equal(app.sheetOpen(), false, 'the sheet closes; the progress shows on the card');
   await app.waitFor(async () => ((await doc('s_oct')).swings.find(s => s.id === 'sw_none').pose.frames || []).every(f => f.j), { what: 'measured again' });
   assert.deepEqual(asked, fr('no', 4).map(f => '/_blob/' + f.asset));
   await app.waitFor(() => /4 of 4 frames/.test(app.text('#pose_sw_none')), { what: 'redrawn' });
   assert.equal(app.$('#poseNone_sw_none'), null);
-  assert.ok(app.$('#pose_sw_face [data-act="measureSwing"]'), 'every measured swing offers it');
+  app.click('#view [data-act="swingMore"][data-wid="sw_face"]');
+  assert.ok(app.$('#swingMoreList [data-act="measureSwing"]'), 'every measured swing offers it');
+  app.$('#sheetInner [data-close]').click();
   // 2.58.0 (he asked): once measured, the frame strip folds away; the four positions show the swing.
   const strip = app.$('#frames_sw_face');
   assert.ok(strip && strip.tagName === 'DETAILS' && !strip.open && strip.querySelector('.filmstrip'));
@@ -243,13 +249,13 @@ test('a face-on clip filmed from the side gives no face-on measures, and says wh
   await app.api.put('sessions', 's_oct', { ...s, swings: s.swings.concat({ id: 'sw_side', view: 'face', club: '7i', frames: fr('sd'), addedOn: '2026-10-26' }) });
   await app.waitFor(() => app.E(`!!session('s_oct').swings.find(s => s.id === 'sw_side')`), { what: 'poll' });
   app.go('range', { sessionId: 's_oct' });
-  app.$('[data-act="measureSwing"][data-wid="sw_side"]').click();
+  app.act('measureSwing', { sid: 's_oct', wid: 'sw_side' });
   await app.waitFor(() => app.$('#pose_sw_side'), { what: 'measured' });
   const m = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_side'))`);
   assert.equal(m.square, false);
   assert.ok(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_side')))`).every(x => x.v == null), 'nothing measured');
   assert.match(app.text('#poseSquare_sw_side'), /^Not measured: at address the hips and shoulders are almost in line/);
-  assert.equal(app.$$('#pose_sw_side .dlines li').length, 0);
+  assert.equal(app.$$('#bodyAll_sw_side .dlines li').length, 0);
   assert.doesNotMatch(app.E(`swingPrompt(session('s_oct').swings.find(s => s.id === 'sw_side'), session('s_oct'))`), /MEASURED FROM THESE FRAMES/);
   assert.equal(app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face')).square`), true, 'a square-on clip still measures');
   // Kept out of the club's trend, which still lists the square-on swings.
@@ -331,7 +337,8 @@ test('a swing\'s camera angle can be changed: the measures follow, and a reading
   await app.api.put('sessions', 's_oct', { ...s0, swings: s0.swings.map(w => w.id === 'sw_dtl' ? { ...w, view: 'face', analysis: { one_thing: 'Stay in your posture' }, analysedOn: '2026-10-25' } : w) });
   await app.waitFor(() => app.E(`session('s_oct').swings.find(s => s.id === 'sw_dtl').view === 'face'`), { what: 'poll' });
   app.go('range', { sessionId: 's_oct' });
-  app.click('#view [data-act="swingAngle"][data-wid="sw_dtl"]');
+  app.click('#view [data-act="swingMore"][data-wid="sw_dtl"]');
+  app.click('#swingMoreList [data-act="swingAngle"]');
   assert.deepEqual(app.$$('#angleChoices .choice b').map(b => b.textContent), ['Down the line', 'Face on current', 'Other angle']);
   assert.ok(app.$('#angleChoices [data-v="face"]').hasAttribute('autofocus'), 'the sheet opens on the current angle, not the first');
   assert.equal(app.$('#angleChoices [data-v="face"]').getAttribute('aria-pressed'), 'true');
@@ -342,7 +349,7 @@ test('a swing\'s camera angle can be changed: the measures follow, and a reading
   assert.deepEqual(sw.analysis, { one_thing: 'Stay in your posture' }, 'the reading kept');
   await app.waitFor(() => app.$('#angleNote_sw_dtl'), { what: 'redrawn' });
   assert.match(app.text('#angleNote_sw_dtl'), /^This reading was made when the clip was marked Face on\. Analyse again to read it as Down the line\.$/);
-  assert.deepEqual(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))).map(x => x.k)`), ['extImpact', 'bendLoss', 'headUp'], 'measured as down the line');
+  assert.deepEqual(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))).map(x => x.k)`), ['extImpact', 'bendLoss', 'headUp', 'handsImpact'], 'measured as down the line');
   // Back to the angle it was read under: no note.
   app.act('swingAngle', { sid: 's_oct', wid: 'sw_dtl' });
   app.click('#angleChoices [data-v="face"]');

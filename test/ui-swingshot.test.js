@@ -66,7 +66,9 @@ test('tying a course swing: its club first, the rest folded, the reference store
   await pick('#tagShots .choice[data-hole="1"][data-i="0"]');
   assert.deepEqual((await stored(R, 'sw_d')).shot, { hole: 1, i: 0 }, 'a reference, nothing derived');
   const len = app.E(`fmt(shotLen(holesOf(session('${R}'))[0], 0))`), left = app.E(`fmt(toGreen(holesOf(session('${R}'))[0], session('${R}').holes[0].shots[0]))`);
-  assert.equal(app.text('#ws_sw_d').replace(/\s+/g, ' ').trim(), `This swing's shot: Hole 1, shot 1 (tee shot): D from 300 m, went ${len} m, finished in the trees, ${left} m left. Change`);
+  assert.equal(app.text('#ws_sw_d').replace(/\s+/g, ' ').trim(), `This swing's shot: Hole 1, shot 1 (tee shot). Change`, 'named, not repeating the tiles (2.70.0)');
+  assert.deepEqual(app.$$('#shotNums_sw_d .tsTile b').map(b => b.textContent), [`${len} m`, 'Trees', `${left} m`]);
+  assert.match(app.E(`swingShotContext(session('${R}').swings.find(w => w.id === 'sw_d'), session('${R}'))`), new RegExp(`D from 300 m, went ${len} m, finished in the trees, ${left} m left`), 'the prompt keeps the whole line');
   app.go('rounds', { sessionId: R, hole: 1 });
   assert.deepEqual(app.$$('.shotrow').map(b => /filmed/.test(b.textContent)), [true, false, false]);
 });
@@ -118,7 +120,7 @@ test('a range swing: the bay\'s numbers for that ball, the shot table marked, fo
   const prof = app.E(`swingShot(session('${RG}').swings[0], session('${RG}')).prof`);
   assert.ok(['pure', 'runner', 'short'].includes(prof));
   const word = { pure: 'a pure strike', runner: 'a low runner', short: 'short of a pure strike' }[prof];
-  assert.equal(app.text('#ws_sw_5').replace(/\s+/g, ' ').trim(), `This swing's shot: Shot 3 of 5 in the 5W block: carry 164.8 m, total 178.2 m, 12.1 m right; face 0.8° open, path 2.3° out-to-in; smash ${(119.2 / 84.7).toFixed(2)}; ${word}. Change`);
+  assert.equal(app.text('#ws_sw_5').replace(/\s+/g, ' ').trim(), `This swing's shot: Shot 3 of 5 in the 5W block: face 0.8° open, path 2.3° out-to-in; smash ${(119.2 / 84.7).toFixed(2)}; ${word}. Change`);
   app.go('range', { blockId: 'b_5w' });
   assert.deepEqual(app.$$('#shotTable tbody tr').map(tr => /filmed/.test(tr.textContent)), [false, false, true, false, false]);
   // The block re-pasted in another order: the same ball is found by carry and total; nothing rewritten.

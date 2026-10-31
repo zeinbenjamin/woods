@@ -4,10 +4,11 @@ licensed Apache-2.0 (its package.json), the licence of the MediaPipe project:
 https://github.com/google-ai-edge/mediapipe/blob/master/LICENSE
 http://www.apache.org/licenses/LICENSE-2.0
 
-pose_landmarker_lite.task: Google's MediaPipe Pose Landmarker (lite, float16,
+pose_landmarker_heavy.task: Google's MediaPipe Pose Landmarker (heavy, float16,
 version 1), downloaded from
-https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
-on 2026-10-31 and copied unchanged. It is published under the terms of its
+https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task
+on 2026-10-31 and copied unchanged (sha256 64437af838a65d18e5ba…). It replaced the lite model
+(Carry 2.65.0), which misplaced the wrists in down-the-line swings. It is published under the terms of its
 model card (BlazePose GHUM 3D), linked from
 https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker
 Used here on one person's server; read the model card before sharing it further.

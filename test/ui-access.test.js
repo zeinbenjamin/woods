@@ -85,7 +85,8 @@ test('the imports say who can play wherever the 2026-10-29 audit found out, with
     assert.ok(!(c.closed && c.bookable != null), `${f}: a closed course is neither public nor private`);
   }
   const count = v => audited.filter(([, c]) => c.bookable === v).length;
-  assert.deepEqual([count(true), count(false), audited.filter(([, c]) => c.closed).length], [51, 20, 1]);
+  // Castle Hill moved to private on the recheck of 2026-11-01 (its own site: "one of Sydney's leading private golf clubs").
+  assert.deepEqual([count(true), count(false), audited.filter(([, c]) => c.closed).length], [50, 21, 1]);
   const kogarah = all.find(([f]) => f === 'kogarah.json')[1];
   assert.equal(kogarah.closed, true);
 });
