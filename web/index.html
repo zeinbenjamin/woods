@@ -6954,15 +6954,42 @@ function stopGps() {
   if (gpsWatch != null && navigator.geolocation) navigator.geolocation.clearWatch(gpsWatch);
   gpsWatch = null;
   if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+  if (playMidnight) { clearTimeout(playMidnight); playMidnight = null; }
+}
+/* GPS and the screen stay on for the whole of today's round (2.71.0, he chose it from the native-app plan,
+   docs/native-app.md: the phone lost the fix every time Carry was left, so each hole started cold). Opening
+   Play on a round dated today makes it the round being played (`carry.playing` on this phone, so a reload
+   keeps it); GPS then runs on every page until *End round* / *Finish round*, every hole is done, or local
+   midnight. A browser still stops it while the phone is locked; only a native app can keep it then. */
+const PLAYING_KEY = 'carry.playing';
+let playMidnight = null;
+function readPlaying() { try { return JSON.parse(localStorage.getItem(PLAYING_KEY) || 'null'); } catch (e) { return null; } }
+function setPlaying(v) { try { v ? localStorage.setItem(PLAYING_KEY, JSON.stringify(v)) : localStorage.removeItem(PLAYING_KEY); } catch (e) { /* per-phone only */ } }
+function playingRound() {
+  const p = readPlaying(); if (!p) return null;
+  const r = p.day === today() && session(p.id);
+  if (!r || r.type !== 'round' || r.date !== today() || holesOf(r).every(holeDone)) { setPlaying(null); return null; }
+  return r;
+}
+function gpsWanted() {
+  if (inPlay()) { const r = session(S.sub.sessionId); if (r && r.date === today() && !holesOf(r).every(holeDone)) setPlaying({ id: r.id, day: today() }); return true; }
+  return !!playingRound();
+}
+// At local midnight the round is yesterday's: look again then.
+function armMidnight() {
+  if (playMidnight) return;
+  const d = new Date(), next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 1);
+  playMidnight = setTimeout(() => { playMidnight = null; playLifecycle(); }, next - d);
 }
 // The screen stays on while playing, where the browser allows it.
 function keepAwake() {
   if (wakeLock || !navigator.wakeLock || document.hidden) return;
   navigator.wakeLock.request('screen').then(l => { wakeLock = l; l.addEventListener('release', () => { wakeLock = null; }); }).catch(() => {});
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && inPlay()) keepAwake(); });
-// Called after every render: GPS runs only while the Play view is open.
-function playLifecycle() { if (inPlay()) startGps(); else if (gpsWatch != null) stopGps(); }
+// The phone drops the screen lock when Carry goes to the background: take it again on the way back.
+document.addEventListener('visibilitychange', () => { if (!document.hidden && gpsWanted()) keepAwake(); });
+// Called after every render: GPS runs while Play is open, and for the rest of today's round.
+function playLifecycle() { if (gpsWanted()) { startGps(); armMidnight(); } else if (gpsWatch != null || wakeLock || playMidnight) stopGps(); }
 
 // Where he is on this hole's map, or why there's no answer.
 // The course's map file for the round being played, whether or not this hole is drawn:
@@ -7226,7 +7253,7 @@ Object.assign(ACTIONS, {
     await addMapShot(r, n, h, g.p, { gps: Math.round(g.acc) }, moving, h.hm ? h.hm.map : playMap());
     toast(h.hm ? 'Ball marked' : 'Ball marked — measured once the hole is drawn');
   },
-  finishPlay(d) { stopGps(); go('rounds', { sessionId: d.sid }, { nav: 'replace' }); },
+  finishPlay(d) { setPlaying(null); stopGps(); go('rounds', { sessionId: d.sid }, { nav: 'replace' }); },
 });
 // Opening without signal (2.54.0): the service worker keeps the page and the data as
 // they last arrived and answers from them only when the network can't be reached.

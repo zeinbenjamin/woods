@@ -1,3 +1,8 @@
+## 2.71.0 — 2026-10-31
+- Once you open Play on today's round, GPS keeps running while you look at other pages, so the next hole doesn't start without a fix. It stops when you tap End round or Finish round, once every hole is done, or at midnight.
+- The screen stays on for that round too, and is kept on again when you come back to Carry from another app.
+- With the phone locked, GPS still stops: a browser can't keep it going then (see the native app plan).
+
 ## 2.70.0 — 2026-10-31
 - A swing card now opens with its picture (the switches and the frame with the plane and the shot drawn), then the ball, body, plane and fix, then the quiet folds, then the buttons. The Swings tab's card follows the same order.
 - A swing tied to its shot no longer repeats the tiles above it: it names the shot (hole and shot number, or which shot in the range block, with face, path and smash) and leaves went, finished and left to the green, or carry and total, to the tiles.

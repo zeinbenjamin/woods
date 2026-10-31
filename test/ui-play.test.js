@@ -207,12 +207,57 @@ test('location blocked says how to allow it', async () => {
   await app.waitFor(() => /blocked|https/.test(app.text('#gpsWhy')), { what: 'blocked message' });
 });
 
-test('leaving Play mode turns GPS off', async () => {
+test('GPS stays on for the rest of today\'s round (2.71.0), and stops when it is ended', async () => {
   const cleared = app.E('__geo.cleared');
   app.go('rounds', { sessionId: R });
-  assert.equal(app.E('__geo.cleared'), cleared + 1);
-  assert.equal(app.E('__geo.watching'), 0);
+  assert.equal(app.E('__geo.cleared'), cleared, 'leaving Play keeps the fix warm');
+  assert.equal(app.E('__geo.watching'), 1);
+  assert.deepEqual(app.J(`JSON.parse(localStorage.getItem('carry.playing'))`), { id: R, day: app.E('today()') }, 'kept on this phone');
   assert.match(app.text('[data-go*="play=1"]'), /^Play: hole 2 →$/, 'today\'s round can be picked up again');
+  app.go('range');
+  assert.equal(app.E('__geo.watching'), 1, 'on any page');
+  // The screen lock: asked for while the round is on, and again when the app comes back to the front.
+  app.E(`window.__wl = { asked: 0, lock: null, request() { this.asked++; const l = { fns: [], released: false, addEventListener(e, f) { this.fns.push(f); }, release() { this.released = true; return Promise.resolve(); } }; this.lock = l; return Promise.resolve(l); } };
+    Object.defineProperty(navigator, 'wakeLock', { value: __wl, configurable: true });
+    Object.defineProperty(document, 'hidden', { value: false, configurable: true }); true`);
+  const back = () => app.E(`document.dispatchEvent(new Event('visibilitychange')); true`);
+  back(); await sleep(20);
+  assert.equal(app.E('__wl.asked'), 1);
+  back(); await sleep(20);
+  assert.equal(app.E('__wl.asked'), 1, 'held: not asked twice');
+  app.E(`__wl.lock.fns.forEach(f => f()); true`);   // the phone dropped it while Carry was in the background
+  back(); await sleep(20);
+  assert.equal(app.E('__wl.asked'), 2, 'taken again on the way back');
+  // End round here: GPS and the lock go, and stay gone on other pages.
+  app.go('rounds', { sessionId: R, play: '1', hole: '2' });
+  app.click('[data-act=finishPlay]');
+  assert.equal(app.E('__geo.watching'), 0);
+  assert.equal(app.E('__wl.lock.released'), true);
+  assert.equal(app.E(`localStorage.getItem('carry.playing')`), null);
+  app.go('rounds', { sessionId: R });
+  assert.equal(app.E('__geo.watching'), 0, 'not restarted by the round page');
+});
+
+test('the round being played stops counting once every hole is done, or on another day', async () => {
+  const day = app.E('today()');
+  await app.api.put('sessions', 'r_one', { id: 'r_one', v: 2, type: 'round', date: day, courseId: 'c_syn', courseName: 'Straight GC', tee: 'white', detail: 'score_only', holes: [{ n: 1, par: 4, metres: 300 }] });
+  await app.waitFor(() => app.E(`!!session('r_one')`), { what: 'round arrives' });
+  app.go('rounds', { sessionId: 'r_one', play: '1', hole: '1' });
+  app.go('rounds');
+  assert.equal(app.E('__geo.watching'), 1, 'a hole still to play');
+  app.click('[data-go*="r_one"]');
+  await app.act('quickScore', { sid: 'r_one', n: '1', s: '4' });
+  await app.waitFor(() => app.E('__geo.watching') === 0, { what: 'GPS off once every hole is done' });
+  assert.equal(app.E(`localStorage.getItem('carry.playing')`), null);
+  // Past midnight the round is yesterday's: the same rule the midnight timer runs.
+  await app.api.put('sessions', 'r_one', { id: 'r_one', v: 2, type: 'round', date: day, courseId: 'c_syn', courseName: 'Straight GC', tee: 'white', detail: 'score_only', holes: [{ n: 1, par: 4, metres: 300 }] });
+  await app.waitFor(() => app.E(`session('r_one').holes[0].strokes == null`), { what: 'hole reopened' });
+  app.go('rounds', { sessionId: 'r_one', play: '1', hole: '1' });
+  app.go('rounds');
+  assert.equal(app.E('__geo.watching'), 1);
+  app.E(`localStorage.setItem('carry.playing', JSON.stringify({ id: 'r_one', day: '2000-01-01' })); playLifecycle(); true`);
+  assert.equal(app.E('__geo.watching'), 0, 'another day');
+  assert.ok(app.E('typeof armMidnight') === 'function');
 });
 
 test('hazards, worked by hand on a straight hole: reach the nearest edge, carry the far one, ahead only, this hole only', async () => {

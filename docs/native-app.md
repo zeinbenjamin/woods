@@ -27,8 +27,8 @@ Discussed the same day; worth doing first and cheap.
    a Strava *Golf* activity started on the 1st tee keeps iOS location running
    all round, so Carry should get a fresh fix within a second or two of an
    unlock. Doesn't make Carry track while locked. To be confirmed on a round.
-3. **Two changes in the app (Carry chat; he picked these two)**, still open as of
-   2.69.1:
+3. **Two changes in the app (Carry chat; he picked these two)**, shipped in
+   2.71.0 (CLAUDE.md, *Play mode*: *GPS for the whole round*):
    - **GPS for the whole round, not only the Play view.** `playLifecycle()`
      stops `watchPosition` on leaving `vPlay`. While a round dated today is in
      progress (started in Play, holes not all done), keep the watch running
