@@ -1817,6 +1817,8 @@ function ttReadable(c) {
     const u = new URL(c.bookingUrl);
     // TeeItUp (2.43.0): <club>.book.teeitup.com with its GolfNow course id, as the server's teeitupSource.
     if (/^[a-z0-9-]+\.book\.teeitup\.com$/i.test(u.hostname)) return /^\d+$/.test(u.searchParams.get('course') || '');
+    // Quick18 (2.61.0): <club>.quick18.com, or its tee sheet's path, as the server's quick18Source.
+    if (/^https?:$/.test(u.protocol) && (/^[a-z0-9-]+\.quick18\.com$/i.test(u.hostname) || /^\/teetimes\/searchmatrix\b/i.test(u.pathname))) return true;
     return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/(bookings\/|\w+\.msp$)/i.test(u.pathname));
   } catch (e) { return false; }
 }
@@ -1943,7 +1945,7 @@ const ttLow = rates => Math.min(...rates.flatMap(r => [r.price, ...r.times.map(t
 function ttRatesHtml(rates) {
   return rates.map(r => `<div class="ttrate"><div class="small"><b>${esc(r.name)}</b>${r.price != null ? ` · ${ttMoney(r.price)}` : ''}${r.special ? ' <span class="tag green">special</span>' : ''}</div>
     <div class="chips">${r.times.map(t => { const f = t.fees[0] || {}, tee = /\b(1st|first)\b/i.test(t.tee || '') || !t.tee ? '' : (/(\d+)(st|nd|rd|th)\b/i.exec(t.tee) || [])[0];
-      return `<a class="chip ttime" href="${esc(ttSafe(r.url) || '#')}" target="_blank" rel="noopener" title="${esc([t.tee, ...t.fees.map(x => `${ttMoney(x.price)} ${x.who || ''}`)].filter(Boolean).join(' · '))}">${t.time}<small>${t.free} free${f.price != null && f.price !== r.price ? ` · ${ttMoney(f.price)}` : ''}${tee ? ` · ${esc(tee)} tee` : ''}</small></a>`; }).join('')}</div></div>`).join('');
+      return `<a class="chip ttime" href="${esc(ttSafe(t.url) || ttSafe(r.url) || '#')}" target="_blank" rel="noopener" title="${esc([t.tee, ...t.fees.map(x => `${ttMoney(x.price)} ${x.who || ''}`)].filter(Boolean).join(' · '))}">${t.time}<small>${t.free} free${f.price != null && f.price !== r.price ? ` · ${ttMoney(f.price)}` : ''}${tee ? ` · ${esc(tee)} tee` : ''}</small></a>`; }).join('')}</div></div>`).join('');
 }
 /* ---------- a course's own tee times (2.45.0) ----------
    The course page's *Tee times* fold: the same reading as Find a tee time,
