@@ -402,7 +402,7 @@ details.sec + .folds, .pcard + .folds, p + .folds, p + details.fold, .row-action
    section gets, so the fold's rule sat on the button (2.41.1, he sent a screenshot). */
 section.sec + details.fold { margin-top: 24px; }
 .row-actions:has(> .danger:only-child) { margin-top: 28px; } .folds + .row-actions, details.sec + .row-actions { margin-top: 16px; }
-/* 2.72.0 (he found open gaps under a section's last fold): a fold carries 10px of padding below its summary, so a
+/* 2.73.0 (he found open gaps under a section's last fold): a fold carries 10px of padding below its summary, so a
    heading after it takes 18px, the same 28px of space as after a button row; a fold right under a card gets 12px. */
 .row-actions + h2 { margin-top: 28px; } .folds + h2, details.sec + h2 { margin-top: 18px; } .next + details.fold, .next + .folds { margin-top: 12px; }
 .ftile .tp { font-size: .55em; color: var(--ink-3); margin-left: 6px; font-weight: 600; }
@@ -1286,7 +1286,7 @@ function overviewGapping(stats) {
       <div class="conf small ${(s.weighted ? s.nEff : s.n) < 5 ? 'early' : ''}">${s.n} shots${s.weighted ? ` · counts like ${s.nEff} recent` : ''} · ${confidence(s.weighted ? s.nEff : s.n)}${sp ? ` · <span class="mid">${fmt(sp.p25) === fmt(sp.p75) ? `middle half at ${fmt(sp.p25)}m` : `middle half ${fmt(sp.p25)}–${fmt(sp.p75)}m`}</span>` : ''}</div></div>`; }).join('') + `</div>
     <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span>${ladder.some(x => carrySpread(x.c.code)) ? '<span><i class="l-spread"></i>where they land: middle half, and 8 in 10</span>' : ''}</div>`;
   h += beliefGapLine();
-  // 2.72.0 (he asked): the ladder's own folds; distance gaps went to The detail, and strokes gained came here,
+  // 2.73.0 (he asked): the ladder's own folds; distance gaps went to The detail, and strokes gained came here,
   // above the strike profile.
   h += patternsFold(stats);
   h += deliveryFold(stats);
@@ -1691,7 +1691,7 @@ function vRounds() {
   if (S.sub && S.sub.sessionId) return vRound();
   const list = S.sessions.filter(s => s.type === 'round');
   const pens = penaltyReport();
-  // One line of what's here, as the Swings page's (2.72.0, he asked).
+  // One line of what's here, as the Swings page's (2.73.0, he asked).
   const dates = list.map(r => r.date).filter(Boolean).sort(), traced = list.filter(r => (r.holes || []).some(h => (h.shots || []).length)).length;
   const basis = list.length ? `<p class="small muted" id="roundsBasis">${[plural(list.length, 'round'), [...new Set([monthLabel(dates[0]), monthLabel(dates[dates.length - 1])].filter(Boolean))].join(' – '), plural(new Set(list.map(r => r.courseId || r.courseName)).size, 'course'), traced ? `${traced} traced` : ''].filter(Boolean).join(' · ')}</p>` : '';
   return `<div class="spread"><h1>Rounds</h1><div class="row-actions" style="margin:0"><button id="addPastRound" data-act="addPastRound">Add past round</button><button class="primary" id="playOpen" data-act="startPlay">Play</button></div></div>` + basis +
@@ -1735,7 +1735,7 @@ function vCourses() {
   const playedIds = new Set(S.sessions.filter(s => s.type === 'round').map(s => s.courseId));
   const nPub = S.courses.filter(c => access(c) === 'public').length, nMap = S.courses.filter(c => c.map && c.map.id).length;
   if (S.courses.length) h += `<p class="small muted" id="coursesBasis">${[plural(S.courses.length, 'course'), `${S.courses.filter(c => playedIds.has(c.id)).length} played`, nPub ? `${nPub} public` : '', nMap ? `${nMap} with a map` : ''].filter(Boolean).join(' · ')}</p>`;
-  // Search (2.72.0, he asked): name, suburb, and public / private / closed; filtered in place as he types.
+  // Search (2.73.0, he asked): name, suburb, and public / private / closed; filtered in place as he types.
   if (S.courses.length > 1) h += `<input type="search" id="courseSearch" class="search" placeholder="Search name, suburb, public or private" aria-label="Search courses" autocomplete="off" value="${esc(S.courseQ || '')}">`;
   // One row (2.44.0): the sort, the map, and on the right where distances are from.
   h += `<div class="courseBar">${S.courses.length > 1 ? `<div class="seg" id="courseSort">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>` : ''}${S.courses.some(hasCoords) ? `<button class="iconBtn" data-go="courses:view=map" id="cmOpen" aria-label="View on a map" title="View on a map"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></button>` : ''}<button class="quiet" id="homeLink" data-act="setHome">${home() ? `From ${esc(home().label || 'your location')} ›` : 'Set location ›'}</button></div>`;
@@ -1840,6 +1840,8 @@ function ttReadable(c) {
     const u = new URL(c.bookingUrl);
     // TeeItUp (2.43.0): <club>.book.teeitup.com with its GolfNow course id, as the server's teeitupSource.
     if (/^[a-z0-9-]+\.book\.teeitup\.com$/i.test(u.hostname)) return /^\d+$/.test(u.searchParams.get('course') || '');
+    // Quick18 (2.61.0): <club>.quick18.com, or its tee sheet's path, as the server's quick18Source.
+    if (/^https?:$/.test(u.protocol) && (/^[a-z0-9-]+\.quick18\.com$/i.test(u.hostname) || /^\/teetimes\/searchmatrix\b/i.test(u.pathname))) return true;
     return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/(bookings\/|\w+\.msp$)/i.test(u.pathname));
   } catch (e) { return false; }
 }
@@ -1966,7 +1968,7 @@ const ttLow = rates => Math.min(...rates.flatMap(r => [r.price, ...r.times.map(t
 function ttRatesHtml(rates) {
   return rates.map(r => `<div class="ttrate"><div class="small"><b>${esc(r.name)}</b>${r.price != null ? ` · ${ttMoney(r.price)}` : ''}${r.special ? ' <span class="tag green">special</span>' : ''}</div>
     <div class="chips">${r.times.map(t => { const f = t.fees[0] || {}, tee = /\b(1st|first)\b/i.test(t.tee || '') || !t.tee ? '' : (/(\d+)(st|nd|rd|th)\b/i.exec(t.tee) || [])[0];
-      return `<a class="chip ttime" href="${esc(ttSafe(r.url) || '#')}" target="_blank" rel="noopener" title="${esc([t.tee, ...t.fees.map(x => `${ttMoney(x.price)} ${x.who || ''}`)].filter(Boolean).join(' · '))}">${t.time}<small>${t.free} free${f.price != null && f.price !== r.price ? ` · ${ttMoney(f.price)}` : ''}${tee ? ` · ${esc(tee)} tee` : ''}</small></a>`; }).join('')}</div></div>`).join('');
+      return `<a class="chip ttime" href="${esc(ttSafe(t.url) || ttSafe(r.url) || '#')}" target="_blank" rel="noopener" title="${esc([t.tee, ...t.fees.map(x => `${ttMoney(x.price)} ${x.who || ''}`)].filter(Boolean).join(' · '))}">${t.time}<small>${t.free} free${f.price != null && f.price !== r.price ? ` · ${ttMoney(f.price)}` : ''}${tee ? ` · ${esc(tee)} tee` : ''}</small></a>`; }).join('')}</div></div>`).join('');
 }
 /* ---------- a course's own tee times (2.45.0) ----------
    The course page's *Tee times* fold: the same reading as Find a tee time,
@@ -2074,7 +2076,7 @@ document.addEventListener('change', e => {
    Linking stores only which map the course uses; the shapes stay in the
    map file. The tee check is worked out on every draw from the card. */
 const plainName = x => String(x || '').toLowerCase().replace(/golf|club|course|country|links|\bthe\b|[^a-z]/g, '');
-/* Where the course is, against its map (2.72.0, he found Randwick's pin 1.8 km inland, in Matraville). The early
+/* Where the course is, against its map (2.73.0, he found Randwick's pin 1.8 km inland, in Matraville). The early
    courses were typed in by hand to three decimals; a linked map's origin is a point on the course from
    OpenStreetMap (the batch imports took theirs from it). Over LOC_OFF apart, the course page says so and offers the
    map's: asked, never changed on its own. The stored point drives the pin, Closest, tee-time distances, Play's
@@ -3494,7 +3496,7 @@ function practiceSection(limit) {
   if (!now.length && !quiet.length) return holes ? `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`
     : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
   const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
-  // 2.72.0 (he asked): the basis line went under the page's heading, How this is ranked joined the list's quiet checks,
+  // 2.73.0 (he asked): the basis line went under the page's heading, How this is ranked joined the list's quiet checks,
   // and Plan session went up beside New session.
   const rankHow = qfold('rankHow', 'How this is ranked', '', `<p class="small muted">${esc(practiceBasis().text)} Recalculated every time this screen draws — there is no stored copy. Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>
     <p class="small muted" id="rankRules">The rules, so you can disagree with them: a tee shot into water costs ${COST.tee.water}, trees ${COST.tee.trees}, a bunker ${COST.tee.bunker}, rough ${COST.tee.rough}; an approach clubbed short or a chip that misses the green ${COST.approach}; a three-putt ${COST.threePutt}; a penalty stroke ${COST.penalty}; a low runner or top on the range ${COST.strike} each; a swing whose body measure is outside its guide ${COST.body}, a finding once it is outside on ${BODY_MIN} of the last ${BODY_RECENT} swings of a club from one angle (and at least half), joining that club's ball finding when there is one. A finding goes quiet after enough clean chances that, at its old rate, it would have shown up 4 times in 5 (3 at least), or once unseen for ${STALE_AFTER} days. A club is flagged for strike at ${Math.round(STRIKE_FLAG * 100)}% low runners or tops over ${STRIKE_MIN} or more full swings. These are judgements, not measurements; "Is this list right?" above is where to check them.</p>`);
@@ -6418,7 +6420,7 @@ function practiceBasis() {
 // One line above a list: the counts and the newest input; the "recalculated, never stored"
 // sentence sits in the fold beside it (Range) or the Evidence fold (Overview).
 const shortDay = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
-// The page's one line of what it's built from, under its heading, as the Swings page's (2.72.0).
+// The page's one line of what it's built from, under its heading, as the Swings page's (2.73.0).
 function pageBasis(id) {
   const b = practiceBasis();
   if (!b.text.startsWith('Built')) return '';

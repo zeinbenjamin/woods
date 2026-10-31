@@ -15,7 +15,7 @@
       "lng": 150.76295,
       "tee": "social",
       "notes": "18 holes, par 70, 5,330 m off the social tees. Lengths in metres; tee sets: social, ladies (social is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: social 68 / 125. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify ('social' and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4367635, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.richmondgolfclub.com.au/cms/public-bookings/).",
+      "source": "Card: Golfify ('social' and ladies', metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/4367635, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.richmondgolfclub.com.au/cms/public-bookings/); rechecked 2026-11-01: the public calendar lists no rates; the social play page says to book with the pro shop.",
       "holes": [
         {
           "n": 1,
@@ -201,7 +201,7 @@
       "bookable": true,
       "bookingUrl": "https://www.richmondgolfclub.com.au/guests/ListBookingEvents.msp?booking_resource_id=3000000",
       "prereg": true,
-      "bookingNote": "Create a login, then book and pay online."
+      "bookingNote": "Create a login, then book and pay online; the public calendar was empty all week on 1 Nov 2026, and the club's social play page says to call the pro shop."
     }
   ],
   "sessions": [],

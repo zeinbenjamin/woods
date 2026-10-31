@@ -1,4 +1,4 @@
-// A course's stored location against its map (2.72.0): Randwick's record held
+// A course's stored location against its map (2.73.0): Randwick's record held
 // -33.963, 151.24, typed by hand, 1.8 km from the course; the linked map's
 // origin is on the course. Over 300 m apart the course page says so and offers
 // the map's location, asked, never changed on its own; close enough, or no map,
@@ -46,7 +46,7 @@ test('within 300 m, or no map: nothing said; no location stored: offered', async
   await app.waitFor(async () => (await app.api.get('courses', 'c_noloc')).lat != null, { what: 'saved' });
 });
 
-test('the course search (2.72.0): name, suburb and who can play, every word, filtered in place', async () => {
+test('the course search (2.73.0): name, suburb and who can play, every word, filtered in place', async () => {
   await app.api.put('courses', 'c_pr', { id: 'c_pr', v: 2, name: 'Cliff Top Club', suburb: 'La Perouse', bookable: false, holes: card(9) });
   await app.waitFor(() => app.E(`!!course('c_pr')`), { what: 'course' });
   app.go('courses');

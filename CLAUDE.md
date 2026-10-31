@@ -119,7 +119,7 @@ server/index.js     routes, static hosting
 server/auth.js      Cloudflare Access sign-in: the JWT check, req.user
 server/db.js        SQLite: JSON documents + asset metadata
 server/anthropic.js the Messages API call — the only place the key exists
-server/teetimes.js  reads a course's public MiClub tee-time pages on request
+server/teetimes.js  reads a course's public MiClub, TeeItUp or Quick18 tee-time pages on request
 web/index.html      the app, one file, ~3,200 lines
 web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
@@ -821,8 +821,48 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   course Carry can't read shows its `bookingNote` and link ("members and
   guests" when private); a closed course, or one with no way to book, has no
   fold. `ui-courseteetimes` (4) against the stand-in MiClub.
-- **Next:** the other TeeItUp courses' first searches, and a way to store a course's MiClub id when
-  its link has none (Massey Park's calendar shows nothing publicly).
+- **Every link checked live** (2026-11-01, he asked; an agent read each calendar
+  through a page reader for Wed 4 Nov, since the NAS's search can't be seen from
+  here): 34 of the 40 MiClub links list prices, and the assumed course id
+  3000000 worked on every one stored without an id (Asquith, Bankstown,
+  Stonecutters Ridge and 12 more), so **no course needs an id of its own: the
+  planned "store a MiClub id" was dropped**. Massey Park's 3000000 now lists
+  public rates (18 Holes $44.50), so its "lists no rates" answer is gone. No
+  public calendar: Camden, Castle Hill (now castlehillcountryclub.com.au, "one of
+  Sydney's leading private golf clubs": `imports/castle-hill.json` is private),
+  Cronulla (already private), Richmond (empty all week; the club says call);
+  Gordon's pages didn't answer the reader (they read normally in 2.41.3). Those
+  empty calendars are a page of their own, "No rows meeting selected criteria"
+  with no days, which `parseCalendar` read as unreadable; now `[]`, so they
+  say "lists no rates at all". Cells with no price read "Not Available",
+  "Unavailable" (North Ryde), "Contact Pro Shop" (Antill Park), "Timesheets
+  open 7 days prior" (The Coast), "Bookings Not Yet Opened" (Woollahra); a day
+  is only taken when its cell links to a timesheet, so all are skipped. The NAS
+  still holds Liverpool's dead `liverpool.miclub.com.au` (the fixed import isn't
+  loaded). TeeItUp: Bardwell Valley (81 times) and Marrickville (61) list times;
+  Avalon and Palm Beach showed none on either day tried.
+- **Quick18, Lane Cove** (2.72.0, he asked): `<club>.quick18.com/teetimes/searchmatrix?teedate=YYYYMMDD`
+  (Sagacity Golf), a plain page, no login: `matrixTable`, a column per rate
+  (`matrixHdrSched`), a row per time with `mtrxTeeTimes`, `matrixPlayers` ("1 to
+  4 players", "1 or 2 players", "1 player": the most it can still take) and a
+  `matrixsched` cell per rate (`mtrxPrice` and a Select link to book that time,
+  or `mtrxInactive`); a full time isn't listed. `quick18Source` takes the host
+  or the `/teetimes/searchmatrix` path (as MiClub's path test, so the tests can
+  serve it); `parseQuick18` drops **member rates** (a membership the search
+  can't know of; Lane Cove's after 5:30 pm is members only). Each time carries
+  its own `url`, and the page's chip links `t.url` before the rate's. The fixture
+  is Lane Cove's real sheet for 4 Nov (`test/fixtures/quick18-matrix.html`,
+  through a page reader, tables only, verbatim). Lane Cove's NAS link is
+  misspelt (`lanecove.quic18.com`): he sets `https://lanecove.quick18.com`.
+- **Hurstville is not read** (2026-11-01): golf-booking.com (G24 Group, Poland)
+  fills its sheet in by script; a browser run found the course's ids
+  (`data-courseid` 17299, `HURG`), times and spots without a login, but **no
+  prices until a booking is started**, and the script files it named weren't
+  at those addresses, so the API wasn't found. Its terms (s.VI.3) bar copying
+  its databases beyond permitted use and limit non-club users to non-profit
+  use; no clause on automated reading as GolfNow's has. Put to him.
+- **Next:** a second source per course (resellers), once the links are settled
+  (he agreed, 2026-10-31).
 
 ## Appearance (2.37.0)
 
@@ -838,7 +878,7 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
-## Tidy-ups and the course's location (2.72.0)
+## Tidy-ups and the course's location (2.73.0)
 
 He found Randwick's pin 1.8 km inland. **Location against the map:** the early courses' `lat`/`lng` were typed by
 hand to three decimals; a linked map's `origin` is a point on the course (the batch imports took theirs from it).
@@ -2437,7 +2477,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 514 tests, about 110s.
+`npm test` — 518 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2465,6 +2505,9 @@ fixture would let the reading be pinned.
   asked until it's opened, today then tomorrow once today's times have gone, a
   day picked staying on the course page, players, a redraw asking nothing new,
   an unreadable course's booking note, no fold for a closed course.
+- `quick18.test.js` (4) — the Quick18 reader on Lane Cove's real sheet: links, a
+  rate per column, members left out, spots, each time's own link, hand-made rows
+  for the other players wordings, and the route against a stand-in.
 - `teeitup.test.js` (4) — the TeeItUp reader on a hand-made answer (see
   *Tee times*): links, Sydney times, cents, spots, the route asking with the
   alias, unreadable and refused answers keeping a sample.

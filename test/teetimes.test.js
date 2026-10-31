@@ -41,6 +41,8 @@ test('the calendar: each rate, its holes, and its price on the days it is offere
   const twelve = CAL.replace('<h3>9 Holes</h3>', '<h3>12-Holes</h3>');
   assert.equal(parseCalendar(twelve)[2].holes, 12);
   assert.deepEqual(parseCalendar(EMPTY), [], 'Massey Park\'s calendar: a calendar, with no rates');
+  // Camden's, Castle Hill's, Cronulla's and Richmond's (seen 2026-11-01): no days, no rates, one line.
+  assert.deepEqual(parseCalendar('<div class="container"><p>No rows meeting selected criteria.</p> <a href="?all=1">Show All</a></div>'), [], 'a calendar listing nothing is empty, not unreadable');
 });
 
 test('the timesheet: every tee time in 24-hour time with its free spots', () => {
@@ -85,7 +87,7 @@ before(async () => {
   for (let i = 0; i < 80; i++) { try { if ((await fetch(`${base}/healthz`)).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   const put = (id, doc) => fetch(`${base}/api/courses/${id}`, { method: 'PUT', headers: hdr, body: JSON.stringify({ id, v: 2, name: id, holes: [], ...doc }) });
   await put('c_mi', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000` });
-  await put('c_q18', { bookingUrl: 'https://lanecove.quick18.com/teetimes/searchmatrix' });
+  await put('c_q18', { bookingUrl: 'https://www.golf-booking.com/en/club/hurstville-golf-course' });
   await put('c_none', {});
   await put('c_empty', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=5` });
   await put('c_guess', { bookingUrl: `http://localhost:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp` });   // no id in the link (as Massey Park's), an empty calendar

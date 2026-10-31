@@ -64,7 +64,10 @@ function blocks(html, cls) {
 // The calendar: each rate (fee group) with, for each day it's offered, its
 // price. A day the rate isn't offered has no cell date and is left out.
 export function parseCalendar(html) {
-  if (!/feeGroupRow|public-calendar/.test(html)) return null;
+  // A calendar with no public rates at all (Camden, Castle Hill, Cronulla and
+  // Richmond, seen 2026-11-01) is a page of its own: "No rows meeting selected
+  // criteria", no days, no rates. Nothing listed, not unreadable.
+  if (!/feeGroupRow|public-calendar/.test(html)) return /No rows meeting selected criteria/i.test(html || '') ? [] : null;
   return blocks(html, 'feeGroupRow').map(b => {
     const open = /^<div\b[^>]*>/.exec(b)[0];
     const cls = classes(open);
@@ -222,6 +225,72 @@ async function teeitupTimes(src, date, filters, fresh) {
   }
 }
 
+/* ---------- Quick18 (Sagacity Golf): Lane Cove ----------
+   Seen 2026-11-01 (through a page reader; this container can't reach it):
+   <club>.quick18.com/teetimes/searchmatrix?teedate=YYYYMMDD is a plain page,
+   no login, a `matrixTable` with a column per rate (`matrixHdrSched`) and a
+   row per time: `mtrxTeeTimes` ("6:00" + an AM/PM div), `matrixPlayers`
+   ("1 to 4 players", "1 or 2 players", "1 player": the players it can still
+   take) and a `matrixsched` cell per rate, its `mtrxPrice` and a Select link
+   to book that time, or `mtrxInactive` when the rate isn't offered then.
+   A time that's full isn't listed. Bookings open 14 days ahead. */
+export const QUICK18_HOST = /^([a-z0-9-]+)\.quick18\.com$/i;
+export const QUICK18_PATH = /^\/teetimes\/searchmatrix\b/i;
+export function quick18Source(bookingUrl) {
+  let u;
+  try { u = new URL(bookingUrl); } catch { return null; }
+  if (!/^https?:$/.test(u.protocol)) return null;
+  return QUICK18_HOST.test(u.hostname) || QUICK18_PATH.test(u.pathname) ? { origin: u.origin } : null;
+}
+export const quick18Url = (src, date) => `${src.origin}/teetimes/searchmatrix?teedate=${date.replace(/-/g, '')}`;
+const rateHolesByName = n => { const m = /\b(9|10|12|18)\s*-?\s*holes?\b/i.exec(n || ''); return m ? Number(m[1]) : null; };
+
+// → [{ name, holes, price, special, url, times: [{ time, tee, free, of, fees, url }] }],
+//   [] for a day with no times, or null for a page that isn't a tee-time matrix.
+// Member rates are left out: they need a membership the search can't know of.
+export function parseQuick18(html, src, date) {
+  const table = /<table\b[^>]*\bclass="[^"]*\bmatrixTable\b[^"]*"[^>]*>([\s\S]*?)<\/table>/i.exec(html || '');
+  if (!table) return /no tee times|no times available|not available for booking/i.test(text(html || '')) ? [] : null;
+  const names = [...table[1].matchAll(/<th\b[^>]*\bclass="[^"]*\bmatrixHdrSched\b[^"]*"[^>]*>([\s\S]*?)<\/th>/gi)].map(m => text(m[1]));
+  if (!names.length) return null;
+  const page = quick18Url(src, date);
+  const rates = names.map(name => ({ name, holes: rateHolesByName(name), price: null, special: false, url: page, times: [] }));
+  for (const row of table[1].matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const cells = [...row[1].matchAll(/<td\b([^>]*)>([\s\S]*?)<\/td>/gi)];
+    const tc = cells.find(c => /\bmtrxTeeTimes\b/.test(c[1])), pc = cells.find(c => /\bmatrixPlayers\b/.test(c[1]));
+    if (!tc || !pc) continue;
+    const time = clock(text(tc[2]));
+    const free = Math.max(0, ...(text(pc[2]).match(/\d+/g) || []).map(Number));
+    if (!time || !free) continue;
+    cells.filter(c => /\bmatrixsched\b/.test(c[1])).forEach((c, i) => {
+      const r = rates[i];
+      if (!r || /\bmtrxInactive\b/.test(c[1])) return;
+      const price = money((/class="[^"]*\bmtrxPrice\b[^"]*"[^>]*>([\s\S]*?)<\/div>/i.exec(c[2]) || [])[1]);
+      const href = (/<a\b[^>]*\bhref="([^"]+)"/i.exec(c[2]) || [])[1];
+      let url = null;
+      try { url = href ? new URL(href.replace(/&amp;/g, '&'), src.origin).href : null; } catch {}
+      if (price != null && (r.price == null || price < r.price)) r.price = price;
+      r.times.push({ time, tee: null, free, of: null, fees: price != null ? [{ price, who: r.name }] : [], ...(url ? { url } : {}) });
+    });
+  }
+  return rates.filter(r => r.times.length && !/\bmembers?\b/i.test(r.name)).sort((a, b) => (b.holes || 0) - (a.holes || 0));
+}
+
+async function quick18Times(src, date, filters, fresh) {
+  const page = quick18Url(src, date);
+  try {
+    const got = await fetchPage(page, fresh);
+    const all = parseQuick18(got.text, src, date);
+    if (!all) return { status: 'unreadable', source: 'Quick18', calendar: page, message: 'The booking site\'s tee sheet could not be read.' };
+    const offered = all.filter(r => !filters.holes || !r.holes || r.holes === filters.holes);
+    const rates = offered.map(r => { const times = r.times.filter(t => suits(t, r, filters)); return { ...r, times, listed: r.times.length }; });
+    const note = rates.length ? null : !all.length ? 'No times are open to the public on this day.' : 'No rate on this day matches the holes asked for.';
+    return { status: 'ok', source: 'Quick18', date, calendar: page, rates, ...(note ? { note } : {}), fetchedAt: new Date(got.at).toISOString() };
+  } catch (e) {
+    return { status: e.code === 'unreachable' ? 'unreachable' : 'unreadable', source: 'Quick18', calendar: page, message: e.message };
+  }
+}
+
 /* ---------- filters ---------- */
 
 // Times that suit: within [from, to] (HH:MM), the holes asked for, and enough
@@ -241,8 +310,10 @@ export function suits(t, rate, { from, to, holes, players } = {}) {
 export async function teeTimes(course, date, filters = {}, { fresh = false } = {}) {
   const tee = teeitupSource(course && course.bookingUrl);
   if (tee) return teeitupTimes(tee, date, filters, fresh);
+  const q18 = quick18Source(course && course.bookingUrl);
+  if (q18) return quick18Times(q18, date, filters, fresh);
   const src = miclubSource(course && course.bookingUrl);
-  if (!src) return { status: 'unsupported', message: course && course.bookingUrl ? 'Carry can read MiClub and TeeItUp booking sites so far.' : 'This course has no booking link.' };
+  if (!src) return { status: 'unsupported', message: course && course.bookingUrl ? 'Carry can read MiClub, TeeItUp and Quick18 booking sites so far.' : 'This course has no booking link.' };
   const calendar = calendarUrl(src, date);
   try {
     const page = await fetchPage(calendar, fresh);
