@@ -1,3 +1,9 @@
+## 2.62.0 — 2026-10-31
+- The practice list now uses the measured body. A measure outside its guide on most of a club's recent swings from one camera angle (at least 3 of the last 5) becomes a finding, such as hips moving toward the ball at impact on your driver.
+- When the same club already has a finding from the ball data, the body fault backs it up on that card ("body, measured") and adds to its weight, rather than being listed twice. On its own it gets its own card, with a drill and a note that the guides are rules of thumb.
+- A finding's page lists the measure for each swing behind it, and *How this is ranked* shows the rule.
+- Only swings where the body was found on most frames, filmed square on, count. Like any finding, a body fault goes quiet once enough swings come back inside the guide.
+
 ## 2.61.0 — 2026-10-31
 - Back buttons now take you to the page you came from, named for it: a round opened from the Swings tab goes back to Swings, a finding opened from the Overview goes back to the Overview, and Settings goes back to the page you opened it on. The page comes back as you left it, scrolled to the same place with the same sections open.
 - Moving from hole to hole doesn't add to the way back: back from any hole goes to the round, then to wherever you opened the round from.

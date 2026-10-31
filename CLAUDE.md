@@ -829,6 +829,24 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## Body faults in the practice list (2.62.0)
+
+He asked (2026-10-31, with the shot tracer and swing plane mockup): plane faults and the other body measures should
+feed the practice list. `bodyItems()` (in `practiceItems`, after `swingItems`): per club and camera angle, the
+reliable, square-on measured swings (`poseMeasures`: `reliable`, `square !== false`) in date order; for each
+`POSE_MEASURES` measure with a guide, a finding `body:<club>:<measure>` once it is outside the guide (`off` from
+`poseValues`) on at least `BODY_MIN` (3) of the last `BODY_RECENT` (5) and at least half of them. Evidence is each
+outside swing at `COST.body` (0.15, a judgement like the other costs); every measured swing is a chance, so it goes
+quiet by the same rule as any finding once swings come back inside. **It ranks like a swing reading**: beside a
+ball-data finding whose block is the same club it joins that finding as `support` and adds half its weight
+(`rankedPracticeUncached`, `leans`), never its own drill; alone it is listed with `kind: 'body'` (`.pcard.k-body`),
+a drill from `BODY_DRILL` and "2D, from the frames; the guides are rules of thumb." The host's card says it in one
+`.bodysup` line; the finding's page (*The evidence*) lists each swing's value and whether it was outside;
+`#rankRules` states the rule from the same constants. On his data: D, 5W and 7i hips toward the ball at impact
+(5 of 5 each), D and 5W forward bend lost, 7i head height (4 of 5). Derived on every draw, nothing stored.
+`ui-bodyfaults` (3) works hand-made down-the-line joints; 8 mutations caught (one survived at first: every test
+swing in a finding was outside, so all chances counting as misses passed; a 3-of-4 club added).
+
 ## This swing's own shot (2.56.0)
 
 He asked (2026-10-31, after asking whether it was worth it: the main value is a reading
@@ -2191,7 +2209,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 483 tests, about 45s.
+`npm test` — 486 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2246,6 +2264,8 @@ fixture would let the reading be pinned.
 - `ui-nav.test.js` (10) — back goes where he came from: each way into a round, session, block, finding,
   course, Settings and the feed; hole to hole sideways; a circle; a tab afresh; a deleted page skipped; folds
   restored; deleting returns; the Swings card's Play video and read-only body.
+- `ui-bodyfaults.test.js` (3) — the measured body in the practice list: a finding from most recent swings,
+  unreliable swings left out, joining a ball finding as support or standing alone, the card, the page, the rules.
 - `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags
   following their shot, the prompt, filmed marks, the finding's page.
 - `ui-pose.test.js` (17) — the body, measured (the guide and changing the angle since 2.57.0): a stand-in detector with hand-made
