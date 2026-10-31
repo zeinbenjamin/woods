@@ -3900,7 +3900,7 @@ async function analyseSwing(sessionId, swingId, onText) {
   } catch (e) { return { error: e && e.code ? e.code : 'failed', text: e && e.text }; }
 }
 /* ---------- the body, measured (2.55.0) ----------
-   MediaPipe's Pose Landmarker (lite, vendored in web/vendor/mediapipe/, run in the
+   MediaPipe's Pose Landmarker (heavy since 2.65.0, vendored in web/vendor/mediapipe/, run in the
    browser, nothing sent anywhere) finds 33 joints on each stored frame. The joints
    are stored on the swing as `pose` (SCHEMA.md): they are a measurement of each
    frame, slow to make on a phone. Every angle, shift and trend below is worked out
@@ -3912,7 +3912,13 @@ async function analyseSwing(sessionId, swingId, onText) {
    the address frame, so a mirrored clip still reads right. Joints the model is
    unsure of (visibility under POSE_VIS) are left out, never guessed; a swing whose
    body was found in fewer than POSE_MIN_SHARE of its frames is marked unreliable. */
-const POSE_BY = 'mediapipe-0.10.35-lite';
+const POSE_BY = 'mediapipe-0.10.35-heavy';
+/* 2.65.0 (he drew his own hand path on the 3 Aug 7i, and it disagreed with Carry's): the lite model put his wrists on
+   his trail forearm going back down the line (from behind, against the sky, the hands are on the far side of the body),
+   70 px from the glove; heavy put them on it (checked frame by frame on his clip, `full` in between). He chose heavy:
+   31 MB once, about 3x slower. A swing measured or traced by an earlier model is `poseOld`: the card says so and the
+   Swings page measures them again in one go. */
+const poseOld = sw => !!((sw.pose && /^mediapipe-/.test(sw.pose.by || '') && sw.pose.by !== POSE_BY) || (sw.track && /^mediapipe-/.test(sw.track.by || '') && sw.track.by !== POSE_BY));
 const POSE_BASE = '/vendor/mediapipe/';
 const POSE_VIS = 0.5, POSE_MIN_SHARE = 0.75;
 const POSE_SQUARE = 0.2;   // face-on: hip and shoulder width at address, each at least this share of the torso's length
@@ -3927,7 +3933,7 @@ function poseModel() {
   if (!poseLoad) poseLoad = (async () => {
     const mp = await import(POSE_BASE + 'vision_bundle.mjs');
     const files = await mp.FilesetResolver.forVisionTasks(POSE_BASE + 'wasm');
-    const make = delegate => mp.PoseLandmarker.createFromOptions(files, { baseOptions: { modelAssetPath: POSE_BASE + 'pose_landmarker_lite.task', delegate }, runningMode: 'IMAGE', numPoses: 1 });
+    const make = delegate => mp.PoseLandmarker.createFromOptions(files, { baseOptions: { modelAssetPath: POSE_BASE + 'pose_landmarker_heavy.task', delegate }, runningMode: 'IMAGE', numPoses: 1 });
     let lm; try { lm = await make('GPU'); } catch (e) { lm = await make('CPU'); }
     return { async detect(src) {
       const im = new Image(); im.src = src; await im.decode();
@@ -4159,7 +4165,7 @@ function poseSection(sw, s, { readOnly = false } = {}) {
   if (!m && readOnly) return `<p class="small muted" id="poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Measure the body</i> is on its ${s.type === 'round' ? 'round' : 'session'}'s page.</p>`;
   if (!m) return `<div class="row-actions" style="margin-top:6px"><button data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure the body</button><span class="small muted">Finds the joints on each frame, on this phone.</span></div><div id="pm_${sw.id}"></div>`;
   const vals = poseValues(m);
-  let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
+  let h = `${poseOld(sw) ? `<p class="small notice" id="poseOld_${sw.id}">Measured with the earlier body model, which misplaced the wrists from behind. ${readOnly ? 'Measure it again on its page.' : 'Measure again for the hands where they really were.'}</p>` : ''}<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
   h += `<div class="posePos">${POSE_POS.map(([k, label]) => { const i = m.keys && m.keys[k]; const f = i == null ? null : m.frames[i]; return f ? `<figure><div class="pf"><img src="/_blob/${f.asset}" alt="${label}" loading="lazy">${poseFrameSvg(f)}</div><figcaption>${label}</figcaption></figure>` : ''; }).join('')}</div>`;
   const sayV = x => x.v == null ? x.why || 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
   // No body on any frame says so; a view the measures don't cover says that, never both.
@@ -4836,8 +4842,8 @@ function vSwings() {
   const clubs = [...new Set(sws.map(sw => sw.club || ''))].sort((a, b) => (clubOrder(a) - clubOrder(b)) || a.localeCompare(b));
   const read = sws.filter(sw => sw.analysis && sw.analysis.one_thing).length;
   const span = [monthLabel(swingDate(sws[sws.length - 1])), monthLabel(swingDate(sws[0]))].filter(Boolean);
-  const unmeasured = sws.filter(sw => (sw.frames || []).length && !sw.pose).length;
-  const measureAll = unmeasured ? `<div class="row-actions" style="margin:0 0 8px"><button id="measureAll" data-act="measureAll">Measure the body on ${plural(unmeasured, 'swing')}</button></div><div id="measureNote" class="small muted"></div>` : '';
+  const unmeasured = sws.filter(sw => (sw.frames || []).length && !sw.pose).length, old = sws.filter(sw => (sw.frames || []).length && sw.pose && poseOld(sw)).length;
+  const measureAll = unmeasured || old ? `<div class="row-actions" style="margin:0 0 8px"><button id="measureAll" data-act="measureAll">${old ? `Measure ${plural(unmeasured + old, 'swing')} with the new model` : `Measure the body on ${plural(unmeasured, 'swing')}`}</button></div><div id="measureNote" class="small muted"></div>` : '';
   h += `<p class="small muted" id="swingBasis">${[plural(sws.length, 'swing'), [...new Set(span)].join(' – '), read === sws.length ? 'all read' : `${read} read`].filter(Boolean).join(' · ')}</p>`;
   h += measureAll;
   h += `<h2>By club</h2><div class="folds" id="swingClubs">` + clubs.map(club => {
@@ -5116,7 +5122,7 @@ Object.assign(ACTIONS, {
     if (ok) { toast('Hands traced'); render(); }
   },
   async measureAll() {
-    const todo = allSwings().filter(sw => (sw.frames || []).length && !sw.pose);
+    const todo = allSwings().filter(sw => (sw.frames || []).length && (!sw.pose || poseOld(sw)));
     const note = t => { const b = document.getElementById('measureNote'); if (b) b.textContent = t; };
     const btn = document.getElementById('measureAll'); if (btn) btn.disabled = true;
     let done = 0;

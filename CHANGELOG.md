@@ -1,3 +1,8 @@
+## 2.65.0 — 2026-10-31
+- A more accurate body model. From behind, the old one often put your wrists on your forearm instead of your hands, so the hand line ran too close to your body going back. Carry now uses MediaPipe's largest pose model, which found your hands where the video shows them.
+- It's a bigger one-time download (about 31 MB) the first time you measure, and measuring takes a few times longer.
+- Swings measured with the old model say so on their card. *Measure n swings with the new model* on the Swings page redoes them all in one go, hand trace included.
+
 ## 2.64.1 — 2026-10-31
 - The hand line now works on slow-motion clips. It traced them too thinly (the downswing got about ten points), which drew a line of corners. Now the whole swing is traced and the downswing filled in frame by frame.
 - Where the line changes colour (the top, and impact) now comes from how your hands actually move, so it's right whatever the clip's speed. Before, it could switch to "coming down" halfway down.

@@ -83,7 +83,7 @@ test('measuring a swing asks the model about each stored frame and keeps the joi
   assert.deepEqual(asked, fr('fa').map(f => '/_blob/' + f.asset));
   const pose = (await doc('s_oct')).swings.find(s => s.id === 'sw_face').pose;
   assert.deepEqual(Object.keys(pose).sort(), ['aspect', 'by', 'frames', 'on'], 'the joints and where they came from, no measures');
-  assert.equal(pose.by, 'mediapipe-0.10.35-lite'); assert.equal(pose.aspect, 1);
+  assert.equal(pose.by, 'mediapipe-0.10.35-heavy'); assert.equal(pose.aspect, 1);
   assert.equal(pose.frames.length, 16);
   assert.deepEqual(pose.frames[0].j[11], [0.56, 0.35, 0.99]);
   assert.equal(pose.frames[3].asset, 'fa3');

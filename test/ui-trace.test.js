@@ -175,3 +175,20 @@ test('a slow-motion clip: the whole swing traced, the downswing filled in, and t
   await app.E(`traceHands(session('s1').swings.find(w => w.id === 'sw_a'), (i, n, ph) => window.__steps.push(ph))`);
   assert.equal(app.J('window.__steps').filter(p => p === 'fill').length, 0);
 });
+
+test('a swing measured by the earlier model says so, and the Swings page measures it again with the new one', async () => {
+  // 2.65.0: lite put his wrists on his forearm going back down the line; heavy replaced it.
+  const s0 = await doc('s1');
+  await app.api.put('sessions', 's1', { ...s0, swings: s0.swings.map(w => w.id === 'sw_a' ? { ...w, pose: { ...w.pose, by: 'mediapipe-0.10.35-lite' }, track: { ...w.track, by: 'mediapipe-0.10.35-lite' } }
+    : w.id === 'sw_b' ? { ...w, pose: { ...w.pose, by: 'mediapipe-0.10.35-heavy' }, track: { ...w.track, by: 'mediapipe-0.10.35-lite' } } : w) });
+  await app.waitFor(() => app.E(`session('s1').swings.find(w => w.id === 'sw_a').pose.by.endsWith('lite')`), { what: 'poll' });
+  app.go('range', { sessionId: 's1' });
+  assert.match(app.text('#poseOld_sw_a'), /^Measured with the earlier body model, which misplaced the wrists from behind\. Measure again/);
+  assert.ok(app.$('#poseOld_sw_b'), 'traced by the earlier model, measured by the new: still old');
+  assert.ok(!app.$('#poseOld_sw_bad'), 'a swing the new model measured says nothing');
+  app.go('swings');
+  assert.equal(app.text('#measureAll'), 'Measure 2 swings with the new model');
+  app.click('#measureAll');
+  await app.waitFor(async () => (await doc('s1')).swings.filter(w => ['sw_a', 'sw_b'].includes(w.id)).every(w => w.pose.by === 'mediapipe-0.10.35-heavy' && w.track.by === 'mediapipe-0.10.35-heavy'), { what: 'measured again' });
+  await app.waitFor(() => !app.$('#measureAll'), { what: 'nothing left' });
+});
