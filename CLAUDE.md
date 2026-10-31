@@ -486,6 +486,13 @@ Each of these cost real debugging time. Don't reintroduce them.
   debug sweep checked sideways overflow only, so it missed it; the sweep now also flags
   content past a fixed-height box and siblings drawn over each other (scratchpad, not the
   repo: it needs Chromium and a seeded server).
+- **A chart that fills its column can't hold its words in the SVG** (2.57.1, his iPad): the
+  *Across the swing* traces were a 240-unit viewBox at `width: 100%`, so on an iPad's
+  ~1000 px column every label, red dot and guide box drew about 4x (text near 40 px). The
+  lines now stretch (`preserveAspectRatio="none"`, `vector-effect: non-scaling-stroke`)
+  inside a 64 px `.trbox`, and the words, dots and boxes are spans laid over it by
+  percentage. The other text-bearing charts have a `max-width` (`.dplane` 280, `.pattern`
+  420, `.ghist` 560 since then). Check a new chart at 1024 and 1366 too, not only 390.
 - **Spacing is set by adjacency, not per section** (2.25.1, he sent three
   screenshots of folds against buttons, Delete buttons against text, and the
   bag table cut off): `.folds`, `details.fold`, `.row-actions` and `h2` get
