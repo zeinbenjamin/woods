@@ -1,3 +1,7 @@
+## 2.65.1 — 2026-10-31
+- The swing plane works again on down-the-line swings measured with the new model. It is more cautious than the old one about hands it can't see clearly, and from behind your wrists are always partly hidden, so Carry was throwing away hands that were in the right place. That left some swings with no plane and gaps in the hand line.
+- When the model's two wrists disagree, Carry now trusts the one it's surer of rather than averaging them, since both hands are on the grip.
+
 ## 2.65.0 — 2026-10-31
 - A more accurate body model. From behind, the old one often put your wrists on your forearm instead of your hands, so the hand line ran too close to your body going back. Carry now uses MediaPipe's largest pose model, which found your hands where the video shows them.
 - It's a bigger one-time download (about 31 MB) the first time you measure, and measuring takes a few times longer.

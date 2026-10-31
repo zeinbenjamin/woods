@@ -841,7 +841,18 @@ Told the cost (31 MB once, about 3x slower here: 230-490 ms a frame on this CPU 
 pose or trace by an earlier MediaPipe model; hand-made test poses aren't) shows `#poseOld_<id>` on the card, and the
 Swings page's `#measureAll` takes those too ("Measure n swings with the new model"), so his whole history can be
 redone in one go; trends would otherwise mix models. `ui-trace` covers the note and the re-measure (pose old, trace
-old). Not testable in jsdom: that the heavy file loads and runs, checked in Chromium on his 7i (below).
+old). Not testable in jsdom: that the heavy file loads and runs, checked in Chromium on his 7i.
+**The hands under heavy** (2.65.1): measured again with heavy, his 7i lost its plane ("not measurable") and its line
+broke into 12 pieces. Heavy's per-joint score is *visibility* (is it seen), not whether the position is right, and down
+the line the wrists are hidden behind each other and the body: at address lead 0.02, trail 0.41, both under `POSE_VIS`;
+92 of 356 traced frames had no wrist over 0.5. The positions were still on the glove. So the hands alone
+(`handFrom`, used by `poseMeasures`' `handP`, the trace's `handOf` and `traceData`) take a wrist from `HAND_VIS` (0.3),
+and two wrists over `HAND_APART` (0.06 of the frame) apart give the surer one, not the middle (both hands hold the grip,
+so one is wrong); every other joint keeps 0.5. His 7i after: the plane back (top inside the V, 65° against 55-67°), 292
+traced points in 6 runs, the backswing up behind and the downswing nearer his body, as his own drawing had it; a
+zigzag at chest height on the way down is the model in the fastest, blurriest frames. Coming down isn't measured on it:
+its 8 old frames have none between the top and impact. `ui-plane` (5) checks the rule and the plane from one wrist.
+Also fixed a race in `ui-pose`'s measure-all test (it checked before the page's redraw; the full suite caught it once).
 
 ## The hands traced from the video (2.64.0)
 
@@ -2298,7 +2309,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 496 tests, about 45s.
+`npm test` — 497 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2355,8 +2366,9 @@ fixture would let the reading be pinned.
   restored; deleting returns; the Swings card's Play video and read-only body.
 - `ui-trace.test.js` (6) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
   a slow-motion clip, swings measured by the earlier model, repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
-- `ui-plane.test.js` (4) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
-  swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list.
+- `ui-plane.test.js` (5) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
+  swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list, the hands
+  under heavy (a hidden wrist from 0.3, two that disagree).
 - `ui-bodyfaults.test.js` (3) — the measured body in the practice list: a finding from most recent swings,
   unreliable swings left out, joining a ball finding as support or standing alone, the card, the page, the rules.
 - `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags

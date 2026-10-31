@@ -170,8 +170,9 @@ test('Swing history: measure the rest in one go, then each measure swing by swin
   assert.match(app.text('#measureAll'), /Measure the body on 1 swing/);
   app.click('#measureAll');
   await app.waitFor(async () => (await doc('s_sep')).swings[0].pose, { what: 'measured all' });
-  await app.waitFor(() => app.$('#ptrend_7i'), { what: 'trend' });
-  assert.equal(app.$('#measureAll'), null, 'nothing left to measure');
+  // The page redraws once the save lands, a moment after the server has it (the trend table was already there from the
+  // other swings, so waiting for it alone raced the redraw under load).
+  await app.waitFor(() => !app.$('#measureAll') && app.$('#ptrend_7i'), { what: 'redrawn: nothing left to measure' });
   // 2.58.0: one row a measure, the latest swing's value, the change since the first, how many swings.
   const sway = app.$('#ptrend_7i tr[data-k="swayTop"]');
   assert.deepEqual([...sway.children].map(td => td.textContent), ['Hip sway at the topFace on', '-12%25 Oct 2026', '0%since Sept 2026', '3']);
