@@ -152,3 +152,19 @@ test('plane faults feed the practice list and the reading\'s prompt', () => {
   assert.ok(!items.some(x => x.key === 'body:D:planeTop'), 'the top was inside the V');
   assert.match(app.E(`poseContext(session('s_2026-10-01').swings.find(s => s.id === 'sw_steep'))`), /Hands coming down, against the plane: \d+° over the shoulder line, steeper than the V \(\d+°; the V is \d+–\d+°\) \(outside a coaching guide/);
 });
+
+test('the hands down the line: a wrist hidden behind the other still counts from 0.3 sure, and two that disagree give the surer', () => {
+  // 2.65.1: heavy scored his 3 Aug 7i's wrists at address 0.02 and 0.41, both under the 0.5 every other joint needs,
+  // so the plane had no hands to start from.
+  assert.deepEqual(app.J(`handFrom([0.46, 0.48, 0.02], [0.47, 0.49, 0.41])`), [0.47, 0.49], 'the trail wrist alone at 0.41');
+  assert.equal(app.J(`handFrom([0.46, 0.48, 0.29], [0.47, 0.49, 0.2])`), null, 'under 0.3 neither');
+  assert.deepEqual(app.J(`handFrom([0.40, 0.40, 0.9], [0.42, 0.42, 0.6])`).map(v => +v.toFixed(3)), [0.41, 0.41], 'together on the grip: the middle');
+  assert.deepEqual(app.J(`handFrom([0.30, 0.40, 0.6], [0.42, 0.40, 0.9])`), [0.42, 0.40], '0.12 apart: one is wrong, the surer is taken');
+  assert.deepEqual(app.J(`handFrom([0.5, 0.5, 0.9], null, 0.5)`), [0.25, 0.5], "x in the frame's aspect");
+  // In the measures: the address hands at 0.41 sure give the plane its shaft line.
+  const sw = app.J(`session('s_2026-10-01').swings.find(s => s.id === 'sw_in')`);
+  sw.pose.frames[0].j[15][2] = 0.02; sw.pose.frames[0].j[16][2] = 0.41;
+  const m = app.J(`poseMeasures(${JSON.stringify(sw)})`);
+  assert.ok(m.plane, 'still measurable');
+  near(m.plane.shaft, up([0.60, 0.62]), 'the same shaft line from the one wrist');
+});

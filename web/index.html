@@ -3921,6 +3921,16 @@ const POSE_BY = 'mediapipe-0.10.35-heavy';
 const poseOld = sw => !!((sw.pose && /^mediapipe-/.test(sw.pose.by || '') && sw.pose.by !== POSE_BY) || (sw.track && /^mediapipe-/.test(sw.track.by || '') && sw.track.by !== POSE_BY));
 const POSE_BASE = '/vendor/mediapipe/';
 const POSE_VIS = 0.5, POSE_MIN_SHARE = 0.75;
+/* The hands (2.65.1): heavy scores a wrist hidden behind the other or the body low (down the line they always are; his
+   3 Aug 7i at address: lead 0.02, trail 0.41) while still placing it on the glove, so the hands take a wrist from
+   HAND_VIS. Both hands hold the grip: two wrists further apart than HAND_APART (of the frame's height) mean one is
+   wrong, and the surer is taken rather than the middle. Every other joint keeps POSE_VIS. [x, y, sure] each, or null. */
+const HAND_VIS = 0.3, HAND_APART = 0.06;
+function handFrom(l, r, ar = 1) {
+  const L = l && l[2] >= HAND_VIS ? [l[0] * ar, l[1]] : null, R = r && r[2] >= HAND_VIS ? [r[0] * ar, r[1]] : null;
+  if (L && R) return Math.hypot(L[0] - R[0], L[1] - R[1]) <= HAND_APART ? midP(L, R) : l[2] >= r[2] ? L : R;
+  return L || R;
+}
 const POSE_SQUARE = 0.2;   // face-on: hip and shoulder width at address, each at least this share of the torso's length
 const IMPACT_SURE = 0.06;  // impact found from the hands counts as caught when the frames either side are at most this many seconds away
 const PLANE_INLINE = 0.2;  // down the line: the shoulders at address at most this share of the torso's length apart (a judgement, about 15° off the line)
@@ -3976,7 +3986,7 @@ function poseMeasures(sw) {
   const a = fr.findIndex(body); if (a < 0) return { found, of: fr.length, reliable: false, view: sw.view, frames: fr };
   // The hands: both wrists' middle, or the one the model is sure of (down the line one often hides behind the other;
   // before 2.63.0 both were needed, so such a clip found no top or impact).
-  const handP = f => { const l = P(f, PJ.lWr), r = P(f, PJ.rWr); return l && r ? midP(l, r) : l || r; };
+  const handP = f => f && f.j ? handFrom(f.j[PJ.lWr], f.j[PJ.rWr], ar) : null;
   const hands = f => { const p = handP(f); return p ? p[1] : null; };
   // The positions: impact as he marked it, else the hands' lowest point after the top; the top, the hands' highest before impact.
   const idx = fr.map((_, i) => i);
@@ -4324,7 +4334,7 @@ function swingPhases(xs) {
   for (let i = fast; i < n && y[i] >= lo - gone; i++) { if (y[i] > lo) lo = y[i]; if (xs[i].h[1] > xs[low].h[1]) low = i; }
   return { top: xs[top].t, fast: xs[fast].t, low: xs[low].t };
 }
-const handOf = j => { const ok = k => j && j[k] && j[k][2] >= POSE_VIS ? j[k] : null, l = ok(PJ.lWr), r = ok(PJ.rWr); return l && r ? midP(l, r) : l || r; };
+const handOf = j => j ? handFrom(j[PJ.lWr], j[PJ.rWr]) : null;
 async function videoFrames(src, times, onFrame) {
   const vid = document.createElement('video');
   vid.preload = 'auto'; vid.muted = true; vid.playsInline = true; vid.src = src;
@@ -4416,7 +4426,7 @@ function traceData(sw, m = poseMeasures(sw)) {
   const tr = sw.track && Array.isArray(sw.track.pts) && sw.track.pts.length >= TRACK_MIN ? sw.track.pts : null;
   let pts, gap = Infinity;
   if (tr) {
-    pts = tr.map(q => { const l = q[3] >= POSE_VIS ? [q[1] * ar, q[2]] : null, r = q[6] >= POSE_VIS ? [q[4] * ar, q[5]] : null; return { t: q[0], p: l && r ? midP(l, r) : l || r }; });
+    pts = tr.map(q => ({ t: q[0], p: handFrom(q.slice(1, 4), q.slice(4, 7), ar) }));
     const st = pts.slice(1).map((q, i) => q.t - pts[i].t).filter(x => x > 0).sort((a, b) => a - b);
     gap = 3.5 * (st[st.length >> 1] || 0.02);
   } else pts = m.frames.map((f, i) => ({ t: f.t, p: m.hands[i] }));
