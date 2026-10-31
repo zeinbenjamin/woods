@@ -11,6 +11,7 @@ import { startApp, card } from './harness.js';
 
 const fixture = f => readFileSync(new URL(`fixtures/${f}`, import.meta.url), 'utf8');
 const CAL = fixture('miclub-calendar.html'), SHEET = fixture('miclub-timesheet.html'), EMPTY = fixture('miclub-calendar-empty.html');
+const Q18 = fixture('quick18-matrix.html');
 // Tomorrow, local: today would hide the times already past, which depends on the clock.
 const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const TOMORROW = day(1), LATER = day(3);
@@ -27,6 +28,8 @@ before(async () => {
     // GolfNow's TeeItUp API (2.43.0), asked with the club's alias: one 18-hole time for up to four.
     if (u.pathname === '/v2/tee-times') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(req.headers['x-be-alias'] === 'tiu-golf' ? JSON.stringify([{ teetimes: [{ teetime: '2026-10-31T07:30:00', maxPlayers: 4, bookedPlayers: 0, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 4500, allowedPlayers: [1, 2, 3, 4] }] }] }]) : '{}'); }
     res.writeHead(200, { 'content-type': 'text/html' });
+    // Quick18 (2.61.0): Lane Cove's real sheet (for 4 Nov), served for any day.
+    if (u.pathname === '/teetimes/searchmatrix') return res.end(Q18);
     if (/ViewPublicCalendar/.test(u.pathname)) return res.end(id === '5' ? EMPTY : CAL.replaceAll('2026-10-30', '1999-01-01').replaceAll('2026-11-02', '1999-01-02').replaceAll('2026-10-31', u.searchParams.get('selectedDate')));
     res.end(SHEET);
   });
@@ -41,7 +44,8 @@ before(async () => {
     c('c_events', 'Events GC', -34.05, { bookable: true, bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/ListBookingEvents.msp?booking_resource_id=3000004` }),
     c('c_down', 'Down GC', -33.92, { bookable: true, bookingUrl: mi(4) }),
     c('c_empty', 'Empty GC', -33.93, { bookingUrl: mi(5) }),
-    c('c_q18', 'Quick GC', -33.94, { bookable: true, bookingUrl: 'https://lanecove.quick18.com/teetimes/searchmatrix', bookingNote: 'Public 9 holes.' }),
+    c('c_q18', 'Quick GC', -33.94, { bookable: true, bookingUrl: `http://127.0.0.1:${fake.address().port}/teetimes/searchmatrix` }),
+    c('c_gb', 'Booking GC', -33.945, { bookable: true, bookingUrl: 'https://www.golf-booking.com/en/club/booking-gc', bookingNote: 'Public 9 holes.' }),
     c('c_priv', 'Private GC', -33.905, { bookable: false, bookingUrl: mi(3000002) }),
     c('c_shut', 'Shut GC', -33.905, { closed: true, bookingUrl: mi(3000003) }),
   ] } });
@@ -62,8 +66,9 @@ test('Courses opens Tee times: seven days, today first, and the courses near hom
   app.click(days[1]);
   await settled('tomorrow checked');
   const asked = new Set(hits.filter(h => /Calendar/.test(h)).map(h => new URL(h, 'http://x').searchParams.get('booking_resource_id')));
-  assert.deepEqual([...asked].sort(), ['3000000', '3000004', '4', '5'], 'near home, public or not known, readable (an event-list link too): not Far (33 km), Private, Shut or Quick');
-  assert.match(app.text('#ttStatus'), /3 of 5 courses have times that suit/);
+  assert.deepEqual([...asked].sort(), ['3000000', '3000004', '4', '5'], 'near home, public or not known, readable (an event-list link too): not Far (33 km), Private, Shut or Booking');
+  assert.match(app.text('#ttStatus'), /4 of 6 courses have times that suit/);
+  assert.ok(hits.some(h => h.startsWith('/teetimes/searchmatrix?teedate=' + TOMORROW.replace(/-/g, ''))), 'the Quick18 course asked for the day\'s sheet');
   assert.ok(hits.some(h => h.startsWith('/v2/tee-times?date=') && h.includes('facilityIds=16001')), 'the TeeItUp course asked through GolfNow\'s API');
   assert.match(app.text('#ttNotes'), /2 private or closed courses are not searched/);
 });
@@ -86,10 +91,14 @@ test('a course with times: its rates, each time with its spots and the club\'s o
 test('every course that shows nothing says why', () => {
   assert.match(row('c_down'), /Couldn't read its tee times: the booking site answered 503/);
   assert.match(row('c_empty'), /lists no rates at all/);
-  assert.match(app.text('#ttOther'), /Quick GC/);
+  assert.match(app.text('#ttOther'), /Booking GC/);
   assert.match(app.text('#ttOther'), /Public 9 holes/);
   const ids = sel => app.$$(sel).map(x => x.dataset.tt || x.id.replace('tt_', ''));
-  assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near', 'c_tiu', 'c_events'], 'only courses with times in the list, nearest first');
+  assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near', 'c_q18', 'c_tiu', 'c_events'], 'only courses with times in the list, nearest first');
+  // The Quick18 course: each time links to its own Select page on the club's sheet.
+  const q18 = app.$('#tt_c_q18 a.ttime');
+  assert.match(q18.textContent, /06:00\s*4 free/);
+  assert.match(q18.href, /\/teetimes\/course\/877\/teetime\/202611040600\?psid=4454&p=0$/);
   // The TeeItUp course: its time, and the club's own page for the day.
   const tiu = app.$('#tt_c_tiu a.ttime');
   assert.match(tiu.textContent, /07:30\s*4 free/);

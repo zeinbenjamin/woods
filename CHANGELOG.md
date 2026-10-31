@@ -1,3 +1,8 @@
+## 2.61.0 — 2026-11-01
+- Find a tee time now reads Lane Cove's own booking site (Quick18): each time shows its spots free and price, and tapping it opens that exact time on the club's site to book. Members' rates are left out. Lane Cove's booking link needs to be `https://lanecove.quick18.com` for this (it's currently misspelt).
+- A club whose public calendar lists nothing at all (Camden, Castle Hill, Cronulla, Richmond this week) now says so, instead of "couldn't be read".
+- Castle Hill is now marked private (its own site says so), and Camden's and Richmond's booking notes say their public calendars were empty, once their imports are loaded again.
+
 ## 2.60.1 — 2026-10-31
 - *Across the swing* now runs across the swing's real time, address to finish, so frames packed around impact no longer squeeze the backswing to one side.
 - Address, Top, Impact and Finish are marked on every chart and named once underneath; names that sit close together no longer run into each other.

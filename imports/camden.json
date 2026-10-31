@@ -15,7 +15,7 @@
       "lng": 150.72902,
       "tee": "white",
       "notes": "18 holes, par 71, 5,279 m off the white tees. Lengths in metres; tee sets: white, blue, red, orange (white is the primary: the first men's set the card lists, the rated set). No handicap rating stored (none from Golf Australia checked); seen on Golfify: white 70 / 117. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card. Golfify prints the white set twice; one copy is kept. Hole 9 is a par 3 off the white tees (175 m) and a par 4 off the blue (253 m); pars here are the white tees'.",
-      "source": "Card: Golfify (blue, white, red and orange, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/47061390, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://camden.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000).",
+      "source": "Card: Golfify (blue, white, red and orange, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/47061390, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://camden.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000); rechecked 2026-11-01: the public calendar lists no rates.",
       "holes": [
         {
           "n": 1,
@@ -235,7 +235,8 @@
         }
       ],
       "bookable": true,
-      "bookingUrl": "https://camden.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000"
+      "bookingUrl": "https://camden.miclub.com.au/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000",
+      "bookingNote": "Its public calendar listed no rates on 1 Nov 2026 and the club's site opens on the members' login: call the club before planning a round."
     }
   ],
   "sessions": [],
