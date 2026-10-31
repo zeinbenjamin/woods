@@ -107,7 +107,13 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .pl-thru { fill: none; stroke: #B9C2BB; stroke-opacity: .85; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
 .pl-back.sparse, .pl-down.sparse, .pl-thru.sparse, .pl-under.sparse { stroke-dasharray: 0.1 7; }
 .pl-head { fill: #F4F7F3; stroke: #0B100B; stroke-width: 1.5; } .planeKey .k-thru { border-top: 3px solid #B9C2BB; }
-.tracer { margin: 10px 0 4px; } .tracerPic { margin-top: 6px; max-width: 420px; } .tracerPic > img { width: 100%; display: block; }
+.swsum { margin: 8px 0 10px; border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; }
+.sumrow { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 9px 12px; border-top: 1px solid var(--rule); } .sumrow:first-child { border-top: 0; }
+.sumrow > b { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; padding-top: 2px; }
+.sumrow .tsTiles { margin-top: 0; } .sumrow .swshot { margin: 6px 0 0; } .sumrow .analysis { margin: 0; padding: 0; border: 0; background: none; }
+.sumrow .ties { margin-top: 6px; } .planeTag.tagLow { top: auto; bottom: 8px; }
+@media (max-width: 420px) { .sumrow { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+.tracer { margin: 10px 0 4px; } .switches { display: flex; flex-wrap: wrap; gap: 4px 18px; } .tracerPic { margin-top: 6px; max-width: 420px; } .tracerPic > img { width: 100%; display: block; }
 /* svg.trShot.trShot: outranks `.bigmap svg { height: auto }`, which the swing sheet's video sits in (the tracer drew square). */
 svg.trShot.trShot { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .trShot * { vector-effect: non-scaling-stroke; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .ts-under { stroke: #0B100B; stroke-opacity: .45; stroke-width: 7; } .ts-line { stroke: #D7B66D; stroke-width: 3.5; stroke-dasharray: 1 7; }
@@ -3882,7 +3888,8 @@ Answer as JSON with exactly these keys, keeping to the word limits:
   "feel": "the swing thought he takes to the ball (8 words or fewer)",
   "drill": { "name": "one drill (6 words or fewer)", "how": "how to do it (25 words or fewer)" },
   "check": "how he will know it is working, from ball flight or contact (15 words or fewer)",
-  "ball_data": "agrees" | "contradicts" | "unclear",${sw.view === 'dtl' ? `
+  "ball_data": "agrees" | "contradicts" | "unclear",${poseContext(sw) || swingShotContext(sw, session) ? `
+  "ties": "how it fits together (30 words or fewer): which of the MEASURED positions above${swingShotContext(sw, session) ? " and this swing's own shot" : ''} your fix accounts for, naming them; say plainly where the measures and what you see disagree",` : ''}${sw.view === 'dtl' ? `
   "wrist": { "top": "cupped" | "flat" | "bowed" | "cannot tell", "lead_arm_parallel": "held" | "opening" | "released" | "cannot tell", "frames": "which frames you read these from" },` : ''}
   "matches_ball_data": "one short sentence: does what you see explain the strike mix above?",
   "observations": [ { "what": "one specific thing you can see", "evidence": "which frame(s) show it", "confidence": "high" | "medium" | "low" } ],
@@ -4179,7 +4186,7 @@ function poseAxis(m, W, P) {
 }
 // The swing card's body section.
 // readOnly (the Swings tab's card, 2.61.0): what was measured, without the buttons that measure it.
-function poseSection(sw, s, { readOnly = false } = {}) {
+function poseSection(sw, s, { readOnly = false, plane = true, fold = false } = {}) {
   if (!(sw.frames || []).length) return '';
   const m = sw.pose ? poseMeasures(sw) : null;
   if (!m && readOnly) return `<p class="small muted" id="poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Measure the body</i> is on its ${s.type === 'round' ? 'round' : 'session'}'s page.</p>`;
@@ -4191,9 +4198,10 @@ function poseSection(sw, s, { readOnly = false } = {}) {
   // No body on any frame says so; a view the measures don't cover says that, never both.
   if (!m.found) h += `<p class="small muted" id="poseNone_${sw.id}">No body was found on these frames. Film with the whole body in the picture, then measure again.</p>`;
   else if (m.square === false) h += `<p class="small muted" id="poseSquare_${sw.id}">Not measured: at address the hips and shoulders are almost in line, so the camera wasn't square on to the chest. Face-on measures need the camera facing you; a clip filmed from behind or down the line can't give them.</p>`;
-  else if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>`;
+  else if (vals.length) { const ul = `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>`;
+    h += fold ? `<details id="bodyAll_${sw.id}"><summary class="small muted" style="cursor:pointer">Every measure · ${vals.length}</summary>${ul}</details>` : ul; }
   else h += `<p class="small muted">The skeleton is drawn, but measures need a face-on or down-the-line view: this one is "${esc(VIEWS[sw.view] || 'other')}".</p>`;
-  if (m.view === 'dtl' && m.found && m.keys) h += planeSection(sw, s, m, readOnly);
+  if (plane && m.view === 'dtl' && m.found && m.keys) h += planeSection(sw, s, m, readOnly);
   const tr = m.keys ? poseTraces(m) : '';
   const guide = POSE_GUIDE[m.view] ? `<p class="small muted" id="poseGuide_${sw.id}">Dotted: a guide at the top and impact${m.plane ? ', and for the plane coming down too; its band is the V, from the shaft line to the shoulder line' : ''}. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '';
   if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}${guide}</details>`;
@@ -4243,12 +4251,14 @@ function planeSection(sw, s, m, readOnly) {
   if (!m.plane) return `<div class="plane" id="plane_${sw.id}"><div class="small"><b>Swing plane</b></div><p class="small muted" id="planeOff_${sw.id}">${m.inLine === false ? planeCamera(m) : 'Not measurable: the hands or shoulders at address weren\'t found surely enough, or the ball is above them.'}</p>${move ? `<div class="row-actions">${move}</div>` : ''}</div>`;
   const on = overlayOn('plane');
   // Cropped top to bottom to the swing: from a little above the highest hands, head or shoulders to a little under the ball.
-  const d = traceData(sw, m), ar = d.ar, ys = [m.plane.ball[1], m.plane.shoulders[1], ...d.runs.flat().map(q => q.p[1])];
+  const shot = on && overlayOn('tracer') ? tracerPts(sw) : null;
+  const d = traceData(sw, m), ar = d.ar, ys = [m.plane.ball[1], m.plane.shoulders[1], ...d.runs.flat().map(q => q.p[1]), ...(shot ? shot.map(q => q[1]) : [])];
   const y0 = Math.max(0, Math.min(...ys) - 0.08), y1 = Math.min(1, m.plane.ball[1] + 0.1), ch = Math.max(0.2, y1 - y0);
-  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar }, d)}</div><span class="planeTag">Measured · your hands, 2D</span></div>
+  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar }, d)}${shot ? `<svg class="trShot" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">${tracerInner(tracerSamples(shot))}</svg>` : ''}</div><span class="planeTag">Measured · your hands, 2D</span>${shot ? `<span class="planeTag tracerTag tagLow">Shot traced by you${tracerShape(sw) ? ` · ${tracerShape(sw)}` : ''}</span>` : ''}</div>
     <div class="planeKey small muted"><span><i class="k-shaft"></i>Shaft line</span><span><i class="k-sh"></i>Shoulder line</span><span><i class="k-back"></i>Hands going back</span><span><i class="k-down"></i>Coming down</span><span><i class="k-thru"></i>After impact</span></div>` : '';
   const trace = !readOnly && !d.dense && sw.video ? `<button class="quiet" data-act="traceSwing" data-sid="${s.id}" data-wid="${sw.id}">Trace the hands from the video</button>` : '';
-  return `<div class="plane" id="plane_${sw.id}"><div class="spread">${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}<span class="small muted">your hands; the club isn't tracked</span></div>${pic}${on ? traceNote(sw, d) : ''}${move || trace ? `<div class="row-actions" style="margin-top:4px">${trace}${move}</div>` : ''}<div id="tr_${sw.id}"></div></div>`;
+  const both = !!shot, redraw = both && !readOnly ? `<button class="quiet" data-act="traceShot" data-sid="${s.id}" data-wid="${sw.id}">Redraw the shot</button>` : '';
+  return `<div class="plane" id="plane_${sw.id}"><div class="spread">${both ? `<span class="switches">${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}${overlaySwitch('tracer', 'Shot tracer', `tracerSw_${sw.id}`)}</span>` : `${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}<span class="small muted">your hands; the club isn't tracked</span>`}</div>${pic}${on ? traceNote(sw, d) : ''}${both ? `<p class="small muted" id="tracerNote_${sw.id}">The hands are measured; the ball's flight is a drawing from your taps, not a measurement. The club isn't tracked.</p>` : ''}${move || trace || redraw ? `<div class="row-actions" style="margin-top:4px">${trace}${redraw}${move}</div>` : ''}<div id="tr_${sw.id}"></div></div>`;
 }
 // Where the line came from, said under it.
 function traceNote(sw, d) {
@@ -4575,11 +4585,17 @@ const cap = w => w ? w[0].toUpperCase() + w.slice(1) : w;
 function tracerNumbers(sw, s) {
   const x = swingShot(sw, s); if (!x || x.gone) return '';
   const tile = (v, label, dim) => `<div class="tsTile"><b${dim ? ' class="muted"' : ''}>${v}</b><span>${label}</span></div>`;
-  if (x.where === 'course') return `<div class="tsTiles" id="tracerNums_${sw.id}">${tile(x.len == null ? '–' : `${fmt(x.len)} m`, x.len == null ? 'not measurable' : 'went', x.len == null)}${tile(x.lie && x.lie !== 'unknown' ? esc(cap(x.lie)) : '–', x.lie && x.lie !== 'unknown' ? 'finished' : 'lie not recorded', !x.lie || x.lie === 'unknown')}${tile(x.left == null || x.lie === 'green' ? '–' : `${fmt(x.left)} m`, x.lie === 'green' ? 'on the green' : 'left to the green', x.left == null || x.lie === 'green')}</div>
-    <p class="small muted">Hole ${x.h.n}, ${SHOT_KIND[x.kind].toLowerCase()}: the numbers are measured on the hole map, where you marked the ball. The line's shape is your drawing.</p>`;
+  if (x.where === 'course') return `<div class="tsTiles" id="shotNums_${sw.id}">${tile(x.len == null ? '–' : `${fmt(x.len)} m`, x.len == null ? 'not measurable' : 'went', x.len == null)}${tile(x.lie && x.lie !== 'unknown' ? esc(cap(x.lie)) : '–', x.lie && x.lie !== 'unknown' ? 'finished' : 'lie not recorded', !x.lie || x.lie === 'unknown')}${tile(x.left == null || x.lie === 'green' ? '–' : `${fmt(x.left)} m`, x.lie === 'green' ? 'on the green' : 'left to the green', x.left == null || x.lie === 'green')}</div>
+`;
   const sh = x.sh, side = sh.carrySide;
-  return `<div class="tsTiles" id="tracerNums_${sw.id}">${tile(`${+sh.carry.toFixed(1)} m`, 'carry, from the bay')}${tile(`${+sh.total.toFixed(1)} m`, 'total, from the bay')}${tile(side == null ? '–' : side === 0 ? 'on line' : `${+Math.abs(side).toFixed(1)} m ${side < 0 ? 'left' : 'right'}`, side == null ? 'left or right: not measured here' : 'side, from the bay', side == null)}</div>
-    <p class="small muted">The distances are the bay's; the line is your drawing.</p>`;
+  return `<div class="tsTiles" id="shotNums_${sw.id}">${tile(`${+sh.carry.toFixed(1)} m`, 'carry, from the bay')}${tile(`${+sh.total.toFixed(1)} m`, 'total, from the bay')}${tile(side == null ? '–' : side === 0 ? 'on line' : `${+Math.abs(side).toFixed(1)} m ${side < 0 ? 'left' : 'right'}`, side == null ? 'left or right: not measured here' : 'side, from the bay', side == null)}</div>
+`;
+}
+const tracerShape = sw => { const x = sw.tracer && SHOT_SHAPES.find(y => y[0] === sw.tracer.shape); return x ? x[1] : ''; };
+// The swing plane's picture draws the traced shot too when both are on (2.67.0): one picture, not two.
+function planeDrawsShot(sw) {
+  if (!overlayOn('plane') || !overlayOn('tracer') || !tracerPts(sw) || !sw.pose) return false;
+  const m = poseMeasures(sw); return !!(m && m.view === 'dtl' && m.found && m.keys && m.plane && m.frames[m.keys.address]);
 }
 function tracerSection(sw, s, readOnly) {
   if (!(sw.frames || []).length) return '';
@@ -4592,10 +4608,11 @@ function tracerSection(sw, s, readOnly) {
   const img = `<img src="/_blob/${last.asset}" alt="The finish, with the traced flight" loading="lazy">`;
   const pic = ar ? `<div class="pf tracerPic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%">${img}${svg}</div>`
     : `<div class="pf tracerPic">${img}${svg}`;
-  const on = overlayOn('tracer');
-  return `<div class="tracer" id="tracer_${sw.id}"><div class="spread">${overlaySwitch('tracer', 'Shot tracer', `tracerSw_${sw.id}`)}<span class="small muted">your drawing</span></div>
-    ${on ? `${pic}<span class="planeTag tracerTag">Traced by you${shape ? ` · ${shape[1]}` : ''}</span></div>${tracerNumbers(sw, s)}` : ''}
-    <p class="small muted" id="tracerNote_${sw.id}">A drawing from your taps, not a measurement.${!readOnly && !swingShot(sw, s) && sessionHasShots(s) ? ' Tie the swing to its shot (above) for the real distances beside it.' : ''}</p>
+  const on = overlayOn('tracer'), merged = planeDrawsShot(sw);
+  if (merged) return '';
+  return `<div class="tracer" id="tracer_${sw.id}"><div class="spread">${overlaySwitch('tracer', 'Shot tracer', `tracerSw_${sw.id}`)}<span class="small muted">${merged ? 'your drawing, on the plane\'s picture below' : 'your drawing'}</span></div>
+    ${on && !merged ? `${pic}<span class="planeTag tracerTag">Traced by you${shape ? ` · ${shape[1]}` : ''}</span></div>` : ''}
+    <p class="small muted" id="tracerNote_${sw.id}">A drawing from your taps, not a measurement.${!readOnly && !swingShot(sw, s) && sessionHasShots(s) ? ' Tie the swing to its shot (above) for the real distances.' : ''}</p>
     ${btn ? `<div class="row-actions">${btn}</div>` : ''}</div>`;
 }
 const sessionHasShots = s => s.type === 'round' ? holesOf(s).some(h => (h.shots || []).length) : (s.blocks || []).some(b => (b.shots || []).length);
@@ -4638,7 +4655,7 @@ const traceAt = (d, t) => { let best = null; if (t == null) return null; for (co
 // A reading as a coach gives it: the one fix, why, a feel, a drill, how to
 // know it's working. Everything behind it is one tap down. Readings from
 // before 2.11.0 have no why/feel/check, so they show the fix and the fold.
-function swingReading(sw, s, a) {
+function swingReading(sw, s, a, { fold = false, pre = '' } = {}) {
   const line = (label, text) => text ? `<div class="cue"><b>${label}</b> ${esc(text)}</div>` : '';
   const drill = a.drill && a.drill.name ? a.drill.name + (a.drill.how ? ` — ${a.drill.how}` : '') : '';
   const obs = a.observations || [], tell = a.cannot_tell || [];
@@ -4652,10 +4669,39 @@ function swingReading(sw, s, a) {
   ].join('');
   return `<div class="analysis">
       <div class="one${String(a.one_thing || '').length > 110 ? ' long' : ''}">${esc(a.one_thing || '')}</div>
-      ${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}
-      ${detail ? `<details class="seen" id="seen_${sw.id}"><summary class="small">What Claude saw${obs.length ? ` (${obs.length})` : ''}</summary>${detail}</details>` : ''}
+      ${a.ties ? `<div class="small ties" id="${pre}ties_${sw.id}"><b>How it fits together:</b> ${esc(a.ties)}</div>` : ''}
+      ${fold && (a.why || a.feel || drill || a.check) ? `<details class="seen" id="${pre}how_${sw.id}"><summary class="small">Why, feel and drill</summary>${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}</details>` : `${line('Why', a.why)}${line('Feel', a.feel)}${line('Drill', drill)}${line('Working when', a.check)}`}
+      ${detail ? `<details class="seen" id="${pre}seen_${sw.id}"><summary class="small">What Claude saw${obs.length ? ` (${obs.length})` : ''}</summary>${detail}</details>` : ''}
       <div class="small muted" style="margin-top:6px">Read from frames by Claude${sw.analysedIn === 'chat' ? ' in a chat' : ''} on ${dateLabel(sw.analysedOn || s.date)} — a reading, not a measurement.</div>
     </div>`;
+}
+/* ---------- this swing, in one place (2.67.0) ----------
+   He found the card's parts each talking about their own thing (his Georges River 5i and Long Reef driver): the ball,
+   the body, the plane and the reading, never joined. The card now opens with them in four rows, all derived on each
+   draw: the ball (the tied shot's numbers, the shape he traced), the body (how many measures are outside the guide,
+   named), the plane (where the hands were against the V), and the fix with the reading's own "how it fits together"
+   (`analysis.ties`, asked of new readings; older ones say to analyse again). The rest folds under it. */
+const BODY_SHORT = { swayTop: 'hip sway at the top', hipImpact: 'hips at impact', headImpact: 'head drift', armTop: 'lead arm at the top',
+  extImpact: 'hips toward the ball', bendLoss: 'forward bend lost', headUp: 'head height', handsImpact: 'hands height at impact' };
+function swingSummary(sw, s, { readOnly = false, pre = '' } = {}) {
+  const rows = [], a = sw.analysis, x = swingShot(sw, s);
+  const row = (k, label, body) => rows.push(`<div class="sumrow" id="${pre}sum${k}_${sw.id}"><b>${label}</b><div>${body}</div></div>`);
+  const shape = tracerPts(sw) ? tracerShape(sw) : '';
+  if (x && !x.gone) row('Ball', `The ball${shape ? ` · ${shape.toLowerCase()}, traced` : ''}`, tracerNumbers(sw, s).replace(' id="shotNums_', ` id="${pre}shotNums_`) + (readOnly ? '' : swingShotSection(sw, s)));
+  else if (!readOnly && (x || swingTaggable(s))) row('Ball', `The ball${shape ? ` · ${shape.toLowerCase()}, traced` : ''}`, swingShotSection(sw, s));
+  else if (shape) row('Ball', 'The ball', `<span class="small">${esc(shape)}, as you traced it.</span>`);
+  const m = sw.pose ? poseMeasures(sw) : null, vals = poseValues(m).filter(v => v.v != null);
+  const body = vals.filter(v => !v.plane && v.off != null), off = body.filter(v => v.off);
+  if (m && body.length) row('Body', 'The body', m.reliable
+    ? `<span class="small">${off.length ? `<b class="offg">${off.length} of ${body.length}</b> outside the guide: ${esc(off.map(v => BODY_SHORT[v.k] || v.name.toLowerCase()).join(', '))}.` : `All ${body.length} inside the guide.`}</span>`
+    : `<span class="small muted">Measured on too few frames to rely on.</span>`);
+  const pl = vals.filter(v => v.plane);
+  if (pl.length) { const said = v => v.say(v.v).split(' (')[0].replace(/, \d+° above the shaft line$/, '');
+    const ws = pl.map(said), same = pl.length === 2 && ws[0] === ws[1];
+    row('Plane', 'The plane', `<span class="small">${same ? `${cap(ws[0])} at the top and coming down` : pl.map((v, i) => `${v.k === 'planeTop' ? 'At the top' : 'Coming down'}: ${v.off ? `<span class="offg">${esc(ws[i])}</span>` : esc(ws[i])}`).join(' · ')}.</span>`); }
+  if (a && a.one_thing) row('Fix', 'The fix', swingReading(sw, s, a, { fold: true, pre })
+    + (!readOnly && !a.ties && (poseContext(sw) || swingShotContext(sw, s)) ? `<p class="small muted" id="${pre}tiesHint_${sw.id}">Analyse again and Claude says how the ball, the body and the fix fit together.</p>` : ''));
+  return rows.length ? `<div class="swsum" id="${pre}sum_${sw.id}">${rows.join('')}</div>` : '';
 }
 function swingCard(sw, s, opts = {}) {
   const a = sw.analysis;
@@ -4663,18 +4709,19 @@ function swingCard(sw, s, opts = {}) {
     <div class="spread"><div><b>${esc(VIEWS[sw.view] || 'Swing')}</b>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}${a ? ' <span class="tag green">analysed</span>' : ''}</div>
       <span class="small muted">${sw.frames.length} frames${sw.impact != null ? `, packed around impact at ${sw.impact.toFixed(1)} s` : frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
-    ${swingShotSection(sw, s)}
+    ${a && sw.analysedView && sw.analysedView !== sw.view ? `<div class="notice small" id="angleNote_${sw.id}">This reading was made when the clip was marked ${esc(VIEWS[sw.analysedView] || sw.analysedView)}. Analyse again to read it as ${esc(VIEWS[sw.view] || sw.view)}.</div>` : ''}
+    ${swingSummary(sw, s)}
+    ${a && !a.one_thing ? swingReading(sw, s, a, { fold: true }) : ''}
+    ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet — tap Analyse and Claude reads these frames against your ball data for this club.</div>`}
+    ${tracerSection(sw, s)}
+    ${(() => { const m = sw.pose ? poseMeasures(sw) : null; return m && m.view === 'dtl' && m.found && m.keys ? planeSection(sw, s, m, false) : ''; })()}
+    ${poseSection(sw, s, { plane: false, fold: true })}
     ${(() => {
       // Once the body is measured its four positions show the swing, so the strip folds away (2.58.0, he asked).
       const strip = `<div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
     ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}`;
       return sw.pose && sw.frames.length ? `<details class="frames" id="frames_${sw.id}"><summary class="small muted">Frames · ${sw.frames.length}</summary>${strip}</details>` : strip;
     })()}
-    ${tracerSection(sw, s)}
-    ${poseSection(sw, s)}
-    ${a && sw.analysedView && sw.analysedView !== sw.view ? `<div class="notice small" id="angleNote_${sw.id}">This reading was made when the clip was marked ${esc(VIEWS[sw.analysedView] || sw.analysedView)}. Analyse again to read it as ${esc(VIEWS[sw.view] || sw.view)}.</div>` : ''}
-    ${a ? swingReading(sw, s, a) : ''}
-    ${a ? '' : `<div class="small muted" style="margin-top:6px">Not analysed yet — tap Analyse and Claude reads these frames against your ball data for this club.</div>`}
     <div class="row-actions">
       <button class="${a ? '' : 'primary'}" data-act="analyseSwing" data-sid="${s.id}" data-wid="${sw.id}">${a ? 'Analyse again' : 'Analyse'}</button>
       ${sw.video ? `<button data-act="playSwing" data-sid="${s.id}" data-wid="${sw.id}">Play video</button>` : ''}
@@ -5179,12 +5226,12 @@ function wireSwingForm(root, sessionId) {
 function reelCardHtml(sw, s) {
   const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
   const play = sw.video ? `<button class="primary" data-act="reelPlay" data-vid="${esc(sw.video)}" data-sid="${s.id}" data-wid="${sw.id}" id="reelPlay">Play video</button>` : '';
-  const pose = (sw.frames || []).length ? `<div id="reelPose">${(tracerSection(sw, s, true) + poseSection(sw, s, { readOnly: true })).replace(/ id="/g, ' id="rc_')}</div>` : '';
+  const pose = (sw.frames || []).length ? `<div id="reelPose">${(tracerSection(sw, s, true) + poseSection(sw, s, { readOnly: true, fold: true })).replace(/ id="/g, ' id="rc_')}</div>` : '';
   return `<div class="spread"><h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>${play}</div>
     <div id="reelVideo"></div>
     <p class="muted small">${[esc(w.label), esc(VIEWS[sw.view] || 'Other angle'), sw.note ? esc(sw.note) : ''].filter(Boolean).join(' · ')}</p>
     ${(() => { const x = swingShot(sw, s); return x && !x.gone ? `<p class="small" id="reelShot"><b>This swing's shot:</b> ${esc(swingShotText(x))}</p>` : ''; })()}
-    <div class="swing" id="reelCard">${a ? swingReading(sw, s, a) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
+    <div class="swing" id="reelCard">${swingSummary(sw, s, { readOnly: true, pre: 'rc_' })}${a && a.one_thing ? '' : a ? swingReading(sw, s, a, { fold: true, pre: 'rc_' }) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
     ${pose}
     <div class="row-actions"><button data-act="reelOpen" data-go-session="${go}">Open the ${s.type === 'round' ? 'round' : 'session'} →</button></div>`;
 }

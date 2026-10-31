@@ -384,7 +384,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
 evidence, confidence}]` (at most three since 2.11.0), `matches_ball_data`,
 `cannot_tell[]`; since 2.18.0, on down-the-line readings only, `wrist{top:
 cupped|flat|bowed|cannot tell, lead_arm_parallel: held|opening|released|cannot
-tell, frames}`. Older readings may have `positions[]`, `drill{name, why}`,
+tell, frames}`; since 2.67.0, when the swing has body measures or a tied
+shot, `ties` (a sentence: which measured positions and which shot the fix
+accounts for, and where they disagree). Older readings may have `positions[]`, `drill{name, why}`,
 and `notes` + `parsed: false` when prose was pasted instead of JSON.
 
 **Frame `t` is never 0.** Seeking a video to exactly zero yields an

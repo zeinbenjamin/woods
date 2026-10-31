@@ -1,3 +1,9 @@
+## 2.67.0 — 2026-10-31
+- A swing card now opens with the whole story in four rows: the ball (how far it went and where it finished, plus the shape you traced), the body (how many measures are outside the guide, and which), the plane (where your hands were against the V), and the fix.
+- New readings also say how it all fits together: which measured positions and which shot the fix accounts for, and where they disagree. Older readings say to analyse again to get this.
+- The traced shot and the swing plane are drawn on one picture, with both switches above it. Turn either off and the other keeps its own picture.
+- Why, feel and drill, what Claude saw, every body measure and the frames are folded under the summary, so the card is about a quarter shorter and the summary is the first thing you read.
+
 ## 2.66.0 — 2026-10-31
 - Shot tracer: on a swing card, *Trace the shot* takes three taps (the ball, where it peaked, where it came down) and the shape you saw, and draws the ball's flight over the finish frame like the tracers on golf videos. If you've already tapped the ball for the swing plane, Carry starts from there.
 - When the swing is tied to its shot, the real numbers sit beside the line: on the course, how far it went, where it finished and what was left to the green, from the hole map; at the range, the bay's carry, total and side. The line itself is labelled as your drawing, not a measurement.
