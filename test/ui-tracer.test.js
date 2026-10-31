@@ -139,6 +139,13 @@ test('the flight: out of the ball near straight up, level at the peak, through a
   // A ball that finished left: the peak heads left.
   const L = app.J(`tracerSegs([[0.5, 0.8], [0.45, 0.1], [0.3, 0.5]])`);
   assert.ok(L[0][2][0] > 0.45 && L[1][1][0] < 0.45);
+  // 2.69.0, his hook: up and to the right, over the peak, coming down to its LEFT but still right of the ball. Level at
+  // the peak heading where the ball goes after it (left), not right toward the landing seen from the ball, which made a
+  // fade with a flat cut back at the top.
+  const H = app.J(`tracerSegs([[0.53, 0.79], [0.635, 0.17], [0.6, 0.18]])`);
+  assert.ok(H[0][2][0] > 0.635 && H[1][1][0] < 0.635, 'level at the peak, heading left');
+  const pts = app.J(`tracerSamples([[0.53, 0.79], [0.635, 0.17], [0.6, 0.18]])`), after = pts.slice(pts.findIndex(q => Math.abs(q[0] - 0.635) < 1e-9 && Math.abs(q[1] - 0.17) < 1e-9));
+  assert.ok(after.every((q, i) => !i || q[0] <= after[i - 1][0] + 1e-9), 'from the peak on, it only moves left: no cut back');
 });
 
 test('its own switch, apart from the swing plane\'s; the Swings card shows it without the buttons', () => {

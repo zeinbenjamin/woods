@@ -189,7 +189,7 @@ test('a swing measured by the earlier model says so, and the Swings page measure
     : w.id === 'sw_b' ? { ...w, pose: { ...w.pose, by: 'mediapipe-0.10.35-heavy' }, track: { ...w.track, by: 'mediapipe-0.10.35-lite' } } : w) });
   await app.waitFor(() => app.E(`session('s1').swings.find(w => w.id === 'sw_a').pose.by.endsWith('lite')`), { what: 'poll' });
   app.go('range', { sessionId: 's1' });
-  assert.match(app.text('#poseOld_sw_a'), /^Measured with the earlier body model, which misplaced the wrists from behind\. Measure again/);
+  assert.match(app.text('#poseOld_sw_a'), /^Measured with the earlier body model, which misplaced the wrists from behind\. Analyse again/);
   assert.ok(app.$('#poseOld_sw_b'), 'traced by the earlier model, measured by the new: still old');
   assert.ok(!app.$('#poseOld_sw_bad'), 'a swing the new model measured says nothing');
   app.go('swings');
