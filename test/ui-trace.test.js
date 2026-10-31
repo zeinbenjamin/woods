@@ -24,10 +24,12 @@ function jointsAt(t) {
 }
 const HIDDEN = t => t > 0.98 && t < 1.06;   // the model loses both wrists here, as blur at speed does
 const ONE = t => t > 0.4 && t < 0.5;         // and the lead wrist alone here, hidden behind the other down the line
-const swing = (id, { pose = true, video = `${id}_vid` } = {}) => {
-  const frames = TS.map((t, i) => ({ asset: `${id}f${i}`, t }));
-  return { id, view: 'dtl', club: '7i', frames, addedOn: '2026-10-01', impact: 1.15, ball: { x: 0.7, y: 0.78 }, ...(video ? { video } : {}),
-    ...(pose ? { pose: { by: 'test', on: '2026-10-01', aspect: 1, frames: frames.map(f => ({ asset: f.asset, t: f.t, j: jointsAt(f.t) })) } } : {}) };
+// A slow-motion clip, as his 3 Aug 7i is: 8 frames across 13 s, the swing eight times slower, from 0.4 s.
+const SLOW = t => (t - 0.4) / 8 + 0.05, LONG_TS = Array.from({ length: 8 }, (_, i) => +(0.55 + i * 11.45 / 7).toFixed(2));
+const swing = (id, { pose = true, video = `${id}_vid`, ts = TS, at = t => t, impact = 1.15 } = {}) => {
+  const frames = ts.map((t, i) => ({ asset: `${id}f${i}`, t }));
+  return { id, view: 'dtl', club: '7i', frames, addedOn: '2026-10-01', ...(impact != null ? { impact } : {}), ball: { x: 0.7, y: 0.78 }, ...(video ? { video } : {}),
+    ...(pose ? { pose: { by: 'test', on: '2026-10-01', aspect: 1, frames: frames.map(f => ({ asset: f.asset, t: f.t, j: jointsAt(at(f.t)) })) } } : {}) };
 };
 
 let app;
@@ -36,15 +38,15 @@ before(async () => {
   app = await startApp({ seed: {
     clubs: [club('7i', 'iron', { order: 4 })],
     sessions: [{ id: 's1', v: 2, type: 'range', date: '2026-10-01', venue: 'Test range', blocks: [],
-      swings: [swing('sw_a'), swing('sw_b', { pose: false }), swing('sw_bad', { video: 'bad_vid' }), swing('sw_novid', { video: null })] }] } });
+      swings: [swing('sw_a'), swing('sw_b', { pose: false }), swing('sw_bad', { video: 'bad_vid' }), swing('sw_novid', { video: null }), swing('sw_long', { ts: LONG_TS, at: SLOW, impact: null })] }] } });
   await app.waitFor(() => app.E('S.sessions.length') === 1, { what: 'seeded' });
   app.win.carryVideoFrames = async (src, times, onFrame) => {
     if (src.includes('bad')) throw new Error('unreadable');
-    for (let i = 0; i < times.length; i++) { const t = Math.round(times[i] * 30) / 30; await onFrame(t, { t }, i); }   // a 30 fps clip: the frame shown
+    for (let i = 0; i < times.length; i++) { const t = Math.round(times[i] * 30) / 30; await onFrame(t, { t, src }, i); }   // a 30 fps clip: the frame shown
   };
   app.win.carryPose = {
-    async detect(src) { const i = +src.match(/f(\d+)$/)[1]; return { w: 9, h: 16, joints: jointsAt(TS[i]) }; },
-    async detectCanvas(c) { const j = jointsAt(c.t); if (HIDDEN(c.t)) { j[15] = [j[15][0], j[15][1], 0.1]; j[16] = [j[16][0], j[16][1], 0.1]; } if (ONE(c.t)) j[15] = [j[15][0] + 0.2, j[15][1], 0.1]; return { w: 9, h: 16, joints: j }; },
+    async detect(src) { const i = +src.match(/f(\d+)$/)[1]; return { w: 9, h: 16, joints: src.includes('long') ? jointsAt(SLOW(LONG_TS[i])) : jointsAt(TS[i]) }; },
+    async detectCanvas(c) { if (c.src.includes('long')) { const j = jointsAt(SLOW(c.t)), e = 0.006 * Math.sin(c.t * 97); j[15] = [j[15][0], j[15][1] + e, j[15][2]]; j[16] = [j[16][0], j[16][1] + e, j[16][2]]; return { w: 9, h: 16, joints: j }; } /* the model's wobble: more than the slowed hands move a frame */ const j = jointsAt(c.t); if (HIDDEN(c.t)) { j[15] = [j[15][0], j[15][1], 0.1]; j[16] = [j[16][0], j[16][1], 0.1]; } if (ONE(c.t)) j[15] = [j[15][0] + 0.2, j[15][1], 0.1]; return { w: 9, h: 16, joints: j }; },
   };
 });
 after(() => app && app.stop());
@@ -80,14 +82,14 @@ test('traced from the video: the frames a 30 fps clip shows, each once, the hand
   assert.deepEqual(Object.keys(tr).sort(), ['by', 'on', 'pts']);
   await app.waitFor(() => app.$('#traceNote_sw_a') && /video/.test(app.text('#traceNote_sw_a')) && !/Dotted/.test(app.text('#traceNote_sw_a')), { what: 'redrawn' });
   // Two frames lost at speed: 44 points, two runs, never bridged.
-  assert.equal(app.text('#traceNote_sw_a'), 'The hands from 44 frames of the video, about 30 a second; the line is smoothed between them, and broken where the hands weren\'t found surely.');
+  assert.equal(app.text('#traceNote_sw_a'), 'The hands from 44 frames of the video; the line is smoothed between them, and broken where the hands weren\'t found surely.');
   const d = app.J(`(() => { const d = traceData(session('s1').swings.find(w => w.id === 'sw_a')); return { dense: d.dense, runs: d.runs.map(r => [r[0].t, r[r.length - 1].t, r.length]), cuts: d.cuts }; })()`);
   assert.equal(d.dense, true);
   assert.deepEqual(d.runs, [[+(2 / 30).toFixed(3), +(29 / 30).toFixed(3), 28], [+(32 / 30).toFixed(3), +(47 / 30).toFixed(3), 16]]);
-  // Where the colours change: the top from the trace (the hands highest, at 22/30 s, not the frame at 0.75), impact
-  // where he marked it; unmarked, the hands' lowest point after the top in the trace (34/30 s, where the frames say 1.15).
-  assert.deepEqual(d.cuts, [0.05, +(22 / 30).toFixed(3), 1.15, 1.55]);
-  assert.deepEqual(app.J(`traceData({ ...session('s1').swings.find(w => w.id === 'sw_a'), impact: null }).cuts`), [0.05, +(22 / 30).toFixed(3), +(34 / 30).toFixed(3), 1.55]);
+  // Where the colours change, from the trace's own motion: the top the hands highest before the downswing (22/30 s,
+  // not the frame at 0.75), impact where he marked it, or unmarked the lowest after it (34/30 s, the frames say 1.15).
+  assert.deepEqual(d.cuts, [+(2 / 30).toFixed(3), +(22 / 30).toFixed(3), 1.15, +(47 / 30).toFixed(3)]);
+  assert.deepEqual(app.J(`traceData({ ...session('s1').swings.find(w => w.id === 'sw_a'), impact: null }).cuts`), [+(2 / 30).toFixed(3), +(22 / 30).toFixed(3), +(34 / 30).toFixed(3), +(47 / 30).toFixed(3)]);
   assert.ok(!app.$('#plane_sw_a path.sparse'), 'solid now');
   assert.ok(!app.$('#plane_sw_a [data-act="traceSwing"]'), 'nothing more to trace');
   // The colours change at the top and impact: green to the top, white to impact, grey after.
@@ -148,4 +150,28 @@ test('on the playing clip: the line draws itself to the clip\'s time, whole when
   assert.ok(!app.$('#sheetInner .trBox') && app.$('#sheetInner video'));
   app.$('#sheetInner [data-close]').click();
   app.win.localStorage.removeItem('carry.overlays');
+});
+
+test('a slow-motion clip: the whole swing traced, the downswing filled in, and the parts found by motion, not by seconds', async () => {
+  // 2.64.1: his 3 Aug 7i is slow motion, the swing filling 2 to 12 s of a 13 s clip; 90 looks across it gave the
+  // downswing about ten, a line of corners on his phone.
+  app.win.__steps = [];
+  const tr = await app.E(`traceHands(session('s1').swings.find(w => w.id === 'sw_long'), (i, n, ph) => window.__steps.push(ph))`);
+  const steps = app.J('window.__steps');
+  assert.equal(steps.filter(p => p === 'trace').length, 240, 'the whole clip, at most 240 looks');
+  assert.equal(steps.filter(p => p === 'fill').length, 120, 'then the downswing filled in');
+  // The downswing runs from the top (real 0.75 s) to the hands' low (real 1.15 s), eight times slower: 6.0 to 9.2.
+  // Every 30 fps frame between them is there.
+  const ts = tr.pts.map(p => p[0]), want = [];
+  for (let f = 180; f <= 276; f++) want.push(+(f / 30).toFixed(3));
+  assert.deepEqual(want.filter(t => !ts.includes(t)), [], 'no frame of the downswing missing');
+  assert.ok(ts.every((t, i) => !i || t > ts[i - 1]), 'in time order: ' + JSON.stringify(ts.filter((t, i) => i && t <= ts[i - 1]).slice(0, 5)));
+  const long = { ...app.J(`session('s1').swings.find(w => w.id === 'sw_long')`), track: tr };
+  const d = app.J(`(() => { const d = traceData(${JSON.stringify(long)}); return { cuts: d.cuts, runs: d.runs.length }; })()`);
+  assert.equal(d.runs, 1, 'denser in the downswing than elsewhere is not a gap');
+  assert.ok(Math.abs(d.cuts[1] - 6) < 0.1 && Math.abs(d.cuts[2] - 9.2) < 0.1, `top ${d.cuts[1]}, impact ${d.cuts[2]}`);
+  // A normal 30 fps clip already has every frame from the first look: nothing to fill.
+  app.win.__steps = [];
+  await app.E(`traceHands(session('s1').swings.find(w => w.id === 'sw_a'), (i, n, ph) => window.__steps.push(ph))`);
+  assert.equal(app.J('window.__steps').filter(p => p === 'fill').length, 0);
 });

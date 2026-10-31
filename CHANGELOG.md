@@ -1,3 +1,8 @@
+## 2.64.1 — 2026-10-31
+- The hand line now works on slow-motion clips. It traced them too thinly (the downswing got about ten points), which drew a line of corners. Now the whole swing is traced and the downswing filled in frame by frame.
+- Where the line changes colour (the top, and impact) now comes from how your hands actually move, so it's right whatever the clip's speed. Before, it could switch to "coming down" halfway down.
+- To redo a swing traced before this, use *Measure again*.
+
 ## 2.64.0 — 2026-10-31
 - The hand line is smooth now, like the tracers on golf videos. *Measure the body* also traces your hands through the stored video, on every frame the clip has across the swing, not just the 16 pictures, and draws one smooth line from address to the finish: green going back, white coming down, grey after impact.
 - The line draws itself over the clip as it plays, in the swing's video and in the Swings feed, with your hands as a dot, and shows whole when paused. The *Swing plane* switch turns it off.

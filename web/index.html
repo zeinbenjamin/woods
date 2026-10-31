@@ -4226,7 +4226,7 @@ function planeSection(sw, s, m, readOnly) {
 }
 // Where the line came from, said under it.
 function traceNote(sw, d) {
-  if (d.dense) return `<p class="small muted" id="traceNote_${sw.id}">The hands from ${d.n} frames of the video${d.fps ? `, about ${fmt(d.fps)} a second` : ''}; the line is smoothed between them${d.runs.length > 1 ? ', and broken where the hands weren\'t found surely' : ''}.</p>`;
+  if (d.dense) return `<p class="small muted" id="traceNote_${sw.id}">The hands from ${d.n} frames of the video; the line is smoothed between them${d.runs.length > 1 ? ', and broken where the hands weren\'t found surely' : ''}.</p>`;
   return `<p class="small muted" id="traceNote_${sw.id}">Dotted: from the ${d.m.frames.length} frames only, so the line between them is drawn, not measured.${sw.video ? ' Trace the hands from the video for the real path.' : ' No video is stored for this swing to trace.'}</p>`;
 }
 // One tap on the ball, on the address frame; the camera check beside it, from the same frame.
@@ -4294,7 +4294,31 @@ async function measureAndSave(sid, wid, onFrame, onTrace) {
    taken from requestVideoFrameCallback's mediaTime (a 30 fps clip repeats a frame between two seeks; the
    repeat is skipped), and the pose model run on each. Stored as `swing.track` (SCHEMA.md): the two wrists,
    rounded like the pose. The same rules as frame extraction: never at exactly 0, wait until painted. */
-const TRACK_MAX = 90, TRACK_STEP = 1 / 60, TRACK_MIN = 8;
+const TRACK_MAX = 240, TRACK_STEP = 1 / 60, TRACK_MIN = 8, TRACK_FILL = 120, TRACK_FINE = 1 / 50;
+/* Slow motion (2.64.1): his 3 Aug 7i is a slow-motion clip, the swing filling 2 to 12 s of 13, so every rule in seconds
+   was wrong for it, and 90 looks across the span gave the downswing about ten (a line of corners on his phone). Now
+   nothing is in seconds: the whole span is looked at every TRACK_STEP or, for a long clip, at up to TRACK_MAX evenly;
+   the downswing is the hands' fastest drop (`swingPhases`), the top found by walking back while the hands rise and
+   impact forward while they fall; and if the downswing was looked at less often than TRACK_FINE, it is filled in
+   at TRACK_STEP (at most TRACK_FILL more). */
+function swingPhases(xs) {
+  if (xs.length < 3) return null;
+  // Over a few points at a time (a 60th of them), so the model's jitter between frames a slow-motion clip's hands
+  // barely move across can't pass for the downswing.
+  const y = xs.map(x => x.h[1]), n = xs.length, k = Math.max(1, Math.round(n / 60));
+  let fast = -1, v = 0;
+  for (let i = 0; i + k < n; i++) { const dv = (y[i + k] - y[i]) / ((xs[i + k].t - xs[i].t) || 1e-9); if (dv > v) { v = dv; fast = i + k; } }
+  if (fast < 0) return null;
+  // Walk back from the drop until the hands are well below the highest point passed (30% of the swing's height): that
+  // was the climb up to the top, and the top is the highest raw point on the way. Impact the same, forward and lowest.
+  const amp = Math.max(...y) - Math.min(...y), gone = 0.3 * amp;
+  let top = fast, hi = y[fast];
+  for (let i = fast; i >= 0 && y[i] <= hi + gone; i--) { if (y[i] < hi) hi = y[i]; if (xs[i].h[1] < xs[top].h[1]) top = i; }
+  let low = fast, lo = y[fast];
+  for (let i = fast; i < n && y[i] >= lo - gone; i++) { if (y[i] > lo) lo = y[i]; if (xs[i].h[1] > xs[low].h[1]) low = i; }
+  return { top: xs[top].t, fast: xs[fast].t, low: xs[low].t };
+}
+const handOf = j => { const ok = k => j && j[k] && j[k][2] >= POSE_VIS ? j[k] : null, l = ok(PJ.lWr), r = ok(PJ.rWr); return l && r ? midP(l, r) : l || r; };
 async function videoFrames(src, times, onFrame) {
   const vid = document.createElement('video');
   vid.preload = 'auto'; vid.muted = true; vid.playsInline = true; vid.src = src;
@@ -4331,17 +4355,35 @@ async function videoFrames(src, times, onFrame) {
 async function traceHands(sw, onStep) {
   const fr = sw.frames || []; if (!sw.video || fr.length < 2) return null;
   const t0 = fr[0].t, t1 = fr[fr.length - 1].t, span = t1 - t0; if (!(span > 0)) return null;
-  const n = Math.min(TRACK_MAX, Math.max(2, Math.round(span / TRACK_STEP) + 1));
-  const times = Array.from({ length: n }, (_, i) => t0 + span * i / (n - 1));
-  const model = await poseModel(), pts = []; let last = null;
-  await (window.carryVideoFrames || videoFrames)('/_blob/' + sw.video, times, async (t, cv, i) => {
-    if (onStep) onStep(i + 1, n);
-    if (t == null || (last != null && Math.abs(t - last) < 0.004)) return;   // the same decoded frame again
-    last = t;
-    const r = await (model.detectCanvas ? model.detectCanvas(cv) : model.detect(cv)), j = r && r.joints;
-    const q = k => j && j[k] ? [r3(j[k][0]), r3(j[k][1]), Math.round(j[k][2] * 100) / 100] : [0, 0, 0];
-    pts.push([r3(t), ...q(PJ.lWr), ...q(PJ.rWr)]);
-  });
+  const model = await poseModel(), frames = window.carryVideoFrames || videoFrames, src = '/_blob/' + sw.video;
+  const detect = async cv => { const r = await (model.detectCanvas ? model.detectCanvas(cv) : model.detect(cv)); return r && r.joints; };
+  const spread = (a, b, n) => Array.from({ length: n }, (_, i) => a + (b - a) * i / (n - 1));
+  const pts = [], seen = new Set(); let repeats = 0;
+  const look = async (times, ph) => {
+    let last = null;
+    await frames(src, times, async (t, cv, i) => {
+      if (onStep) onStep(i + 1, times.length, ph);
+      if (t == null || (last != null && Math.abs(t - last) < 0.004) || seen.has(r3(t))) { repeats++; return; }   // the same decoded frame again
+      last = t; seen.add(r3(t));
+      const j = await detect(cv);
+      const q = k => j && j[k] ? [r3(j[k][0]), r3(j[k][1]), Math.round(j[k][2] * 100) / 100] : [0, 0, 0];
+      pts.push([r3(t), ...q(PJ.lWr), ...q(PJ.rWr)]);
+    });
+  };
+  await look(spread(t0, t1, Math.min(TRACK_MAX, Math.max(2, Math.round(span / TRACK_STEP) + 1))), 'trace');
+  pts.sort((x, y) => x[0] - y[0]);
+  // The downswing looked at too seldom (slow motion, or a long clip): fill it in. A first look that met the same frame
+  // twice already had every frame the clip has, so there is nothing to fill.
+  const hs = pts.map(p => ({ t: p[0], h: handOf([...Array(15).fill(null), p.slice(1, 4), p.slice(4, 7)]) })).filter(x => x.h);
+  const ph = swingPhases(hs);
+  if (ph && !repeats) {
+    const inDown = hs.filter(x => x.t >= ph.top && x.t <= ph.low), step = inDown.length > 1 ? (ph.low - ph.top) / (inDown.length - 1) : Infinity;
+    if (step > TRACK_FINE) {
+      const a = ph.top, b = ph.low + (ph.low - ph.top) * 0.25;
+      await look(spread(a, Math.min(t1, b), Math.min(TRACK_FILL, Math.max(2, Math.round((Math.min(t1, b) - a) / TRACK_STEP) + 1))), 'fill');
+      pts.sort((x, y) => x[0] - y[0]);
+    }
+  }
   return pts.length >= TRACK_MIN ? { by: POSE_BY, on: today(), pts } : null;
 }
 // Centripetal Catmull-Rom as cubic Béziers (Yuksel, Schaefer and Keyser): the curve goes through every point and,
@@ -4382,12 +4424,17 @@ function traceData(sw, m = poseMeasures(sw)) {
   // Traced, the top and impact come from the trace (the hands highest, then lowest after it) where the 16 frames
   // are coarse: his unmarked Long Reef clip's "impact" frame was already into the follow-through. A marked impact
   // stays where he put it. Only for drawing; the measures keep the frames.
-  if (tr && cuts[1] != null) {
-    const ok = pts.filter(q => q.p), hi = cuts[2] != null ? cuts[2] : cuts[3];
-    const top = ok.filter(q => q.t >= cuts[0] && q.t <= hi).reduce((b, q) => !b || q.p[1] < b.p[1] ? q : b, null);
-    if (top) cuts[1] = top.t;
-    if (sw.impact != null && m.impFrom === 'marked') cuts[2] = Math.max(cuts[1], sw.impact);
-    else { const low = ok.filter(q => q.t > cuts[1] && q.t <= cuts[3]).reduce((b, q) => !b || q.p[1] > b.p[1] ? q : b, null); if (low) cuts[2] = low.t; }
+  // 2.64.1: from the trace's own motion, not the frames' positions (8 frames 1.6 s apart can't place either): the
+  // downswing is the hands' fastest drop between neighbours in a run; the top the hands highest in the 1.5 s before it;
+  // impact the lowest in the 0.5 s after, or his mark.
+  // 2.64.1: from the trace's own motion (`swingPhases`, no seconds, so slow motion reads the same), not the frames'
+  // positions: 8 frames 1.6 s apart can't place either. A marked impact stays where he put it.
+  if (tr) {
+    const ok = pts.filter(q => q.p), ph = ok.length > 2 && swingPhases(ok.map(q => ({ t: q.t, h: q.p })));
+    if (ph) {
+      cuts[0] = ok[0].t; cuts[1] = ph.top; cuts[3] = ok[ok.length - 1].t;
+      cuts[2] = sw.impact != null && m.impFrom === 'marked' ? Math.max(cuts[1], sw.impact) : ph.low;
+    }
   }
   // The model's points jitter a few pixels frame to frame; traced, each is drawn as a 1-2-3-2-1 average of its
   // neighbours in the run (the ends with what they have), for the drawing only.
@@ -5053,7 +5100,7 @@ Object.assign(ACTIONS, {
     const box = document.getElementById('pm_' + d.wid);
     const say = t => { const b = document.getElementById('pm_' + d.wid); if (b) b.innerHTML = `<div class="small muted">${esc(t)}</div>`; };
     say('Loading the pose model…');
-    const res = await measureAndSave(d.sid, d.wid, (i, n) => say(`Measuring frame ${i} of ${n}…`), (i, n) => say(`Tracing the hands from the video: ${i} of ${n}…`));
+    const res = await measureAndSave(d.sid, d.wid, (i, n) => say(`Measuring frame ${i} of ${n}…`), (i, n, ph) => say(`${ph === 'fill' ? 'Filling in the downswing' : 'Tracing the hands from the video'}: ${i} of ${n}…`));
     if (res.error) { const b = document.getElementById('pm_' + d.wid) || box; if (b) b.innerHTML = `<div class="notice warn">${res.error === 'model' ? `The pose model couldn't run in this browser${res.message ? ` (${esc(res.message)})` : ''}. It needs WebAssembly with SIMD: Safari 16.4 or later, or a recent Chrome.` : 'That swing is gone.'}</div>`; return; }
     if (res.ok) { toast(res.traceErr ? 'Body measured; the video couldn\'t be traced here' : 'Body measured'); render(); }
   },
@@ -5062,7 +5109,7 @@ Object.assign(ACTIONS, {
     const say = (t, warn) => { const b = document.getElementById('tr_' + d.wid); if (b) b.innerHTML = `<div class="small ${warn ? 'notice warn' : 'muted'}">${esc(t)}</div>`; };
     say('Loading the pose model…');
     let track;
-    try { track = await traceHands(sw, (i, n) => say(`Tracing the hands from the video: ${i} of ${n}…`)); }
+    try { track = await traceHands(sw, (i, n, ph) => say(`${ph === 'fill' ? 'Filling in the downswing' : 'Tracing the hands from the video'}: ${i} of ${n}…`)); }
     catch (e) { say(e && e.message === 'unreadable' ? 'This browser can\'t decode the video (an iPhone clip from Photos opens in Safari). The dotted line from the frames stays.' : `The pose model couldn't run here${e && e.message ? ` (${e.message})` : ''}.`, true); return; }
     if (!track) { say('Too few frames of the video to trace.', true); return; }
     const ok = await queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => w.id === sw.id ? { ...w, track } : w) }); });
