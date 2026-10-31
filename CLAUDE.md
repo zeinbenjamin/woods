@@ -1895,6 +1895,11 @@ never invented:
   no card; the club domain is for sale), Fairfield City (18Birdies' card has
   a 937 m hole 2), Shortees and Sylvania Par 3 (cards whose unit can't be
   told). Auburn is Golfify's "Rosnay Golf Club"; Liverpool its "Oak Point".
+  **Liverpool is Oak Point** (2026-11-01, he asked why the name stayed): the
+  club trades as Oak Point Golf Club (opgc.au; Liverpool merged with Kogarah),
+  so `imports/liverpool.json` is named that, with the id `c_liverpool` kept and
+  `liverpool` in the test's `RENAMED`. The map file keeps OpenStreetMap's
+  "Liverpool Golf Club" (the hole-maps chat's).
 - Only address, phone and fees are missing against Bexley's fuller record:
   77 clubs' sites weren't visited. The in-app course page's live card check
   against each map is the next test of these numbers; a flagged hole is a
