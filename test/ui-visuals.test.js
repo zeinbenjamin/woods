@@ -95,8 +95,20 @@ test('numbers worked out while a course map was still loading are worked out aga
   // and approach distances — until the next save.
   const mapShots = () => app.E(`shotRecords().filter(x => x.r.id === 'rMap').length`);
   app.E(`window.__fh = HoleMap.forHole; HoleMap.forHole = () => undefined; true`);   // as while the file is loading
-  app.E(`S.sessions = S.sessions.slice(); true`);                                       // a fresh data state, worked out now
+  // A fresh data state, worked out now: new course records too, as on a first load (since 2.59.0 a map's
+  // holes are kept per course record, so the old records' holes would be answered without asking).
+  app.E(`S.sessions = S.sessions.slice(); S.courses = S.courses.map(c => ({ ...c })); true`);
   assert.equal(mapShots(), 0, 'nothing measurable yet');
   app.E(`HoleMap.forHole = __fh; mapArrived(); true`);                                  // the map file lands
   assert.equal(mapShots(), 2, 'its two shots count as soon as it arrives');
+});
+
+test('a map\'s holes are built once per course record, not on every draw (2.59.0)', () => {
+  const asks = app.E(`(() => { let n = 0; const real = HoleMap.forHole; HoleMap.forHole = (...a) => (n++, real(...a));
+    try { go('rounds', { sessionId: 'rMap' }); const first = n; render(); render(); return [first, n - first]; } finally { HoleMap.forHole = real; } })()`);
+  assert.equal(JSON.parse(JSON.stringify(asks))[1], 0, 'two more draws ask the map nothing');
+  // A saved course is a new record: its holes are built again from it.
+  const again = app.E(`(() => { let n = 0; const real = HoleMap.forHole; HoleMap.forHole = (...a) => (n++, real(...a));
+    try { S.courses = S.courses.map(c => ({ ...c })); render(); return n; } finally { HoleMap.forHole = real; } })()`);
+  assert.ok(again > 0, 'a new course record asks again');
 });

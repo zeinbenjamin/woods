@@ -1,3 +1,8 @@
+## 2.59.0 — 2026-10-31
+- Faster with a season of data: the Overview, Range list and round pages draw about 4 to 10 times faster, and a course page about twice as fast. Nothing you see has changed, only how often the app works it out.
+- After a save (every shot marked in Play mode), the app now fetches only what changed, a few KB instead of the whole history, which matters on mobile data. Opening the app no longer downloads everything twice.
+- The copy kept on your phone for opening without signal now stays as current as the app, not as it was when you opened it.
+
 ## 2.58.0 — 2026-10-31
 - On a round, *What this round showed* and *Clubs on the course* are now toggles, right under *Getting to the green* and *Strokes gained*.
 - Once a swing's body has been measured, its frame-by-frame strip folds away under *Frames*; the four positions show the swing.

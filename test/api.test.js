@@ -155,6 +155,34 @@ test('stamps are per person: a friend\'s write doesn\'t make my app refetch', as
   assert.equal(a.courses, b.courses);
 });
 
+test('a collection comes with the time of its latest change, and ?since= gives only what changed after it (2.59.0)', async () => {
+  const put = (who, id, doc) => fetch(`${base}/api/sessions/${id}`, { method: 'PUT', headers: hdr(who), body: JSON.stringify(doc) });
+  const get = async (who, q = '') => (await fetch(`${base}/api/sessions${q}`, { headers: hdr(who) })).json();
+  await put(ME, 's_d1', { id: 's_d1', type: 'range', date: '2026-10-01' });
+  await put(ME, 's_d2', { id: 's_d2', type: 'range', date: '2026-10-02' });
+  const whole = await get(ME);
+  assert.match(whole.t, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
+  // Nothing new: at most the document written at that very time comes back (at, not after), and every id.
+  const quiet = await get(ME, `?since=${encodeURIComponent(whole.t)}`);
+  assert.ok(quiet.docs.length <= 1 && quiet.docs.every(d => d.id === 's_d2'), JSON.stringify(quiet.docs.map(d => d.id)));
+  assert.deepEqual(quiet.ids, whole.docs.map(d => d.id));
+  assert.equal(quiet.t, whole.t);
+  // One change and one deletion: only the changed document, and the gone id missing from ids.
+  await put(ME, 's_d1', { id: 's_d1', type: 'range', date: '2026-10-01', venue: 'Moore Park' });
+  await fetch(`${base}/api/sessions/s_d2`, { method: 'DELETE', headers: hdr(ME) });
+  await put(FRIEND, 's_dF', { id: 's_dF', type: 'range', date: '2026-10-03' });   // a friend's: never mine
+  const delta = await get(ME, `?since=${encodeURIComponent(whole.t)}`);
+  assert.deepEqual(delta.docs.map(d => [d.id, d.venue]), [['s_d1', 'Moore Park']]);
+  assert.ok(!delta.ids.includes('s_d2') && delta.ids.includes('s_d1') && !delta.ids.includes('s_dF'));
+  assert.ok(delta.t > whole.t);
+  // Write times only ever go forward, even within one millisecond.
+  const times = [];
+  for (let i = 0; i < 5; i++) { await put(ME, 's_tick', { id: 's_tick', type: 'range', date: '2026-10-04', i }); times.push((await get(ME)).t); }
+  assert.ok(times.every((t, i) => i === 0 || t > times[i - 1]), times.join(' '));
+  // Only a time the server gave.
+  for (const bad of ['yesterday', "x' OR 1=1", '2026-10-31']) assert.equal((await fetch(`${base}/api/sessions?since=${encodeURIComponent(bad)}`, { headers: hdr(ME) })).status, 400, bad);
+});
+
 test('a course someone else has played on can\'t be deleted from under them', async () => {
   const put = (who, col, id, doc) => fetch(`${base}/api/${col}/${id}`, { method: 'PUT', headers: hdr(who), body: JSON.stringify(doc) });
   await put(ME, 'courses', 'c_played', { id: 'c_played', name: 'Played GC', holes: [] });

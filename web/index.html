@@ -635,7 +635,9 @@ let memo = { key: [], map: new Map() };
 let mapEpoch = 0;
 function mapArrived() { mapEpoch++; render(); }
 function memoised(name, arg, fn) {
-  const key = [S.sessions, S.clubs, S.courses, S.settings, mapEpoch];
+  // The day is part of the state: recency weights and freshness count whole local days, so a page
+  // left open past midnight works them out again (2.59.0, when the practice list joined the cache).
+  const key = [S.sessions, S.clubs, S.courses, S.settings, mapEpoch, today()];
   if (key.some((k, i) => k !== memo.key[i])) memo = { key, map: new Map() };
   const id = name + '|' + arg;
   if (!memo.map.has(id)) memo.map.set(id, fn(arg));
@@ -1770,7 +1772,7 @@ function ttRedraw() {
 function ttSetDay(date) { S.sub = { ...(S.sub || {}), ...(S.sub && S.sub.courseId ? {} : { view: 'teetimes' }), date }; tt.showDay = true; render(); }
 function ttDaysScroll(x) {
   const row = document.getElementById('ttDays'); if (!row) return;
-  row.scrollLeft = x;
+  if (x) row.scrollLeft = x;   // a new row starts at 0; writing it anyway made every draw lay out the page early
   if (!tt.showDay) return; tt.showDay = false;
   const on = row.querySelector('[aria-pressed="true"]'); if (!on) return;
   const l = on.offsetLeft - row.offsetLeft, r = l + on.offsetWidth;
@@ -2544,7 +2546,7 @@ function stencilGrid(holes, opts = {}) {
     const st = opts.scores ? scoreClass(h) : '';
     const sub = opts.scores && h.strokes != null ? `${h.strokes}` : `${h.metres || '–'}m`;
     return `<button class="tile ${st === 'b3' || st === 'b2' ? 'hot' : ''}" data-act="${opts.act}" data-n="${h.n}" data-id="${esc(opts.id || '')}" title="Hole ${h.n}">
-      ${usesMap(h) ? HoleMap.svg(h.hm, { par: h.par, shots: mapShots(h), dots: (h._dots || []).filter(s => s.mx != null).map(s => ({ p: [s.mx, s.my], first: s.first })) }) : usesArt(h) ? artSVG(h, { dots: h._dots }) : stencilSVG(h, { lenFrac: (h.metres || maxM) / maxM, shots: h.shots, dots: h._dots })}
+      ${usesMap(h) ? hmSvg(h.hm, { par: h.par, shots: mapShots(h), dots: (h._dots || []).filter(s => s.mx != null).map(s => ({ p: [s.mx, s.my], first: s.first })) }) : usesArt(h) ? artSVG(h, { dots: h._dots }) : stencilSVG(h, { lenFrac: (h.metres || maxM) / maxM, shots: h.shots, dots: h._dots })}
       <div class="lab"><b>${h.n}</b><span>par ${h.par ?? '–'}</span><span>${sub}</span></div></button>`;
   }).join('') + `</div>`;
 }
@@ -2756,8 +2758,29 @@ const usesArt = h => !!h.art && (h.shots || []).every(s => s.x != null);
    own plane. hm is undefined while the map file loads, null without one.
    The hole's GPS marks go with it: where the map has no line (or only an
    estimated green) they draw the hole, for the tee played. */
-const hmFor = (c, n, metres, tee) => c && c.map && c.map.id && window.HoleMap
-  ? HoleMap.forHole(c.map.id, n, metres, { marks: (((c.holes || []).find(x => x.n === n)) || {}).marks, tee: tee || primaryTee(c) }) : null;
+const hmFor = (c, n, metres, tee) => c && c.map && c.map.id && window.HoleMap ? hmCached(c, n, metres, tee || primaryTee(c)) : null;
+// A hole from the map is the same for the same course record, hole, length and tee until a map file
+// arrives (2.59.0: rebuilding every round's holes, card check included, on every draw was about half a
+// course page). Kept per course object, which is replaced, never changed, when the course is saved.
+const hmCache = new WeakMap();
+// A hole's drawing is the same string for the same hole and the same marks on it: kept per hole
+// (2.59.0), so a round or course page doesn't rebuild 18 maps on every draw.
+const hmSvgCache = new WeakMap();
+function hmSvg(hm, opts) {
+  let m = hmSvgCache.get(hm); if (!m) hmSvgCache.set(hm, m = new Map());
+  const k = JSON.stringify(opts);
+  if (!m.has(k)) m.set(k, HoleMap.svg(hm, opts));
+  return m.get(k);
+}
+function hmCached(c, n, metres, tee) {
+  let e = hmCache.get(c);
+  if (!e || e.epoch !== mapEpoch) hmCache.set(c, e = { epoch: mapEpoch, map: new Map() });
+  const k = `${n}|${metres}|${tee}`;
+  if (e.map.has(k)) return e.map.get(k);
+  const hm = HoleMap.forHole(c.map.id, n, metres, { marks: (((c.holes || []).find(x => x.n === n)) || {}).marks, tee });
+  if (hm !== undefined) e.map.set(k, hm);   // undefined: the map file is still loading; ask again when it arrives
+  return hm;
+}
 const withHm = (c, h) => ({ ...h, hm: hmFor(c, h.n, h.metres) });
 // The map wins over art and the outline, unless shots were logged on another one.
 const usesMap = h => !!h.hm && (h.shots || []).every(s => s.mx != null);
@@ -2967,7 +2990,8 @@ function shotRecordsUncached() {
 const shotHoleCount = () => soloRounds().reduce((n, r) => n + (r.holes || []).filter(h => (h.shots || []).length).length, 0);
 
 /* ---------- reference distances, with where they came from ---------- */
-const rangeBlocksFor = (code, counted = false) => S.sessions.filter(s => s.type === 'range' && (!counted || countsForNumbers(s))).flatMap(s => (s.blocks || []).map(b => ({ ...b, date: s.date }))).filter(b => b.club === code);
+const rangeBlocksFor = (code, counted = false) => memoised('rangeBlocksFor', `${code}|${counted}`, () => rangeBlocksForUncached(code, counted));
+const rangeBlocksForUncached = (code, counted) => S.sessions.filter(s => s.type === 'range' && (!counted || countsForNumbers(s))).flatMap(s => (s.blocks || []).map(b => ({ ...b, date: s.date }))).filter(b => b.club === code);
 function weighted(blocks, key) { const bs = blocks.filter(b => b.summary && b.summary[key] != null && (b.swing || 'full') === 'full'); if (!bs.length) return null; const wt = b => (b.summary.n || 1) * shotWeight(b.date); const w = sum(bs.map(wt)); return sum(bs.map(b => b.summary[key] * wt(b))) / w; }
 function carryRef(code) {
   const s = clubStats(code); if (s && s.stockCarry) return { v: s.stockCarry, measured: true, src: 'range', pure: pct(s.pure, s.n) };
@@ -3168,7 +3192,10 @@ function assessPractice(it) {
 // joins that item as supporting evidence instead of being listed on its
 // own: video ranks below ball data, and adds weight (half its own) only
 // when it agrees with it.
-function rankedPractice() {
+// Worked out once per data state (2.59.0): it was rebuilt on every draw, 35-70% of the Overview,
+// Range and round pages with a season of data. Callers read it; nothing changes it in place.
+function rankedPractice() { return memoised('rankedPractice', '', () => rankedPracticeUncached()); }
+function rankedPracticeUncached() {
   const all = practiceItems().map(assessPractice), byWeight = (a, b) => b.weight - a.weight;
   let now = all.filter(x => x.status !== 'quiet');
   for (const sw of now.filter(x => x.kind === 'swing' && x.club)) {
@@ -3345,7 +3372,7 @@ function vCourseHole() {
   holeDots = dots;
   // On a map, each dot is a tap target (bigger than the dot) for that shot's details.
   const hits = hole.hm ? dots.map((s, k) => { const [x, y] = HoleMap.mapToView(hole.hm, [s.mx, s.my]); return `<circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11" data-shot="${k}"/>`; }).join('') : '';
-  h += `<div class="bigmap">${hole.hm ? HoleMap.svg(hole.hm, { big: true, par: hole.par, dots: dots.map(s => ({ p: [s.mx, s.my], first: s.first })), attrs: 'id="holeMap"' }).replace(/<\/svg>$/, `<g class="hits">${hits}</g></svg>`) : hole.art ? artSVG({ ...hole, shots: [] }, { big: true, dots }) : stencilSVG(hole, { big: true, dots })}</div>${hole.hm ? HoleMap.legend(hole.hm, { big: true, par: hole.par }) + MAP_CREDIT + holeCheck(hole) : ''}`;
+  h += `<div class="bigmap">${hole.hm ? hmSvg(hole.hm, { big: true, par: hole.par, dots: dots.map(s => ({ p: [s.mx, s.my], first: s.first })), attrs: 'id="holeMap"' }).replace(/<\/svg>$/, `<g class="hits">${hits}</g></svg>`) : hole.art ? artSVG({ ...hole, shots: [] }, { big: true, dots }) : stencilSVG(hole, { big: true, dots })}</div>${hole.hm ? HoleMap.legend(hole.hm, { big: true, par: hole.par }) + MAP_CREDIT + holeCheck(hole) : ''}`;
   if (dots.length) h += `<div class="legend" style="justify-content:center"><span><i class="l-teedot"></i>tee shots</span><span><i class="l-dot"></i>other shots</span><span>${plural(plays.filter(p => (p.h.shots || []).length).length, 'round')} traced</span></div>`
     + (hole.hm ? `<div class="shotinfo small muted" id="shotInfo">Tap a dot to see that shot.</div>` : '');
   const par3 = hole.par === 3 && adviceFor(hole.metres) ? `<p class="small advice">${adviceFor(hole.metres)}</p>` : '';
@@ -5960,7 +5987,8 @@ function strokesGainedSection(r) {
   return `<div class="folds">${fold('strokesGained', 'Strokes gained', teaser, body)}</div>`;
 }
 // Across recent rounds (the Overview): per 18 holes, each hole weighted by recency like the practice list.
-function strokesGainedRecent() {
+function strokesGainedRecent() { return memoised('strokesGainedRecent', '', () => strokesGainedRecentUncached()); }
+function strokesGainedRecentUncached() {
   const lvl = sgLevel(), rounds = soloRounds().filter(r => r.date);
   const full = rounds.map(r => ({ r, sg: sgRound(r, lvl.level) })).filter(x => x.sg.holes.length && !x.sg.left.length);
   if (full.length < SG_MIN_ROUNDS) return { lvl, rounds: full.length, cats: null };

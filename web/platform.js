@@ -48,8 +48,11 @@
      The artifact runtime pushes changes; here we poll a cheap stamp
      endpoint and refetch only what moved. Local writes notify listeners
      immediately, so the UI never waits for the next poll. */
-  const cache = {};                 // collection -> array of docs
+  const cache = {};                 // collection -> array of docs, as the app sees them (waiting saves on top)
+  const server = {};                // collection -> Map(id -> doc), as the server last had them
+  const since = {};                 // collection -> the time of the server's latest change we hold (2.59.0)
   const listeners = {};             // collection -> [cb]
+  const writes = {};                // collection -> saves started, so a refresh that crossed one is dropped
   const errorHandlers = new Set();  // onSnapshot error callbacks
   let lastStamps = {};
 
@@ -63,8 +66,32 @@
     const key = docs => JSON.stringify((docs || []).slice().sort((x, y) => String(x.id).localeCompare(String(y.id))));
     return key(a) === key(b);
   };
-  async function refresh(name) {
-    try { const docs = withPending(name, (await api('/' + name)).docs); if (same(docs, cache[name])) return; cache[name] = docs; emit(name); }
+  // Ask for what changed since the latest time held, not the whole collection (2.59.0): every save
+  // used to bring the whole of it back on the next poll, about 690 KB of sessions with a season of
+  // data, after each shot marked in Play mode. `full` asks for all of it (start-up, and the service
+  // worker's first look, which keeps the whole copy for opening without signal).
+  const hold = (name, r) => { server[name] = new Map((r.docs || []).map(d => [d.id, d])); since[name] = r.t || null; };
+  async function refresh(name, full) {
+    // A save started while this was on its way: the answer may predate it, and taking it would put the
+    // older copy back on screen until the next poll. Drop it; the next poll asks again from the same time.
+    const w0 = writes[name] || 0, crossed = () => (writes[name] || 0) !== w0;
+    try {
+      if (full || !since[name] || !server[name]) {
+        const r = await api('/' + name); if (crossed()) return; hold(name, r);
+        const docs = withPending(name, r.docs); if (same(docs, cache[name])) return; cache[name] = docs; emit(name); return;
+      }
+      const r = await api('/' + name + '?since=' + encodeURIComponent(since[name]));
+      if (crossed()) return;
+      const had = server[name], ids = new Set(r.ids || []);
+      // What actually changed: a document that differs from ours, or one that has gone.
+      const changed = (r.docs || []).filter(d => { const o = had.get(d.id); return !o || JSON.stringify(o) !== JSON.stringify(d); });
+      const gone = [...had.keys()].filter(id => !ids.has(id));
+      if (r.t) since[name] = r.t;
+      if (!changed.length && !gone.length) return;          // usually our own save coming round again
+      const next = new Map(had); for (const id of gone) next.delete(id); for (const d of changed) next.set(d.id, d);
+      server[name] = next;
+      cache[name] = withPending(name, [...next.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))); emit(name);
+    }
     catch (e) { console.warn('refresh failed', name, e); }
   }
 
@@ -112,7 +139,7 @@
   // Ask for every collection again (2.54.0): when the service worker first takes over a
   // page, what loaded before it went past it unkept. A quiet refetch through it keeps a
   // copy; the app only redraws if something changed.
-  window.carryRefetch = () => Promise.all(Object.keys(listeners).map(refresh));
+  window.carryRefetch = () => Promise.all(Object.keys(listeners).map(name => refresh(name, true)));
   window.carryOutbox = () => ({ pending: Object.keys(readBox()).length, flush });
 
   let polling = false, signedOut = false;
@@ -144,18 +171,20 @@
         onSnapshot(cb, onErr) {
           (listeners[name] = listeners[name] || []).push(cb);
           if (onErr) errorHandlers.add(onErr);
-          api('/' + name).then(r => { cache[name] = withPending(name, r.docs); emit(name); }).catch(e => onErr && onErr(e));
+          api('/' + name).then(r => { hold(name, r); cache[name] = withPending(name, r.docs); emit(name); }).catch(e => onErr && onErr(e));
           return () => { listeners[name] = (listeners[name] || []).filter(f => f !== cb); };
         },
         doc(id) {
           return {
             async set(body) {
               const key = name + '/' + id;
+              writes[name] = (writes[name] || 0) + 1;
               let saved;
               // A waiting copy being sent right now must land before this newer one.
               if (flushing) await flushing.catch(() => {});
               try {
                 saved = await put(name, id, body);
+                if (server[name]) server[name].set(id, saved);   // what the server now holds, so the poll's echo of it changes nothing
                 // This newer copy got through: an older waiting one must never follow it.
                 const box = readBox(); if (box[key]) { delete box[key]; writeBox(box); announce(); }
               } catch (e) {
@@ -169,7 +198,9 @@
               return saved;
             },
             async delete() {
+              writes[name] = (writes[name] || 0) + 1;
               await api(`/${name}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+              if (server[name]) server[name].delete(id);
               cache[name] = (cache[name] || []).filter(d => d.id !== id); emit(name);
             },
           };

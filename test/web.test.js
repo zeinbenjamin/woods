@@ -87,6 +87,32 @@ test('a change made elsewhere arrives by polling', async () => {
   assert.equal(win.eval('S.clubs.length'), 1, 'polled the change in without a reload');
 });
 
+test('a poll after a change asks for what changed since, not the whole collection (2.59.0)', async () => {
+  const seen = []; const real = win.fetch;
+  win.fetch = (u, o) => { seen.push(String(u)); return real(u, o); };
+  try {
+    // A change made elsewhere: the poll asks with ?since= and the app gets it.
+    await fetch(`${base}/api/clubs/PW`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: 'PW', name: 'Pitching wedge', category: 'wedge', order: 8 }) });
+    for (let i = 0; i < 40 && !win.eval(`S.clubs.some(c => c.code === 'PW')`); i++) await sleep(200);
+    assert.ok(win.eval(`S.clubs.some(c => c.code === 'PW')`), 'arrived');
+    assert.ok(seen.some(u => /\/api\/clubs\?since=/.test(u)), seen.join(' '));
+    assert.ok(!seen.some(u => /\/api\/clubs$/.test(u)), 'never the whole collection again');
+    // The app's own save coming round again redraws nothing.
+    const draws = () => win.eval('window.__draws || 0');
+    win.eval(`(() => { const r = render; window.__draws = 0; render = (...a) => { window.__draws++; return r(...a); }; })()`);
+    await win.eval(`save('clubs', '9i', { ...S.clubs.find(c => c.code === '9i'), nominalCarry: 101 })`);
+    const after = draws(); seen.length = 0;
+    for (let i = 0; i < 25 && !seen.some(u => /\/api\/clubs\?since=/.test(u)); i++) await sleep(200);
+    await sleep(300);
+    assert.ok(seen.some(u => /\/api\/clubs\?since=/.test(u)), 'the poll asked');
+    assert.equal(draws(), after, 'its own save coming back changed nothing on screen');
+    // A deletion elsewhere is seen too.
+    await fetch(`${base}/api/clubs/PW`, { method: 'DELETE' });
+    for (let i = 0; i < 40 && win.eval(`S.clubs.some(c => c.code === 'PW')`); i++) await sleep(200);
+    assert.ok(!win.eval(`S.clubs.some(c => c.code === 'PW')`), 'gone from the app');
+  } finally { win.fetch = real; }
+});
+
 test('deleting from the app removes it from the server', async () => {
   await win.eval(`(async()=>{ const db = await claude.use('db'); await db.collection('courses').doc('c_web').delete(); })()`);
   await sleep(200);
