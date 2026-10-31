@@ -105,7 +105,7 @@ test('face-on by hand: the positions from the hands, sway at the top, hips and h
   assert.match(app.text('#pose_sw_face'), /16 of 16 frames/);
   assert.match(app.text('#pose_sw_face .small'), /^The body, measured 16 of 16 frames · 2D · impact from the hands$/);
   assert.doesNotMatch(app.text('#pose_sw_face'), /Measured from the frames by a pose model/, 'the long caption is gone (2.57.0)');
-  assert.ok(app.$('#ptr_sw_face') && app.$$('#ptr_sw_face .ptrace').length === 4, 'a chart per measure across the swing');
+  assert.ok(app.$('#ptr_sw_face') && app.$$('#ptr_sw_face .ptrace:not(.traxis)').length === 4, 'a chart per measure across the swing');
 });
 
 test('a mirrored clip reads the same: the target side comes from the address frame', async () => {
@@ -296,7 +296,23 @@ test('the guide: dotted bands at the top and impact, red where the swing is outs
   const svg = hip.querySelector('svg');
   assert.equal(svg.getAttribute('preserveAspectRatio'), 'none');
   assert.equal(svg.querySelectorAll('text, rect, circle').length, 0, 'nothing in the stretched drawing that would grow with it');
-  assert.deepEqual(hip.querySelectorAll('.trbox > span.tr-mlab').length, 2);
+  // 2.60.1: all four positions marked on each chart and named once under them, placed by time in the clip.
+  assert.equal(hip.querySelectorAll('svg line.tr-mark').length, 4);
+  const labs = [...app.$$('#ptr_sw_face .traxis .tr-alab')];
+  assert.deepEqual(labs.map(x => x.textContent), ['Address', 'Top', 'Impact', 'Finish']);
+  assert.equal(app.$$('#ptr_sw_face .traxis').length, 1, 'named once, not under every chart');
+  // keys 0, 7, 11, 15 at t 0.05 + 0.1i: 5 + (t - 0.05) / 1.5 * 230 of 240
+  const pct = t => (100 * (5 + (t - 0.05) / 1.5 * 230) / 240).toFixed(2) + '%';
+  assert.deepEqual(labs.map(x => x.style.left), [pct(0.05), pct(0.75), pct(1.15), pct(1.55)]);
+  assert.deepEqual(labs.map(x => x.className), ['tr-alab l', 'tr-alab', 'tr-alab', 'tr-alab r']);
+  // Frames packed around a marked impact: across is the clip's time, not one column per frame.
+  const packed = app.J(`(() => { const m = { frames: [0.05, 0.5, 0.9, 1.0, 1.05, 1.1, 1.15, 1.2, 1.55].map(t => ({ t })), keys: { address: 0, top: 2, impact: 5, finish: 8 } }; const X = poseX(m, 240, 5); return [X(2), X(5), X(8)].map(x => +x.toFixed(2)); })()`);
+  assert.deepEqual(packed, [+(5 + 0.85 / 1.5 * 230).toFixed(2), +(5 + 1.05 / 1.5 * 230).toFixed(2), 235]);
+  // A time missing or out of order: one frame a step, never a line running off the chart.
+  assert.deepEqual(app.J(`(() => { const X = poseX({ frames: [1.45, 1.55, 1.35, 1.5].map(t => ({ t })) }, 240, 5); return [0, 1, 2, 3].map(i => +X(i).toFixed(2)); })()`), [5, +(5 + 230 / 3).toFixed(2), +(5 + 460 / 3).toFixed(2), 235]);
+  // Two names closer than a sixth of the width: the second drops a line rather than run into the first.
+  const close = app.E(`poseAxis({ frames: [0, 0.5, 1, 1.1, 2].map(t => ({ t })), keys: { address: 0, top: 2, impact: 3, finish: 4 } }, 240, 5)`);
+  assert.match(close, /data-k="impact" style="[^"]*"/); assert.match(close, /tr-alab lo" data-k="impact"/); assert.match(close, /tr-row two/);
   assert.ok(hip.querySelector('.trbox > span.tr-off') && hip.querySelector('.trbox > span.tr-band'));
   assert.match(app.text('#poseGuide_sw_face'), /^Dotted: a guide at the top and impact\. Red: outside it\. Hips from tour data \(Sportsbox\), the rest rules of thumb\. Not a measurement of you\.$/);
   // Down the line: forward bend held within 6° of its own address.
