@@ -1840,7 +1840,9 @@ function ttReadable(c) {
     const u = new URL(c.bookingUrl);
     // TeeItUp (2.43.0): <club>.book.teeitup.com with its GolfNow course id, as the server's teeitupSource.
     if (/^[a-z0-9-]+\.book\.teeitup\.com$/i.test(u.hostname)) return /^\d+$/.test(u.searchParams.get('course') || '');
-    // Quick18 (2.61.0): <club>.quick18.com, or its tee sheet's path, as the server's quick18Source.
+    // GolfNow's own site (2.77.0): a facility page with its id, as the server's golfnowSource.
+    if (u.protocol === 'https:' && /^(www\.)?golfnow\.com(\.au)?$/i.test(u.hostname) && /^\/tee-times\/facility\/\d+/i.test(u.pathname)) return true;
+    // Quick18 (2.72.0): <club>.quick18.com, or its tee sheet's path, as the server's quick18Source.
     if (/^https?:$/.test(u.protocol) && (/^[a-z0-9-]+\.quick18\.com$/i.test(u.hostname) || /^\/teetimes\/searchmatrix\b/i.test(u.pathname))) return true;
     return /^https?:$/.test(u.protocol) && (/(^|\.)miclub\.com\.au$/i.test(u.hostname) || /\/guests\/(bookings\/|\w+\.msp$)/i.test(u.pathname));
   } catch (e) { return false; }
