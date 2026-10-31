@@ -1808,7 +1808,8 @@ scorecard sets every length.
   June mirror data): Bayview, Gordon, Liverpool, Muirfield, North Turramurra
   and Pennant Hills now have all 18 lines in OSM (`holes: "osm"`; greens
   estimated on pins where unmapped: most of Bayview and Muirfield, Gordon 7
-  and 18, Liverpool 9). The other ten are `holes: "marks"` over their mapped
+  and 18, Liverpool 9; its map is named Oak Point Golf Club since 2.72.1, as the club
+  trades and as its import is, OSM still saying Liverpool). The other ten are `holes: "marks"` over their mapped
   shapes: Cabramatta, Castle Cove, Cronulla (almost nothing mapped), Leonay,
   Macquarie Links (18 lines but no numbers: numbering them would be a guess),
   Marrickville, North Ryde, Roseville, Wakehurst, Warringah. **Flags snap to
