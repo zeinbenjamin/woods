@@ -125,7 +125,7 @@ web/platform.js     the shim: artifact capability surface → this API
 web/holemap.js      course maps: loading, tee rule, lies, the yardage-book drawing
 web/vendor/maplibre/ MapLibre GL 4.7.1: Courses on a map, drawn as a yardage book (loaded when opened)
 web/vendor/leaflet/ Leaflet 1.9.4: the same map's fallback without WebGL
-web/vendor/mediapipe/ MediaPipe Pose Landmarker (lite) and its wasm: the body, measured on swing frames
+web/vendor/mediapipe/ MediaPipe Pose Landmarker (heavy since 2.65.0) and its wasm: the body, measured on swing frames
 web/course-maps/    built map files, one per course, + index.json (committed)
 course-maps/        map sources: src/<id>.json (card, mapping, origin), osm/<id>.geojson
 scripts/import-export.js   loads a "carry-export" JSON, preserving asset ids
@@ -829,6 +829,20 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## The heavy model (2.65.0)
+
+He drew his own hand path over the 3 Aug 7i (2026-10-31), and it disagreed with Carry's on the way back. Checked frame
+by frame on his clip (backswing and downswing frames at the same heights, laid over each other, then the three
+MediaPipe pose models on the same four frames, `scratchpad/cmp.png`): **lite put his wrists on his trail forearm going
+back**, about 70 px from the glove (from behind, against the sky, his hands are on the far side of his body); `full`
+was better but missed one; **heavy landed on the glove**. Smoothing can't fix wrong points, so the model was the fix.
+Told the cost (31 MB once, about 3x slower here: 230-490 ms a frame on this CPU against lite's 80), he chose heavy.
+`POSE_BY` is `mediapipe-0.10.35-heavy`; the lite file is gone from the repo. **Old measurements:** `poseOld(sw)` (a
+pose or trace by an earlier MediaPipe model; hand-made test poses aren't) shows `#poseOld_<id>` on the card, and the
+Swings page's `#measureAll` takes those too ("Measure n swings with the new model"), so his whole history can be
+redone in one go; trends would otherwise mix models. `ui-trace` covers the note and the re-measure (pose old, trace
+old). Not testable in jsdom: that the heavy file loads and runs, checked in Chromium on his 7i (below).
+
 ## The hands traced from the video (2.64.0)
 
 He asked (2026-10-31, with two screenshots of pro swing tracers): the swing plane's hand line smooth like those.
@@ -862,6 +876,20 @@ the trace against a stand-in 30 fps clip and a stand-in model (repeats, a lost a
 the colours' cuts, measuring with a video, an undecodable clip, the overlay part and whole, the feed, the switch;
 16 mutations caught (three survived at first: a loose bunching check, the wired overlay never played, no one-wrist
 stretch; all tightened).
+**Slow motion** (2.64.1, his phone screenshot of the 3 Aug 7i: a line of corners): that clip is slow motion, the
+swing filling 2 to 12 s of 13 (first read here as an untrimmed clip; a strip of its frames at 2 a second settled it),
+so 90 looks across the span gave the downswing about ten, and every rule in seconds was wrong for it. Now nothing is in
+seconds: the first look covers the whole span every `TRACK_STEP` or, when longer, `TRACK_MAX` (240) evenly; the
+downswing is the hands' fastest drop over a 60th of the points (`swingPhases`), the top the highest raw point walking
+back until the hands are 30% of the swing's height below it, impact the same forward; and when the downswing had looks
+less often than `TRACK_FINE` (1/50 s) it is filled at `TRACK_STEP` (`TRACK_FILL` 120 more), unless the first look met
+the same frame twice (it had every frame already). The colours' cuts in `traceData` come from `swingPhases` too (a
+marked impact kept). Two first tries failed on his clip and are not to be repeated: a coarse "biggest drop" finder
+(it found the hands coming down after the finish) and a same-wrists dedupe (a still address can repeat). The note no
+longer gives a frame rate (the looks are uneven). His 7i (H.264 copy, since Chromium here can't play HEVC): 233 frames,
+top at 6.1 s and impact 8.2 s, the backswing, downswing and finish where the clip shows them; the two drivers' cuts
+unchanged. `ui-trace` (5): a slow-motion stand-in with the model's wobble, every downswing frame present, the cuts, no
+fill on a 30 fps clip.
 
 ## The swing plane (2.63.0)
 
@@ -947,9 +975,9 @@ re-paste keeps the tag; nothing is rewritten.
 
 He asked (2026-10-31, after the mockup at https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK)
 for pose estimation before the course overlay. **The model:** MediaPipe Pose
-Landmarker, lite float16 v1, with `@mediapipe/tasks-vision` 0.10.35 (Apache-2.0),
+Landmarker, heavy float16 v1 since 2.65.0 (lite before; see *The heavy model*), with `@mediapipe/tasks-vision` 0.10.35 (Apache-2.0),
 vendored in `web/vendor/mediapipe/` (17 MB: `vision_bundle.mjs`, the SIMD wasm only,
-`pose_landmarker_lite.task`; `LICENSE.txt` says where each came from), loaded by
+`pose_landmarker_heavy.task`, 31 MB, so about 42 MB in all; `LICENSE.txt` says where each came from), loaded by
 `import()` on first use (`poseModel`: GPU, else CPU) and run in the browser on the
 swing's stored frames. No outside host, nothing sent. Without WebAssembly SIMD (iOS
 before 16.4) it says so. Checked in Chromium on MediaPipe's own sample photo: 33
@@ -2270,7 +2298,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 494 tests, about 45s.
+`npm test` — 496 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2325,8 +2353,8 @@ fixture would let the reading be pinned.
 - `ui-nav.test.js` (10) — back goes where he came from: each way into a round, session, block, finding,
   course, Settings and the feed; hole to hole sideways; a circle; a tab afresh; a deleted page skipped; folds
   restored; deleting returns; the Swings card's Play video and read-only body.
-- `ui-trace.test.js` (4) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
-  repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
+- `ui-trace.test.js` (6) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
+  a slow-motion clip, swings measured by the earlier model, repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
 - `ui-plane.test.js` (4) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
   swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list.
 - `ui-bodyfaults.test.js` (3) — the measured body in the practice list: a finding from most recent swings,

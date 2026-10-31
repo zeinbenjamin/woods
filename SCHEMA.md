@@ -349,12 +349,12 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
                                       // measurement by hand like `impact`. The swing plane (V, hands against it) is derived from it and
                                       // the pose on every draw, never stored. Absent = not tapped.
   "track": {                          // 2.64.0, optional: the hands traced from the stored video, made with the pose
-    "by": "mediapipe-0.10.35-lite", "on": "2026-10-31",   // (or *Trace the hands from the video*). A measurement, like the pose;
+    "by": "mediapipe-0.10.35-heavy", "on": "2026-10-31",   // (or *Trace the hands from the video*). A measurement, like the pose;
     "pts": [ [1.067, 0.29, 0.393, 0.83, 0.271, 0.39, 0.89] ]   // the drawing is derived from it on every draw.
   },                                  // Each point: [t s in the clip, lead wrist x, y, sure, trail wrist x, y, sure], 0..1 of the
                                       // frame like the pose; one per distinct video frame across the frames' span, at most 90.
   "pose": {                           // 2.55.0, optional: the body found on each frame by the pose model, in the browser
-    "by": "mediapipe-0.10.35-lite", "on": "2026-10-31", "aspect": 1.5,   // aspect = frame width / height, so x and y share a scale
+    "by": "mediapipe-0.10.35-heavy", "on": "2026-10-31", "aspect": 1.5,   // aspect = frame width / height, so x and y share a scale; "by" was "-lite" before 2.65.0 (measured again on asking)
     "frames": [ { "asset": "<frame asset id>", "t": 0.05,
                   "j": [[0.512, 0.231, 0.98] /* × 33, MediaPipe's order: x, y as 0..1 of the frame, visibility */] } ]
   },                                  // j: null where no body was found. A measurement of each frame, like the frames; every measure is derived on each draw.
