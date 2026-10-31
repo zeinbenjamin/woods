@@ -1,3 +1,7 @@
+## 2.77.0 — 2026-11-01
+- Find a tee time now reads GolfNow's own site, for the courses whose public times are only there: Wallacia and Woodville. Each time links to the course's GolfNow page to book, and GolfNow's hot deals are marked. GolfNow may list only some of a club's times, so the pro shop can have more.
+- Wallacia's course page now shows its green fees ($25 weekday, $35 weekend for 18 holes), and how to book, once its import is loaded again. Woodville's says to book with the pro shop, on 02 9632 3582.
+
 ## 2.76.0 — 2026-11-01
 - Find a tee time: Bardwell Valley's times showed from 1:28 am, six hours early, because GolfNow keeps that club on another time zone. Times are now read on the club's own clock, as its booking page shows them. If a club's times still come back on the wrong clock, Carry says so instead of listing tee times in the middle of the night.
 - A club whose site doesn't answer now says "Couldn't reach its booking site", not "Couldn't read its tee times".

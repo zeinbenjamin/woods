@@ -893,6 +893,32 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   Bardwell then reads "another clock", its sample settles the rule. The
   search and the course fold say "Couldn't reach its booking site" for
   `unreachable` (Gordon), "Couldn't read its tee times" otherwise.
+- **GolfNow's own site, at his decision** (2.77.0, 2026-11-01: "build the GolfNow
+  reader too", told again of s.2 and that GolfNow often sells only some of a
+  club's times). For **Wallacia** (its own "Online Bookings" is MicroPower's
+  members' login, `id.micropower.com.au/wallaciacountryclub`; no TeeItUp page,
+  `wallacia-country-club.book.teeitup.com` "Booking Engine Not Found") and
+  **Woodville** (council course, pro shop 02 9632 3582). `golfnowSource`: an https
+  `(www.)golfnow.com(.au)` link to `/tee-times/facility/<id>-<slug>`. The page's
+  times come from `POST <origin>/api/tee-times/tee-time-results` (`GOLFNOW_API`
+  overrides the origin, for tests), body `golfnowBody`: `SearchType` 1, the
+  `FacilityId`, `Date` "Nov 04 2026", one player, any holes, the whole day
+  (`TimeMin` 10, `TimeMax` 42), the course's lat/lng, `CurrentClientDate` the
+  day's midnight so the body (and the cache key, which now includes a POST's
+  body) is the same for a course and day. As described for golfnow.com by a
+  public write-up of the site's calls, read 2026-11-01 (skillsdirectory.com,
+  "golf-tee-times"); .com.au assumed the same platform. **Not yet seen live.**
+  `parseGolfnow`: `ttResults.teeTimes[]`, `time` local without a zone (other days
+  dropped), spots from a count (`availableSpots`, `availablePlayers`,
+  `maxPlayers`) else the `playerRule` bits (1, 2, 4, 8 = one to four), rates from
+  `teeTimeRates[]` (`rateName`, `holeCount`, `singlePlayerPrice.greensFees.value`,
+  `isHotDeal` → "(Hot Deal)", `special`); times whose spots can't be told, or an
+  answer without the list, are `unreadable` with `sample`, as are night-time
+  times. An empty day's note says GolfNow sells only some of a club's times.
+  Each chip links to the facility page (no per-time link known). The imports:
+  Wallacia's fees from the club's green-fees page (18 holes $25 weekday, $35
+  weekend, the rest in `bookingNote`), Woodville's pro shop number from the
+  council's page (no fees found worth storing).
 - **Next:** a second source per course (resellers), once the links are settled
   (he agreed, 2026-10-31).
 
@@ -2515,7 +2541,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 520 tests, about 110s.
+`npm test` — 525 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2546,6 +2572,9 @@ fixture would let the reading be pinned.
 - `quick18.test.js` (4) — the Quick18 reader on Lane Cove's real sheet: links, a
   rate per column, members left out, spots, each time's own link, hand-made rows
   for the other players wordings, and the route against a stand-in.
+- `golfnow.test.js` (4) — GolfNow's own site on a hand-made answer (see *Tee times*):
+  links, the search sent, spots from a count or the player rule, hot deals, other
+  days, the route's POST, unreadable and refused answers keeping a sample.
 - `teeitup.test.js` (5) — the TeeItUp reader on a hand-made answer (see
   *Tee times*): links, Sydney times, cents, spots, the route asking with the
   alias, unreadable and refused answers keeping a sample.

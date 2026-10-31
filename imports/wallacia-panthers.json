@@ -15,7 +15,7 @@
       "lng": 150.64892,
       "tee": "blue",
       "notes": "18 holes, par 71, 5,774 m off the blue tees. Lengths in metres; tee sets: blue, red, yellow (blue is the primary: the first men's set the card lists). No handicap rating stored (none from Golf Australia checked); seen on Golfify: blue 69 / 118, red 72 / 128, yellow 71 / 112. Cross-check: Hole19 refused automated reading before this card could be compared with a second source; check it against the club's card.",
-      "source": "Card: Golfify (blue, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/218020390, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/16535-wallacia-country-club/search).",
+      "source": "Card: Golfify (blue, red and yellow, metres), fetched 2026-10-28; hole-map name: the hole-maps chat's note of 2026-10-28; location: the course map's origin (OpenStreetMap way/218020390, ODbL, © OpenStreetMap contributors); booking: web search of 2026-10-29 (seen, https://www.golfnow.com.au/tee-times/facility/16535-wallacia-country-club/search); fees and note from the club's green-fees page (wallaciacountryclub.com.au/golf/golf-green-fees/), read 2026-11-01; its \"Online Bookings\" button is MicroPower's members' login (id.micropower.com.au/wallaciacountryclub), and it has no TeeItUp page.",
       "holes": [
         {
           "n": 1,
@@ -217,7 +217,10 @@
         }
       ],
       "bookable": true,
-      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/16535-wallacia-country-club/search"
+      "bookingUrl": "https://www.golfnow.com.au/tee-times/facility/16535-wallacia-country-club/search",
+      "feeWeekday": 25,
+      "feeWeekend": 35,
+      "bookingNote": "Visitors book on GolfNow or with the pro shop; the club's own online bookings are a members' login. Green fees (the club's page): weekdays 9 holes $20, 18 holes $25, unlimited golf after 1 pm $10; weekends and public holidays 9 holes $25, 18 holes $35; juniors $15."
     }
   ],
   "sessions": [],

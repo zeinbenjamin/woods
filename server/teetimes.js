@@ -114,15 +114,16 @@ export function parseTimesheet(html) {
 /* ---------- fetching ---------- */
 
 // → { text, at }: the page and when it was read, so a cached answer says how old it is.
-// `headers` are added to the request and to the cache key (TeeItUp's alias).
-async function fetchPage(url, fresh = false, headers = null) {
-  const key = headers ? url + ' ' + JSON.stringify(headers) : url;
+// `headers` are added to the request and to the cache key (TeeItUp's alias);
+// a `body` makes it a POST, and is part of the key too (GolfNow's search).
+async function fetchPage(url, fresh = false, headers = null, body = null) {
+  const key = [url, headers ? JSON.stringify(headers) : '', body || ''].join(' ');
   const hit = cache.get(key);
   if (hit instanceof Promise) return hit;
   if (hit && Date.now() - hit.at < (fresh ? Math.min(hit.ttl, FRESH_MIN) : hit.ttl)) { if (hit.error) throw hit.error; return { text: hit.value, at: hit.at }; }
   const p = (async () => {
     try {
-      const res = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html', ...(headers || {}) }, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT) });
+      const res = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html', ...(headers || {}) }, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT), ...(body ? { method: 'POST', body } : {}) });
       if (!res.ok) {
         const body = await res.text().catch(() => '');
         throw Object.assign(new Error(`the booking site answered ${res.status}`), { code: 'unreachable', sample: body.slice(0, 600) });
@@ -301,6 +302,100 @@ async function quick18Times(src, date, filters, fresh) {
   }
 }
 
+/* ---------- GolfNow's own site: Wallacia, Woodville ----------
+   Read at Zein's decision (2026-11-01, "build the GolfNow reader too"), told
+   again that these are the terms that bar automated reading (s.2), and that
+   GolfNow often sells only the times a club gives it. For the two courses whose
+   public times are only there: Wallacia (the club's own online booking is a
+   members' login) and Woodville (otherwise the pro shop). The facility page is
+   built in the browser from a POST to /api/tee-times/tee-time-results; the
+   request and answer below are as described for golfnow.com (a public write-up
+   of the site's calls, read 2026-11-01), the .com.au site assumed the same
+   platform. **Not yet seen live**: an answer that doesn't fit is `unreadable`
+   with a sample, as TeeItUp's first was. Read as politely as the rest: on a
+   search, once per course and day, kept five minutes, nothing stored. */
+const GOLFNOW_API = (process.env.GOLFNOW_API || '').replace(/\/$/, '');
+export const GOLFNOW_HOST = /^(www\.)?golfnow\.com(\.au)?$/i;
+export function golfnowSource(bookingUrl) {
+  let u;
+  try { u = new URL(bookingUrl); } catch { return null; }
+  const m = /^\/tee-times\/facility\/(\d+)(-[a-z0-9-]*)?/i.exec(u.pathname);
+  return u.protocol === 'https:' && GOLFNOW_HOST.test(u.hostname) && m ? { origin: u.origin, facility: m[1], slug: m[1] + (m[2] || '') } : null;
+}
+export const golfnowPage = src => `${src.origin}/tee-times/facility/${src.slug}/search`;
+export const golfnowApi = src => `${GOLFNOW_API || src.origin}/api/tee-times/tee-time-results`;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// The facility search for one day, any holes, from one player, the whole day
+// (TimeMin 10 = 5 am, TimeMax 42 = 9 pm and later). Always the same for a
+// course and day, so it is cached as one.
+export function golfnowBody(src, date, at = {}) {
+  const [y, m, d] = date.split('-').map(Number);
+  return {
+    Radius: 50, Latitude: at.lat ?? -33.87, Longitude: at.lng ?? 151.21, PageSize: 100, PageNumber: 0,
+    SearchType: 1, SortBy: 'Date', SortDirection: 0, Date: `${MONTHS[m - 1]} ${String(d).padStart(2, '0')} ${y}`,
+    BestDealsOnly: false, PriceMin: '0', PriceMax: '10000', Players: '1', Holes: '3', FacilityType: 0, RateType: 'all',
+    TimeMin: '10', TimeMax: '42', FacilityId: Number(src.facility), SortByRollup: 'Date.MinDate', View: 'Grouping',
+    ExcludeFeaturedFacilities: true, TeeTimeCount: 100, PromotedCampaignsOnly: 'false', CurrentClientDate: `${date}T00:00:00.000Z`,
+  };
+}
+const num = v => (v == null || v === '' || !isFinite(Number(v)) ? null : Number(v));
+const HOLE_SIZES = [9, 10, 12, 18];
+// Spots a time can still take: a count if the answer has one, else the most of
+// a player rule's bits (1, 2, 4, 8 = one to four players), else null.
+function golfnowSpots(tt) {
+  const n = num(tt.availableSpots ?? tt.availablePlayers ?? tt.maxPlayers);
+  if (n != null) return n;
+  const rule = num(tt.playerRule);
+  return rule ? [8, 4, 2, 1].map((b, i) => (rule & b ? 4 - i : 0)).find(Boolean) || null : null;
+}
+
+// → rates as the other readers give them; [] for a day with none; null for an
+// answer that doesn't fit (no list, or times whose spots can't be told).
+export function parseGolfnow(body, src, date) {
+  let j;
+  try { j = typeof body === 'string' ? JSON.parse(body) : body; } catch { return null; }
+  const list = j && ((j.ttResults && j.ttResults.teeTimes) ?? j.teeTimes);
+  if (!Array.isArray(list)) return null;
+  const groups = new Map();
+  let unknown = 0;
+  for (const tt of list) {
+    if (!tt || (typeof tt.time === 'string' && /^\d{4}-\d{2}-\d{2}/.test(tt.time) && !tt.time.startsWith(date))) continue;
+    const time = localClock(tt.time) || clock(`${tt.formattedTime || ''} ${tt.formattedTimeMeridian || ''}`);
+    if (!time) continue;
+    const free = golfnowSpots(tt);
+    if (free == null) { unknown++; continue; }
+    for (const r of Array.isArray(tt.teeTimeRates) && tt.teeTimeRates.length ? tt.teeTimeRates : [{}]) {
+      const name = String(r.rateName || 'Tee time'), hot = !!r.isHotDeal;
+      const holes = [r.holeCount, r.holes, tt.multipleHolesRate].map(Number).find(h => HOLE_SIZES.includes(h)) || rateHolesByName(name);
+      const price = num(r.singlePlayerPrice && r.singlePlayerPrice.greensFees && r.singlePlayerPrice.greensFees.value) ?? num(tt.displayRate);
+      const key = [name, holes, hot].join('|');
+      if (!groups.has(key)) groups.set(key, { name: hot && !/hot deal/i.test(name) ? `${name} (Hot Deal)` : name, holes, price, special: hot, url: golfnowPage(src), times: [] });
+      const g = groups.get(key);
+      if (price != null && (g.price == null || price < g.price)) g.price = price;
+      g.times.push({ time, tee: null, free, of: null, fees: price != null ? [{ price, who: g.name }] : [] });
+    }
+  }
+  if (!groups.size && unknown) return null;
+  return [...groups.values()].map(g => ({ ...g, times: g.times.sort((a, b) => (a.time < b.time ? -1 : 1)) })).sort((a, b) => (b.holes || 0) - (a.holes || 0));
+}
+
+async function golfnowTimes(src, date, filters, fresh, course) {
+  const page = golfnowPage(src);
+  try {
+    const got = await fetchPage(golfnowApi(src), fresh, { 'content-type': 'application/json', accept: 'application/json', origin: src.origin }, JSON.stringify(golfnowBody(src, date, course || {})));
+    const all = parseGolfnow(got.text, src, date);
+    if (!all) return { status: 'unreadable', source: 'GolfNow', calendar: page, message: 'GolfNow answered, but not in a form Carry can read yet.', sample: got.text.slice(0, 1500) };
+    const odd = all.flatMap(r => r.times).map(t => t.time).filter(t => t < '04:00' || t >= '22:00').sort()[0];
+    if (odd) return { status: 'unreadable', source: 'GolfNow', calendar: page, message: `GolfNow's times came back on another clock (one at ${odd}), so Carry won't show them as they are.`, sample: got.text.slice(0, 1500) };
+    const offered = all.filter(r => !filters.holes || !r.holes || r.holes === filters.holes);
+    const rates = offered.map(r => { const times = r.times.filter(t => suits(t, r, filters)); return { ...r, times, listed: r.times.length }; });
+    const note = rates.length ? null : !all.length ? 'GolfNow lists no times for this course on this day (it sells only some of a club\'s times: the pro shop may have more).' : 'No rate on this day matches the holes asked for.';
+    return { status: 'ok', source: 'GolfNow', date, calendar: page, rates, ...(note ? { note } : {}), fetchedAt: new Date(got.at).toISOString() };
+  } catch (e) {
+    return { status: e.code === 'unreachable' ? 'unreachable' : 'unreadable', source: 'GolfNow', calendar: page, message: e.message, ...(e.sample ? { sample: e.sample } : {}) };
+  }
+}
+
 /* ---------- filters ---------- */
 
 // Times that suit: within [from, to] (HH:MM), the holes asked for, and enough
@@ -320,10 +415,12 @@ export function suits(t, rate, { from, to, holes, players } = {}) {
 export async function teeTimes(course, date, filters = {}, { fresh = false } = {}) {
   const tee = teeitupSource(course && course.bookingUrl);
   if (tee) return teeitupTimes(tee, date, filters, fresh);
+  const gn = golfnowSource(course && course.bookingUrl);
+  if (gn) return golfnowTimes(gn, date, filters, fresh, course);
   const q18 = quick18Source(course && course.bookingUrl);
   if (q18) return quick18Times(q18, date, filters, fresh);
   const src = miclubSource(course && course.bookingUrl);
-  if (!src) return { status: 'unsupported', message: course && course.bookingUrl ? 'Carry can read MiClub, TeeItUp and Quick18 booking sites so far.' : 'This course has no booking link.' };
+  if (!src) return { status: 'unsupported', message: course && course.bookingUrl ? 'Carry can read MiClub, TeeItUp, Quick18 and GolfNow booking sites so far.' : 'This course has no booking link.' };
   const calendar = calendarUrl(src, date);
   try {
     const page = await fetchPage(calendar, fresh);

@@ -26,6 +26,14 @@ before(async () => {
     const id = u.searchParams.get('booking_resource_id') || u.searchParams.get('bookingResourceId');
     if (id === '4') { res.writeHead(503); return res.end('down'); }
     // GolfNow's TeeItUp API (2.43.0), asked with the club's alias: one 18-hole time for up to four.
+    // GolfNow's own site (2.77.0): the facility search POSTed, one 18-hole time for up to four on the day asked.
+    if (u.pathname === '/api/tee-times/tee-time-results') {
+      let b = ''; return req.on('data', c => (b += c)).on('end', () => {
+        const d = new Date(JSON.parse(b).Date), day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ ttResults: { teeTimes: [{ time: `${day}T07:50:00`, playerRule: 15, teeTimeRates: [{ rateName: '18 Holes', holeCount: 18, singlePlayerPrice: { greensFees: { value: 25 } } }] }] } }));
+      });
+    }
     if (u.pathname === '/v2/tee-times') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(req.headers['x-be-alias'] === 'tiu-golf' ? JSON.stringify([{ teetimes: [{ teetime: '2026-10-31T07:30:00', maxPlayers: 4, bookedPlayers: 0, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 4500, allowedPlayers: [1, 2, 3, 4] }] }] }]) : '{}'); }
     res.writeHead(200, { 'content-type': 'text/html' });
     // Quick18 (2.61.0): Lane Cove's real sheet (for 4 Nov), served for any day.
@@ -36,10 +44,11 @@ before(async () => {
   await new Promise(r => fake.listen(0, '127.0.0.1', r));
   const mi = id => `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=${id}`;
   const c = (id, name, lat, extra) => ({ id, v: 2, name, tee: 'white', holes: card(18), lat, lng: 151.2, ...extra });
-  app = await startApp({ env: { TEETIMES_FRESH_MS: '0', TEEITUP_API: `http://127.0.0.1:${fake.address().port}` }, seed: { clubs: [], sessions: [], settings: { home: { label: 'Home', lat: -33.9, lng: 151.2 } }, courses: [
+  app = await startApp({ env: { TEETIMES_FRESH_MS: '0', TEEITUP_API: `http://127.0.0.1:${fake.address().port}`, GOLFNOW_API: `http://127.0.0.1:${fake.address().port}` }, seed: { clubs: [], sessions: [], settings: { home: { label: 'Home', lat: -33.9, lng: 151.2 } }, courses: [
     c('c_near', 'Near GC', -33.91, { bookable: true, bookingUrl: mi(3000000), suburb: 'Bexley' }),
     c('c_far', 'Far GC', -34.2, { bookable: true, bookingUrl: mi(3000001) }),
     c('c_tiu', 'TeeItUp GC', -33.95, { bookable: true, bookingUrl: 'https://tiu-golf.book.teeitup.com/?course=16001' }),
+    c('c_gn', 'GolfNow GC', -33.955, { bookable: true, bookingUrl: 'https://www.golfnow.com.au/tee-times/facility/16535-golfnow-gc/search' }),
     // A link to MiClub's event list on the club's own domain, as Gordon's and Richmond's are.
     c('c_events', 'Events GC', -34.05, { bookable: true, bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/ListBookingEvents.msp?booking_resource_id=3000004` }),
     c('c_down', 'Down GC', -33.92, { bookable: true, bookingUrl: mi(4) }),
@@ -67,7 +76,7 @@ test('Courses opens Tee times: seven days, today first, and the courses near hom
   await settled('tomorrow checked');
   const asked = new Set(hits.filter(h => /Calendar/.test(h)).map(h => new URL(h, 'http://x').searchParams.get('booking_resource_id')));
   assert.deepEqual([...asked].sort(), ['3000000', '3000004', '4', '5'], 'near home, public or not known, readable (an event-list link too): not Far (33 km), Private, Shut or Booking');
-  assert.match(app.text('#ttStatus'), /4 of 6 courses have times that suit/);
+  assert.match(app.text('#ttStatus'), /5 of 7 courses have times that suit/);
   assert.ok(hits.some(h => h.startsWith('/teetimes/searchmatrix?teedate=' + TOMORROW.replace(/-/g, ''))), 'the Quick18 course asked for the day\'s sheet');
   assert.ok(hits.some(h => h.startsWith('/v2/tee-times?date=') && h.includes('facilityIds=16001')), 'the TeeItUp course asked through GolfNow\'s API');
   assert.match(app.text('#ttNotes'), /2 private or closed courses are not searched/);
@@ -96,7 +105,11 @@ test('every course that shows nothing says why', () => {
   // 2.74.0 (he asked): each course's picture beside its name, in every part of the list.
   for (const sel of ['#tt_c_near summary', '[data-tt="c_down"]', '[data-tt="c_empty"]', '#ttOther .item']) assert.ok(app.$(`${sel} .crow > svg.hm-icon`), `${sel} has the course's tile`);
   const ids = sel => app.$$(sel).map(x => x.dataset.tt || x.id.replace('tt_', ''));
-  assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near', 'c_q18', 'c_tiu', 'c_events'], 'only courses with times in the list, nearest first');
+  assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near', 'c_q18', 'c_tiu', 'c_gn', 'c_events'], 'only courses with times in the list, nearest first');
+  // The GolfNow course: its time, linked to its facility page.
+  const gn = app.$('#tt_c_gn a.ttime');
+  assert.match(gn.textContent, /07:50\s*4 free/);
+  assert.equal(gn.href, 'https://www.golfnow.com.au/tee-times/facility/16535-golfnow-gc/search');
   // The Quick18 course: each time links to its own Select page on the club's sheet.
   const q18 = app.$('#tt_c_q18 a.ttime');
   assert.match(q18.textContent, /06:00\s*4 free/);
