@@ -90,8 +90,10 @@ test('drawn on the swing card, the switch hides the drawing on this phone, and o
   app.go('range', { sessionId: 's_2026-10-01' });
   const pl = app.$('#plane_sw_in');
   assert.ok(pl.querySelector('.planePic img') && pl.querySelector('svg.planeSv .pl-shaft') && pl.querySelector('svg.planeSv .pl-sh') && pl.querySelector('.pl-vee'));
-  assert.equal(pl.querySelector('.pl-back').getAttribute('points').split(' ').length, 8, 'address to the top: 8 frames');
-  assert.equal(pl.querySelector('.pl-down').getAttribute('points').split(' ').length, 5, 'the top to impact: 5 frames');
+  // Smooth (2.64.0): one curve a frame gap, address to the top 7, the top to impact 4, after impact 4; dotted, from frames only.
+  const segs = sel => (pl.querySelector(sel).getAttribute('d').match(/C/g) || []).length;
+  assert.deepEqual([segs('path.pl-back'), segs('path.pl-down'), segs('path.pl-thru')], [7, 4, 4]);
+  assert.ok(pl.querySelector('path.pl-back').classList.contains('sparse'));
   assert.ok(!pl.querySelector('.pl-imp.off'));
   assert.ok(app.$('#plane_sw_steep .pl-imp.off'), 'the steep swing\'s impact is red: hands high');
   assert.match(app.text('#plane_sw_in .planeKey'), /Shaft line\s*Shoulder line\s*Hands going back\s*Coming down/);

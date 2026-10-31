@@ -1,3 +1,9 @@
+## 2.64.0 — 2026-10-31
+- The hand line is smooth now, like the tracers on golf videos. *Measure the body* also traces your hands through the stored video, on every frame the clip has across the swing, not just the 16 pictures, and draws one smooth line from address to the finish: green going back, white coming down, grey after impact.
+- The line draws itself over the clip as it plays, in the swing's video and in the Swings feed, with your hands as a dot, and shows whole when paused. The *Swing plane* switch turns it off.
+- Swings measured before this have *Trace the hands from the video* on the card. A swing with no stored video keeps a dotted line from its 16 frames, labelled as drawn between frames, not measured.
+- The line breaks where the model loses your hands in the blur at speed, rather than guessing across the gap. Measurements still come from the 16 frames as before.
+
 ## 2.63.0 — 2026-10-31
 - Swing plane on down-the-line swings. After *Measure the body*, tap *Tap the ball* and tap the ball once on the address frame. Carry draws the V from the ball (the shaft line through your hands at address, the shoulder line through your shoulders), with your hands going back in green and coming down in white.
 - Three new measures: your hands at the top and coming down, against the V (inside it, flatter under the shaft line, or steeper over the shoulder line), and your hands' height at impact against address.

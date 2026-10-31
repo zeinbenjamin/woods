@@ -348,6 +348,11 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "ball": { "x": 0.55, "y": 0.71 },   // 2.63.0: where he tapped the ball on the address frame, 0..1 of the frame (x across, y down); a
                                       // measurement by hand like `impact`. The swing plane (V, hands against it) is derived from it and
                                       // the pose on every draw, never stored. Absent = not tapped.
+  "track": {                          // 2.64.0, optional: the hands traced from the stored video, made with the pose
+    "by": "mediapipe-0.10.35-lite", "on": "2026-10-31",   // (or *Trace the hands from the video*). A measurement, like the pose;
+    "pts": [ [1.067, 0.29, 0.393, 0.83, 0.271, 0.39, 0.89] ]   // the drawing is derived from it on every draw.
+  },                                  // Each point: [t s in the clip, lead wrist x, y, sure, trail wrist x, y, sure], 0..1 of the
+                                      // frame like the pose; one per distinct video frame across the frames' span, at most 90.
   "pose": {                           // 2.55.0, optional: the body found on each frame by the pose model, in the browser
     "by": "mediapipe-0.10.35-lite", "on": "2026-10-31", "aspect": 1.5,   // aspect = frame width / height, so x and y share a scale
     "frames": [ { "asset": "<frame asset id>", "t": 0.05,
