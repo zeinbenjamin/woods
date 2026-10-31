@@ -967,6 +967,29 @@ and the status line; checked in Chromium against a local server: opened once wit
 signal, offline reload showed his session and the note, a save waited, back online
 it reached the server and the note cleared.
 
+## Back goes where he came from (2.61.0)
+
+He asked (2026-10-31, after a round opened from the Swings tab went back to Rounds): "the back button should
+reflect the page the user was previously on, not just the default of origination". Every `go()` notes the page
+it leaves in `navStack` (tab, sub, scroll, open folds, the feed's place; at most `NAV_MAX` 30), and `back(tab,
+sub, label)` is now `data-act="navBack"`: the last page in the trail that still exists (`navPrev`, skipping a
+deleted round, course or block, `navExists`), named by `navLabel`, restored as left; with no trail (a fresh
+start, a tab tapped), the page's parent as before. Rules: a **sideways** step, between two pages of one kind
+(`navKind`: same tab, view, round, course, block or finding, hole or not, Play or not; a filter such as the
+feed's club or a day doesn't count) replaces rather than stacks, so back from hole 7 is the round, not hole 6;
+going to a page **already in the trail** returns to it (`navPush` truncates), so a circle can't grow; a **tab**
+tapped resets the trail (`go(…, {nav: 'reset'})`); **finishing Play** replaces (`nav: 'replace'`), so the play
+page isn't one to come back to; **deleting** (block, session, round, course) returns with `navBack`. Settings has
+a back only when opened over a page (the gear); the feed's chevron, the course map's back, and every page's
+back go the same way. The trail rides the sign-in trip's resume. `ui-nav` (10) walks the real links (14
+mutations caught, one survived at first: the delete test couldn't tell the previous page from the parent;
+rewritten). **Audited in Chromium on his data** (a scratchpad crawler, every kind of link from each tab, three
+pages deep, through the Swings cards): each page's back names the page left and lands on it.
+**The Swings tab's card** (2.61.0, same ask): *Play video* at the top right of `reelCardHtml` (`reelPlay`, the
+clip in the card with controls, the feed behind paused; again hides it), and the measured body after the
+reading (`poseSection(sw, s, {readOnly: true})`: no measure buttons, ids prefixed `rc_`; unmeasured says where
+to measure it).
+
 ## Page headings (2.50.0)
 
 He found the tops of Courses, Rounds and Swings crowded on his phone and the
@@ -2168,7 +2191,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 473 tests, about 45s.
+`npm test` — 483 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2220,6 +2243,9 @@ fixture would let the reading be pinned.
 - `web.test.js` (6) — the real `web/index.html` in jsdom against a live
   server signed in by `DEV_USER`: writes land in SQLite, uploads become
   blobs, polling works.
+- `ui-nav.test.js` (10) — back goes where he came from: each way into a round, session, block, finding,
+  course, Settings and the feed; hole to hole sideways; a circle; a tab afresh; a deleted page skipped; folds
+  restored; deleting returns; the Swings card's Play video and read-only body.
 - `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags
   following their shot, the prompt, filmed marks, the finding's page.
 - `ui-pose.test.js` (17) — the body, measured (the guide and changing the angle since 2.57.0): a stand-in detector with hand-made
