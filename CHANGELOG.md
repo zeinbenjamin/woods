@@ -1,3 +1,7 @@
+## 2.72.1 — 2026-11-01
+
+- Liverpool's course map is named Oak Point Golf Club, as the club now trades and as its course is in the list.
+
 ## 2.72.0 — 2026-11-01
 - Find a tee time now reads Lane Cove's own booking site (Quick18): each time shows its spots free and price, and tapping it opens that exact time on the club's site to book. Members' rates are left out. Lane Cove's booking link needs to be `https://lanecove.quick18.com` for this (it's currently misspelt).
 - A club whose public calendar lists nothing at all (Camden, Castle Hill, Cronulla, Richmond this week) now says so, instead of "couldn't be read".
