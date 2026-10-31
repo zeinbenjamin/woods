@@ -1,3 +1,7 @@
+## 2.60.1 — 2026-10-31
+- *Across the swing* now runs across the swing's real time, address to finish, so frames packed around impact no longer squeeze the backswing to one side.
+- Address, Top, Impact and Finish are marked on every chart and named once underneath; names that sit close together no longer run into each other.
+
 ## 2.60.0 — 2026-10-31
 - Settings shows *Range numbers* open: no toggle to tap first.
 - On the Overview, *Also costing you* is a toggle, closed until you want it.

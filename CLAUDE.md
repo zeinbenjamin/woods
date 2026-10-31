@@ -898,7 +898,11 @@ joints, the express static server types `.mjs` and `.wasm` right.
   (`poseBand`; `rel` for forward bend, around its own address value), drawn as dotted boxes
   with a dotted path through their middles; the swing's point red (`tr-off`) and the
   measure "outside the guide" (`poseOff`, `off` on `poseValues`) where it leaves one; the
-  reading's prompt is told too. Hips face-on are the one sourced band: Sportsbox AI's tour
+  reading's prompt is told too. **Across is time** (2.60.1, he found the chart crowded left with "topimpact"
+  run together): `poseX` places a frame by its `t`, address to finish (one frame a step if a time is missing or
+  out of order), so frames packed around a marked impact no longer take a column each; all four positions are
+  dotted on every chart and named once under them (`poseAxis`, `.traxis`), a name too close to the one before
+  dropping to a second line. Hips face-on are the one sourced band: Sportsbox AI's tour
   data in Golf Digest (pelvis under ~2 in away at the top, ~5 in toward the target by
   impact), converted over `POSE_HIP_IN` (an assumed 11 in between the model's hip points,
   not his): -18..18% at the top, 32..59% at impact. Head (-15..5% of shoulder width), lead
