@@ -79,11 +79,12 @@ before(async () => {
   fake = createServer((req, res) => {
     seen.push(req.url + ' ' + req.headers['user-agent']);
     if (broken) { res.writeHead(503); return res.end('down'); }
+    if (/resource_id=6\b/.test(req.url)) return;   // a club that never answers (Gordon's, 2026-11-01)
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(/ViewPublicCalendar/.test(req.url) ? (/resource_id=5\b/.test(req.url) || /^localhost:/.test(req.headers.host) ? EMPTY : CAL) : /ViewPublicTimesheet/.test(req.url) ? SHEET : 'nope');
   });
   await new Promise(r => fake.listen(0, r));
-  proc = spawn('node', ['server/index.js'], { env: { ...process.env, PORT: String(PORT), DATA_DIR: DATA, DEV_USER: 'me@example.com', ANTHROPIC_API_KEY: '', TEETIMES_TTL_MS: '1500' } });
+  proc = spawn('node', ['server/index.js'], { env: { ...process.env, PORT: String(PORT), DATA_DIR: DATA, DEV_USER: 'me@example.com', ANTHROPIC_API_KEY: '', TEETIMES_TTL_MS: '1500', TEETIMES_TIMEOUT_MS: '600' } });
   for (let i = 0; i < 80; i++) { try { if ((await fetch(`${base}/healthz`)).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   const put = (id, doc) => fetch(`${base}/api/courses/${id}`, { method: 'PUT', headers: hdr, body: JSON.stringify({ id, v: 2, name: id, holes: [], ...doc }) });
   await put('c_mi', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000000` });
@@ -91,6 +92,9 @@ before(async () => {
   await put('c_none', {});
   await put('c_empty', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=5` });
   await put('c_guess', { bookingUrl: `http://localhost:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp` });   // no id in the link (as Massey Park's), an empty calendar
+  await put('c_slow', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=6` });
+  // Bexley's calendar on a 12-hole card (as Newgreens Chatswood's): its "PHILTER LATE RATE" names no holes.
+  await put('c_twelve', { holes: Array.from({ length: 12 }, (_, i) => ({ n: i + 1, par: 4 })), bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=3000007` });
   await put('c_down', { bookingUrl: `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=4` });
 });
 after(() => { proc && proc.kill(); fake && fake.close(); rmSync(DATA, { recursive: true, force: true }); });
@@ -128,7 +132,7 @@ test('an empty answer says why: nothing that day, a calendar with no rates, a ho
   const day = await get('/api/teetimes/c_mi?date=2026-11-07');
   assert.deepEqual(day.body.rates, []); assert.match(day.body.note, /Nothing is open to the public on this day/, 'Bexley on Saturday 7 Nov');
   const none = await get('/api/teetimes/c_empty?date=2026-11-07');
-  assert.match(none.body.note, /lists no rates at all/); assert.doesNotMatch(none.body.note, /assumed/, 'the id was in the link');
+  assert.match(none.body.note, /lists nothing from this day/); assert.doesNotMatch(none.body.note, /assumed/, 'the id was in the link');
   assert.match((await get('/api/teetimes/c_guess?date=2026-11-07')).body.note, /assumed \(3000000\)/, 'Massey Park: the id was assumed');
   assert.match((await get('/api/teetimes/c_mi?date=2026-10-31&holes=9')).body.note, /matches the holes/);
   assert.equal((await get('/api/teetimes/c_mi?date=2026-10-31')).body.note, undefined, 'no note when there are rates');
@@ -152,4 +156,19 @@ test('the route needs sign-in like the rest of /api', async () => {
     for (let i = 0; i < 80; i++) { try { s = (await fetch(`http://127.0.0.1:${PORT + 1}/api/teetimes/c_mi?date=2026-10-31`)).status; break; } catch {} await new Promise(r => setTimeout(r, 100)); }
     assert.equal(s, 401);
   } finally { p.kill(); }
+});
+
+test('a club that never answers is "couldn\'t be reached", in Carry\'s words (Gordon, 2026-11-01)', async () => {
+  const r = await get('/api/teetimes/c_slow?date=2026-10-31');
+  assert.equal(r.body.status, 'unreachable');
+  assert.equal(r.body.message, 'the booking site took too long to answer');
+});
+
+test('a rate whose holes come only from MiClub\'s class takes the card\'s on a shorter course', async () => {
+  assert.deepEqual(parseCalendar(CAL).map(x => [x.name, x.holes, !!x.classed]), [['18 Holes', 18, false], ['PHILTER LATE RATE', 18, true], ['9 Holes', 9, false]]);
+  const all = await get('/api/teetimes/c_twelve?date=2026-10-31');
+  assert.deepEqual(all.body.rates.map(x => [x.name, x.holes]), [['18 Holes', 18], ['PHILTER LATE RATE', 12]], 'a named 18 stays 18');
+  const eighteen = await get('/api/teetimes/c_twelve?date=2026-10-31&holes=18');
+  assert.deepEqual(eighteen.body.rates.map(x => x.name), ['18 Holes']);
+  assert.deepEqual((await get('/api/teetimes/c_mi?date=2026-10-31&holes=18')).body.rates.map(x => [x.name, x.holes]), [['18 Holes', 18], ['PHILTER LATE RATE', 18]], 'on an 18-hole card (none here: no card) the class stands');
 });

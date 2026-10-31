@@ -861,6 +861,20 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   at those addresses, so the API wasn't found. Its terms (s.VI.3) bar copying
   its databases beyond permitted use and limit non-club users to non-profit
   use; no clause on automated reading as GolfNow's has. Put to him.
+- **His search of Thu 5 Nov** (2.74.0, 18 holes, 4 players, any distance, on
+  2.73.0): 31 of 44 courses with times; Lane Cove read live through Quick18
+  ("108 times at other lengths", a 9-hole course), Massey Park and Oak Point
+  listed. Three fixes: **timeouts** came through raw ("The operation was aborted
+  due to timeout", filed unreadable): Node's `TimeoutError` DOMException has a
+  numeric `code` (23), and `fetchPage` passed any error with a `code` on as its
+  own; now only a string code does, so a timeout is `unreachable`, "took too long
+  to answer" (Gordon, which also timed out for the page reader). **A class's
+  18 defers to a shorter card**: a rate with no holes in its name
+  (`classed` from `parseCalendar`) and MiClub's `eighteenHoles` takes the
+  course's card size when that's under 18 (Newgreens Chatswood's "Twilight"
+  showed under 18 holes); a named rate is never changed. **An empty calendar's
+  note** says bookings may not be open yet as well as sign-up (Woollahra's
+  showed nothing past Wednesday, "Bookings Not Yet Opened").
 - **Next:** a second source per course (resellers), once the links are settled
   (he agreed, 2026-10-31).
 
@@ -2483,7 +2497,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 518 tests, about 110s.
+`npm test` — 520 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2517,7 +2531,7 @@ fixture would let the reading be pinned.
 - `teeitup.test.js` (4) — the TeeItUp reader on a hand-made answer (see
   *Tee times*): links, Sydney times, cents, spots, the route asking with the
   alias, unreadable and refused answers keeping a sample.
-- `teetimes.test.js` (9) — the MiClub reader against Bexley's real calendar
+- `teetimes.test.js` (11) — the MiClub reader against Bexley's real calendar
   and timesheet (`test/fixtures/`), which links are MiClub, the filters, and
   the route against a stand-in MiClub: rates, times, the cache expiring,
   unsupported, unreachable, a bad date, sign-in.

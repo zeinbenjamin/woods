@@ -35,7 +35,7 @@ before(async () => {
   });
   await new Promise(r => fake.listen(0, '127.0.0.1', r));
   const mi = id => `http://127.0.0.1:${fake.address().port}/guests/bookings/ViewPublicCalendar.msp?booking_resource_id=${id}`;
-  const c = (id, name, lat, extra) => ({ id, v: 2, name, tee: 'white', holes: card(9), lat, lng: 151.2, ...extra });
+  const c = (id, name, lat, extra) => ({ id, v: 2, name, tee: 'white', holes: card(18), lat, lng: 151.2, ...extra });
   app = await startApp({ env: { TEETIMES_FRESH_MS: '0', TEEITUP_API: `http://127.0.0.1:${fake.address().port}` }, seed: { clubs: [], sessions: [], settings: { home: { label: 'Home', lat: -33.9, lng: 151.2 } }, courses: [
     c('c_near', 'Near GC', -33.91, { bookable: true, bookingUrl: mi(3000000), suburb: 'Bexley' }),
     c('c_far', 'Far GC', -34.2, { bookable: true, bookingUrl: mi(3000001) }),
@@ -90,7 +90,7 @@ test('a course with times: its rates, each time with its spots and the club\'s o
 
 test('every course that shows nothing says why', () => {
   assert.match(row('c_down'), /Couldn't read its tee times: the booking site answered 503/);
-  assert.match(row('c_empty'), /lists no rates at all/);
+  assert.match(row('c_empty'), /lists nothing from this day/);
   assert.match(app.text('#ttOther'), /Booking GC/);
   assert.match(app.text('#ttOther'), /Public 9 holes/);
   const ids = sel => app.$$(sel).map(x => x.dataset.tt || x.id.replace('tt_', ''));

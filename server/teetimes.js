@@ -83,7 +83,7 @@ export function parseCalendar(html) {
       if (!date || /\bcell-na\b/.test(m[1])) continue;
       days[date] = { price: money(m[2]), special: /\bcell-promotion\b/.test(m[1]) };
     }
-    return id ? { id, name, holes, days } : null;
+    return id ? { id, name, holes, ...(named ? {} : { classed: true }), days } : null;
   }).filter(Boolean);
 }
 
@@ -131,7 +131,9 @@ async function fetchPage(url, fresh = false, headers = null) {
       cache.set(key, { at, ttl: TTL, value });
       return { text: value, at };
     } catch (e) {
-      const error = e.code ? e : Object.assign(new Error(e.name === 'TimeoutError' ? 'the booking site took too long to answer' : 'the booking site could not be reached'), { code: 'unreachable' });
+      // Carry's own errors carry a string code; a timeout's DOMException has a
+      // numeric one (23), which once passed it through raw as "unreadable" (Gordon, 2026-11-01).
+      const error = typeof e.code === 'string' ? e : Object.assign(new Error(e.name === 'TimeoutError' ? 'the booking site took too long to answer' : 'the booking site could not be reached'), { code: 'unreachable' });
       cache.set(key, { at: Date.now(), ttl: ERROR_TTL, error });
       throw error;
     }
@@ -320,6 +322,11 @@ export async function teeTimes(course, date, filters = {}, { fresh = false } = {
     let oldest = page.at;
     const cal = parseCalendar(page.text);
     if (!cal) return { status: 'unreadable', calendar, message: src.guessed ? 'The booking site\'s calendar could not be read (its course id was a guess: add the full calendar link to the course).' : 'The booking site\'s calendar could not be read.' };
+    // A rate with no holes in its name has them from MiClub's class, which is
+    // 18 for anything not called nine: on a shorter card (Newgreens
+    // Chatswood's 12, whose "Twilight" read as 18, 2026-11-01) the card wins.
+    const card = Array.isArray(course.holes) ? course.holes.length : 0;
+    for (const r of cal) if (r.classed && r.holes === 18 && card && card < 18) r.holes = card;
     const offered = cal.filter(r => r.days[date] && (!filters.holes || !r.holes || r.holes === filters.holes)).slice(0, MAX_RATES);
     const rates = [];
     for (const r of offered) {
@@ -335,7 +342,7 @@ export async function teeTimes(course, date, filters = {}, { fresh = false } = {
     // calendar with no rates at all (Massey Park's shows times only to
     // registered public members) reads differently from a day with none.
     const note = rates.length ? null
-      : !cal.length ? `The club's public calendar lists no rates at all: its times may only show after signing up on its site${src.guessed ? `, or the course id Carry assumed (${src.resource}) is not this course's` : ''}.`
+      : !cal.length ? `The club's public calendar lists nothing from this day: bookings may not be open yet (Woollahra's open a few days ahead), or its times may only show after signing up on its site${src.guessed ? `, or the course id Carry assumed (${src.resource}) is not this course's` : ''}.`
       : !cal.some(r => r.days[date]) ? 'Nothing is open to the public on this day (often a members\' competition).'
       : 'No rate on this day matches the holes asked for.';
     return { status: 'ok', source: 'MiClub', date, calendar, rates, ...(note ? { note } : {}), fetchedAt: new Date(oldest).toISOString() };
