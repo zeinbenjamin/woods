@@ -286,6 +286,13 @@ test('the guide: dotted bands at the top and impact, red where the swing is outs
   assert.ok(hip.classList.contains('off'));
   assert.equal(head.querySelectorAll('.tr-off').length, 0); assert.ok(!head.classList.contains('off'));
   assert.equal(tilt.querySelectorAll('.tr-band').length, 0, 'no band without a guide');
+  // 2.57.1, his iPad: the chart scaled with its column, so the words, boxes and dots grew about 4x. The
+  // lines stretch (preserveAspectRatio none); the words, boxes and dots are page elements at a fixed size.
+  const svg = hip.querySelector('svg');
+  assert.equal(svg.getAttribute('preserveAspectRatio'), 'none');
+  assert.equal(svg.querySelectorAll('text, rect, circle').length, 0, 'nothing in the stretched drawing that would grow with it');
+  assert.deepEqual(hip.querySelectorAll('.trbox > span.tr-mlab').length, 2);
+  assert.ok(hip.querySelector('.trbox > span.tr-off') && hip.querySelector('.trbox > span.tr-band'));
   assert.match(app.text('#poseGuide_sw_face'), /^Dotted: a guide at the top and impact\. Red: outside it\. Hips from tour data \(Sportsbox\), the rest rules of thumb\. Not a measurement of you\.$/);
   // Down the line: forward bend held within 6° of its own address.
   const d = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))`);

@@ -1,3 +1,7 @@
+## 2.57.1 — 2026-10-31
+- On an iPad (or any wide screen), the *Across the swing* charts no longer blow up their labels, dots and guide boxes. They stay the same size as on a phone while the lines use the full width.
+- The round-by-round chart on a practice item's page no longer stretches past a comfortable width.
+
 ## 2.57.0 — 2026-10-31
 - A swing's camera angle can be changed: *Change angle* on the swing card. The body measures follow straight away. A reading made under the old angle stays, with a note to analyse again.
 - *Across the swing* now shows a dotted guide at the top and impact on each chart, and marks the swing red where it's outside it. The measures list says *outside the guide* too.

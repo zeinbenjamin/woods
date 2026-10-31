@@ -96,7 +96,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .poseSk { position: absolute; inset: 0; width: 100%; height: 100%; } .poseSk line { stroke: #F4F1E6; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linecap: round; }
 .poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .8; vector-effect: non-scaling-stroke; }
 .ptrace { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 8px; align-items: center; margin: 4px 0; } .ptrace .lab { font-size: 11.5px; color: var(--ink-3); line-height: 1.25; } .ptrace .lab b { display: block; font: 600 13px var(--cond); color: var(--ink); }
-.ptrace svg { display: block; width: 100%; height: auto; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-guide { fill: none; stroke: var(--ink-2); stroke-width: 1.3; stroke-dasharray: 3 3; opacity: .7; } .tr-band { fill: var(--green); fill-opacity: .08; stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 2 2; opacity: .8; } .tr-off { fill: var(--flag); stroke: var(--paper); stroke-width: 1; } .ptrace.off .lab b { color: var(--flag); } .dlines .offg { color: var(--flag); font-weight: 600; } .tr-mlab { font: 500 9.5px var(--body); fill: var(--ink-3); }
+.ptrace .trbox { position: relative; height: 64px; } .ptrace svg { display: block; width: 100%; height: 100%; overflow: visible; } .ptrace svg * { vector-effect: non-scaling-stroke; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-guide { fill: none; stroke: var(--ink-2); stroke-width: 1.3; stroke-dasharray: 3 3; opacity: .7; } .tr-band { position: absolute; width: 12px; transform: translateX(-50%); box-sizing: border-box; border: 1px dashed var(--ink-2); background: color-mix(in srgb, var(--green) 10%, transparent); opacity: .8; pointer-events: none; } .tr-off { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--flag); box-shadow: 0 0 0 1px var(--paper); pointer-events: none; } .ptrace.off .lab b { color: var(--flag); } .dlines .offg { color: var(--flag); font-weight: 600; } .tr-mlab { position: absolute; bottom: -3px; font: 500 10px/1 var(--body); color: var(--ink-3); white-space: nowrap; pointer-events: none; }
 ul.ptrend { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 6px; } ul.ptrend li { background: var(--paper-2); border-radius: var(--r); padding: 8px 10px; }
 ul.ptrend .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; } ul.ptrend .vals { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); } ul.ptrend .s { font-size: 11.5px; color: var(--ink-3); }
 svg.dplane { display: block; width: 100%; max-width: 280px; height: auto; margin: 4px auto 6px; }
@@ -351,7 +351,7 @@ tr.cs td { padding-top: 5px; padding-bottom: 5px; }
 .card-key i.sc { min-width: 12px; width: 12px; height: 12px; line-height: 12px; vertical-align: -1px; margin-right: 2px; } .card-key i.sc.par { border: 1px solid var(--ink-3); } .card-key i.sc.eagle, .card-key i.sc.b2, .card-key i.sc.b3 { margin-left: 3px; margin-right: 5px; } .card-key i.sc.eagle { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--score-e); } .card-key i.sc.b2 { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--score-2); } .card-key i.sc.b3 { box-shadow: 0 0 0 1.5px var(--paper), 0 0 0 2.5px var(--score-3); }
 .holemap .hit { fill: transparent; cursor: pointer; } .holemap .hit.on { fill: none; stroke: var(--hm-flag, #c8432a); stroke-width: 2; }
 .shotinfo { text-align: center; margin: 8px 0 4px; min-height: 2.6em; }
-.ghist { width: 100%; height: auto; display: block; margin: 4px 0; } .ghist .col { fill: var(--green); } .ghist .gx { stroke: var(--rule); stroke-width: 1; } .ghist .rg { stroke: var(--ink-2); stroke-width: 1.5; }
+.ghist { width: 100%; max-width: 560px; height: auto; display: block; margin: 4px 0; } .ghist .col { fill: var(--green); } .ghist .gx { stroke: var(--rule); stroke-width: 1; } .ghist .rg { stroke: var(--ink-2); stroke-width: 1.5; }
 .ghist .tk { font: 10px var(--body); fill: var(--ink-3); } .ghist .vl { font: 600 11px var(--body); fill: var(--ink); } .ghist .hitbox { fill: transparent; }
 table.mini { width: 100%; font-size: 13px; border-collapse: collapse; } table.mini td, table.mini th { text-align: left; padding: 3px 0; border-bottom: 1px solid var(--rule); }
 .warn-text { color: var(--flag); }
@@ -3928,15 +3928,20 @@ function poseTraces(m) {
     const xs = v.filter(x => x != null).concat(...bands.map(x => x.b)), lo = Math.min(...xs), hi = Math.max(...xs), span = hi - lo || 1;
     const X = i => P + i * (W - 2 * P) / Math.max(1, n - 1), Y = x => P + 4 + (H - 2 * P - 8) * (1 - (x - lo) / span);
     let d = '', pen = false; v.forEach((x, i) => { if (x == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x).toFixed(1)}`; pen = true; });
-    const marks = [['top', 'top'], ['impact', 'impact']].filter(([key]) => m.keys[key] != null).map(([key, t]) => `<line class="tr-mark" x1="${X(m.keys[key]).toFixed(1)}" x2="${X(m.keys[key]).toFixed(1)}" y1="${P}" y2="${H - P}"/><text class="tr-mlab" x="${(X(m.keys[key]) + 3).toFixed(1)}" y="${H - 2}">${t}</text>`).join('');
+    // The lines stretch with the width (preserveAspectRatio none, strokes that don't scale); the words, the guide's
+    // boxes and the red points are laid over in page units, so an iPad's wide column doesn't blow them up (2.57.1).
+    const px = x => `${(100 * x / W).toFixed(2)}%`, py = y => `${(100 * y / H).toFixed(2)}%`;
+    const keyed = [['top', 'top'], ['impact', 'impact']].filter(([key]) => m.keys[key] != null);
+    const marks = keyed.map(([key]) => `<line class="tr-mark" x1="${X(m.keys[key]).toFixed(1)}" x2="${X(m.keys[key]).toFixed(1)}" y1="${P}" y2="${H - P}"/>`).join('');
+    const mlabs = keyed.map(([key, t]) => `<span class="tr-mlab" style="left:calc(${px(X(m.keys[key]))} + 3px)">${t}</span>`).join('');
     // The guide: a dotted path from address (or the first band) through the middle of each band, the bands as dotted boxes,
     // and the swing's own point red where it is outside one.
     const a0 = v[m.keys.address], start = a0 != null && !['arm'].includes(k) ? [[m.keys.address, POSE_GUIDE[m.view][k] && POSE_GUIDE[m.view][k].rel ? a0 : 0]] : [];
     const gpts = start.concat(bands.map(x => [x.i, (x.b[0] + x.b[1]) / 2]));
     const gpath = gpts.length > 1 ? `<path class="tr-guide" d="${gpts.map(([i, y], j) => `${j ? 'L' : 'M'}${X(i).toFixed(1)},${Y(y).toFixed(1)}`).join('')}"/>` : '';
-    const boxes = bands.map(x => `<rect class="tr-band" x="${(X(x.i) - 6).toFixed(1)}" y="${Y(x.b[1]).toFixed(1)}" width="12" height="${Math.max(1, Y(x.b[0]) - Y(x.b[1])).toFixed(1)}"/>`).join('');
-    const offs = bands.filter(x => v[x.i] != null && (v[x.i] < x.b[0] || v[x.i] > x.b[1])).map(x => `<circle class="tr-off" cx="${X(x.i).toFixed(1)}" cy="${Y(v[x.i]).toFixed(1)}" r="3.5"/>`).join('');
-    return `<div class="ptrace${offs ? ' off' : ''}" data-k="${k}"><div class="lab"><b>${name}</b>${unit}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)} across the swing${bands.length ? ', with the guide' : ''}${offs ? ', outside the guide' : ''}">${marks}${boxes}${gpath}<path class="tr-line" d="${d}"/>${offs}</svg></div>`;
+    const boxes = bands.map(x => `<span class="tr-band" style="left:${px(X(x.i))};top:${py(Y(x.b[1]))};height:max(2px, ${py(Y(x.b[0]) - Y(x.b[1]))})"></span>`).join('');
+    const offs = bands.filter(x => v[x.i] != null && (v[x.i] < x.b[0] || v[x.i] > x.b[1])).map(x => `<span class="tr-off" style="left:${px(X(x.i))};top:${py(Y(v[x.i]))}"></span>`).join('');
+    return `<div class="ptrace${offs ? ' off' : ''}" data-k="${k}"><div class="lab"><b>${name}</b>${unit}</div><div class="trbox" role="img" aria-label="${esc(name)} across the swing${bands.length ? ', with the guide' : ''}${offs ? ', outside the guide' : ''}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${marks}${gpath}<path class="tr-line" d="${d}"/></svg>${boxes}${offs}${mlabs}</div></div>`;
   }).join('');
 }
 // The swing card's body section.
