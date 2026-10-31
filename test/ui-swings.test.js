@@ -181,7 +181,7 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.ok(app.sheetOpen(), 'a sheet over the feed');
   assert.match(app.text('#sheetInner h2'), /19 Oct 2026/);
   assert.match(app.text('#sheetInner #reelCard'), /Hold the wrist angle longer/);
-  assert.match(app.text('#sheetInner #reelCard'), /a reading, not a measurement/);
+  assert.match(app.text('#sheetInner'), /a reading, not a measurement/, 'said in What Claude saw at the foot (2.68.0)');
   assert.ok(app.$('#reels'), 'the feed is still there underneath');
   app.$('#sheetInner [data-close]').click();
   reels[1].querySelector('.reelInfo').click();

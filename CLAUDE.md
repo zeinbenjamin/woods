@@ -829,6 +829,24 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## One row of buttons, the notes at the foot (2.68.0)
+
+He sent three screenshots of the 2.67.0 card: buttons in four places (*Redraw the shot*, *Move the ball*, *Measure
+again*, the bottom row), the "hands from n frames" note in the middle, *What Claude saw* under the fix, and asked what
+the difference between Analyse and Measure was. **Analyse does both**: `ACTIONS.analyseSwing` measures first
+(`measureAndSave`, the trace too) when the swing has no pose or one by an earlier model (`poseOld`), then reads, so the
+reading gets `poseContext`; a model that can't run reads without and toasts so. **One row** at the card's foot: *Analyse*,
+*Play video*, *Trace/Redraw the shot*, *More…* (`ACTIONS.swingMore`, `#swingMoreList`: tap/move the ball, measure the body
+again, trace the hands from the video, change angle, delete; measuring and tracing close the sheet and report on the
+card's `pm_`/`tr_`). The sections draw bare (`tracerSection(…, bare)`, `planeSection(…, bare)`, `poseSection({bare})`):
+pictures and switches only; no ball means no plane section (tapping it is in More, or the tracer's first tap).
+**Quiet folds** at the foot (`swingFolds`, `.qfolds#sf_<id>`, the `qfold` style of the Range list's checks): *What
+Claude saw* (`readingSeen`, with the "read from frames… a reading, not a measurement" credit, which left the fix; its
+row label says *The fix · a reading*), *How the lines were drawn* (`#drawn_<id>`: `traceNote`, the tracer's note with
+when it was traced, the plane's camera when off the line, "the club isn't tracked"), *Every measure*, *Across the
+swing*, *Frames*. The Swings card has the same foot, `rc_` ids. `ui-swingsum` (4) covers the row, More and the folds,
+and Analyse measuring then reading.
+
 ## This swing, in one place (2.67.0)
 
 He found the swing card's parts each talking about their own thing (screenshots of his Georges River 5i and Long Reef
@@ -2357,7 +2375,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 506 tests, about 45s.
+`npm test` — 507 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2414,7 +2432,7 @@ fixture would let the reading be pinned.
   restored; deleting returns; the Swings card's Play video and read-only body.
 - `ui-trace.test.js` (6) — the hands traced from the video: the smoothing, a stand-in 30 fps clip and model,
   a slow-motion clip, swings measured by the earlier model, repeats and lost stretches, the colours' cuts, an undecodable clip, the overlay on the playing clip and the feed.
-- `ui-swingsum.test.js` (3) — the swing card's summary: the four rows from hand-made joints, a tied shot and a
+- `ui-swingsum.test.js` (4) — the swing card's summary: the four rows from hand-made joints, a tied shot and a
   reading with `ties`, an older reading's hint, the plane's misses, the one picture and either switch off, the prompt
   asking `ties` only with something to tie, the Swings card read-only.
 - `ui-tracer.test.js` (6) — the shot tracer: the three taps and the shape, the ball skipped when set and taken

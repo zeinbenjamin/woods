@@ -290,7 +290,7 @@ test('a reading shows the one fix in the card\'s summary; why, feel, drill and h
   assert.equal(app.text('#view .analysis .one'), COACHED.one_thing);
   const seen = app.$('#seen_sw_1');
   assert.ok(seen && seen.tagName === 'DETAILS' && !seen.open, 'what Claude saw is one tap down, with an id so it stays open across redraws');
-  assert.equal(seen.querySelector('summary').textContent, 'What Claude saw (1)');
+  assert.equal(seen.querySelector('summary').textContent, 'What Claude saw · 1', 'a quiet fold at the card\'s foot (2.68.0)');
   assert.match(seen.textContent, /Club exits left[\s\S]*Against your ball data: Explains the low runners\.[\s\S]*Can't tell from this angle: Face angle at impact/);
   assert.equal(app.$$('#view .analysis > .obs').length, 0, 'no observations on the card itself');
 });

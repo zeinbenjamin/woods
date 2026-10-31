@@ -97,8 +97,8 @@ test('drawn on the swing card, the switch hides the drawing on this phone, and o
   assert.ok(!pl.querySelector('.pl-imp.off'));
   assert.ok(app.$('#plane_sw_steep .pl-imp.off'), 'the steep swing\'s impact is red: hands high');
   assert.match(app.text('#plane_sw_in .planeKey'), /Shaft line\s*Shoulder line\s*Hands going back\s*Coming down/);
-  assert.match(app.text('#pose_sw_in .dlines'), /Hands at the top, against the plane: inside the V[\s\S]*Hands coming down, against the plane: inside the V[\s\S]*Hands height at impact: 8% of torso length lower than at address/);
-  assert.match(app.text('#pose_sw_steep .dlines'), /Hands coming down, against the plane: \d+° over the shoulder line, steeper than the V[^·]*· outside the guide/);
+  assert.match(app.text('#bodyAll_sw_in .dlines'), /Hands at the top, against the plane: inside the V[\s\S]*Hands coming down, against the plane: inside the V[\s\S]*Hands height at impact: 8% of torso length lower than at address/);
+  assert.match(app.text('#bodyAll_sw_steep .dlines'), /Hands coming down, against the plane: \d+° over the shoulder line, steeper than the V[^·]*· outside the guide/);
   assert.match(app.text('#poseGuide_sw_in'), /and for the plane coming down too; its band is the V, from the shaft line to the shoulder line/);
   assert.ok(app.$('#ptr_sw_in .ptrace[data-k="plane"]') && app.$('#ptr_sw_in .ptrace[data-k="handsUp"]'), 'across the swing');
   assert.equal(app.$$('#ptr_sw_in .ptrace[data-k="plane"] .tr-band').length, 2, 'the V at the top and coming down');
@@ -108,7 +108,7 @@ test('drawn on the swing card, the switch hides the drawing on this phone, and o
   assert.equal(app.$('#planeSw_sw_in').getAttribute('aria-checked'), 'false');
   assert.ok(!app.$('#plane_sw_in .planePic') && !app.$('#plane_sw_steep .planePic'));
   assert.equal(app.win.localStorage.getItem('carry.overlays'), '{"plane":false}');
-  assert.match(app.text('#pose_sw_in .dlines'), /Hands at the top, against the plane/);
+  assert.match(app.text('#bodyAll_sw_in .dlines'), /Hands at the top, against the plane/);
   app.click('#planeSw_sw_in'); assert.ok(app.$('#plane_sw_in .planePic'));
   // Off the line: the camera says why, nothing drawn.
   assert.match(app.text('#planeOff_sw_off'), /^At address your shoulders are 45% of your torso apart, so the camera wasn't behind your hands along the line\. Off the line the plane's lines tilt, so they aren't drawn/);
@@ -120,8 +120,11 @@ test('drawn on the swing card, the switch hides the drawing on this phone, and o
 
 test('tap the ball: the sheet checks the camera, the tap is the one thing stored', async () => {
   app.go('range', { sessionId: 's_2026-10-01' });
-  assert.match(app.text('#plane_sw_noball'), /Tap the ball once on the address frame/);
-  app.click('#plane_sw_noball [data-act="planeBall"]');
+  // 2.68.0: no ball, no plane section; tapping it is in the card's More… sheet.
+  assert.equal(app.$('#plane_sw_noball'), null);
+  app.click('#view [data-act="swingMore"][data-wid="sw_noball"]');
+  assert.match(app.text('#swingMoreList [data-act="planeBall"]'), /^Tap the ball/);
+  app.click('#swingMoreList [data-act="planeBall"]');
   assert.match(app.text('#planeCam'), /^Camera in line\. At address your shoulders overlap \(0% of your torso apart\)/);
   assert.equal(await app.save(), false, 'no tap, nothing saved');
   assert.match(app.toast(), /Tap the ball first/);
@@ -135,9 +138,11 @@ test('tap the ball: the sheet checks the camera, the tap is the one thing stored
   assert.deepEqual(sw.ball, { x: 0.7, y: 0.78 });
   assert.deepEqual(Object.keys(sw).sort(), ['addedOn', 'ball', 'club', 'frames', 'id', 'pose', 'view'], 'no angle, no V, nothing derived');
   await app.waitFor(() => app.$('#plane_sw_noball .planePic'), { what: 'drawn' });
-  assert.match(app.text('#plane_sw_noball [data-act="planeBall"]'), /Move the ball/);
+  app.click('#view [data-act="swingMore"][data-wid="sw_noball"]');
+  assert.match(app.text('#swingMoreList [data-act="planeBall"]'), /^Move the ball/);
   // An off-the-line clip warns in the sheet before a tap.
-  app.click('#plane_sw_off [data-act="planeBall"]');
+  app.click('#view [data-act="swingMore"][data-wid="sw_off"]');
+  app.click('#swingMoreList [data-act="planeBall"]');
   assert.match(app.text('#planeCam'), /^Camera off the line\./);
   app.$('#sheetInner [data-close]').click();
 });

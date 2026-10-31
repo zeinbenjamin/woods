@@ -37,16 +37,23 @@ const S1 = 's_sum';
 const COACHED = { one_thing: 'Keep your chest down through impact', why: 'Frame 11 stands up.', feel: 'Chest to the ball', drill: { name: 'Wall drill', how: 'Bum on a wall.' },
   check: 'Ball starts on line', ball_data: 'agrees', ties: 'Hips toward the ball and the hands rising at impact are one move; the low runner fits it.' };
 const TRACER = { peak: { x: 0.72, y: 0.1 }, land: { x: 0.8, y: 0.4 }, shape: 'draw', on: '2026-10-01' };
-let app;
+let app, seen = null;
+const FRESH = swing('sw_new', '7i'), JOINTS = FRESH.pose.frames.map(f => f.j);
+delete FRESH.pose;
 before(async () => {
-  app = await startApp({ seed: {
+  app = await startApp({ intercept: async (url, o) => {
+    if (/\/_blob\/sw_newf\d+$/.test(url)) return new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'content-type': 'image/webp' } });
+    if (!url.endsWith('/api/analyse')) return null;
+    seen = JSON.parse(o.body);
+    return new Response(JSON.stringify({ text: '{}', json: { one_thing: 'Stay in your posture', ties: 'The hands rising fits the hips moving in.' }, usage: {} }), { status: 200, headers: { 'content-type': 'application/json' } });
+  }, seed: {
     clubs: [club('D', 'driver', { order: 1 }), club('7i', 'iron', { order: 4 })],
     sessions: [{ id: S1, v: 2, type: 'range', date: '2026-10-01', venue: 'Test range', blocks: [
       { id: 'b7', seq: 1, club: '7i', swing: 'full', shots: [{ carry: 120, total: 131, carrySide: -3 }, { carry: 122, total: 133 }] }],
     swings: [
       { ...swing('sw_all', '7i', { imp: IMP_HIGH }), analysis: COACHED, tracer: TRACER, shot: { block: 'b7', i: 0, carry: 120, total: 131 } },
       { ...swing('sw_old', 'D', { down: STEEP }), analysis: { one_thing: 'Swing to the right' } },
-      { id: 'sw_bare', view: 'face', club: '7i', frames: [{ asset: 'b0', t: 0.05 }], addedOn: '2026-10-01' }] }] } });
+      { id: 'sw_bare', view: 'face', club: '7i', frames: [{ asset: 'b0', t: 0.05 }], addedOn: '2026-10-01' }, FRESH] }] } });
   await app.waitFor(() => app.E('S.sessions.length') === 1, { what: 'seeded' });
 });
 after(() => app && app.stop());
@@ -66,7 +73,7 @@ test('the summary: the ball, the body, the plane and the fix in four rows, the r
   const how = app.$('#how_sw_all'); assert.ok(how && !how.open && /Wall drill/.test(how.textContent), 'why, feel and drill one tap down');
   assert.equal(app.$('#tiesHint_sw_all'), null);
   // An older reading: no join, and it says how to get one. A steep swing: the plane said part by part, the miss marked.
-  assert.match(app.text('#tiesHint_sw_old'), /Analyse again and Claude says how the ball, the body and the fix fit together/);
+  assert.match(app.text('#tiesHint_sw_old'), /Analyse again and it says how the ball, the body and the fix fit together/);
   assert.match(app.text('#sumPlane_sw_old > div'), /^At the top: inside the V · Coming down: \d+° over the shoulder line, steeper than the V\.$/);
   assert.ok(app.$('#sumPlane_sw_old .offg'));
   assert.equal(app.text('#sumBall_sw_old > b'), 'The ball', 'nothing traced');
@@ -86,7 +93,7 @@ test('one picture: the traced shot on the swing plane\'s, both switches on its r
   assert.match(app.text('#plane_sw_all .tracerTag'), /^Shot traced by you · Draw$/);
   assert.equal(app.$('#tracer_sw_all'), null, 'no second picture');
   assert.ok(app.$('#plane_sw_all #planeSw_sw_all') && app.$('#plane_sw_all #tracerSw_sw_all'));
-  assert.ok(app.$('#plane_sw_all [data-act="traceShot"]'), 'redraw is still there');
+  assert.ok(app.$('#view [data-act="traceShot"][data-wid="sw_all"]'), 'redraw is still there, in the card\'s one row');
   // The crop reaches the peak: the tracer's 0.1 is above the hands' highest point.
   const crop = app.$('#plane_sw_all .planeCrop').getAttribute('style'), top = -parseFloat(/top:(-?[\d.]+)%/.exec(crop)[1]), h = parseFloat(/height:([\d.]+)%/.exec(crop)[1]);
   assert.ok(Math.abs(top / h - 0.02) < 0.002, `cropped from 0.02, the plane's margin over the peak (${top / h})`);
@@ -104,4 +111,26 @@ test('the reading is asked how it fits together only when there is something to 
   assert.ok(app.$('#sheetInner #rc_sum_sw_all #rc_shotNums_sw_all') && app.$('#sheetInner #rc_ties_sw_all'));
   assert.equal(app.$('#sheetInner #rc_sum_sw_all [data-act]'), null, 'read-only');
   app.$('#sheetInner [data-close]').click();
+});
+
+test('one button: Analyse measures the body first when it isn\'t measured, then reads it with the measures; the rest is in More…', async () => {
+  app.win.carryPose = { async detect(src) { const i = Number(/sw_newf(\d+)$/.exec(src)[1]); return { w: 1000, h: 1000, joints: JOINTS[i] }; } };
+  app.go('range', { sessionId: S1 });
+  const row = app.$('[data-act="analyseSwing"][data-wid="sw_new"]').parentNode;
+  assert.deepEqual([...row.querySelectorAll('button')].map(b => b.textContent), ['Analyse', 'Trace the shot', 'More…'], 'one row, four at most');
+  assert.equal(app.$$('#view .swing [data-act="measureSwing"], #view .swing [data-act="planeBall"], #view .swing [data-act="traceSwing"]').length, 0, 'no buttons scattered through the card');
+  app.click('[data-act="analyseSwing"][data-wid="sw_new"]');
+  await app.waitFor(async () => { const w = (await app.api.get('sessions', S1)).swings.find(x => x.id === 'sw_new'); return w.pose && w.analysis; }, { what: 'measured, then read' });
+  const prompt = seen.prompt || JSON.stringify(seen);
+  assert.match(prompt, /MEASURED FROM THESE FRAMES/, 'the reading was given the measures it had just taken');
+  assert.match(prompt, /"ties"/);
+  // More…: the rarer things, in one sheet.
+  app.go('range', { sessionId: S1 });
+  app.click('#view [data-act="swingMore"][data-wid="sw_all"]');
+  assert.deepEqual(app.$$('#swingMoreList .choice b').map(b => b.textContent), ['Move the ball', 'Measure the body again', 'Change angle', 'Delete this swing']);
+  app.$('#sheetInner [data-close]').click();
+  // The quiet folds at the foot, in order; the credit for the reading is in What Claude saw.
+  assert.deepEqual(app.$$('#sf_sw_all > details').map(d => d.id), ['seen_sw_all', 'drawn_sw_all', 'bodyAll_sw_all', 'ptr_sw_all', 'frames_sw_all']);
+  assert.match(app.text('#seen_sw_all'), /a reading, not a measurement/);
+  assert.match(app.text('#drawn_sw_all'), /Dotted: from the 16 frames only[\s\S]*The ball's flight is a drawing from your taps[\s\S]*The club isn't tracked/);
 });

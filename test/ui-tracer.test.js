@@ -51,8 +51,9 @@ const tiles = sel => app.$$(`${sel} .tsTile`).map(t => [...t.children].map(c => 
 test('three taps and a shape: the ball first when the swing has none, then the peak and the landing on the last frame', async () => {
   app.win.localStorage.removeItem('carry.overlays');
   app.go('rounds', { sessionId: R });
-  assert.match(app.text('#tracer_sw_d'), /Three taps: the ball, where it peaked, where it came down\./);
-  app.click('#tracer_sw_d [data-act="traceShot"]');
+  // 2.68.0: one row of buttons at the card's foot.
+  assert.equal(app.text('#view [data-act="traceShot"][data-wid="sw_d"]'), 'Trace the shot');
+  app.click('#view [data-act="traceShot"][data-wid="sw_d"]');
   assert.match(app.text('#trSheet'), /^Tap the ball\. At address, where it sits\. The line starts here\. The swing plane uses this tap too\./);
   assert.equal(app.$('#trImg').getAttribute('src'), '/_blob/d0', 'the address frame');
   assert.ok(app.$('#trNext').disabled, 'no tap, no next');
@@ -78,7 +79,7 @@ test('three taps and a shape: the ball first when the swing has none, then the p
   await app.waitFor(() => app.$('#tracer_sw_d .tracerPic'), { what: 'drawn' });
   assert.ok(app.$('#tracer_sw_d .tracerPic img[src="/_blob/d3"]') && app.$('#tracer_sw_d svg.trShot .ts-line') && app.$('#tracer_sw_d svg.trShot .ts-land'));
   assert.equal(app.text('#tracer_sw_d .tracerTag'), 'Traced by you · Fade');
-  assert.match(app.text('#tracerNote_sw_d'), /^A drawing from your taps, not a measurement\.$/);
+  assert.match(app.text('#drawn_sw_d #tracerNote_sw_d'), /^The ball's flight is a drawing from your taps, not a measurement, traced \d+ \w+ \d{4}\.$/);
 });
 
 test('beside it, the real numbers: the hole map\'s on the course, the bay\'s at the range, and nothing when it isn\'t tied', async () => {
@@ -107,8 +108,8 @@ test('beside it, the real numbers: the hole map\'s on the course, the bay\'s at 
 
 test('redrawing starts from what was drawn, skips the ball the swing has, and a shape tapped again is taken back', async () => {
   app.go('range', { sessionId: RG });
-  assert.equal(app.text('#tracer_sw_5 [data-act="traceShot"]'), 'Redraw the shot');
-  app.click('#tracer_sw_5 [data-act="traceShot"]');
+  assert.equal(app.text('#view [data-act="traceShot"][data-wid="sw_5"]'), 'Redraw the shot');
+  app.click('#view [data-act="traceShot"][data-wid="sw_5"]');
   assert.match(app.text('#trSheet'), /^Tap where it peaked\./, 'the ball is already there');
   assert.ok(!app.$('#trNext').disabled, 'the old peak stands');
   app.click('#trBack');
@@ -149,7 +150,7 @@ test('its own switch, apart from the swing plane\'s; the Swings card shows it wi
   assert.ok(!app.$('#tracer_sw_5 .tracerPic') && !app.$('#tracer_sw_i .tracerPic'), 'off for every swing');
   assert.ok(app.$('#shotNums_sw_5'), 'the shot\'s numbers are the ball\'s, not the drawing\'s: they stay');
   assert.equal(app.$('#tracerSw_sw_5').getAttribute('aria-checked'), 'false');
-  assert.ok(app.$('#tracer_sw_5 [data-act="traceShot"]'), 'it can still be redrawn');
+  assert.ok(app.$('#view [data-act="traceShot"][data-wid="sw_5"]'), 'it can still be redrawn');
   assert.equal(app.E(`overlayOn('plane')`), true, 'the plane untouched');
   app.click('#tracerSw_sw_5');
   assert.ok(app.$('#tracer_sw_5 .tracerPic'));
