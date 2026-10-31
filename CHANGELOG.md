@@ -1,3 +1,12 @@
+## 2.58.0 — 2026-10-31
+- On a round, *What this round showed* and *Clubs on the course* are now toggles, right under *Getting to the green* and *Strokes gained*.
+- Once a swing's body has been measured, its frame-by-frame strip folds away under *Frames*; the four positions show the swing.
+- On the Range list, *Quiet lately* is a row like *Is this list right?* and *What the readings couldn't see*, in one quiet group.
+- *Measured, swing by swing* on the Swings page is one row per measure: the latest value, the change since the first swing, and how many swings.
+- Face and path now read the way golfers say it: the face open or closed, the path in-to-out or out-to-in. *Curves left* and *curves right* stay.
+- The Overview's *Face, path and strike* is just the table: face, path, which way it curves, which one the shots followed, and smash. Clubs without enough shots are listed in one line.
+- *Strokes gained* says what it's measured against in one line instead of a paragraph.
+
 ## 2.57.1 — 2026-10-31
 - On an iPad (or any wide screen), the *Across the swing* charts no longer blow up their labels, dots and guide boxes. They stay the same size as on a phone while the lines use the full width.
 - The round-by-round chart on a practice item's page no longer stretches past a comfortable width.

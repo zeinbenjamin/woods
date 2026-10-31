@@ -97,8 +97,7 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .8; vector-effect: non-scaling-stroke; }
 .ptrace { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 8px; align-items: center; margin: 4px 0; } .ptrace .lab { font-size: 11.5px; color: var(--ink-3); line-height: 1.25; } .ptrace .lab b { display: block; font: 600 13px var(--cond); color: var(--ink); }
 .ptrace .trbox { position: relative; height: 64px; } .ptrace svg { display: block; width: 100%; height: 100%; overflow: visible; } .ptrace svg * { vector-effect: non-scaling-stroke; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-guide { fill: none; stroke: var(--ink-2); stroke-width: 1.3; stroke-dasharray: 3 3; opacity: .7; } .tr-band { position: absolute; width: 12px; transform: translateX(-50%); box-sizing: border-box; border: 1px dashed var(--ink-2); background: color-mix(in srgb, var(--green) 10%, transparent); opacity: .8; pointer-events: none; } .tr-off { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--flag); box-shadow: 0 0 0 1px var(--paper); pointer-events: none; } .ptrace.off .lab b { color: var(--flag); } .dlines .offg { color: var(--flag); font-weight: 600; } .tr-mlab { position: absolute; bottom: -3px; font: 500 10px/1 var(--body); color: var(--ink-3); white-space: nowrap; pointer-events: none; }
-ul.ptrend { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 6px; } ul.ptrend li { background: var(--paper-2); border-radius: var(--r); padding: 8px 10px; }
-ul.ptrend .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; } ul.ptrend .vals { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); } ul.ptrend .s { font-size: 11.5px; color: var(--ink-3); }
+table.ptrend { margin: 4px 0 8px; } table.ptrend td { vertical-align: top; } table.ptrend td:first-child { white-space: normal; text-align: left; } table.ptrend td .small { font-weight: 400; }
 svg.dplane { display: block; width: 100%; max-width: 280px; height: auto; margin: 4px auto 6px; }
 .dp-box { fill: var(--paper-2); stroke: var(--rule); } .dp-axis { stroke: var(--rule); stroke-width: 1; } .dp-diag { stroke: var(--ink-3); stroke-dasharray: 4 4; }
 .dp-lab { font: 500 10px var(--body); fill: var(--ink-3); } .dp-ax { font: 500 10px var(--body); fill: var(--ink-3); }
@@ -297,7 +296,7 @@ details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > su
 .filmstrip { display: flex; gap: 4px; overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
 .filmstrip img { height: 132px; width: auto; border-radius: 4px; flex: 0 0 auto; background: var(--paper-2); }
 .analysis { border-left: 3px solid var(--green); padding: 8px 10px; margin: 8px 0 0; background: var(--paper-2); border-radius: 0 var(--r) var(--r) 0; }
-.swshot { margin: 4px 0 8px; } .swshot button.quiet { padding: 2px 6px; }
+.swshot { margin: 4px 0 8px; } details.frames > summary { cursor: pointer; margin: 2px 0 6px; } details.frames[open] > summary { margin-bottom: 8px; } .swshot button.quiet { padding: 2px 6px; }
 .analysis .one { font-family: var(--cond); font-weight: 700; font-size: 16px; line-height: 1.25; margin-bottom: 6px; }
 .analysis .one.long { font: 500 14px/1.35 var(--body); }
 .analysis .obs { font-size: 13px; margin: 3px 0; }
@@ -1191,7 +1190,10 @@ function corr(xs, ys) {
   const mx = sum(xs) / n, my = sum(ys) / n, sx = Math.sqrt(sum(xs.map(x => (x - mx) ** 2))), sy = Math.sqrt(sum(ys.map(y => (y - my) ** 2)));
   return sx > 1e-9 && sy > 1e-9 ? sum(xs.map((x, i) => (x - mx) * (ys[i] - my))) / (sx * sy) : null;
 }
-const degLabel = v => Math.abs(v) < 0.05 ? '0.0°' : `${fmt(Math.abs(v), 1)}° ${v < 0 ? 'left' : 'right'}`;
+// A golfer's words (2.58.0, he asked): the face open or closed to the target, the path in-to-out or out-to-in.
+// For a right-hander, as the bay reports it: face minus (left) is closed; path plus (right) is in-to-out.
+const faceLabel = v => Math.abs(v) < 0.05 ? 'square' : `${fmt(Math.abs(v), 1)}° ${v < 0 ? 'closed' : 'open'}`;
+const pathLabel = v => Math.abs(v) < 0.05 ? 'neutral' : `${fmt(Math.abs(v), 1)}° ${v < 0 ? 'out-to-in' : 'in-to-out'}`;
 const f2pLabel = v => Math.abs(v) < 0.05 ? 'square to the path' : `${fmt(Math.abs(v), 1)}° ${v < 0 ? 'closed' : 'open'}`;
 const strength = r => Math.abs(r) >= 0.7 ? 'closely' : Math.abs(r) >= 0.4 ? 'partly' : 'hardly';
 // shots: [{...shot, prof}] for one club.
@@ -1218,8 +1220,8 @@ function delivery(shots) {
 function deliveryLines(d) {
   const lines = [];
   if (d.enough) {
-    lines.push(`Face ${degLabel(d.face)} and path ${degLabel(d.path)} on average, so the face was ${f2pLabel(d.f2p)} to the path${Math.abs(d.f2p) >= 0.05 ? ` (curving the ball ${d.f2p < 0 ? 'left' : 'right'})` : ''}.`);
-    lines.push(`Shot to shot the face ranged ${degLabel(d.faceRange[0])} to ${degLabel(d.faceRange[1])}, the path ${degLabel(d.pathRange[0])} to ${degLabel(d.pathRange[1])}: the ${d.faceSd > 1.5 * d.pathSd ? 'face moved more' : d.pathSd > 1.5 * d.faceSd ? 'path moved more' : 'two moved about as much'}.`);
+    lines.push(`Face ${faceLabel(d.face)} and path ${pathLabel(d.path)} on average, so the face was ${f2pLabel(d.f2p)} to the path${Math.abs(d.f2p) >= 0.05 ? ` (curving the ball ${d.f2p < 0 ? 'left' : 'right'})` : ''}.`);
+    lines.push(`Shot to shot the face ranged ${faceLabel(d.faceRange[0])} to ${faceLabel(d.faceRange[1])}, the path ${pathLabel(d.pathRange[0])} to ${pathLabel(d.pathRange[1])}: the ${d.faceSd > 1.5 * d.pathSd ? 'face moved more' : d.pathSd > 1.5 * d.faceSd ? 'path moved more' : 'two moved about as much'}.`);
     const f = d.follows;
     if (f && f.face != null && f.path != null) lines.push(`Where they finished followed the face ${strength(f.face)} (r ${fmt(f.face, 2)}) and the path ${strength(f.path)} (r ${fmt(f.path, 2)}), over ${f.n} shots.`);
   }
@@ -1234,7 +1236,7 @@ function deliverySvg(d) {
   g += `<line class="dp-axis" x1="${X(0)}" x2="${X(0)}" y1="${P}" y2="${W - P}"/><line class="dp-axis" x1="${P}" x2="${W - P}" y1="${Y(0)}" y2="${Y(0)}"/>`;
   g += `<line class="dp-diag" x1="${X(-lim)}" y1="${Y(-lim)}" x2="${X(lim)}" y2="${Y(lim)}"/>`;
   g += `<text class="dp-lab" x="${P + 4}" y="${P + 12}">curves right</text><text class="dp-lab" x="${W - P - 4}" y="${W - P - 6}" text-anchor="end">curves left</text>`;
-  g += `<text class="dp-ax" x="${W / 2}" y="${W - 6}" text-anchor="middle">path · left ← → right</text><text class="dp-ax" transform="translate(11 ${W / 2}) rotate(-90)" text-anchor="middle">face · left ← → right</text>`;
+  g += `<text class="dp-ax" x="${W / 2}" y="${W - 6}" text-anchor="middle">path · out-to-in ← → in-to-out</text><text class="dp-ax" transform="translate(11 ${W / 2}) rotate(-90)" text-anchor="middle">face · closed ← → open</text>`;
   g += d.pts.map(p => `<circle class="dp-pt${p.side == null ? '' : p.side < 0 ? ' l' : ' r'}" cx="${f1(X(p.path))}" cy="${f1(Y(p.face))}" r="4"/>`).join('');
   return `<svg class="dplane" viewBox="0 0 ${W} ${W}" role="img" aria-label="Club path against face angle, one dot a shot">${g}</svg>`;
 }
@@ -1242,11 +1244,11 @@ function deliveryHtml(d, id) {
   if (!d.n && d.smash == null && !d.smashN) return '';
   let h = '';
   if (d.n) h += deliverySvg(d) + `<div class="legend"><span><i class="l-dl"></i>finished left</span><span><i class="l-dr"></i>finished right</span><span>diagonal: face square to path</span></div>`;
-  if (d.enough) h += `<div class="tiles">${tile(degLabel(d.face).replace(' left', 'L').replace(' right', 'R'), 'face', 'to the target')}${tile(degLabel(d.path).replace(' left', 'L').replace(' right', 'R'), 'path', 'to the target')}${tile(d.smash != null ? fmt(d.smash, 2) : '–', 'smash', 'ball ÷ club speed')}</div>`;
+  if (d.enough) h += `<div class="tiles">${tile(Math.abs(d.face) < 0.05 ? '0°' : `${fmt(Math.abs(d.face), 1)}°`, `face ${Math.abs(d.face) < 0.05 ? 'square' : d.face < 0 ? 'closed' : 'open'}`, 'to the target')}${tile(Math.abs(d.path) < 0.05 ? '0°' : `${fmt(Math.abs(d.path), 1)}°`, `path ${Math.abs(d.path) < 0.05 ? 'neutral' : d.path < 0 ? 'out-to-in' : 'in-to-out'}`, 'to the target')}${tile(d.smash != null ? fmt(d.smash, 2) : '–', 'smash', 'ball ÷ club speed')}</div>`;
   const lines = deliveryLines(d);
   if (!d.enough && d.n) lines.unshift(`${d.n} of the ${DELIVERY_MIN} shots with face and path this needs.`);
   if (lines.length) h += `<ul class="dlines" id="${id}Lines">${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>`;
-  return h + `<p class="small muted">As the bay measured it, for a right-hander: minus is left. A correlation shows what moved together, not what caused it.</p>`;
+  return h + `<p class="small muted">As the bay measured it, for a right-hander. A correlation shows what moved together, not what caused it.</p>`;
 }
 function blockDelivery(b, profOf) {
   const full = (b.swing || 'full') === 'full', shots = (b.shots || []).map((sh, i) => ({ ...sh, prof: full ? profOf(i) : '' }));
@@ -1258,11 +1260,15 @@ function deliveryFold(stats) {
   const rows = stats.map(({ c }) => ({ c, d: clubDelivery(c.code) })).filter(r => r.d.n || r.d.smashN);
   if (!rows.length) return '';
   const ok = rows.filter(r => r.d.enough || r.d.smash != null);
-  const lead = ok.find(r => r.d.follows && r.d.follows.face != null && r.d.follows.path != null);
-  const teaser = lead ? `${lead.c.code} follows the ${Math.abs(lead.d.follows.face) >= Math.abs(lead.d.follows.path) ? 'face' : 'path'}` : `${plural(rows.length, 'club')} measured`;
-  let body = ok.length ? `<div class="scroll"><table id="deliveryTable"><thead><tr><th>Club</th><th>Face</th><th>Path</th><th>Face to path</th><th>Smash</th><th>Shots</th></tr></thead><tbody>${ok.map(({ c, d }) => `<tr><td>${esc(c.code)}</td><td>${d.enough ? degLabel(d.face) : '–'}</td><td>${d.enough ? degLabel(d.path) : '–'}</td><td>${d.enough ? f2pLabel(d.f2p) : '–'}</td><td>${d.smash != null ? fmt(d.smash, 2) : '–'}</td><td>${d.n}</td></tr>`).join('')}</tbody></table></div>` : '';
-  body += rows.map(({ c, d }) => { const ls = deliveryLines(d); if (!d.enough && d.n) ls.unshift(`${d.n} of the ${DELIVERY_MIN} shots with face and path this needs.`); return ls.length ? `<p class="small" data-club="${esc(c.code)}"><b>${esc(c.code)}</b> ${esc(ls.join(' '))}</p>` : ''; }).join('');
-  body += `<p class="small muted">From the sessions the range filter counts, full swings, as the bay measured them (for a right-hander, minus is left). Each club's own page shows the shots.</p>`;
+  // Which one where the shots finished followed: the stronger correlation, if it is at least partly (2.58.0: a column,
+  // where 2.53.0 wrote every club's figures out as sentences, which he found too much on the Overview).
+  const follows = d => { const f = d.follows; if (!f || f.face == null || f.path == null) return '–'; const a = Math.abs(f.face), b = Math.abs(f.path); return Math.max(a, b) < 0.4 ? 'neither' : a >= b ? 'face' : 'path'; };
+  const lead = ok.find(r => ['face', 'path'].includes(follows(r.d)));
+  const teaser = lead ? `${lead.c.code} follows the ${follows(lead.d)}` : `${plural(rows.length, 'club')} measured`;
+  let body = ok.length ? `<div class="scroll"><table id="deliveryTable"><thead><tr><th>Club</th><th>Face</th><th>Path</th><th>Curve</th><th>Follows</th><th>Smash</th></tr></thead><tbody>${ok.map(({ c, d }) => `<tr data-club="${esc(c.code)}"><td>${esc(c.code)}</td><td>${d.enough ? faceLabel(d.face) : '–'}</td><td>${d.enough ? pathLabel(d.path) : '–'}</td><td>${d.enough ? (Math.abs(d.f2p) < 0.05 ? 'straight' : d.f2p < 0 ? 'left' : 'right') : '–'}</td><td>${d.enough ? follows(d) : '–'}</td><td>${d.smash != null ? fmt(d.smash, 2) : '–'}</td></tr>`).join('')}</tbody></table></div>` : '';
+  const few = rows.filter(r => !r.d.enough && r.d.n);
+  if (few.length) body += `<p class="small muted" id="deliveryFew">Not enough shots with face and path yet: ${few.map(r => `${esc(r.c.code)} (${r.d.n} of ${DELIVERY_MIN})`).join(', ')}.</p>`;
+  body += `<p class="small muted">Full swings the range filter counts. Each range block shows its shots.</p>`;
   return fold('ovDelivery', 'Face, path and strike', teaser, body);
 }
 /* ---------- shot patterns (2.52.0) ----------
@@ -1589,16 +1595,14 @@ function vRound() {
   h += scorecard(r, holes) + `<p class="small muted" style="margin-top:8px">Tap a hole to trace shots on it.</p>`;
   h += toGreenSection(r);
   h += strokesGainedSection(r);
+  // 2.58.0 (he asked): what the round showed and the clubs, folded under the two above.
   h += roundFindingsSection(r);
+  h += roundClubsSection(r, st);
   h += quickScoreSection(r);
   h += roundSourceSection(r);
   const mxo = Math.max(...st.byPar.map(p => p.over), 1);
   h += `<h2>Strokes lost by par</h2>` + st.byPar.map(p => `<div class="hbar"><span>Par ${p.par} <span class="muted">×${p.n}</span></span><i class="${p.over / p.n >= 2.5 ? 'flag' : p.over / p.n >= 1.5 ? 'sand' : ''}" style="width:${pct(p.over, mxo)}%"></i><small>+${p.over}</small></div>`).join('');
   h += `<h2>Holes</h2>` + stencilGrid(holes, { act: 'logHole', id: r.id, courseId: r.courseId, scores: true });
-  if (st.shotLevel) {
-    const ent = Object.entries(st.byClub).map(([k, v]) => ({ k, n: v.length, med: median(v) })).filter(x => x.med).sort((a, b) => b.med - a.med);
-    if (ent.length) h += `<h2>Clubs on the course</h2><p class="small muted">Full swings only, measured tap to tap, so treat as ±15m. Compare with range stock carry on the Overview.</p><div class="scroll"><table><thead><tr><th>Club</th><th>Shots</th><th>Median m</th><th>Range stock</th></tr></thead><tbody>` + ent.map(x => { const s = clubStats(x.k); return `<tr><td><b>${esc(x.k)}</b></td><td>${x.n}</td><td class="num">${fmt(x.med)}</td><td>${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td></tr>`; }).join('') + `</tbody></table></div>`;
-  }
   h += swingSection(r);
   h += `<div class="row-actions"><button class="danger" data-act="deleteSession" data-id="${r.id}">Delete round</button></div>`;
   return h;
@@ -3304,8 +3308,9 @@ function practiceSection(limit) {
     <p class="small muted" id="rankRules">The rules, so you can disagree with them: a tee shot into water costs ${COST.tee.water}, trees ${COST.tee.trees}, a bunker ${COST.tee.bunker}, rough ${COST.tee.rough}; an approach clubbed short or a chip that misses the green ${COST.approach}; a three-putt ${COST.threePutt}; a penalty stroke ${COST.penalty}; a low runner or top on the range ${COST.strike} each. A finding goes quiet after enough clean chances that, at its old rate, it would have shown up 4 times in 5 (3 at least), or once unseen for ${STALE_AFTER} days. A club is flagged for strike at ${Math.round(STRIKE_FLAG * 100)}% low runners or tops over ${STRIKE_MIN} or more full swings. These are judgements, not measurements; "Is this list right?" below is where to check them.</p>`) +
     (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
     (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
-    (quiet.length ? `<details class="sec" id="quietList"><summary><b>Quiet lately</b> <span class="small muted">— ${plural(quiet.length, 'item')}, left out of the plan</span></summary>${quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')}</details>` : '') +
-    (listReviewSection() || blindSpotsSection() ? `<div class="folds" id="listChecks" style="margin-top:16px">${listReviewSection()}${blindSpotsSection()}</div>` : '') +
+    // Quiet lately sits with the list's two checks, one quiet group of rows (2.58.0, he asked).
+    (() => { const q = quiet.length ? fold('quietList', 'Quiet lately', `${plural(quiet.length, 'item')}, left out of the plan`, quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')) : '';
+      const g = q + listReviewSection() + blindSpotsSection(); return g ? `<div class="folds" id="listChecks" style="margin-top:16px">${g}</div>` : ''; })() +
     (now.some(x => x.block) ? `<div class="row-actions" style="margin-top:18px"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
 }
 // One line for the fold: the biggest difference that counts, or how many taps to check.
@@ -3559,14 +3564,21 @@ function roundFindings(r) {
   const { now, quiet } = rankedPractice();
   return now.concat(quiet).map(it => ({ it, recs: (it.recs || []).filter(x => x.r && x.r.id === r.id && (it.kind !== 'tee' || x.lie !== 'fairway')) })).filter(x => x.recs.length);
 }
+function roundClubsSection(r, st) {
+  if (!st.shotLevel) return '';
+  const ent = Object.entries(st.byClub).map(([k, v]) => ({ k, n: v.length, med: median(v) })).filter(x => x.med).sort((a, b) => b.med - a.med);
+  if (!ent.length) return '';
+  return fold('roundClubs', 'Clubs on the course', `${plural(ent.length, 'club')} · ${esc(ent[0].k)} ${fmt(ent[0].med)}m`,
+    `<p class="small muted">Full swings, measured tap to tap (±15m).</p><div class="scroll"><table><thead><tr><th>Club</th><th>Shots</th><th>Median m</th><th>Range stock</th></tr></thead><tbody>` + ent.map(x => { const s = clubStats(x.k); return `<tr><td><b>${esc(x.k)}</b></td><td>${x.n}</td><td class="num">${fmt(x.med)}</td><td>${s && s.stockCarry ? fmt(s.stockCarry) : '–'}</td></tr>`; }).join('') + `</tbody></table></div>`);
+}
 function roundFindingsSection(r) {
   const fs = roundFindings(r); if (!fs.length) return '';
-  return `<h2>What this round showed</h2><div id="roundFindings">` + fs.slice(0, 5).map(({ it, recs }) => {
+  return fold('roundFindingsFold', 'What this round showed', `${plural(fs.length, 'finding')} · ${esc(goalName(fs[0].it))}`, `<div id="roundFindings">` + fs.slice(0, 5).map(({ it, recs }) => {
     const holes = [...new Map(recs.map(x => [x.h.n, x])).values()].sort((a, b) => a.h.n - b.h.n), clubs = [...new Set(recs.map(x => x.club).filter(Boolean))];
     return `<div class="finding k-${it.kind}"><div class="spread"><b>${esc(goalName(it))}</b><span class="small muted">${plural(recs.length, 'time')}${clubs.length ? ' · ' + clubs.map(esc).join(', ') : ''}</span></div>
       <div class="small">${holes.slice(0, 6).map(x => `<button class="quiet" style="padding:2px 6px" data-go="rounds:sessionId=${r.id},hole=${x.h.n}">Hole ${x.h.n}</button>`).join('')}${holes.length > 6 ? `<button class="quiet" style="padding:2px 6px" data-go="range:goal=${esc(it.key)}">+${holes.length - 6} more</button>` : ''}</div>
       <div class="row-actions" style="margin-top:4px">${goalButtons(it)}</div></div>`;
-  }).join('') + `</div>`;
+  }).join('') + `</div>`);
 }
 
 /* ============================================================
@@ -3698,7 +3710,7 @@ function ballContextFor(code) {
     `Strike mix: ${pct(s.pure, s.n)}% pure, ${pct(s.runner, s.n)}% low runners (low launch, long roll), ${pct(s.short, s.n)}% short or fat, ${pct(s.top, s.n)}% topped.`,
     tot && tot.measured ? `Stock total ${fmt(tot.v)}m.` : '',
     cal && cal.n ? `On course this club has measured ${fmt(cal.med)}m over ${cal.n} full swings.` : '',
-    (() => { const d = clubDelivery(code); return d.enough ? `Measured at impact by the bay over ${d.n} shots (right-hander, minus is left): ${deliveryLines(d).join(' ')}` : d.smash != null ? deliveryLines(d).join(' ') : ''; })(),
+    (() => { const d = clubDelivery(code); return d.enough ? `Measured at impact by the bay over ${d.n} shots (a right-hander; face to the target, path in-to-out or out-to-in): ${deliveryLines(d).join(' ')}` : d.smash != null ? deliveryLines(d).join(' ') : ''; })(),
   ].filter(Boolean).join(' ');
 }
 function swingPrompt(sw, session) {
@@ -3984,8 +3996,13 @@ function poseTrend(club, swings) {
   return out;
 }
 function poseTrendHtml(club, swings) {
+  // One row a measure: the latest swing's value, its change since the first, how many swings (2.58.0: he found the
+  // date-by-date list too much). The whole history is still each swing's own card.
   const tr = poseTrend(club, swings); if (!tr.length) return '';
-  return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing:</b></div><ul class="ptrend" id="ptrend_${esc(club)}">${tr.map(t => `<li><div class="row"><b>${esc(t.name)}</b><span class="muted">${esc(VIEWS[t.view])}</span></div><div class="vals">${t.pts.slice(-6).map(p => `${dateLabel(p.date)}${p.course ? ' (course)' : ''} <strong>${fmt(p.v)}${t.unit.startsWith('°') ? '°' : '%'}</strong>`).join(' · ')}</div><div class="s">${esc(t.unit)}</div></li>`).join('')}</ul>`;
+  const u = t => t.unit.startsWith('°') ? '°' : '%';
+  const row = t => { const a = t.pts[0], z = t.pts[t.pts.length - 1], ch = t.pts.length > 1 ? z.v - a.v : null;
+    return `<tr data-k="${t.k}"><td><b>${esc(t.name)}</b><div class="small muted">${esc(VIEWS[t.view])}</div></td><td class="num"><b>${fmt(z.v)}${u(t)}</b><div class="small muted">${dateLabel(z.date)}${z.course ? ' · course' : ''}</div></td><td class="num">${ch == null ? '<span class="muted">–</span>' : `${ch > 0 ? '+' : ch < 0 ? '−' : ''}${fmt(Math.abs(ch))}${u(t)}<div class="small muted">since ${monthLabel(a.date)}</div>`}</td><td class="num n">${t.pts.length}</td></tr>`; };
+  return `<div class="small" style="margin-top:8px"><b>Measured, swing by swing</b></div><div class="scroll"><table class="ptrend" id="ptrend_${esc(club)}"><thead><tr><th></th><th>Latest</th><th>Change</th><th>Swings</th></tr></thead><tbody>${tr.map(row).join('')}</tbody></table></div>`;
 }
 async function measureAndSave(sid, wid, onFrame) {
   const s = session(sid), sw = s && swingsOf(s).find(x => x.id === wid); if (!sw) return { error: 'gone' };
@@ -4023,8 +4040,12 @@ function swingCard(sw, s, opts = {}) {
       <span class="small muted">${sw.frames.length} frames${sw.impact != null ? `, packed around impact at ${sw.impact.toFixed(1)} s` : frameGap(sw.frames) != null ? `, ${frameGap(sw.frames).toFixed(2)} s apart` : ''}</span></div>
     ${sw.note ? `<div class="small muted">${esc(sw.note)}</div>` : ''}
     ${swingShotSection(sw, s)}
-    <div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
-    ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}
+    ${(() => {
+      // Once the body is measured its four positions show the swing, so the strip folds away (2.58.0, he asked).
+      const strip = `<div class="filmstrip">${sw.frames.map((f, i) => `<button class="frame" data-act="dropFrame" data-sid="${s.id}" data-wid="${sw.id}" data-fi="${i}" title="Remove frame ${i + 1}"><img src="/_blob/${f.asset}" alt="frame ${i + 1}" loading="lazy"><span>${i + 1}</span></button>`).join('')}</div>
+    ${sw.frames.length ? `<div class="small muted" style="margin-top:-4px">Tap a frame to remove it.</div>` : ''}`;
+      return sw.pose && sw.frames.length ? `<details class="frames" id="frames_${sw.id}"><summary class="small muted">Frames · ${sw.frames.length}</summary>${strip}</details>` : strip;
+    })()}
     ${poseSection(sw, s)}
     ${a && sw.analysedView && sw.analysedView !== sw.view ? `<div class="notice small" id="angleNote_${sw.id}">This reading was made when the clip was marked ${esc(VIEWS[sw.analysedView] || sw.analysedView)}. Analyse again to read it as ${esc(VIEWS[sw.view] || sw.view)}.</div>` : ''}
     ${a ? swingReading(sw, s, a) : ''}
@@ -4099,7 +4120,7 @@ function swingShotText(x) {
   const sh = x.sh, bits = [`carry ${fmt(sh.carry, 1)} m`, `total ${fmt(sh.total, 1)} m`];
   if (sh.carrySide != null) bits.push(sh.carrySide === 0 ? 'on line' : `${fmt(Math.abs(sh.carrySide), 1)} m ${sh.carrySide < 0 ? 'left' : 'right'}`);
   const more = [];
-  if (sh.faceAngle != null && sh.clubPath != null) more.push(`face ${degLabel(sh.faceAngle)}, path ${degLabel(sh.clubPath)}`);
+  if (sh.faceAngle != null && sh.clubPath != null) more.push(`face ${faceLabel(sh.faceAngle)}, path ${pathLabel(sh.clubPath)}`);
   if (sh.ballSpeed != null && sh.speed) more.push(`smash ${(sh.ballSpeed / sh.speed).toFixed(2)}`);
   if (x.prof) more.push(PROF_WORD[x.prof]);
   return `Shot ${x.i + 1} of ${x.n} in the ${x.b.club} block: ${bits.join(', ')}${more.length ? '; ' + more.join('; ') : ''}.`;
@@ -5927,7 +5948,8 @@ function sgRound(r, level) {
 }
 const sgNum = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
 const sgCatRows = (cats, perShot = true) => Object.entries(cats).sort((a, b) => a[1].gained - b[1].gained).map(([k, c]) => `<tr><td>${SG_CAT[k]}</td><td>${c.n}</td><td><b>${sgNum(c.gained)}</b></td>${perShot ? `<td class="muted">${k === 'pen' ? '' : sgNum(c.gained / c.n)}</td>` : ''}</tr>`).join('');
-const sgLimits = (lvl) => `<p class="small muted" style="margin-top:6px">An estimate against a published table, not an official number: expected strokes are Broadie's PGA Tour baseline with a ${lvl.level}-handicap allowance added the way PinFlag models it (${esc(lvl.how)}; change it in Settings). Distances are to the green's middle, not the hole; lies are as recorded; beyond the table's last row the last row is used. Not strokes gained as the Tour publishes it, and not a prediction. Worked out on every draw; nothing is stored, and it changes nothing about the plan or the armed club.</p>`;
+// One line (2.58.0: he found the paragraph of caveats too much); the method is in CLAUDE.md, *Strokes gained*.
+const sgLimits = (lvl) => `<p class="small muted" style="margin-top:6px">An estimate against a ${lvl.level}-handicap (${esc(lvl.how)}; change it in Settings).</p>`;
 function strokesGainedSection(r) {
   const lvl = sgLevel(), sg = sgRound(r, lvl.level);
   if (!sg.holes.length) return '';

@@ -118,7 +118,7 @@ test('a range swing: the bay\'s numbers for that ball, the shot table marked, fo
   const prof = app.E(`swingShot(session('${RG}').swings[0], session('${RG}')).prof`);
   assert.ok(['pure', 'runner', 'short'].includes(prof));
   const word = { pure: 'a pure strike', runner: 'a low runner', short: 'short of a pure strike' }[prof];
-  assert.equal(app.text('#ws_sw_5').replace(/\s+/g, ' ').trim(), `This swing's shot: Shot 3 of 5 in the 5W block: carry 164.8 m, total 178.2 m, 12.1 m right; face 0.8° right, path 2.3° left; smash ${(119.2 / 84.7).toFixed(2)}; ${word}. Change`);
+  assert.equal(app.text('#ws_sw_5').replace(/\s+/g, ' ').trim(), `This swing's shot: Shot 3 of 5 in the 5W block: carry 164.8 m, total 178.2 m, 12.1 m right; face 0.8° open, path 2.3° out-to-in; smash ${(119.2 / 84.7).toFixed(2)}; ${word}. Change`);
   app.go('range', { blockId: 'b_5w' });
   assert.deepEqual(app.$$('#shotTable tbody tr').map(tr => /filmed/.test(tr.textContent)), [false, false, true, false, false]);
   // The block re-pasted in another order: the same ball is found by carry and total; nothing rewritten.
