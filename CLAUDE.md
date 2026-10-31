@@ -829,6 +829,33 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## The swing plane (2.63.0)
+
+He asked (2026-10-31, with the shot tracer mockup at https://claude.ai/artifact/6NRpduNMeXDGSb7bJMxto9; boards
+8–10), and that plane faults feed the practice list. Down the line only, from the stored pose plus one tap:
+`swing.ball` (SCHEMA.md), set in the sheet `ACTIONS.planeBall` on the address frame (capped at 58vh tall, the
+camera check above it). In `poseMeasures` (dtl): `handP` (both wrists' middle, or the one over `POSE_VIS`; since
+this release the top and impact are found that way too, so a hidden wrist no longer loses them), `m.hands`,
+`series.handsUp`; `m.shGap` = the shoulders' horizontal gap at address over the torso, `m.inLine` under
+`PLANE_INLINE` (0.2, a judgement: about 15° off the line); with a ball and in line, `m.plane = {ball, side,
+shaft, shoulder}` (degrees up from the ball, on the golfer's side) and `series.plane` for every frame's hands.
+`keys.down` is the frame nearest halfway in time from the top to impact. Measures (`POSE_MEASURES.dtl`):
+`planeTop`, `planeDown` (band = the V, `vee` in `POSE_GUIDE`; worded by `planeSay`: inside, under the shaft line
+"flatter", over the shoulder line "steeper"; left out of `poseValues` without `m.plane`), `handsImpact` (±10% of
+the torso, `sure`: only when `m.impactSure`, impact marked or frames within `IMPACT_SURE` 0.06 s either side; his
+unmarked clips are 0.1–0.5 s apart and a driver read 39% high from a follow-through frame, so it says to mark
+impact instead). **Drawn** by `planeSection`/`planeSvg` over the address frame, cropped top to bottom to the swing
+(`.planeCrop`), the paths with a dark underlay; the *Swing plane* switch (`overlaySwitch`, `ACTIONS.toggleOverlay`,
+`localStorage` `carry.overlays`, default on) hides the drawing on this phone, the measures stay. The shot tracer
+will get its own switch beside it. Off the line: `#planeOff_<id>` says why, nothing drawn. *Across the swing* has
+*Hands against the plane* (the V at the top and coming down) and *Hands height*. Plane faults reach the practice
+list through `bodyItems` with `BODY_DRILL` entries, and the reading's prompt through `poseContext`. On his data:
+Long Reef D (19 Oct) and the 30 Oct D, both inside the V at the top and coming down; the 30 Oct swing (impact
+marked) has hands 36% high at impact, with the hips 29% toward the ball. `ui-plane` (4): the angles by hand, a
+hidden wrist, steep and off-line swings, the card, switch and sheet, impact not caught, the practice list; 15
+mutations caught (one survived at first: both test wrists identical; a hidden-wrist swing added, which found the
+key-position bug above).
+
 ## Body faults in the practice list (2.62.0)
 
 He asked (2026-10-31, with the shot tracer and swing plane mockup): plane faults and the other body measures should
@@ -2209,7 +2236,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 486 tests, about 45s.
+`npm test` — 490 tests, about 45s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2264,6 +2291,8 @@ fixture would let the reading be pinned.
 - `ui-nav.test.js` (10) — back goes where he came from: each way into a round, session, block, finding,
   course, Settings and the feed; hole to hole sideways; a circle; a tab afresh; a deleted page skipped; folds
   restored; deleting returns; the Swings card's Play video and read-only body.
+- `ui-plane.test.js` (4) — the swing plane: the V and the hands by hand, a hidden wrist, steep and off-line
+  swings, the card, the switch, tapping the ball, impact not caught, plane faults in the practice list.
 - `ui-bodyfaults.test.js` (3) — the measured body in the practice list: a finding from most recent swings,
   unreliable swings left out, joining a ball finding as support or standing alone, the card, the page, the rules.
 - `ui-swingshot.test.js` (6) — a swing tied to the shot it hit: course and range, tags
@@ -2436,7 +2465,7 @@ In rough order of value:
    modelled handicap allowance, and letting the practice list use it (he
    asked for read-only first).
 2. **Pose estimation on swing frames** shipped in 2.55.0 (see *The body,
-   measured*). He wanted it **before** stage 2 of the shot patterns (2026-10-31),
+   measured*); its faults feed the practice list (2.62.0) and the swing plane is drawn from it (2.63.0). He wanted it **before** stage 2 of the shot patterns (2026-10-31),
    mockup first: https://claude.ai/artifact/RXTm3HqHiPQb3Fdd2cnUYK
    (a skeleton on each frame, a chart per measure across the 16 frames, faults
    session by session; one camera is 2D, so face-on measures sway and head

@@ -345,6 +345,9 @@ One collection, two shapes, discriminated by `type`. Both may carry `swings`.
   "addedOn": "2026-09-24", "duration": 6.4,
   "frames": [ { "asset": "<id>", "t": 0.05 } ],   // never t: 0 — see below; 16 since 2.18.0 (8 before), even across the trim, or packed around `impact`
   "impact": 1.02,                     // 2.26.0: where he marked the club meeting the ball, s from the clip's start; null or absent = not marked, frames even
+  "ball": { "x": 0.55, "y": 0.71 },   // 2.63.0: where he tapped the ball on the address frame, 0..1 of the frame (x across, y down); a
+                                      // measurement by hand like `impact`. The swing plane (V, hands against it) is derived from it and
+                                      // the pose on every draw, never stored. Absent = not tapped.
   "pose": {                           // 2.55.0, optional: the body found on each frame by the pose model, in the browser
     "by": "mediapipe-0.10.35-lite", "on": "2026-10-31", "aspect": 1.5,   // aspect = frame width / height, so x and y share a scale
     "frames": [ { "asset": "<frame asset id>", "t": 0.05,

@@ -95,6 +95,21 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .pf { position: relative; border-radius: 6px; overflow: hidden; background: var(--paper-2); } .pf img { display: block; width: 100%; height: auto; }
 .poseSk { position: absolute; inset: 0; width: 100%; height: 100%; } .poseSk line { stroke: #F4F1E6; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linecap: round; }
 .poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .8; vector-effect: non-scaling-stroke; }
+.plane { margin: 10px 0 4px; } .planePic { margin-top: 6px; max-width: 420px; } .planeCrop { position: absolute; left: 0; width: 100%; } .planeCrop img { width: 100%; height: 100%; } .planeSv { position: absolute; inset: 0; width: 100%; height: 100%; }
+.planeSv * { vector-effect: non-scaling-stroke; } .pl-vee { fill: #6DB37F; fill-opacity: .14; stroke: none; }
+.pl-shaft, .pl-sh { stroke-width: 2; stroke-dasharray: 7 5; } .pl-shaft { stroke: #8FC3E8; } .pl-sh { stroke: #AA96BD; }
+.pl-under { fill: none; stroke: #0B100B; stroke-opacity: .5; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
+.pl-back, .pl-down { fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; } .pl-back { stroke: #6DB37F; } .pl-down { stroke: #F4F7F3; }
+.pl-top, .pl-ball { fill: #F4F7F3; stroke: #0B100B; stroke-width: 1.5; } .pl-imp { fill: #F4F7F3; stroke: #0B100B; stroke-width: 1.5; } .pl-imp.off { fill: var(--score-3); }
+.pl-pick { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #F4F7F3; border: 2.5px solid #C96A6A; box-sizing: border-box; }
+.planeTag { position: absolute; left: 8px; top: 8px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(11,16,11,.8); color: #9BD3A8; border: 1px solid #6DB37F; }
+.planeKey { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; } .planeKey i { display: inline-block; width: 16px; height: 0; vertical-align: middle; margin-right: 5px; border-top: 2px dashed; }
+.planeKey .k-shaft { border-color: #8FC3E8; } .planeKey .k-sh { border-color: #AA96BD; } .planeKey .k-back { border-top: 3px solid #6DB37F; } .planeKey .k-down { border-top: 3px solid #F4F7F3; box-shadow: 0 0 0 1px rgba(11,16,11,.5); }
+.ballPick { cursor: crosshair; margin: 8px auto; } #ballDot { position: absolute; inset: 0; pointer-events: none; }
+.switch { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0; border: 0; background: none; color: var(--ink-2); font-size: 14px; font-weight: 500; }
+.switch .knob { width: 36px; height: 22px; border-radius: 999px; background: var(--rule); position: relative; flex: none; transition: background .15s; }
+.switch .knob::after { content: ''; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); transition: left .15s; }
+.switch[aria-checked="true"] { color: var(--ink); } .switch[aria-checked="true"] .knob { background: var(--green); } .switch[aria-checked="true"] .knob::after { left: 17px; }
 .ptrace { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 8px; align-items: center; margin: 4px 0; } .ptrace .lab { font-size: 11.5px; color: var(--ink-3); line-height: 1.25; } .ptrace .lab b { display: block; font: 600 13px var(--cond); color: var(--ink); }
 .ptrace .trbox { position: relative; height: 64px; } .ptrace svg { display: block; width: 100%; height: 100%; overflow: visible; } .ptrace svg * { vector-effect: non-scaling-stroke; } .ptrace .tr-line { fill: none; stroke: var(--green); stroke-width: 2; } .tr-mark { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; } .tr-guide { fill: none; stroke: var(--ink-2); stroke-width: 1.3; stroke-dasharray: 3 3; opacity: .7; } .tr-band { position: absolute; width: 12px; transform: translateX(-50%); box-sizing: border-box; border: 1px dashed var(--ink-2); background: color-mix(in srgb, var(--green) 10%, transparent); opacity: .8; pointer-events: none; } .tr-off { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--flag); box-shadow: 0 0 0 1px var(--paper); pointer-events: none; } .ptrace.off .lab b { color: var(--flag); } .dlines .offg { color: var(--flag); font-weight: 600; } .traxis { margin-top: -2px; } .tr-row { position: relative; height: 13px; } .tr-row.two { height: 25px; } .tr-alab { position: absolute; top: 0; transform: translateX(-50%); font: 500 10.5px/1.2 var(--body); color: var(--ink-3); white-space: nowrap; pointer-events: none; } .tr-alab.l { transform: none; } .tr-alab.r { transform: translateX(-100%); } .tr-alab.lo { top: 12px; }
 table.ptrend { margin: 4px 0 8px; } table.ptrend td { vertical-align: top; } table.ptrend td:first-child { white-space: normal; text-align: left; } table.ptrend td .small { font-weight: 400; }
@@ -3896,6 +3911,8 @@ const POSE_BY = 'mediapipe-0.10.35-lite';
 const POSE_BASE = '/vendor/mediapipe/';
 const POSE_VIS = 0.5, POSE_MIN_SHARE = 0.75;
 const POSE_SQUARE = 0.2;   // face-on: hip and shoulder width at address, each at least this share of the torso's length
+const IMPACT_SURE = 0.06;  // impact found from the hands counts as caught when the frames either side are at most this many seconds away
+const PLANE_INLINE = 0.2;  // down the line: the shoulders at address at most this share of the torso's length apart (a judgement, about 15° off the line)
 const PJ = { nose: 0, lSh: 11, rSh: 12, lEl: 13, rEl: 14, lWr: 15, rWr: 16, lHip: 23, rHip: 24, lKn: 25, rKn: 26, lAn: 27, rAn: 28 };
 const POSE_BONES = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [25, 27], [24, 26], [26, 28]];
 let poseLoad = null;
@@ -3943,7 +3960,10 @@ function poseMeasures(sw) {
   const body = f => P(f, PJ.lSh) && P(f, PJ.rSh) && P(f, PJ.lHip) && P(f, PJ.rHip);
   const found = fr.filter(body).length, reliable = found >= POSE_MIN_SHARE * fr.length;
   const a = fr.findIndex(body); if (a < 0) return { found, of: fr.length, reliable: false, view: sw.view, frames: fr };
-  const hands = f => { const p = midP(P(f, PJ.lWr), P(f, PJ.rWr)); return p ? p[1] : null; };
+  // The hands: both wrists' middle, or the one the model is sure of (down the line one often hides behind the other;
+  // before 2.63.0 both were needed, so such a clip found no top or impact).
+  const handP = f => { const l = P(f, PJ.lWr), r = P(f, PJ.rWr); return l && r ? midP(l, r) : l || r; };
+  const hands = f => { const p = handP(f); return p ? p[1] : null; };
   // The positions: impact as he marked it, else the hands' lowest point after the top; the top, the hands' highest before impact.
   const idx = fr.map((_, i) => i);
   let imp = null, impFrom = 'hands';
@@ -3952,9 +3972,16 @@ function poseMeasures(sw) {
   const before = i => imp == null ? i > a && i <= Math.floor(0.75 * (fr.length - 1)) : i > a && i < imp;
   for (const i of idx) if (before(i) && hands(fr[i]) != null && (top == null || hands(fr[i]) < hands(fr[top]))) top = i;
   if (imp == null && top != null) for (const i of idx) if (i > top && hands(fr[i]) != null && (imp == null || hands(fr[i]) > hands(fr[imp]))) imp = i;
-  const keys = { address: a, top, impact: imp, finish: fr.length - 1 };
+  // Coming down (2.63.0, the swing plane): the frame nearest halfway in time from the top to impact, strictly between.
+  let down = null;
+  if (top != null && imp != null && imp - top > 1) { const mid = (fr[top].t + fr[imp].t) / 2; for (let i = top + 1; i < imp; i++) if (down == null || Math.abs(fr[i].t - mid) < Math.abs(fr[down].t - mid)) down = i; }
+  const keys = { address: a, top, impact: imp, finish: fr.length - 1, down };
+  // Caught at impact: marked, or frames close enough either side that the hands' lowest frame is impact, not the
+  // follow-through (his unmarked clips are 0.1-0.5 s apart; the hands there read 39% high on a driver).
+  const near = (i, j) => fr[j] && fr[i] && fr[i].t != null && fr[j].t != null && Math.abs(fr[j].t - fr[i].t) <= IMPACT_SURE;
   const A = fr[a], hipA = midP(P(A, PJ.lHip), P(A, PJ.rHip)), shA = midP(P(A, PJ.lSh), P(A, PJ.rSh));
-  const series = {}, out = { found, of: fr.length, reliable, view: sw.view, keys, impFrom, frames: fr, series };
+  const series = {}, out = { found, of: fr.length, reliable, view: sw.view, keys, impFrom, frames: fr, series,
+    impactSure: imp != null && (impFrom === 'marked' || (near(imp, imp - 1) && near(imp, imp + 1))) };
   if (sw.view === 'face') {
     const dir = Math.sign(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]) || 1;            // the lead shoulder's side is the target's
     const hipW = Math.abs(P(A, PJ.lHip)[0] - P(A, PJ.rHip)[0]), shW = Math.abs(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]), noseA = P(A, PJ.nose);
@@ -3974,6 +4001,22 @@ function poseMeasures(sw) {
     series.hipDepth = fr.map(f => { const h = body(f) && midP(P(f, PJ.lHip), P(f, PJ.rHip)); return h && torso ? 100 * (h[0] - hipA[0]) * ball / torso : null; });
     series.bend = fr.map(f => { if (!body(f)) return null; const h = midP(P(f, PJ.lHip), P(f, PJ.rHip)), sh = midP(P(f, PJ.lSh), P(f, PJ.rSh)); return Math.atan2((sh[0] - h[0]) * ball, h[1] - sh[1]) * 180 / Math.PI; });
     series.headUp = fr.map(f => { const n = P(f, PJ.nose); return n && torso ? 100 * (noseA[1] - n[1]) / torso : null; });
+    const hA = handP(A);
+    out.hands = fr.map(handP);
+    series.handsUp = fr.map((f, i) => out.hands[i] && hA && torso ? 100 * (hA[1] - out.hands[i][1]) / torso : null);
+    /* The swing plane (2.63.0, he asked with the shot tracer mockup): from the ball he tapped, the shaft line
+       through the hands at address and the shoulder line through the shoulders' middle, the V between them;
+       each frame's hands as degrees up from the ball. Only with the camera in line: at address the two
+       shoulders overlap (PLANE_INLINE); off the line the lines tilt and it isn't drawn. The club isn't tracked. */
+    out.shGap = torso ? Math.abs(P(A, PJ.lSh)[0] - P(A, PJ.rSh)[0]) / torso : null;
+    out.inLine = out.shGap == null ? null : out.shGap <= PLANE_INLINE;
+    const bl = sw.ball && isFinite(sw.ball.x) && isFinite(sw.ball.y) ? [sw.ball.x * ar, sw.ball.y] : null;
+    if (bl && hA && out.inLine) {
+      const side = Math.sign(shA[0] - bl[0]) || 1, up = q => Math.atan2(bl[1] - q[1], (q[0] - bl[0]) * side) * 180 / Math.PI;
+      out.plane = { ball: bl, side, shaft: up(hA), shoulder: up(shA), hands: hA, shoulders: shA };
+      if (out.plane.shoulder > out.plane.shaft) series.plane = out.hands.map(h => h ? up(h) : null);
+      else out.plane = null;
+    }
   }
   return out;
 }
@@ -3997,11 +4040,16 @@ const POSE_GUIDE = {
     hipDepth: { top: [-15, 5], impact: [-15, 5] },
     bend: { top: [-6, 6], impact: [-6, 6], rel: true },
     headUp: { top: [-6, 6], impact: [-6, 6] },
+    // The plane: hands inside the V at the top and coming down; at impact back near address height. Rules of thumb.
+    plane: { top: true, down: true, vee: true },
+    handsUp: { impact: [-10, 10], sure: true },
   },
 };
 // The band for a series at a position, in its units, or null where there's no guide.
 function poseBand(m, s, at) {
   const g = POSE_GUIDE[m.view] && POSE_GUIDE[m.view][s]; if (!g || !g[at]) return null;
+  if (g.vee) return m.plane ? [m.plane.shaft, m.plane.shoulder] : null;
+  if (g.sure && !m.impactSure) return null;
   if (!g.rel) return g[at];
   const a0 = m.series[s] && m.series[s][m.keys.address]; return a0 == null ? null : [a0 + g[at][0], a0 + g[at][1]];
 }
@@ -4022,13 +4070,25 @@ const POSE_MEASURES = {
     { k: 'extImpact', s: 'hipDepth', at: 'impact', name: 'Hips toward the ball at impact', unit: '% of torso length', say: v => `${fmt(Math.abs(v))}% of torso length ${v < 0 ? 'away from' : 'toward'} the ball (early extension when toward)` },
     { k: 'bendLoss', s: 'bend', at: 'impact', diff: true, name: 'Forward bend lost by impact', unit: '°', say: v => `${fmt(Math.abs(v))}° ${v < 0 ? 'more bent over' : 'more upright'} than at address` },
     { k: 'headUp', s: 'headUp', at: 'impact', name: 'Head height at impact', unit: '% of torso length', say: v => `${fmt(Math.abs(v))}% of torso length ${v < 0 ? 'lower' : 'higher'} than at address` },
+    { k: 'planeTop', s: 'plane', at: 'top', plane: true, name: 'Hands at the top, against the plane', unit: '°', say: (v, m) => planeSay(v, m) },
+    { k: 'planeDown', s: 'plane', at: 'down', plane: true, name: 'Hands coming down, against the plane', unit: '°', say: (v, m) => planeSay(v, m) },
+    { k: 'handsImpact', s: 'handsUp', at: 'impact', sure: true, name: 'Hands height at impact', unit: '% of torso length', say: v => `${fmt(Math.abs(v))}% of torso length ${v < 0 ? 'lower' : 'higher'} than at address` },
   ],
 };
+// Where the hands are against the V, in words: under the shaft line (flatter), inside, or over the shoulder line (steeper).
+function planeSay(v, m) {
+  const p = m && m.plane; if (!p) return `${fmt(v)}° up from the ball`;
+  const pair = `${fmt(v)}°; the V is ${fmt(p.shaft)}–${fmt(p.shoulder)}°`;
+  return v < p.shaft ? `${fmt(p.shaft - v)}° under the shaft line, flatter than the V (${pair})`
+    : v > p.shoulder ? `${fmt(v - p.shoulder)}° over the shoulder line, steeper than the V (${pair})`
+    : `inside the V, ${fmt(v - p.shaft)}° above the shaft line (${pair})`;
+}
 function poseValues(m) {
   if (!m || !m.keys || !POSE_MEASURES[m.view]) return [];
   return POSE_MEASURES[m.view].map(d => { const i = m.keys[d.at], ser = m.series[d.s]; let v = i == null || !ser ? null : ser[i];
     if (d.diff && v != null) { const a0 = ser[m.keys.address]; v = a0 == null ? null : a0 - v; }
-    return { ...d, v: v == null || !isFinite(v) ? null : v, off: poseOff(m, d) }; });
+    if (d.sure && !m.impactSure) return { ...d, v: null, off: null, why: 'mark impact on the trim to measure this: these frames are too far apart to catch it', say: x => d.say(x, m) };
+    return { ...d, v: v == null || !isFinite(v) ? null : v, off: poseOff(m, d), say: x => d.say(x, m) }; }).filter(d => !d.plane || m.plane);
 }
 // The skeleton over one frame, in the frame's own 0..1 positions.
 function poseFrameSvg(f) {
@@ -4042,11 +4102,11 @@ const POSE_POS = [['address', 'Address'], ['top', 'Top'], ['impact', 'Impact'], 
 // packed around a marked impact used to take a column each, so the takeaway was squeezed into a sliver.
 function poseTraces(m) {
   const defs = m.view === 'face' ? [['hip', 'Hip shift', '% of hip width, + toward the target'], ['head', 'Head', '% of shoulder width'], ['arm', 'Lead arm', '° at the elbow'], ['tilt', 'Spine tilt', '° from upright']]
-    : m.view === 'dtl' ? [['hipDepth', 'Hips toward the ball', '% of torso length'], ['bend', 'Forward bend', '° from upright'], ['headUp', 'Head height', '% of torso length']] : [];
+    : m.view === 'dtl' ? [['hipDepth', 'Hips toward the ball', '% of torso length'], ['bend', 'Forward bend', '° from upright'], ['headUp', 'Head height', '% of torso length'], ['plane', 'Hands against the plane', '° up from the ball; the band is the V'], ['handsUp', 'Hands height', '% of torso length above address']] : [];
   const W = 240, H = 56, P = 5;
   const charts = defs.map(([k, name, unit]) => {
     const v = m.series[k]; if (!v || v.every(x => x == null)) return '';
-    const bands = ['top', 'impact'].map(at => ({ at, i: m.keys[at], b: m.keys[at] == null ? null : poseBand(m, k, at) })).filter(x => x.b);
+    const bands = ['top', 'down', 'impact'].map(at => ({ at, i: m.keys[at], b: m.keys[at] == null ? null : poseBand(m, k, at) })).filter(x => x.b);
     const xs = v.filter(x => x != null).concat(...bands.map(x => x.b)), lo = Math.min(...xs), hi = Math.max(...xs), span = hi - lo || 1;
     const X = poseX(m, W, P), Y = x => P + 4 + (H - 2 * P - 8) * (1 - (x - lo) / span);
     let d = '', pen = false; v.forEach((x, i) => { if (x == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x).toFixed(1)}`; pen = true; });
@@ -4056,7 +4116,7 @@ function poseTraces(m) {
     const marks = POSE_POS.filter(([key]) => m.keys[key] != null).map(([key]) => `<line class="tr-mark" x1="${X(m.keys[key]).toFixed(1)}" x2="${X(m.keys[key]).toFixed(1)}" y1="${P}" y2="${H - P}"/>`).join('');
     // The guide: a dotted path from address (or the first band) through the middle of each band, the bands as dotted boxes,
     // and the swing's own point red where it is outside one.
-    const a0 = v[m.keys.address], start = a0 != null && !['arm'].includes(k) ? [[m.keys.address, POSE_GUIDE[m.view][k] && POSE_GUIDE[m.view][k].rel ? a0 : 0]] : [];
+    const a0 = v[m.keys.address], start = a0 != null && !['arm'].includes(k) ? [[m.keys.address, POSE_GUIDE[m.view][k] && (POSE_GUIDE[m.view][k].rel || POSE_GUIDE[m.view][k].vee) ? a0 : 0]] : [];
     const gpts = start.concat(bands.map(x => [x.i, (x.b[0] + x.b[1]) / 2]));
     const gpath = gpts.length > 1 ? `<path class="tr-guide" d="${gpts.map(([i, y], j) => `${j ? 'L' : 'M'}${X(i).toFixed(1)},${Y(y).toFixed(1)}`).join('')}"/>` : '';
     const boxes = bands.map(x => `<span class="tr-band" style="left:${px(X(x.i))};top:${py(Y(x.b[1]))};height:max(2px, ${py(Y(x.b[0]) - Y(x.b[1]))})"></span>`).join('');
@@ -4093,18 +4153,84 @@ function poseSection(sw, s, { readOnly = false } = {}) {
   const vals = poseValues(m);
   let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
   h += `<div class="posePos">${POSE_POS.map(([k, label]) => { const i = m.keys && m.keys[k]; const f = i == null ? null : m.frames[i]; return f ? `<figure><div class="pf"><img src="/_blob/${f.asset}" alt="${label}" loading="lazy">${poseFrameSvg(f)}</div><figcaption>${label}</figcaption></figure>` : ''; }).join('')}</div>`;
-  const sayV = x => x.v == null ? 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
+  const sayV = x => x.v == null ? x.why || 'not measurable on these frames' : Math.abs(x.v) < 0.5 && !x.unit.startsWith('°') ? 'no measurable movement' : x.say(x.v);
   // No body on any frame says so; a view the measures don't cover says that, never both.
   if (!m.found) h += `<p class="small muted" id="poseNone_${sw.id}">No body was found on these frames. Film with the whole body in the picture, then measure again.</p>`;
   else if (m.square === false) h += `<p class="small muted" id="poseSquare_${sw.id}">Not measured: at address the hips and shoulders are almost in line, so the camera wasn't square on to the chest. Face-on measures need the camera facing you; a clip filmed from behind or down the line can't give them.</p>`;
   else if (vals.length) h += `<ul class="dlines">${vals.map(x => `<li><b>${esc(x.name)}:</b> ${esc(sayV(x))}${x.off ? ' <span class="offg">· outside the guide</span>' : ''}</li>`).join('')}</ul>`;
   else h += `<p class="small muted">The skeleton is drawn, but measures need a face-on or down-the-line view: this one is "${esc(VIEWS[sw.view] || 'other')}".</p>`;
+  if (m.view === 'dtl' && m.found && m.keys) h += planeSection(sw, s, m, readOnly);
   const tr = m.keys ? poseTraces(m) : '';
-  const guide = POSE_GUIDE[m.view] ? `<p class="small muted" id="poseGuide_${sw.id}">Dotted: a guide at the top and impact. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '';
+  const guide = POSE_GUIDE[m.view] ? `<p class="small muted" id="poseGuide_${sw.id}">Dotted: a guide at the top and impact${m.plane ? ', and for the plane coming down too; its band is the V, from the shaft line to the shoulder line' : ''}. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '';
   if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}${guide}</details>`;
   h += readOnly ? '</div>' : `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
   return h;
 }
+/* ---------- the swing plane (2.63.0) ----------
+   Down the line, from the measured hands and shoulders and one tap on the ball (`swing.ball`, SCHEMA.md):
+   the shaft line (ball → hands at address) and the shoulder line (ball → the shoulders' middle), the V
+   between them, the hands going back (green) and coming down (white) drawn over the address frame.
+   *Swing plane* on the card shows or hides the drawing on this phone (`carry.overlays`); the measures
+   stay in the list either way. */
+const overlays = () => { try { return JSON.parse(localStorage.getItem('carry.overlays') || '{}') || {}; } catch (e) { return {}; } };
+const overlayOn = k => overlays()[k] !== false;
+ACTIONS.toggleOverlay = function (d) {
+  const o = overlays(); o[d.k] = !overlayOn(d.k);
+  try { localStorage.setItem('carry.overlays', JSON.stringify(o)); } catch (e) {}
+  render();
+};
+const overlaySwitch = (k, label, id) => { const on = overlayOn(k); return `<button class="switch" role="switch" aria-checked="${on}" id="${id}" data-act="toggleOverlay" data-k="${k}"><span class="knob" aria-hidden="true"></span>${label}</button>`; };
+const planeCamera = m => m.shGap == null ? '' : m.inLine
+  ? `At address your shoulders overlap (${fmt(100 * m.shGap)}% of your torso apart), so the camera was behind your hands, along the line.`
+  : `At address your shoulders are ${fmt(100 * m.shGap)}% of your torso apart, so the camera wasn't behind your hands along the line. Off the line the plane's lines tilt, so they aren't drawn: film from behind the hands, pointing down the target line.`;
+// The address frame with the V, the shaft and shoulder lines run to the frame's edge, and the hands' path.
+function planeSvg(m) {
+  const p = m.plane, ar = (m.aspect || 1), far = q => { const dx = q[0] - p.ball[0], dy = q[1] - p.ball[1], l = Math.hypot(dx, dy) || 1; return [p.ball[0] + 3 * dx / l, p.ball[1] + 3 * dy / l]; };
+  const S = far(p.hands), H = far(p.shoulders), pt = q => `${q[0].toFixed(3)},${q[1].toFixed(3)}`;
+  const k = m.keys, path = (a, b) => m.hands.slice(a, b + 1).filter(Boolean).map(pt).join(' ');
+  const offImp = (poseValues(m).find(x => x.k === 'handsImpact') || {}).off;
+  const dot = (i, cls) => i != null && m.hands[i] ? `<circle class="${cls}" cx="${m.hands[i][0].toFixed(3)}" cy="${m.hands[i][1].toFixed(3)}" r="0.012"/>` : '';
+  return `<svg class="planeSv" viewBox="0 0 ${ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true">
+    <polygon class="pl-vee" points="${pt(p.ball)} ${pt(S)} ${pt(H)}"/>
+    <line class="pl-shaft" x1="${p.ball[0].toFixed(3)}" y1="${p.ball[1].toFixed(3)}" x2="${S[0].toFixed(3)}" y2="${S[1].toFixed(3)}"/>
+    <line class="pl-sh" x1="${p.ball[0].toFixed(3)}" y1="${p.ball[1].toFixed(3)}" x2="${H[0].toFixed(3)}" y2="${H[1].toFixed(3)}"/>
+    ${k.top != null ? `<polyline class="pl-under" points="${path(k.address, k.top)}"/><polyline class="pl-back" points="${path(k.address, k.top)}"/>` : ''}
+    ${k.top != null && k.impact != null ? `<polyline class="pl-under" points="${path(k.top, k.impact)}"/><polyline class="pl-down" points="${path(k.top, k.impact)}"/>` : ''}
+    ${dot(k.top, 'pl-top')}${dot(k.impact, offImp ? 'pl-imp off' : 'pl-imp')}<circle class="pl-ball" cx="${p.ball[0].toFixed(3)}" cy="${p.ball[1].toFixed(3)}" r="0.01"/></svg>`;
+}
+function planeSection(sw, s, m, readOnly) {
+  const A = m.frames[m.keys.address], move = readOnly ? '' : `<button class="quiet" data-act="planeBall" data-sid="${s.id}" data-wid="${sw.id}">${sw.ball ? 'Move the ball' : 'Tap the ball'}</button>`;
+  if (!sw.ball) return readOnly ? '' : `<div class="plane" id="plane_${sw.id}"><div class="small"><b>Swing plane</b> <span class="muted">Tap the ball once on the address frame and the plane is drawn from your hands.</span></div><div class="row-actions" style="margin-top:4px">${move}</div></div>`;
+  if (!m.plane) return `<div class="plane" id="plane_${sw.id}"><div class="small"><b>Swing plane</b></div><p class="small muted" id="planeOff_${sw.id}">${m.inLine === false ? planeCamera(m) : 'Not measurable: the hands or shoulders at address weren\'t found surely enough, or the ball is above them.'}</p>${move ? `<div class="row-actions">${move}</div>` : ''}</div>`;
+  const on = overlayOn('plane');
+  // Cropped top to bottom to the swing: from a little above the highest hands, head or shoulders to a little under the ball.
+  const ar = (sw.pose && sw.pose.aspect) || 1, ys = [m.plane.ball[1], m.plane.shoulders[1], ...m.hands.slice(m.keys.address, (m.keys.impact ?? m.keys.address) + 1).filter(Boolean).map(h => h[1])];
+  const y0 = Math.max(0, Math.min(...ys) - 0.08), y1 = Math.min(1, m.plane.ball[1] + 0.1), ch = Math.max(0.2, y1 - y0);
+  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar })}</div><span class="planeTag">Measured · your hands, 2D</span></div>
+    <div class="planeKey small muted"><span><i class="k-shaft"></i>Shaft line</span><span><i class="k-sh"></i>Shoulder line</span><span><i class="k-back"></i>Hands going back</span><span><i class="k-down"></i>Coming down</span></div>` : '';
+  return `<div class="plane" id="plane_${sw.id}"><div class="spread">${overlaySwitch('plane', 'Swing plane', `planeSw_${sw.id}`)}<span class="small muted">your hands; the club isn't tracked</span></div>${pic}${move ? `<div class="row-actions" style="margin-top:4px">${move}</div>` : ''}</div>`;
+}
+// One tap on the ball, on the address frame; the camera check beside it, from the same frame.
+ACTIONS.planeBall = function (d) {
+  const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid); if (!sw) return;
+  const m = poseMeasures(sw), A = m && m.keys ? m.frames[m.keys.address] : null;
+  if (!A) { toast('Measure the body first'); return; }
+  let at = sw.ball ? { ...sw.ball } : null;
+  const dotHtml = () => at ? `<span class="pl-pick" style="left:${(100 * at.x).toFixed(1)}%;top:${(100 * at.y).toFixed(1)}%"></span>` : '';
+  openSheet(`<h2>Swing plane</h2>
+    <p class="small"><b>Tap the ball.</b> <span class="muted">The one thing the body measure can't find; your hands and shoulders are already measured on every frame.</span></p>
+    <p class="small ${m.inLine === false ? 'warn' : 'muted'}" id="planeCam"><b>Camera ${m.inLine === false ? 'off the line' : 'in line'}.</b> ${esc(planeCamera(m))}</p>
+    <div class="pf ballPick" id="ballPick" style="max-width:min(100%, ${(58 * ((sw.pose && sw.pose.aspect) || 1)).toFixed(1)}vh)"><img src="/_blob/${A.asset}" alt="Address frame: tap the ball"><div id="ballDot">${dotHtml()}</div></div>`, async () => {
+    if (!at) { toast('Tap the ball first'); return false; }
+    return queued('sessions/' + s.id, () => { const now = session(s.id) || s; return save('sessions', s.id, { ...now, swings: swingsOf(now).map(w => w.id === sw.id ? { ...w, ball: at } : w) }); });
+  });
+  const pick = $('#ballPick', sheetInner);
+  pick.onclick = e => {
+    const r = pick.getBoundingClientRect(); if (!r.width || !r.height) return;
+    at = { x: r3(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))), y: r3(Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))) };
+    $('#ballDot', sheetInner).innerHTML = dotHtml();
+  };
+};
 // Measures for the reading's prompt, when the swing has been measured.
 function poseContext(sw) {
   const m = sw.pose ? poseMeasures(sw) : null, vals = poseValues(m).filter(x => x.v != null);
@@ -4844,6 +4970,9 @@ const BODY_DRILL = {
   extImpact: 'Bum on a wall (or a bag behind your hips) at address: still touching it through impact.',
   bendLoss: 'Chest down through the ball: hold your forward bend until the ball has gone.',
   headUp: 'Same height to impact: keep your eyes level with the ball until it has gone.',
+  planeTop: 'Pause at the top, filmed down the line: hands between the shaft line and the shoulder line, then swing from there.',
+  planeDown: 'Slow downswings to a pause with the hands at hip height, inside the V, then full speed.',
+  handsImpact: 'Hands back to address height: hold your posture and feel the hands pass where they started.',
 };
 function bodyItems() {
   const by = {}, items = [];
