@@ -82,7 +82,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 0; } .spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 label { display: block; font-size: 13px; color: var(--ink-2); margin: 12px 0 4px; }
 input[type=file] { display: block; width: 100%; margin-top: 4px; font: 400 14px var(--body); color: var(--ink); }
-input[type=text], input[type=number], input[type=date], input[type=url], select, textarea { width: 100%; font: 400 16px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r); padding: 9px 10px; }
+input[type=text], input[type=search], input[type=number], input[type=date], input[type=url], select, textarea { width: 100%; font: 400 16px var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: var(--r); padding: 9px 10px; }
 input[type=number] { -moz-appearance: textfield; } input[type=range] { width: 100%; accent-color: var(--green); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; } .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; }
@@ -322,6 +322,8 @@ details.sec > summary { cursor: pointer; }
 .basis { font-size: 12px; color: var(--ink-2); background: var(--paper-2); border-radius: var(--r); padding: 7px 10px; margin: 8px 0; } .basis.slim { background: none; padding: 0; color: var(--ink-3); margin: 4px 0 0; }
 details.pcard > summary { cursor: pointer; font-size: 14px; } details.pcard > summary b { font-family: var(--cond); font-size: 15px; }
 .steps { margin: 6px 0 0; padding-left: 20px; font-size: 14px; } .steps li { margin: 10px 0; }
+input.search { width: 100%; font-size: 16px; margin: 4px 0 8px; } .item[hidden] { display: none; }
+.morelist { margin: 12px 0 0; padding-bottom: 12px; border-bottom: 1px solid var(--rule); } .morelist > summary { cursor: pointer; }
 .sec { display: block; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--rule); clear: both; }
 /* A heading with buttons beside it (2.27.1, his screenshot of Blocks): the row carries the
    heading's margins, not the h2, or the taller buttons sit on the text above and below. */
@@ -400,7 +402,9 @@ details.sec + .folds, .pcard + .folds, p + .folds, p + details.fold, .row-action
    section gets, so the fold's rule sat on the button (2.41.1, he sent a screenshot). */
 section.sec + details.fold { margin-top: 24px; }
 .row-actions:has(> .danger:only-child) { margin-top: 28px; } .folds + .row-actions, details.sec + .row-actions { margin-top: 16px; }
-.folds + h2, details.sec + h2, .row-actions + h2 { margin-top: 28px; }
+/* 2.72.0 (he found open gaps under a section's last fold): a fold carries 10px of padding below its summary, so a
+   heading after it takes 18px, the same 28px of space as after a button row; a fold right under a card gets 12px. */
+.row-actions + h2 { margin-top: 28px; } .folds + h2, details.sec + h2 { margin-top: 18px; } .next + details.fold, .next + .folds { margin-top: 12px; }
 .ftile .tp { font-size: .55em; color: var(--ink-3); margin-left: 6px; font-weight: 600; }
 .next { background: var(--paper-2); border-radius: 12px; padding: 14px 16px; border-left: 4px solid var(--green); } .next .nt { font-family: var(--cond); font-weight: 700; font-size: 26px; line-height: 1.15; margin: 2px 0 4px; } .next .nfrom { margin-top: 6px; } .next .row-actions { margin-top: 12px; }
 .wrow { display: grid; grid-template-columns: 22px 1fr 14px; gap: 10px; align-items: start; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; padding: 10px 0; } .wrow > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -1162,7 +1166,7 @@ function vOverview() {
   // 2.5.0: the answer first (how he's playing, the one next practice), the
   // picture behind it after, and the specialised analysis folded away —
   // every number is still here, one tap down. Nothing is computed differently.
-  h += overviewForm(rounds) + overviewWork() + overviewGapping(stats) + overviewScoring(rounds) + overviewMore() + overviewRecent();
+  h += overviewForm(rounds) + overviewWork() + overviewGapping(stats) + overviewScoring(rounds) + overviewMore(stats);
   return h;
 }
 // A section folded to one line: its title and the single number worth seeing.
@@ -1171,16 +1175,28 @@ function vOverview() {
 const qfold = (id, title, teaser, body) => body ? `<details class="qfold" id="${id}"><summary class="small muted">${title}${teaser ? ` <span>${teaser}</span>` : ''}</summary><div class="qbody">${body}</div></details>` : '';
 const fold = (id, title, teaser, body) => body ? `<details class="sec fold" id="${id}"><summary><span><b>${title}</b>${teaser ? ` <span class="small muted">${teaser}</span>` : ''}</span></summary>${body}</details>` : '';
 const unhead = html => html.replace(/^<h2>[^<]*<\/h2>/, '');
-function overviewMore() {
+function distanceGapsFold(stats) {
+  const g = gapHealth(stats);
+  const flagged = g.pairs.filter(p => p.flag).length;
+  return g.pairs.length ? fold('gapPanel', 'Distance gaps', flagged ? `<span class="warn">⚠ ${plural(flagged, 'gap')} worth a look</span>` : g.median ? `typical gap ${fmt(g.median)}m` : '',
+    `<div class="gaps" id="gapList">` + g.pairs.map(p => `<div class="gap ${p.flag ? 'flag' : ''}"><span>${esc(p.a.c.code)} → ${esc(p.b.c.code)}</span><b>${fmt(p.gap)}m</b><small>${p.flag ? '⚠ ' + esc(p.flag) : ''}${p.early ? `${p.flag ? ' · ' : ''}early signal` : ''}</small></div>`).join('') + `</div>
+    <p class="small muted">Stock carry between clubs next to each other in the bag${g.median ? `; your typical gap is ${fmt(g.median)}m` : ''}. Flags compare with your own gaps — worth a look, not a verdict.</p>`) : '';
+}
+function strikeProfileFold(ladder) {
+  return `<details class="sec fold" id="strikeProfile"><summary><span><b>Strike profile</b> <span class="small muted">pure, low runners, short and topped</span></span></summary>` +
+    ladder.map(({ c, s }) => `<div class="prow"><b>${esc(c.code)}</b>${profileBar(s)}<small>${pct(s.pure, s.n)}% pure</small></div>`).join('') +
+    `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>low runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>topped</span></div></details>`;
+}
+function overviewMore(stats = []) {
   const brk = gameBreakdown().rows.filter(r => r.key !== 'putting').sort((a, b) => b.missed / b.of - a.missed / a.of)[0];
   const d = courseDemand(), most = d.bands.slice().sort((a, b) => b.n - a.n || a.from - b.from)[0];
   const pt = puttingStats(), b = practiceBasis();
   const parts = [
+    distanceGapsFold(stats),
     fold('ovBreakdown', 'Where your game is being tested', brk ? `${brk.label}: ${pct(brk.missed, brk.of)}% ${brk.what}` : '', unhead(overviewBreakdown())),
     fold('ovApproaches', 'Approach distances', most ? `most often ${most.from}–${most.from + 19}m` : '', unhead(overviewApproaches())),
     fold('ovPutting', 'Putting', pt ? `${pt.perHole.toFixed(2)} a hole · ${plural(pt.threes, 'three-putt')}` : '', unhead(overviewPutting())),
     fold('ovCalibration', 'Range vs course', calibrationTeaser(), unhead(calibrationSection())),
-    fold('ovStrokesGained', 'Strokes gained', sgTeaser(), strokesGainedOverview()),
     fold('ovEvidence', 'Evidence', esc(b.text.replace(/^Built from /, '').replace(/\.$/, '')), unhead(overviewEvidence())),
   ].join('');
   return parts ? `<h2>The detail</h2><div class="folds">${parts}</div>` : '';
@@ -1238,8 +1254,7 @@ function overviewWork() {
     </div>`;
   const rows = items.slice(1, 3).map((it, i) => `<button class="wrow k-${it.kind}" data-go="range:goal=${esc(it.key)}"><span class="wn">${i + 2}</span><span><span class="wt">${esc(it.title)}</span>
       <span class="small muted">${evidence(it)}</span>${doThis(it) || how(it) ? `<span class="small wa">→ ${doThis(it) || how(it)}</span>` : ''}${goalProgress(it) ? `<span class="small progress">${esc(progressText(it))}</span>` : ''}</span><span class="chev">›</span></button>`).join('');
-  return `<h2>Next practice</h2>${hero}` + (rows ? fold('alsoCosting', 'Also costing you', `${plural(items.slice(1, 3).length, 'more item')}`, `<div class="work">${rows}</div>`) : '') +
-    `<div class="row-actions"><button class="quiet" data-go="range">Full list and evidence →</button></div>` + basisShort();
+  return `<h2>Next practice</h2>${hero}` + (rows ? fold('alsoCosting', 'Also costing you', `${plural(items.slice(1, 3).length, 'more item')}`, `<div class="work">${rows}</div>`) : '');
 }
 
 /* ---------- gapping ---------- */
@@ -1260,7 +1275,7 @@ function gapHealth(stats) {
   return { pairs, median: med };
 }
 function overviewGapping(stats) {
-  if (!stats.length) return `<h2>Gapping</h2>` + rangeFilterLine() + `<div class="empty"><p>No full-swing shots yet. Gapping appears once a range block has shot-level carry and total.</p><button class="primary" data-go="range">Go to range</button></div>`;
+  if (!stats.length) return `<h2>Gapping</h2>` + rangeFilterLine() + `<div class="empty"><p>No full-swing shots yet. Gapping appears once a range block has shot-level carry and total.</p><button class="primary" data-go="range">Go to range</button></div>` + fold('ovStrokesGained', 'Strokes gained', sgTeaser(), strokesGainedOverview());
   const ladder = stats.slice().sort((a, b) => b.s.stockCarry - a.s.stockCarry);
   const maxM = Math.max(200, ...ladder.map(x => Math.max(x.s.pureCarry || 0, x.s.stockCarry, x.c.nominalCarry || 0)));
   const w = m => (100 * m / maxM).toFixed(1) + '%';
@@ -1271,16 +1286,12 @@ function overviewGapping(stats) {
       <div class="conf small ${(s.weighted ? s.nEff : s.n) < 5 ? 'early' : ''}">${s.n} shots${s.weighted ? ` · counts like ${s.nEff} recent` : ''} · ${confidence(s.weighted ? s.nEff : s.n)}${sp ? ` · <span class="mid">${fmt(sp.p25) === fmt(sp.p75) ? `middle half at ${fmt(sp.p25)}m` : `middle half ${fmt(sp.p25)}–${fmt(sp.p75)}m`}</span>` : ''}</div></div>`; }).join('') + `</div>
     <div class="legend"><span><i class="l-stock"></i>stock carry (median)</span><span><i class="l-pure"></i>to pure</span><span><i class="l-ass"></i>assumed</span>${ladder.some(x => carrySpread(x.c.code)) ? '<span><i class="l-spread"></i>where they land: middle half, and 8 in 10</span>' : ''}</div>`;
   h += beliefGapLine();
-  const g = gapHealth(stats);
-  const flagged = g.pairs.filter(p => p.flag).length;
-  if (g.pairs.length) h += fold('gapPanel', 'Distance gaps', flagged ? `<span class="warn">⚠ ${plural(flagged, 'gap')} worth a look</span>` : g.median ? `typical gap ${fmt(g.median)}m` : '',
-    `<div class="gaps" id="gapList">` + g.pairs.map(p => `<div class="gap ${p.flag ? 'flag' : ''}"><span>${esc(p.a.c.code)} → ${esc(p.b.c.code)}</span><b>${fmt(p.gap)}m</b><small>${p.flag ? '⚠ ' + esc(p.flag) : ''}${p.early ? `${p.flag ? ' · ' : ''}early signal` : ''}</small></div>`).join('') + `</div>
-    <p class="small muted">Stock carry between clubs next to each other in the bag${g.median ? `; your typical gap is ${fmt(g.median)}m` : ''}. Flags compare with your own gaps — worth a look, not a verdict.</p>`);
-  h += `<details class="sec fold" id="strikeProfile"><summary><span><b>Strike profile</b> <span class="small muted">pure, low runners, short and topped</span></span></summary>` +
-    ladder.map(({ c, s }) => `<div class="prow"><b>${esc(c.code)}</b>${profileBar(s)}<small>${pct(s.pure, s.n)}% pure</small></div>`).join('') +
-    `<div class="legend"><span><i class="l-p"></i>pure</span><span><i class="l-r"></i>low runner</span><span><i class="l-s"></i>short</span><span><i class="l-t"></i>topped</span></div></details>`;
+  // 2.72.0 (he asked): the ladder's own folds; distance gaps went to The detail, and strokes gained came here,
+  // above the strike profile.
   h += patternsFold(stats);
   h += deliveryFold(stats);
+  h += fold('ovStrokesGained', 'Strokes gained', sgTeaser(), strokesGainedOverview());
+  h += strikeProfileFold(ladder);
   return h;
 }
 
@@ -1605,15 +1616,6 @@ function overviewEvidence() {
 }
 
 /* ---------- recent ---------- */
-function overviewRecent() {
-  const xs = S.sessions.slice(0, 3); if (!xs.length) return '';
-  return `<h2>Recent</h2><div class="list" id="recentList">` + xs.map(s => {
-    if (s.type === 'round') { const st = roundStats(s); return `<button class="item recent" data-go="rounds:sessionId:${s.id}">${dateLabel(s.date)} · ${esc(s.courseName)} · <b>${st.gross}</b> <span class="muted">(${signed(st.toPar)}${st.holes !== 18 ? `, ${st.holes} holes` : ''})</span></button>`; }
-    const shots = (s.blocks || []).reduce((n, b) => n + (b.shots || []).length, 0);
-    return `<button class="item recent" data-go="range:sessionId:${s.id}">${dateLabel(s.date)} · Range${s.venue ? ' · ' + esc(s.venue) : ''}${shots ? ` · <span class="muted">${shots} shots</span>` : s.planned ? ' · <span class="muted">planned</span>' : ''}</button>`;
-  }).join('') + `</div><div class="row-actions"><button class="quiet" data-go="rounds">All rounds →</button><button class="quiet" data-go="range">All range sessions →</button></div>`;
-}
-
 /* ---------- range ---------- */
 function vRange() {
   if (S.sub && (S.sub.view === 'swings' || S.sub.view === 'reels')) { S.tab = 'swings'; if (S.sub.view === 'swings') S.sub = null; return vSwingsTab(); }
@@ -1622,7 +1624,8 @@ function vRange() {
   if (S.sub && S.sub.sessionId) return vRangeSession();
   const list = S.sessions.filter(s => s.type === 'range');
   const nsw = allSwings().length;
-  return `<div class="spread"><h1>Range</h1><button class="primary" data-act="newRange">New session</button></div><h2>What to practise</h2>` + practiceSection() + `<h2>Sessions</h2>` +
+  const plan = rankedPractice().now.some(x => x.block) ? `<button id="planOpen" data-act="planSession">Plan session</button>` : '';
+  return `<div class="spread"><h1>Range</h1><div class="row-actions" style="margin:0">${plan}<button class="primary" data-act="newRange">New session</button></div></div>${pageBasis('rangeBasis')}<h2>What to practise</h2>` + practiceSection() + `<h2>Sessions</h2>` +
 
     (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Log a range session, then add a block per club and target. Paste shots straight from a tracked bay: one line per shot, carry then total, then club speed if shown.</p><button class="primary" data-act="newRange">New session</button></div>`);
 }
@@ -1688,7 +1691,10 @@ function vRounds() {
   if (S.sub && S.sub.sessionId) return vRound();
   const list = S.sessions.filter(s => s.type === 'round');
   const pens = penaltyReport();
-  return `<div class="spread"><h1>Rounds</h1><div class="row-actions" style="margin:0"><button id="addPastRound" data-act="addPastRound">Add past round</button><button class="primary" id="playOpen" data-act="startPlay">Play</button></div></div>` +
+  // One line of what's here, as the Swings page's (2.72.0, he asked).
+  const dates = list.map(r => r.date).filter(Boolean).sort(), traced = list.filter(r => (r.holes || []).some(h => (h.shots || []).length)).length;
+  const basis = list.length ? `<p class="small muted" id="roundsBasis">${[plural(list.length, 'round'), [...new Set([monthLabel(dates[0]), monthLabel(dates[dates.length - 1])].filter(Boolean))].join(' – '), plural(new Set(list.map(r => r.courseId || r.courseName)).size, 'course'), traced ? `${traced} traced` : ''].filter(Boolean).join(' · ')}</p>` : '';
+  return `<div class="spread"><h1>Rounds</h1><div class="row-actions" style="margin:0"><button id="addPastRound" data-act="addPastRound">Add past round</button><button class="primary" id="playOpen" data-act="startPlay">Play</button></div></div>` + basis +
     (pens.total ? `<div class="row-actions" style="margin:0 0 8px"><button class="quiet" data-go="rounds:view=penalties">Penalty report · ${plural(pens.total, 'stroke')} →</button></div>` : '') +
     (list.length ? `<div class="list">${list.map(sessionItem).join('')}</div>` : `<div class="empty"><p>Play a round with GPS, or add one you've played: by scorecard, or from screenshots. Then tap any hole to trace your shots.</p><button class="primary" data-act="addPastRound">Add past round</button></div>`);
 }
@@ -1726,16 +1732,32 @@ function vCourses() {
   if (S.sub && S.sub.view === 'map') return vCourseMap();
   let h = `<div class="spread"><h1>Courses</h1><div class="row-actions" style="margin:0"><button class="iconBtn" id="addCourse" data-act="newCourse" aria-label="Add course" title="Add course"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button class="primary" data-go="courses:view=teetimes" id="ttOpen">Find a tee time</button></div></div>`;
   const sort = courseSort(), list = sortedCourses(sort);
+  const playedIds = new Set(S.sessions.filter(s => s.type === 'round').map(s => s.courseId));
+  const nPub = S.courses.filter(c => access(c) === 'public').length, nMap = S.courses.filter(c => c.map && c.map.id).length;
+  if (S.courses.length) h += `<p class="small muted" id="coursesBasis">${[plural(S.courses.length, 'course'), `${S.courses.filter(c => playedIds.has(c.id)).length} played`, nPub ? `${nPub} public` : '', nMap ? `${nMap} with a map` : ''].filter(Boolean).join(' · ')}</p>`;
+  // Search (2.72.0, he asked): name, suburb, and public / private / closed; filtered in place as he types.
+  if (S.courses.length > 1) h += `<input type="search" id="courseSearch" class="search" placeholder="Search name, suburb, public or private" aria-label="Search courses" autocomplete="off" value="${esc(S.courseQ || '')}">`;
   // One row (2.44.0): the sort, the map, and on the right where distances are from.
   h += `<div class="courseBar">${S.courses.length > 1 ? `<div class="seg" id="courseSort">${COURSE_SORTS.filter(([k]) => k !== 'near' || nearAvailable()).map(([k, label]) => `<button data-act="setCourseSort" data-v="${k}" aria-pressed="${k === sort}">${label}</button>`).join('')}</div>` : ''}${S.courses.some(hasCoords) ? `<button class="iconBtn" data-go="courses:view=map" id="cmOpen" aria-label="View on a map" title="View on a map"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></button>` : ''}<button class="quiet" id="homeLink" data-act="setHome">${home() ? `From ${esc(home().label || 'your location')} ›` : 'Set location ›'}</button></div>`;
   if (window.HoleMap && HoleMap.icons) HoleMap.icons();   // starts icons.json; its arrival redraws through mapArrived
   const tail = sort === 'near' ? list.filter(c => distanceTo(c) == null).length : sort === 'recent' ? list.filter(c => addedAt(c) == null).length : 0;
   h += S.courses.length ? `<div class="list">` + list.map(c => {
     const played = S.sessions.filter(s => s.type === 'round' && s.courseId === c.id); const full = played.filter(isSolo).map(r => roundStats(r)).filter(st => st.holes === (c.holes || []).length && st.holes); const best = full.length ? Math.min(...full.map(st => st.gross)) : null;
-    return `<button class="item" data-go="courses:courseId:${c.id}"><div class="crow">${courseIcon(c)}<div class="cbody"><div class="t">${esc(c.name)}</div><div class="s">${[esc(c.suburb || ''), played.length ? 'played ' + played.length : '', distanceLabel(c) ? `${distanceLabel(c)} away` : ''].filter(Boolean).join(' · ')}${accessTag(c)}${c.prereg && !c.closed ? ' <span class="tag">pre-register</span>' : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
-  }).join('') + `</div>` + (tail ? `<p class="small muted" id="courseSortNote">${sort === 'near' ? `${plural(tail, 'course')} with no location on ${tail === 1 ? 'its' : 'their'} card ${tail === 1 ? 'is' : 'are'} listed last, A–Z. Add a latitude and longitude to place ${tail === 1 ? 'it' : 'them'}.` : `${plural(tail, 'course')} added before the app kept the date ${tail === 1 ? 'is' : 'are'} listed last, A–Z.`}</p>` : '') : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
+    return `<button class="item" data-go="courses:courseId:${c.id}" data-q="${esc(courseSearchText(c))}"${courseMatches(c, S.courseQ) ? '' : ' hidden'}><div class="crow">${courseIcon(c)}<div class="cbody"><div class="t">${esc(c.name)}</div><div class="s">${[esc(c.suburb || ''), played.length ? 'played ' + played.length : '', distanceLabel(c) ? `${distanceLabel(c)} away` : ''].filter(Boolean).join(' · ')}${accessTag(c)}${c.prereg && !c.closed ? ' <span class="tag">pre-register</span>' : ''}</div></div>${best ? `<div class="n">${best}</div>` : ''}</div></button>`;
+  }).join('') + `</div><p class="small muted" id="courseNoMatch"${list.some(c => courseMatches(c, S.courseQ)) ? ' hidden' : ''}>No course matches “<span>${esc(S.courseQ || '')}</span>”.</p>` + (tail ? `<p class="small muted" id="courseSortNote">${sort === 'near' ? `${plural(tail, 'course')} with no location on ${tail === 1 ? 'its' : 'their'} card ${tail === 1 ? 'is' : 'are'} listed last, A–Z. Add a latitude and longitude to place ${tail === 1 ? 'it' : 'them'}.` : `${plural(tail, 'course')} added before the app kept the date ${tail === 1 ? 'is' : 'are'} listed last, A–Z.`}</p>` : '') : `<div class="empty"><p>No courses yet. Add one with its scorecard and it's ready for round logging.</p></div>`;
   return h;
 }
+// What the search looks in: name, suburb, and who can play (public, private, closed). Every word typed must match.
+const courseSearchText = c => [c.name, c.suburb, ACCESS_LABEL[access(c)]].filter(Boolean).join(' ').toLowerCase();
+const courseMatches = (c, q) => String(q || '').toLowerCase().split(/\s+/).filter(Boolean).every(w => courseSearchText(c).includes(w));
+// Typing filters the rows already drawn, so the box keeps focus and the keyboard stays up.
+document.addEventListener('input', e => {
+  if (!e.target || e.target.id !== 'courseSearch') return;
+  S.courseQ = e.target.value;
+  const words = S.courseQ.toLowerCase().split(/\s+/).filter(Boolean); let any = false;
+  for (const b of document.querySelectorAll('#view .list .item[data-q]')) { const ok = words.every(w => b.dataset.q.includes(w)); b.hidden = !ok; any = any || ok; }
+  const none = document.getElementById('courseNoMatch'); if (none) { none.hidden = any; none.querySelector('span').textContent = S.courseQ; }
+});
 // A course's picture in the list (2.46.0, the hole-maps chat's icons): the
 // whole course from its map file, north up, only when the map is linked, so an
 // unlinked course doesn't show a map it isn't using; otherwise its initials in
@@ -1778,6 +1800,7 @@ function vCourse() {
   const par = sum((c.holes || []).map(h => h.par || 0)), len = sum((c.holes || []).map(h => h.metres || 0));
   let h = back('courses', null, 'Courses') + `<div class="spread"><h1>${esc(c.name)}</h1><button data-act="editCourse" data-id="${c.id}">Edit</button></div>
   <p class="muted small">${[[c.suburb, c.state].filter(Boolean).map(esc).join(', '), c.holes && c.holes.length ? `Par ${par}, ${len}m` : '', distanceLabel(c) ? `${distanceLabel(c)} from ${esc((home() || {}).label || 'you')}, straight line` : ''].filter(Boolean).join(' · ')}</p>`;
+  h += courseLocationCheck(c);
   h += courseTeeTimes(c);
   if (c.holes && c.holes.length) {
     const gaps = missingHoles(c.holes);
@@ -2051,6 +2074,29 @@ document.addEventListener('change', e => {
    Linking stores only which map the course uses; the shapes stay in the
    map file. The tee check is worked out on every draw from the card. */
 const plainName = x => String(x || '').toLowerCase().replace(/golf|club|course|country|links|\bthe\b|[^a-z]/g, '');
+/* Where the course is, against its map (2.72.0, he found Randwick's pin 1.8 km inland, in Matraville). The early
+   courses were typed in by hand to three decimals; a linked map's origin is a point on the course from
+   OpenStreetMap (the batch imports took theirs from it). Over LOC_OFF apart, the course page says so and offers the
+   map's: asked, never changed on its own. The stored point drives the pin, Closest, tee-time distances, Play's
+   course pick and the 3 km guard on GPS marks. */
+const LOC_OFF = 0.3;   // km
+function mapLocation(c) {
+  if (!c || !c.map || !c.map.id || !window.HoleMap) return null;
+  const m = HoleMap.get(c.map.id), o = m && m.origin;
+  return o && isFinite(o[0]) && isFinite(o[1]) ? { lat: +o[0].toFixed(4), lng: +o[1].toFixed(4) } : null;
+}
+function courseLocationCheck(c) {
+  const p = mapLocation(c); if (!p) return '';
+  const d = hasCoords(c) ? kmBetween(c, p) : null;
+  if (d != null && d < LOC_OFF) return '';
+  const far = d == null ? 'This course has no location stored' : `This course's stored location is ${d < 1 ? Math.round(d * 1000) + ' m' : d.toFixed(1) + ' km'} from the course on its map`;
+  return `<div class="notice warn" id="locCheck">${far}. It places the pin on the map, sorts Closest, sets tee-time distances, picks the course when you start Play here, and checks your GPS marks. <button class="quiet" data-act="useMapLocation" data-id="${c.id}">Use the map's location</button></div>`;
+}
+async function useMapLocation(d) {
+  const c = course(d.id), p = mapLocation(c); if (!p) return;
+  const ok = await queued('courses/' + c.id, () => { const cur = course(c.id); return save('courses', cur.id, { ...cur, lat: p.lat, lng: p.lng }); });
+  if (ok) { toast(`Location set from the map: ${p.lat}, ${p.lng}`); render(); }
+}
 function courseMapSection(c) {
   if (!window.HoleMap || !(c.holes || []).length) return '';
   if (c.map && c.map.id) {
@@ -3448,14 +3494,15 @@ function practiceSection(limit) {
   if (!now.length && !quiet.length) return holes ? `<p class="muted small">Nothing stands out from ${plural(holes, 'hole')} of shot data yet.</p>`
     : `<div class="empty"><p>Log shots on a few holes (Rounds → a round → tap a hole) and add range sessions, and this fills with what to practise, ranked by what's costing you.</p></div>`;
   const top = limit || 5, shown = now.slice(0, top), rest = now.slice(top);
-  return basisShort() + fold('rankHow', 'How this is ranked', '', `<p class="small muted">${esc(practiceBasis().text)} Recalculated every time this screen draws — there is no stored copy. Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>
-    <p class="small muted" id="rankRules">The rules, so you can disagree with them: a tee shot into water costs ${COST.tee.water}, trees ${COST.tee.trees}, a bunker ${COST.tee.bunker}, rough ${COST.tee.rough}; an approach clubbed short or a chip that misses the green ${COST.approach}; a three-putt ${COST.threePutt}; a penalty stroke ${COST.penalty}; a low runner or top on the range ${COST.strike} each; a swing whose body measure is outside its guide ${COST.body}, a finding once it is outside on ${BODY_MIN} of the last ${BODY_RECENT} swings of a club from one angle (and at least half), joining that club's ball finding when there is one. A finding goes quiet after enough clean chances that, at its old rate, it would have shown up 4 times in 5 (3 at least), or once unseen for ${STALE_AFTER} days. A club is flagged for strike at ${Math.round(STRIKE_FLAG * 100)}% low runners or tops over ${STRIKE_MIN} or more full swings. These are judgements, not measurements; "Is this list right?" below is where to check them.</p>`) +
-    (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
-    (rest.length ? `<details class="sec" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
+  // 2.72.0 (he asked): the basis line went under the page's heading, How this is ranked joined the list's quiet checks,
+  // and Plan session went up beside New session.
+  const rankHow = qfold('rankHow', 'How this is ranked', '', `<p class="small muted">${esc(practiceBasis().text)} Recalculated every time this screen draws — there is no stored copy. Ranked by what it's costing you, recent evidence first (${PRACTICE_HALF_LIFE} days old counts half); something practised since counts half again until a round confirms it.${holes && holes < 9 ? ' Early signals, not conclusions.' : ''} Each item's evidence is on its own page (Details).</p>
+    <p class="small muted" id="rankRules">The rules, so you can disagree with them: a tee shot into water costs ${COST.tee.water}, trees ${COST.tee.trees}, a bunker ${COST.tee.bunker}, rough ${COST.tee.rough}; an approach clubbed short or a chip that misses the green ${COST.approach}; a three-putt ${COST.threePutt}; a penalty stroke ${COST.penalty}; a low runner or top on the range ${COST.strike} each; a swing whose body measure is outside its guide ${COST.body}, a finding once it is outside on ${BODY_MIN} of the last ${BODY_RECENT} swings of a club from one angle (and at least half), joining that club's ball finding when there is one. A finding goes quiet after enough clean chances that, at its old rate, it would have shown up 4 times in 5 (3 at least), or once unseen for ${STALE_AFTER} days. A club is flagged for strike at ${Math.round(STRIKE_FLAG * 100)}% low runners or tops over ${STRIKE_MIN} or more full swings. These are judgements, not measurements; "Is this list right?" above is where to check them.</p>`);
+  return (now.length ? shown.map(practiceCard).join('') : `<p class="muted small">Nothing current: everything below has gone quiet.</p>`) +
+    (rest.length ? `<details class="morelist" id="moreList"><summary><b>${plural(rest.length, 'more item')}</b> <span class="small muted">— lower down the list</span></summary>${rest.map((it, k) => practiceCard(it, top + k)).join('')}</details>` : '') +
     // Quiet lately sits with the list's two checks, one quiet group of rows (2.58.0, he asked).
     (() => { const q = quiet.length ? qfold('quietList', 'Quiet lately', `${plural(quiet.length, 'item')}, left out of the plan`, quiet.map(it => `<div class="qitem"><b>${esc(it.title)}</b><div class="small muted">${esc(it.note)}</div></div>`).join('')) : '';
-      const g = q + listReviewSection() + blindSpotsSection(); return g ? `<div class="qfolds" id="listChecks">${g}</div>` : ''; })() +
-    (now.some(x => x.block) ? `<div class="row-actions" style="margin-top:18px"><button class="primary" data-act="planSession">Plan a range session from this</button></div>` : '');
+      const g = q + listReviewSection() + blindSpotsSection() + rankHow; return g ? `<div class="qfolds" id="listChecks">${g}</div>` : ''; })();
 }
 // One line for the fold: the biggest difference that counts, or how many taps to check.
 function calibrationTeaser() {
@@ -4772,6 +4819,7 @@ function swingFolds(sw, s, { pre = '' } = {}) {
   return out.length ? `<div class="qfolds" id="${pre}sf_${sw.id}">${out.join('')}</div>` : '';
 }
 // Everything rarer than analysing, playing and tracing, in one sheet.
+ACTIONS.useMapLocation = useMapLocation;
 ACTIONS.swingMore = function (d) {
   const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid); if (!sw) return;
   const m = sw.pose ? poseMeasures(sw) : null, dtl = m && m.view === 'dtl' && m.keys, dd = dtl && m.plane ? traceData(sw, m) : null;
@@ -6370,11 +6418,13 @@ function practiceBasis() {
 // One line above a list: the counts and the newest input; the "recalculated, never stored"
 // sentence sits in the fold beside it (Range) or the Evidence fold (Overview).
 const shortDay = iso => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
-function basisShort() {
+// The page's one line of what it's built from, under its heading, as the Swings page's (2.72.0).
+function pageBasis(id) {
   const b = practiceBasis();
-  const bits = b.text.startsWith('Built') ? b.text.replace(/^Built from /, '').replace(/\.$/, '').split(', ').filter(x => !/scorecard-only/.test(x))
-    .map(x => x.replace(/ of shot data/, ' traced').replace(/ analysed swings?/, ' swings')) : [];
-  return `<div class="basis slim">${bits.length ? esc(bits.join(' · ')) : esc(b.text)}${b.newest ? ` · newest ${esc(shortDay(b.newest))}` : ''}</div>`;
+  if (!b.text.startsWith('Built')) return '';
+  const bits = b.text.replace(/^Built from /, '').replace(/\.$/, '').split(', ').filter(x => !/scorecard-only/.test(x))
+    .map(x => x.replace(/ of shot data/, ' traced').replace(/ analysed swings?/, ' swings'));
+  return `<p class="small muted" id="${id}">${esc([...bits, b.newest ? `newest ${shortDay(b.newest)}` : ''].filter(Boolean).join(' · '))}</p>`;
 }
 const basisLine = () => { const b = practiceBasis(); return `<div class="basis">${esc(b.text)}${b.newest ? ` Newest input ${dateLabel(b.newest)}.` : ''} <span class="muted">Recalculated every time this screen draws — there is no stored copy.</span></div>`; };
 

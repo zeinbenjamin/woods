@@ -838,6 +838,26 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## Tidy-ups and the course's location (2.72.0)
+
+He found Randwick's pin 1.8 km inland. **Location against the map:** the early courses' `lat`/`lng` were typed by
+hand to three decimals; a linked map's `origin` is a point on the course (the batch imports took theirs from it).
+`courseLocationCheck` (`#locCheck`) on the course page when they're over `LOC_OFF` (0.3 km) apart, or the course
+has none: says how far, what the location drives (the pin, Closest, tee-time distances, Play's course pick, the 3 km
+guard on marks), and *Use the map's location* (`useMapLocation`, the origin to 4 places, queued like any course
+save, everything else kept). Asked, never changed on its own. In his export of 2026-10-31: Hunter Valley 6.4 km,
+Hurstville 2.1, Randwick 1.8, Lane Cove 1.3, Barnwell Park 1.2, Long Reef 0.86, Bardwell 0.78, The Coast 0.57,
+Beverley Park 0.46, Northbridge 0.32. `ui-courseloc` (3, with the search).
+**Pages, his list:** Overview without Recent, *Full list and evidence* or the basis line; *Distance gaps*
+(`distanceGapsFold`) first in The detail; under the ladder Patterns, Face/path, Strokes gained, Strike profile
+(`strikeProfileFold`). A heading after a fold takes 18px (the fold's own 10px padding made 38 against 24 elsewhere);
+a fold under the practice card 12px. Range: `pageBasis('rangeBasis')` under the heading (the Swings page's style),
+`#planOpen` *Plan session* left of *New session* (the bottom button went), `#rankHow` a `qfold` last in
+`#listChecks`, `#moreList` a `.morelist` with its rule under it. Rounds `#roundsBasis` (rounds, months, courses,
+traced), Courses `#coursesBasis` (courses, played, public, with a map) and `#courseSearch`: every word typed must be
+in the name, suburb or access label (`courseSearchText`); typing hides rows in place (an `input` listener, no redraw,
+so the keyboard stays), `S.courseQ` keeps it across redraws, `#courseNoMatch` when none.
+
 ## The card's order (2.70.0)
 
 He asked (with screenshots of his driver and a 7i card): the picture first (the switches and the frame, right under
@@ -2417,7 +2437,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 510 tests, about 110s.
+`npm test` — 514 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
