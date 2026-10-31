@@ -191,7 +191,8 @@ test('the feed shows the swings that have a video, newest first, one to a screen
   assert.ok(!app.sheetOpen() && !app.$('#reels'), 'the link closes the sheet and leaves the feed');
   assert.match(app.text('#view'), /14 Sept 2026/);
   app.go('swings', { view: 'reels' });
-  assert.equal(app.$('#reels .reelsClose').dataset.go, 'swings');
+  // 2.61.0: the chevron is a back button: to the page the feed was opened from, else the Swings tab.
+  assert.deepEqual([app.$('#reels .reelsClose').dataset.act, app.$('#reels .reelsClose').dataset.tab], ['navBack', 'swings']);
   assert.ok(app.$('#reels .reelsClose svg'), 'the back control is a drawn chevron');
   assert.equal(app.$$('#reels .reelsTop .chip').length, 0, 'no club chips');
   assert.equal(app.$$('#reels .reelsSound').length, 0, 'no speaker button: a tap on the clip toggles sound (2.32.0)');

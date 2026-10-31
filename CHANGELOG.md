@@ -1,3 +1,9 @@
+## 2.61.0 — 2026-10-31
+- Back buttons now take you to the page you came from, named for it: a round opened from the Swings tab goes back to Swings, a finding opened from the Overview goes back to the Overview, and Settings goes back to the page you opened it on. The page comes back as you left it, scrolled to the same place with the same sections open.
+- Moving from hole to hole doesn't add to the way back: back from any hole goes to the round, then to wherever you opened the round from.
+- Tapping a tab starts afresh. Deleting a round, session, block or course takes you back to where you were before it.
+- A swing's card on the Swings tab has *Play video* at the top right, which plays the clip in the card, and shows the measured body under the reading: the four positions, the measures and *Across the swing*.
+
 ## 2.60.1 — 2026-10-31
 - *Across the swing* now runs across the swing's real time, address to finish, so frames packed around impact no longer squeeze the backswing to one side.
 - Address, Top, Impact and Finish are marked on every chart and named once underneath; names that sit close together no longer run into each other.

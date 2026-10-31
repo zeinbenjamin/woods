@@ -235,7 +235,7 @@ a.chip { text-decoration: none; display: inline-flex; gap: 5px; align-items: bas
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + var(--safe-b) + 14px); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: var(--r); font-size: 13px; z-index: 9; opacity: 0; transition: opacity .15s; pointer-events: none; } .toast.show { opacity: 1; }
 .hole-grid { display: grid; grid-template-columns: 36px 52px 1fr 1fr; gap: 6px 8px; align-items: center; font-size: 14px; } .hole-grid input { padding: 7px 8px; text-align: right; } .hole-grid .h { color: var(--ink-3); font-size: 12px; }
 dialog.sheet { border: 0; padding: 0; margin: 0; width: 100%; max-width: 720px; left: 50%; transform: translateX(-50%); top: auto; bottom: 0; max-height: calc(100% - 40px); background: var(--paper); color: var(--ink); border-radius: 14px 14px 0 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
-dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px 0; overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; }
+dialog.sheet::backdrop { background: rgba(10, 20, 12, .45); } dialog.sheet .inner { padding: 14px 16px 0; overflow-y: auto; max-height: calc(100vh - 60px); } dialog.sheet h2 { margin-top: 4px; } #reelVideo video { display: block; width: 100%; max-height: 62vh; background: #000; border-radius: var(--r); margin: 2px 0 10px; } #reelPose { margin: 4px 0 6px; }
 /* The row is sticky at the scrollport's bottom, so it carries the sheet's bottom padding (2.27.2): on .inner, content scrolled past under the Close button in that strip. */
 .sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; position: sticky; bottom: 0; background: var(--paper); padding: 10px 0 calc(18px + env(safe-area-inset-bottom, 0px)); } .count { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
 .stencil.art .trace { stroke: #fff; stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-dasharray: 3 3; opacity: .95; }
@@ -515,7 +515,7 @@ function signInHop() {
   if (Date.now() - last < REHOP_GAP) return false;
   try {
     sessionStorage.setItem(REHOP_KEY, String(Date.now()));
-    sessionStorage.setItem(RESUME_KEY, JSON.stringify({ tab: S.tab, sub: S.sub, y: window.scrollY, open: [...document.querySelectorAll('#view details[id][open]')].map(d => d.id), t: Date.now() }));
+    sessionStorage.setItem(RESUME_KEY, JSON.stringify({ tab: S.tab, sub: S.sub, y: window.scrollY, open: [...document.querySelectorAll('#view details[id][open]')].map(d => d.id), nav: navStack, t: Date.now() }));
   } catch (e) { return false; }   // nowhere to note the trip: a loop guard we can't keep, so no trip
   (window.carryHop || (u => location.replace(u)))(location.pathname + location.search);
   return true;
@@ -794,12 +794,77 @@ function courseDemand() {
 }
 
 /* ---------- routing ---------- */
-function go(tab, sub = null) {
+// Back goes where he came from (2.61.0, he asked: a page's back button named its parent, so a round
+// opened from the Swings tab went back to Rounds). Every go() notes the page it leaves, with its scroll
+// and open folds, and a page's back button returns to the last one still there; with no trail (a fresh
+// start, a tab tapped) it goes to the page's parent as before. A step between two pages of one kind
+// (hole to hole, a play hole to the next) replaces rather than stacks, so back from hole 7 is the round,
+// not hole 6; going to a page already in the trail returns to it, so the trail can't grow in circles.
+const NAV_MAX = 30;
+let navStack = [];
+const navKey = (tab, sub) => tab + '|' + JSON.stringify(Object.keys(sub || {}).sort().map(k => [k, String(sub[k])]));
+// A page's kind is what it shows (the round, course, block, finding or view, and whether a hole or Play);
+// a filter on it (the feed's club, the tee times' day) or which hole is a step within the same page.
+const navKind = (tab, sub) => { const x = sub || {}; return [tab, x.view || '', x.sessionId || '', x.courseId || '', x.blockId || '', x.goal || '', x.hole != null ? 'hole' : '', x.play ? 'play' : ''].join('|'); };
+const navHere = () => ({ tab: S.tab, sub: S.sub, y: window.scrollY, open: [...document.querySelectorAll('#view details[id][open]')].map(d => d.id), reelsY: (document.getElementById('reels') || {}).scrollTop || 0 });
+function navPush(tab, sub) {
+  if (navKey(tab, sub) === navKey(S.tab, S.sub) || navKind(tab, sub) === navKind(S.tab, S.sub)) return;
+  const i = navStack.findIndex(e => navKey(e.tab, e.sub) === navKey(tab, sub));
+  if (i >= 0) { navStack = navStack.slice(0, i); return; }
+  navStack.push(navHere()); if (navStack.length > NAV_MAX) navStack.shift();
+}
+// A page in the trail that has since gone (a deleted round, course or block) is skipped.
+const navExists = e => { const x = e.sub || {};
+  return (!x.sessionId || !!session(x.sessionId)) && (!x.courseId || !!course(x.courseId)) && (!x.blockId || S.sessions.some(s => (s.blocks || []).some(b => b.id === x.blockId))); };
+function navPrev() { for (let i = navStack.length - 1; i >= 0; i--) if (navExists(navStack[i]) && navKey(navStack[i].tab, navStack[i].sub) !== navKey(S.tab, S.sub)) return i; return -1; }
+// What a page is called on the button that returns to it.
+function navLabel(e) {
+  const x = e.sub || {};
+  if (e.tab === 'overview') return 'Overview';
+  if (e.tab === 'settings') return 'Settings';
+  if (e.tab === 'swings') return x.view === 'reels' ? 'Watch' : 'Swings';
+  if (e.tab === 'range') {
+    if (x.view === 'swings' || x.view === 'reels') return 'Swings';
+    if (x.blockId) { const ss = S.sessions.find(s => (s.blocks || []).some(b => b.id === x.blockId)), b = ss && ss.blocks.find(b => b.id === x.blockId); return b ? `${b.club}${b.target ? ' to ' + b.target + 'm' : ''}` : 'Block'; }
+    if (x.goal) { const it = goalOf(x.goal); return it ? goalName(it) : 'Practice'; }
+    if (x.sessionId) { const ss = session(x.sessionId); return ss ? dateLabel(ss.date) : 'Session'; }
+    return 'Range';
+  }
+  if (e.tab === 'rounds') {
+    if (x.view === 'penalties') return 'Penalty report';
+    if (x.sessionId) { if (x.hole) return `Hole ${x.hole}`; const r = session(x.sessionId); return r ? r.courseName : 'Round'; }
+    return 'Rounds';
+  }
+  if (e.tab === 'courses') {
+    if (x.view === 'teetimes') return 'Tee times';
+    if (x.view === 'map') return 'Map';
+    if (x.courseId) { if (x.hole) return `Hole ${x.hole}`; const c = course(x.courseId); return c ? c.name : 'Course'; }
+    return 'Courses';
+  }
+  return 'Back';
+}
+// nav: 'push' (a link: note where he was), 'replace' (finishing something: the page left isn't one to come
+// back to), 'reset' (a tab: a fresh trail).
+function go(tab, sub = null, { nav = 'push' } = {}) {
+  if (nav === 'push') navPush(tab, sub); else if (nav === 'reset') navStack = [];
   S.tab = tab; S.sub = sub;
   try { localStorage.setItem('carry.tab', tab); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
-document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
+// Back to the last page in the trail, as he left it (scroll, open folds, the feed's place); without one, the
+// page's parent.
+function navBack(tab, sub = null) {
+  const i = navPrev();
+  if (i < 0) { navStack = []; return go(tab, sub, { nav: 'none' }); }
+  const e = navStack[i]; navStack = navStack.slice(0, i);
+  S.tab = e.tab; S.sub = e.sub;
+  try { localStorage.setItem('carry.tab', e.tab); } catch (err) {}
+  render();
+  for (const id of e.open || []) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
+  const r = document.getElementById('reels'); if (r && e.reelsY) r.scrollTop = e.reelsY;
+  window.scrollTo(0, e.y || 0);
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.tab, null, { nav: 'reset' })));
 function parseGo(str) {
   const i = str.indexOf(':'); if (i < 0) return [str, null];
   const tab = str.slice(0, i), rest = str.slice(i + 1);
@@ -830,6 +895,7 @@ function render() {
   ttDaysScroll(daysX);
   if (resumed && !resumed.done && S.sessions.length + S.clubs.length) {
     resumed.done = true;
+    if (Array.isArray(resumed.nav)) navStack = resumed.nav.filter(e => e && typeof e.tab === 'string');
     for (const id of resumed.open || []) { const d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = true; }
     requestAnimationFrame(() => window.scrollTo(0, resumed.y || 0));
   }
@@ -842,7 +908,8 @@ document.addEventListener('click', e => {
   const a = e.target.closest('[data-go]'); if (a) { const [tab, sub] = parseGo(a.dataset.go); go(tab, sub); return; }
   const act = e.target.closest('[data-act]'); if (act) { const fn = ACTIONS[act.dataset.act]; if (fn) fn(act.dataset); }
 });
-const back = (tab, sub, label) => `<div class="back"><button class="quiet" data-go="${tab}${sub ? ':' + sub : ''}">‹ ${esc(label)}</button></div>`;
+// A page's back button: the page he came from when there is one, else the page's parent (tab, sub, label).
+const back = (tab, sub, label) => { const i = navPrev(); return `<div class="back"><button class="quiet" data-act="navBack" data-tab="${tab}" data-sub="${sub ? esc(sub) : ''}">‹ ${esc(i >= 0 ? navLabel(navStack[i]) : label)}</button></div>`; };
 
 /* ---------- shared visuals ---------- */
 // Dot strip: every shot's carry on one axis, coloured by strike profile, with the target marked.
@@ -1985,7 +2052,8 @@ function holeCheck(h) {
    range shots count, his location, the data, who's signed in. Analysis
    that used to live on the Bag tab (range vs course) is on the Overview. */
 function vSettings() {
-  let h = `<h1>Settings</h1>`;
+  // The gear opens Settings over whatever page he was on, so it has a way back to it.
+  let h = (navPrev() >= 0 ? back('overview', null, 'Overview') : '') + `<h1>Settings</h1>`;
   h += `<section class="sec" id="bag" style="margin-top:0;padding-top:0;border-top:0"><div class="spread"><h2>Bag</h2><button class="primary" data-act="newClub">Add club</button></div>
   <p class="small muted">Assumed numbers are yours to type; measured ones come from range data. Carry and total stay separate.</p>`;
   if (!S.clubs.length) h += `<div class="empty"><p>No clubs yet.</p></div>`;
@@ -2289,16 +2357,18 @@ const ACTIONS = {
   editRange(d) { const s = session(d.id); openSheet(rangeForm(s), async root => saveRange(root, s)); },
   newBlock(d) { const s = session(d.id); openSheet(blockForm(), async root => saveBlock(root, s, { id: uid('b'), seq: (s.blocks || []).length + 1 })); wireShotCount(sheetInner); },
   editBlock(d) { const s = session(d.sid), b = s.blocks.find(x => x.id === d.bid); openSheet(blockForm(b), async root => saveBlock(root, s, b)); wireShotCount(sheetInner); },
-  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const gone = s.blocks.find(b => b.id === d.bid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { const left = new Set(sessionAssets(doc)); releaseAssets(blockAssets(gone).filter(id => !left.has(id))); toast('Block deleted'); go('range', { sessionId: s.id }); } },
-  async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); go(s.type === 'round' ? 'rounds' : 'range'); } },
+  async deleteBlock(d) { if (!await confirmAsk('Delete this block and its shots?')) return; const s = session(d.sid); const gone = s.blocks.find(b => b.id === d.bid); const doc = { ...s, blocks: s.blocks.filter(b => b.id !== d.bid) }; if (await save('sessions', s.id, doc)) { const left = new Set(sessionAssets(doc)); releaseAssets(blockAssets(gone).filter(id => !left.has(id))); toast('Block deleted'); navBack('range', { sessionId: s.id }); } },
+  async deleteSession(d) { const s = session(d.id); if (!await confirmAsk(`Delete this ${s.type}? This can't be undone.`)) return; if (await remove('sessions', d.id)) { releaseAssets(sessionAssets(s)); toast('Deleted'); navBack(s.type === 'round' ? 'rounds' : 'range'); } },
   newRound() { openSheet(roundForm(), async root => saveRound(root, { id: uid('r'), type: 'round', created: Date.now() })); const c0 = S.courses[0]; wireHoleCount(sheetInner, true, c0 && c0.holes ? c0.holes.map(h => ({ n: h.n, par: h.par, metres: h.metres })) : []); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   editRound(d) { const r = session(d.id); openSheet(roundForm(r), async root => saveRound(root, r)); wireHoleCount(sheetInner, true, r.holes); wireCoursePick(sheetInner); wireCoursePicker(sheetInner); },
   newCourse() { openSheet(courseForm(), async root => saveCourse(root, { id: uid('c'), created: Date.now() })); wireHoleCount(sheetInner, false, []); wireCardPaste(sheetInner); },
   editCourse(d) { const c = course(d.id); if (!c) return; openSheet(courseForm(c), async root => saveCourse(root, c)); wireHoleCount(sheetInner, false, c.holes); wireCardPaste(sheetInner, c); },
-  async deleteCourse(d) { if (!await confirmAsk('Delete this course for everyone who uses this Carry? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); go('courses'); } },
+  async deleteCourse(d) { if (!await confirmAsk('Delete this course for everyone who uses this Carry? Rounds already logged keep their own copy of the scorecard.')) return; if (await remove('courses', d.id)) { toast('Deleted'); navBack('courses'); } },
   newClub() { openSheet(clubForm(), async root => saveClub(root, {})); },
   editClub(d) { openSheet(clubForm(clubBy(d.id)), async root => saveClub(root, clubBy(d.id))); },
 };
+// A page's back button (navBack above).
+ACTIONS.navBack = d => { const [tab, sub] = parseGo(d.tab + (d.sub ? ':' + d.sub : '')); navBack(tab, sub); };
 // Type-to-search course field. Keeps a hidden courseId input so saving and
 // scorecard prefill work exactly as they did with the dropdown.
 function coursePicker(selectedId) {
@@ -4008,9 +4078,11 @@ function poseAxis(m, W, P) {
   return `<div class="ptrace traxis" aria-hidden="true"><div></div><div class="tr-row${labs.some(x => x.includes(' lo')) ? ' two' : ''}">${labs.join('')}</div></div>`;
 }
 // The swing card's body section.
-function poseSection(sw, s) {
+// readOnly (the Swings tab's card, 2.61.0): what was measured, without the buttons that measure it.
+function poseSection(sw, s, { readOnly = false } = {}) {
   if (!(sw.frames || []).length) return '';
   const m = sw.pose ? poseMeasures(sw) : null;
+  if (!m && readOnly) return `<p class="small muted" id="poseNotYet_${sw.id}">The body isn't measured on this swing yet: <i>Measure the body</i> is on its ${s.type === 'round' ? 'round' : 'session'}'s page.</p>`;
   if (!m) return `<div class="row-actions" style="margin-top:6px"><button data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure the body</button><span class="small muted">Finds the joints on each frame, on this phone.</span></div><div id="pm_${sw.id}"></div>`;
   const vals = poseValues(m);
   let h = `<div class="pose" id="pose_${sw.id}"><div class="small"><b>The body, measured</b> <span class="muted">${m.found} of ${m.of} frames · 2D${m.found && m.keys ? ` · impact ${m.impFrom === 'marked' ? 'as marked' : 'from the hands'}` : ''}${m.reliable ? '' : ' · <span class="warn">too few to rely on</span>'}</span></div>`;
@@ -4024,7 +4096,7 @@ function poseSection(sw, s) {
   const tr = m.keys ? poseTraces(m) : '';
   const guide = POSE_GUIDE[m.view] ? `<p class="small muted" id="poseGuide_${sw.id}">Dotted: a guide at the top and impact. Red: outside it. ${m.view === 'face' ? 'Hips from tour data (Sportsbox), the rest rules of thumb.' : 'Rules of thumb.'} Not a measurement of you.</p>` : '';
   if (tr) h += `<details id="ptr_${sw.id}"><summary class="small muted" style="cursor:pointer">Across the swing</summary>${tr}${guide}</details>`;
-  h += `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
+  h += readOnly ? '</div>' : `<div class="row-actions" style="margin-top:4px"><button class="quiet" data-act="measureSwing" data-sid="${s.id}" data-wid="${sw.id}">Measure again</button></div><div id="pm_${sw.id}"></div></div>`;
   return h;
 }
 // Measures for the reading's prompt, when the swing has been measured.
@@ -4446,7 +4518,7 @@ function reelSwings(club) { return swingHistory().filter(sw => sw.video && (!clu
 function vReels() {
   const club = (S.sub && S.sub.club) || '', all = swingHistory().filter(sw => sw.video), sws = reelSwings(club);
   return `<div class="reels" id="reels">
-    <div class="reelsTop"><button class="reelsClose" data-go="swings" aria-label="Back"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+    <div class="reelsTop"><button class="reelsClose" data-act="navBack" data-tab="swings" data-sub="" aria-label="Back"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
     ${sws.length ? sws.map((sw, i) => { const w = swingWhere(sw), a = sw.analysis, go = sw.session.type === 'round' ? `rounds:sessionId=${sw.session.id}` : `range:sessionId=${sw.session.id}`;
       const bg = swingFrame(sw);
       return `<section class="reel" data-i="${i}">${bg ? `<img class="reelBg" src="/_blob/${bg.asset}" alt="" aria-hidden="true" loading="lazy">` : ''}<video src="/_blob/${sw.video}" playsinline muted loop preload="${i < 2 ? 'auto' : 'none'}" data-reel></video>
@@ -4598,13 +4670,19 @@ function wireSwingForm(root, sessionId) {
 }
 // The caption opens the swing's own card over the feed (2.26.0, he asked:
 // the session page was too much): the reading, or "not read yet", and one
-// link to the session it was filmed in.
+// link to the session it was filmed in. Since 2.61.0 (he asked, from the Swings tab) *Play video* at the
+// top right plays the clip in the card, and the measured body follows the reading, read-only: its ids
+// carry rc_ so they can't meet the same swing's on a page.
 function reelCardHtml(sw, s) {
   const w = swingWhere(sw), a = sw.analysis, go = s.type === 'round' ? `rounds:sessionId=${s.id}` : `range:sessionId=${s.id}`;
-  return `<h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>
+  const play = sw.video ? `<button class="primary" data-act="reelPlay" data-vid="${esc(sw.video)}" id="reelPlay">Play video</button>` : '';
+  const pose = (sw.frames || []).length ? `<div id="reelPose">${poseSection(sw, s, { readOnly: true }).replace(/ id="/g, ' id="rc_')}</div>` : '';
+  return `<div class="spread"><h2>${dateLabel(swingDate(sw))} <span class="tag ${w.kind === 'course' ? 'green' : ''}">${w.kind}</span>${sw.club ? ` <span class="tag">${esc(sw.club)}</span>` : ''}</h2>${play}</div>
+    <div id="reelVideo"></div>
     <p class="muted small">${[esc(w.label), esc(VIEWS[sw.view] || 'Other angle'), sw.note ? esc(sw.note) : ''].filter(Boolean).join(' · ')}</p>
     ${(() => { const x = swingShot(sw, s); return x && !x.gone ? `<p class="small" id="reelShot"><b>This swing's shot:</b> ${esc(swingShotText(x))}</p>` : ''; })()}
     <div class="swing" id="reelCard">${a ? swingReading(sw, s, a) : `<div class="small muted">Not read yet. Analyse it from the session.</div>`}</div>
+    ${pose}
     <div class="row-actions"><button data-act="reelOpen" data-go-session="${go}">Open the ${s.type === 'round' ? 'round' : 'session'} →</button></div>`;
 }
 // A minimalist speaker, drawn not typed (he found the emoji tacky): waves on, a cross off.
@@ -4615,6 +4693,16 @@ Object.assign(ACTIONS, {
     const s = session(d.sid), sw = s && swingsOf(s).find(w => w.id === d.wid);
     if (!sw) return;
     openSheet(reelCardHtml({ ...sw, session: s }, s));
+  },
+  // The clip plays in the card, with its controls and sound (a tap is the gesture iOS needs); the feed behind
+  // it pauses. Tapped again, the clip goes.
+  reelPlay(d) {
+    const box = $('#reelVideo'), btn = $('#reelPlay'); if (!box || !btn) return;
+    if (box.firstChild) { box.innerHTML = ''; btn.textContent = 'Play video'; return; }
+    document.querySelectorAll('#reels video').forEach(v => v.pause());
+    box.innerHTML = `<video src="/_blob/${esc(d.vid)}" controls playsinline autoplay></video>`;
+    const v = box.querySelector('video'); if (v.play) Promise.resolve(v.play()).catch(() => {});
+    btn.textContent = 'Hide video';
   },
   reelOpen(d) { sheet.close(); const [tab, sub] = parseGo(d.goSession); go(tab, sub); },
   reelsSound() {
@@ -5324,7 +5412,7 @@ const cm = { el: null, map: null, layer: null, tiles: null, dark: null, key: nul
 function vCourseMap() {
   const placed = S.courses.filter(hasCoords), missing = S.courses.length - placed.length;
   const key = [['public', 'Public'], ['private', 'Private'], ['closed', 'Closed'], [null, 'Not known']];   // 'Private', as the list's tags say it (2.60.0, his word)
-  return `<button class="quiet" data-go="courses" style="padding-left:0">‹ Courses</button>
+  return `<button class="quiet" data-act="navBack" data-tab="courses" data-sub="" style="padding-left:0">‹ ${esc(navPrev() >= 0 ? navLabel(navStack[navPrev()]) : 'Courses')}</button>
   <h1>Courses on a map</h1>
   <p class="small muted" id="cmCount">${plural(placed.length, 'course')}${home() && hasCoords(home()) ? `, and ${esc(home().label || 'your location')}` : ''}. Tap a pin for the course.</p>
   <div id="cmMap" role="region" aria-label="Map of the courses"></div>
@@ -6417,7 +6505,7 @@ Object.assign(ACTIONS, {
     await addMapShot(r, n, h, g.p, { gps: Math.round(g.acc) }, moving, h.hm ? h.hm.map : playMap());
     toast(h.hm ? 'Ball marked' : 'Ball marked — measured once the hole is drawn');
   },
-  finishPlay(d) { stopGps(); go('rounds', { sessionId: d.sid }); },
+  finishPlay(d) { stopGps(); go('rounds', { sessionId: d.sid }, { nav: 'replace' }); },
 });
 // Opening without signal (2.54.0): the service worker keeps the page and the data as
 // they last arrived and answers from them only when the network can't be reached.
