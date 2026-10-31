@@ -919,6 +919,15 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   Wallacia's fees from the club's green-fees page (18 holes $25 weekday, $35
   weekend, the rest in `bookingNote`), Woodville's pro shop number from the
   council's page (no fees found worth storing).
+- **GolfNow's first live run** (2.77.1, his search on 2.77.0, several days):
+  Wallacia "GolfNow lists no times" on every day, but GolfNow's own page (a
+  TinyFish run, 2026-11-01) listed its Wed 4 Nov times: 18 holes $25 every 10
+  minutes from 10:06 am, a $18.99 hot deal at 12:26, $10 after 1 pm. So the
+  answer parsed (the shape fits) but the search sent narrows it to nothing.
+  Woodville: GolfNow answered 500. An empty GolfNow day now carries `sample` and
+  `sent` (the body), to find which field. Bardwell (TeeItUp): "another clock (one
+  at 01:28)" (and 03:08 another day), so its times come in UTC; its `sample` is
+  what settles the rule.
 - **Next:** a second source per course (resellers), once the links are settled
   (he agreed, 2026-10-31).
 
