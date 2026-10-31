@@ -93,6 +93,8 @@ test('every course that shows nothing says why', () => {
   assert.match(row('c_empty'), /lists nothing from this day/);
   assert.match(app.text('#ttOther'), /Booking GC/);
   assert.match(app.text('#ttOther'), /Public 9 holes/);
+  // 2.74.0 (he asked): each course's picture beside its name, in every part of the list.
+  for (const sel of ['#tt_c_near summary', '[data-tt="c_down"]', '[data-tt="c_empty"]', '#ttOther .item']) assert.ok(app.$(`${sel} .crow > svg.hm-icon`), `${sel} has the course's tile`);
   const ids = sel => app.$$(sel).map(x => x.dataset.tt || x.id.replace('tt_', ''));
   assert.deepEqual(ids('#ttList > [data-tt], #ttList > details'), ['c_near', 'c_q18', 'c_tiu', 'c_events'], 'only courses with times in the list, nearest first');
   // The Quick18 course: each time links to its own Select page on the club's sheet.

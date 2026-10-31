@@ -1,3 +1,7 @@
+## 2.75.0 — 2026-11-01
+- Find a tee time shows each course's picture beside its name, as the Courses list does, so the list is easier to scan.
+- Each course's name has its own line; under it, the distance, how many times and from what time, and the lowest price, with a dot between each.
+
 ## 2.74.0 — 2026-11-01
 - Find a tee time: a club whose site doesn't answer in time now says "couldn't be reached: the booking site took too long to answer", not a raw error (Gordon, this week).
 - A 12-hole course like Newgreens Chatswood no longer shows up when you filter for 18 holes: a rate that doesn't say how many holes it is now takes the course's own card.

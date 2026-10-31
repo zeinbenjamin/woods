@@ -875,6 +875,11 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   showed under 18 holes); a named rate is never changed. **An empty calendar's
   note** says bookings may not be open yet as well as sign-up (Woollahra's
   showed nothing past Wednesday, "Bookings Not Yet Opened").
+- **Pictures in the list** (2.75.0, he asked: the names ran together): every course in the search
+  (`ttCourse`, *Nothing that suits*, *Booked another way*) has `ttIcon(c)`, the Courses list's tile at 44 px, in a
+  `.crow`; the name alone on the first line, then distance · times · lowest price (`.ttsum`, joined with ` · `,
+  which fixed his screenshot's "13 km 11 times"); rows without times keep distance and suburb, then why.
+  `vTeeTimes` starts `HoleMap.icons()`. `ui-teetimes` checks the tile in each part.
 - **Next:** a second source per course (resellers), once the links are settled
   (he agreed, 2026-10-31).
 
