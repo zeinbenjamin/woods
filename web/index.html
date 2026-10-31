@@ -93,20 +93,21 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .pose { margin: 8px 0 4px; } .posePos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
 .posePos figure { margin: 0; } .posePos figcaption { font-size: 11.5px; color: var(--ink-3); text-align: center; margin-top: 2px; }
 .pf { position: relative; border-radius: 6px; overflow: hidden; background: var(--paper-2); } .pf img { display: block; width: 100%; height: auto; }
-.poseSk { position: absolute; inset: 0; width: 100%; height: 100%; } .poseSk line { stroke: #F4F1E6; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linecap: round; }
-.poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .8; vector-effect: non-scaling-stroke; }
+.poseSk { position: absolute; inset: 0; width: 100%; height: 100%; } .poseSk line { stroke: #F4F1E6; stroke-width: .012; stroke-linecap: round; }
+.poseSk circle { fill: #D7B66D; stroke: #1B2A20; stroke-width: .004; }
 .plane { margin: 10px 0 4px; } .planePic { margin-top: 6px; max-width: 420px; } .planeCrop { position: absolute; left: 0; width: 100%; } .planeCrop img { width: 100%; height: 100%; } .planeSv { position: absolute; inset: 0; width: 100%; height: 100%; }
-.planeSv * { vector-effect: non-scaling-stroke; } .pl-vee { fill: #6DB37F; fill-opacity: .14; stroke: none; }
-.pl-shaft, .pl-sh { stroke-width: 2; stroke-dasharray: 7 5; } .pl-shaft { stroke: #8FC3E8; } .pl-sh { stroke: #AA96BD; }
-.pl-under { fill: none; stroke: #0B100B; stroke-opacity: .5; stroke-width: 6; stroke-linejoin: round; stroke-linecap: round; }
-.pl-back, .pl-down { fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; } .pl-back { stroke: #6DB37F; } .pl-down { stroke: #F4F7F3; }
-.pl-top, .pl-ball { fill: #F4F7F3; stroke: #0B100B; stroke-width: 1.5; } .pl-imp { fill: #F4F7F3; stroke: #0B100B; stroke-width: 1.5; } .pl-imp.off { fill: var(--score-3); }
+/* 2.69.1: widths in the frame's own units (1 = its height), not non-scaling-stroke, which a browser can drop
+   (his iPad: a 9-unit dot painted the whole picture sand). About 0.0045 is 3 px on a 670 px frame. */ .pl-vee { fill: #6DB37F; fill-opacity: .14; stroke: none; }
+.pl-shaft, .pl-sh { stroke-width: .003; stroke-dasharray: .0105 .0075; } .pl-shaft { stroke: #8FC3E8; } .pl-sh { stroke: #AA96BD; }
+.pl-under { fill: none; stroke: #0B100B; stroke-opacity: .5; stroke-width: .009; stroke-linejoin: round; stroke-linecap: round; }
+.pl-back, .pl-down { fill: none; stroke-width: .0045; stroke-linejoin: round; stroke-linecap: round; } .pl-back { stroke: #6DB37F; } .pl-down { stroke: #F4F7F3; }
+.pl-top, .pl-ball { fill: #F4F7F3; stroke: #0B100B; stroke-width: .0022; } .pl-imp { fill: #F4F7F3; stroke: #0B100B; stroke-width: .0022; } .pl-imp.off { fill: var(--score-3); }
 .pl-pick { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #F4F7F3; border: 2.5px solid #C96A6A; box-sizing: border-box; }
 .planeTag { position: absolute; left: 8px; top: 8px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: rgba(11,16,11,.8); color: #9BD3A8; border: 1px solid #6DB37F; }
 .planeKey { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; } .planeKey i { display: inline-block; width: 16px; height: 0; vertical-align: middle; margin-right: 5px; border-top: 2px dashed; }
-.pl-thru { fill: none; stroke: #B9C2BB; stroke-opacity: .85; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
-.pl-back.sparse, .pl-down.sparse, .pl-thru.sparse, .pl-under.sparse { stroke-dasharray: 0.1 7; }
-.pl-head { fill: #F4F7F3; stroke: #0B100B; stroke-width: 1.5; } .planeKey .k-thru { border-top: 3px solid #B9C2BB; }
+.pl-thru { fill: none; stroke: #B9C2BB; stroke-opacity: .85; stroke-width: .0045; stroke-linejoin: round; stroke-linecap: round; }
+.pl-back.sparse, .pl-down.sparse, .pl-thru.sparse, .pl-under.sparse { stroke-dasharray: .00015 .0105; }
+.pl-head { fill: #F4F7F3; stroke: #0B100B; stroke-width: .0022; } .planeKey .k-thru { border-top: 3px solid #B9C2BB; }
 .swsum { margin: 8px 0 10px; border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; }
 .sumrow { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 9px 12px; border-top: 1px solid var(--rule); } .sumrow:first-child { border-top: 0; }
 .sumrow > b { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; padding-top: 2px; }
@@ -115,9 +116,9 @@ textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 @media (max-width: 420px) { .sumrow { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
 .tracer { margin: 10px 0 4px; } .switches { display: flex; flex-wrap: wrap; gap: 4px 18px; } .tracerPic { margin-top: 6px; max-width: 420px; } .tracerPic > img { width: 100%; display: block; }
 /* svg.trShot.trShot: outranks `.bigmap svg { height: auto }`, which the swing sheet's video sits in (the tracer drew square). */
-svg.trShot.trShot { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .trShot * { vector-effect: non-scaling-stroke; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.ts-under { stroke: #0B100B; stroke-opacity: .45; stroke-width: 7; } .ts-line { stroke: #D7B66D; stroke-width: 3.5; stroke-dasharray: 1 7; }
-.ts-ball { stroke: #F4F7F3; stroke-width: 11; } .ts-land { stroke: #D7B66D; stroke-width: 9; }
+svg.trShot.trShot { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .trShot * { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.ts-under { stroke: #0B100B; stroke-opacity: .45; stroke-width: .0105; } .ts-line { stroke: #D7B66D; stroke-width: .0052; stroke-dasharray: .0015 .0105; }
+.ts-ball { stroke: #F4F7F3; stroke-width: .0165; } .ts-land { stroke: #D7B66D; stroke-width: .0135; }
 .tracerTag { color: #D7B66D; border-color: #D7B66D; } .tracerPic { position: relative; }
 .tsTiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; } .tsTile { background: var(--paper-2); border-radius: 8px; padding: 8px 10px; }
 .tsTile b { display: block; font-size: 18px; } .tsTile span { font-size: 11.5px; color: var(--ink-2); }
@@ -4280,7 +4281,7 @@ function planeSection(sw, s, m, readOnly, bare = false) {
   const shot = on && overlayOn('tracer') ? tracerPts(sw) : null;
   const d = traceData(sw, m), ar = d.ar, ys = [m.plane.ball[1], m.plane.shoulders[1], ...d.runs.flat().map(q => q.p[1]), ...(shot ? shot.map(q => q[1]) : [])];
   const y0 = Math.max(0, Math.min(...ys) - 0.08), y1 = Math.min(1, m.plane.ball[1] + 0.1), ch = Math.max(0.2, y1 - y0);
-  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar }, d)}${shot ? `<svg class="trShot" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">${tracerInner(tracerSamples(shot))}</svg>` : ''}</div><span class="planeTag">Measured · your hands, 2D</span>${shot ? `<span class="planeTag tracerTag tagLow">Shot traced by you${tracerShape(sw) ? ` · ${tracerShape(sw)}` : ''}</span>` : ''}</div>
+  const pic = on && A ? `<div class="pf planePic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%"><img src="/_blob/${A.asset}" alt="Address, with the swing plane" loading="lazy">${planeSvg({ ...m, aspect: ar }, d)}${shot ? trShotSvg(tracerInner(tracerSamples(shot), 1, ar), ar) : ''}</div><span class="planeTag">Measured · your hands, 2D</span>${shot ? `<span class="planeTag tracerTag tagLow">Shot traced by you${tracerShape(sw) ? ` · ${tracerShape(sw)}` : ''}</span>` : ''}</div>
     <div class="planeKey small muted"><span><i class="k-shaft"></i>Shaft line</span><span><i class="k-sh"></i>Shoulder line</span><span><i class="k-back"></i>Hands going back</span><span><i class="k-down"></i>Coming down</span><span><i class="k-thru"></i>After impact</span></div>` : '';
   const trace = !readOnly && !d.dense && sw.video ? `<button class="quiet" data-act="traceSwing" data-sid="${s.id}" data-wid="${sw.id}">Trace the hands from the video</button>` : '';
   const both = !!shot, redraw = both && !readOnly ? `<button class="quiet" data-act="traceShot" data-sid="${s.id}" data-wid="${sw.id}">Redraw the shot</button>` : '';
@@ -4537,7 +4538,7 @@ function traceVideoHtml(sw, s, videoHtml) {
   // The shot tracer is drawn in the frame's own 0..1 (strokes and dots that don't stretch), so it needs no aspect;
   // the box takes the pose's, or the video's own once it has loaded (wireTrace).
   const ar = d ? d.ar : (sw.pose && sw.pose.aspect) || 0.5625;
-  return `<div class="trBox" style="--ar:${ar.toFixed(3)}">${videoHtml}${plane ? `<svg class="planeSv trOv" data-sid="${s.id}" data-wid="${sw.id}" viewBox="0 0 ${d.ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true"></svg>` : ''}${shot ? `<svg class="trShot" data-sid="${s.id}" data-wid="${sw.id}" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true"></svg>` : ''}</div>`;
+  return `<div class="trBox" style="--ar:${ar.toFixed(3)}">${videoHtml}${plane ? `<svg class="planeSv trOv" data-sid="${s.id}" data-wid="${sw.id}" viewBox="0 0 ${d.ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true"></svg>` : ''}${shot ? `<svg class="trShot" data-sid="${s.id}" data-wid="${sw.id}" data-ar="${ar.toFixed(3)}" viewBox="0 0 ${ar.toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true"></svg>` : ''}</div>`;
 }
 function traceDraw(svg, d, tNow) {
   const tr = traceInner(d, tNow), h = tr.head && tNow != null ? `<circle class="pl-head" cx="${tr.head.p[0].toFixed(3)}" cy="${tr.head.p[1].toFixed(3)}" r="0.014"/>` : '';
@@ -4552,7 +4553,7 @@ function wireTrace(root) {
     if (pl) { const sw = find(pl), d = sw && traceData(sw); if (d) draws.push(t => traceDraw(pl, d, t)); }
     if (sh) { const sw = find(sh), P = sw && tracerPts(sw); if (P) { const pts = tracerSamples(P), t0 = tracerStart(sw); draws.push(t => tracerDraw(sh, pts, t, t0, v.duration)); } }
     if (!draws.length) return;
-    if (!pl) v.addEventListener('loadedmetadata', () => { if (v.videoWidth && v.videoHeight) box.style.setProperty('--ar', (v.videoWidth / v.videoHeight).toFixed(3)); });
+    if (!pl) v.addEventListener('loadedmetadata', () => { if (!v.videoWidth || !v.videoHeight) return; const a = (v.videoWidth / v.videoHeight).toFixed(3); box.style.setProperty('--ar', a); if (sh) { sh.dataset.ar = a; sh.setAttribute('viewBox', `0 0 ${a} 1`); draw(); } });
     const draw = () => { const t = v.paused || v.ended ? null : v.currentTime; draws.forEach(f => f(t)); };
     let raf = 0;
     const tick = () => { draw(); raf = v.paused || v.ended ? 0 : requestAnimationFrame(tick); };
@@ -4595,16 +4596,19 @@ function tracerStart(sw) {
   const d = sw.pose && traceData(sw); return d && d.cuts[2] != null ? d.cuts[2] : null;
 }
 // The flight, all of it or a fraction; a dot is a zero-length round-capped stroke, so it stays round in 0..1.
-function tracerInner(pts, frac = 1) {
+function tracerInner(pts, frac = 1, ar = 1) {
   const k = Math.max(1, Math.round(frac * (pts.length - 1))), part = pts.slice(0, k + 1), f = v => v.toFixed(4);
-  const d = part.map((p, i) => `${i ? 'L' : 'M'}${f(p[0])},${f(p[1])}`).join(''), h = part[part.length - 1];
-  return `<path class="ts-under" d="${d}"/><path class="ts-line" d="${d}"/><path class="${frac < 1 ? 'ts-ball' : 'ts-land'}" d="M${f(h[0])},${f(h[1])}h0"/>`;
+  const d = part.map((p, i) => `${i ? 'L' : 'M'}${f(p[0] * ar)},${f(p[1])}`).join(''), h = part[part.length - 1];
+  return `<path class="ts-under" d="${d}"/><path class="ts-line" d="${d}"/><path class="${frac < 1 ? 'ts-ball' : 'ts-land'}" d="M${f(h[0] * ar)},${f(h[1])}h0"/>`;
 }
+const trShotSvg = (inner, ar) => `<svg class="trShot" viewBox="0 0 ${(+ar).toFixed(3)} 1" preserveAspectRatio="none" aria-hidden="true">${inner}</svg>`;
+const frameAr = sw => (sw.pose && sw.pose.aspect) || 0.5625;
 function tracerDraw(svg, pts, t, t0, dur) {
-  if (t == null || t0 == null) { svg.innerHTML = tracerInner(pts); return; }
+  const ar = +(svg.dataset && svg.dataset.ar) || 1;
+  if (t == null || t0 == null) { svg.innerHTML = tracerInner(pts, 1, ar); return; }
   if (t < t0) { svg.innerHTML = ''; return; }
   const span = Math.max(0.1, Math.min(TRACER_DRAW, (isFinite(dur) && dur > t0 ? dur : Infinity) - t0));
-  svg.innerHTML = tracerInner(pts, Math.min(1, (t - t0) / span));
+  svg.innerHTML = tracerInner(pts, Math.min(1, (t - t0) / span), ar);
 }
 const cap = w => w ? w[0].toUpperCase() + w.slice(1) : w;
 // The real numbers beside the drawing, from the shot the swing is tied to; nothing tied, nothing shown.
@@ -4632,7 +4636,7 @@ function tracerSection(sw, s, readOnly, bare = false) {
   const last = sw.frames[sw.frames.length - 1], shape = SHOT_SHAPES.find(x => x[0] === sw.tracer.shape), ar = sw.pose && sw.pose.aspect;
   // Cropped top to bottom to the flight when the frame's shape is known (the pose has it); else the whole frame.
   const ys = P.map(p => p[1]), y0 = Math.max(0, Math.min(...ys) - 0.06), y1 = Math.min(1, Math.max(...ys) + 0.1), ch = Math.max(0.25, y1 - y0);
-  const svg = `<svg class="trShot" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">${tracerInner(tracerSamples(P))}</svg>`;
+  const svg = trShotSvg(tracerInner(tracerSamples(P), 1, frameAr(sw)), frameAr(sw));
   const img = `<img src="/_blob/${last.asset}" alt="The finish, with the traced flight" loading="lazy">`;
   const pic = ar ? `<div class="pf tracerPic" style="aspect-ratio:${(ar / ch).toFixed(3)}"><div class="planeCrop" style="top:${(-100 * y0 / ch).toFixed(2)}%;height:${(100 / ch).toFixed(2)}%">${img}${svg}</div>`
     : `<div class="pf tracerPic">${img}${svg}`;
@@ -4658,7 +4662,7 @@ ACTIONS.traceShot = function (d) {
     const [key, title, help, fr] = STEP[st.step], P = st.ball && st.peak && st.land ? [[st.ball.x, st.ball.y], [st.peak.x, st.peak.y], [st.land.x, st.land.y]] : null;
     const box = $('#trSheet', sheetInner);
     box.innerHTML = `<p class="small"><b>${title}.</b> <span class="muted">${help}</span></p>
-      <div class="trPick" id="trPick"><img src="/_blob/${fr.asset}" alt="${esc(title)}" id="trImg">${st.step === 3 && P ? `<svg class="trShot" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">${tracerInner(tracerSamples(P))}</svg>` : ''}
+      <div class="trPick" id="trPick"><img src="/_blob/${fr.asset}" alt="${esc(title)}" id="trImg">${st.step === 3 && P ? `${trShotSvg(tracerInner(tracerSamples(P), 1, frameAr(sw)), frameAr(sw))}` : ''}
       <div class="trDots">${st.step > 1 ? '' : dot(st.ball, 'pl-pick')}${st.step >= 2 ? dot(st.peak, 'pl-pick') : ''}${st.step === 3 ? dot(st.land, 'pl-pick') : ''}</div></div>
       ${st.step === 3 ? `<div class="small muted" style="margin-top:6px">The shape you saw</div><div class="seg" id="trShapes">${SHOT_SHAPES.map(([k, l]) => `<button data-shape="${k}" aria-pressed="${st.shape === k}">${l}</button>`).join('')}</div>` : ''}
       <div class="row-actions">${st.step > 1 ? '<button id="trBack">Back</button>' : ''}${st.step < 3 ? `<button class="primary" id="trNext"${st[key] ? '' : ' disabled'}>Next</button>` : `<button class="primary" id="trSave"${P ? '' : ' disabled'}>Save tracer</button>`}</div>`;
