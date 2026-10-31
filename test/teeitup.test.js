@@ -41,6 +41,9 @@ test('an answer becomes rates of Sydney times with spots free, dollars from cent
   // Without allowedPlayers, maxPlayers is the spots left (live: never less booked on top); neither, and the time is left out rather than guessed. A time written without an offset is taken as written; dollars stay dollars.
   const plain = parseTeeitup([{ teetimes: [{ teetime: '2026-10-31T07:05:00', maxPlayers: 3, bookedPlayers: 1, rates: [{ name: 'Twilight', holes: 18, greenFeeWalking: 25 }] }, { teetime: '2026-10-31T07:14:00', rates: [{ name: 'Twilight', holes: 18, greenFeeWalking: 25 }] }] }], teeitupSource(GR), '2026-10-31');
   assert.deepEqual([plain[0].times.map(t => [t.time, t.free]), plain[0].price], [[['07:05', 3]], 25]);
+  // A time with its zone written in is the club's own clock, as its page shows it (Bardwell Valley's 7:28 am, 2026-11-01).
+  const zoned = parseTeeitup([{ teetimes: [{ teetime: '2026-11-04T07:28:00.000-07:00', maxPlayers: 4, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 3400 }] }] }], teeitupSource(GR), '2026-11-04');
+  assert.equal(zoned[0].times[0].time, '07:28');
   assert.deepEqual(parseTeeitup('[{"teetimes": []}]', teeitupSource(GR), '2026-10-31'), [], 'a day with nothing is empty, not unreadable');
   for (const bad of ['<html>Login</html>', '{"error":"not found"}', '[]', 'null']) assert.equal(parseTeeitup(bad, teeitupSource(GR), '2026-10-31'), null, bad);
 });
@@ -83,4 +86,15 @@ test('an answer Carry can\'t read says so, with what came back, so it can be fix
   assert.equal(no.body.status, 'unreachable'); assert.match(no.body.message, /403/); assert.equal(no.body.sample, '{"error":"missing alias"}');
   reply = () => [200, '[{"teetimes": []}]'];
   assert.match((await get('/api/teetimes/c_gr?date=2026-11-03')).body.note, /Nothing is open to the public/);
+});
+
+test('times on another clock (a UTC time that lands between 10 pm and 4 am in Sydney) are said, with a sample, not shown', async () => {
+  reply = () => [200, JSON.stringify([{ teetimes: [
+    { teetime: '2026-11-03T14:28:00.000Z', maxPlayers: 4, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 3400 }] },
+    { teetime: '2026-11-03T20:00:00.000Z', maxPlayers: 4, rates: [{ name: '18 Holes', holes: 18, greenFeeWalking: 3400 }] },
+  ] }])];
+  const r = await get('/api/teetimes/c_gr?date=2026-11-04');
+  assert.equal(r.body.status, 'unreadable');
+  assert.match(r.body.message, /another clock \(one at 01:28\)/);
+  assert.match(r.body.sample, /2026-11-03T14:28:00.000Z/);
 });

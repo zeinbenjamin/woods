@@ -168,9 +168,13 @@ export const teeitupPage = (src, date) => `https://${src.alias}.book.teeitup.com
 export const teeitupApi = (src, date) => `${TEEITUP_API}/v2/tee-times?date=${date}&facilityIds=${src.facility}`;
 
 // An ISO time with an offset is moved to Sydney's clock; one without is taken as written.
+// A time with its zone written in (07:28-07:00) is the club's own clock as its
+// page shows it, taken as written: GolfNow has some clubs in the wrong zone
+// (Bardwell Valley's 7:28 am read as 01:28 in Sydney, 2026-11-01). A UTC time
+// (Z) is moved to Sydney's clock.
 function localClock(iso, tz = 'Australia/Sydney') {
   if (typeof iso !== 'string') return null;
-  if (/(Z|[+-]\d\d:?\d\d)$/i.test(iso)) {
+  if (/Z$/i.test(iso)) {
     const d = new Date(iso);
     if (isNaN(d)) return null;
     const p = new Intl.DateTimeFormat('en-AU', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
@@ -218,6 +222,10 @@ async function teeitupTimes(src, date, filters, fresh) {
     const got = await fetchPage(teeitupApi(src, date), fresh, { 'x-be-alias': src.alias, accept: 'application/json' });
     const all = parseTeeitup(got.text, src, date);
     if (!all) return { status: 'unreadable', source: 'TeeItUp', calendar: page, message: 'GolfNow\'s booking engine answered, but not in a form Carry can read yet.', sample: got.text.slice(0, 1500) };
+    // No course tees off between 10 pm and 4 am: a time there means the answer's
+    // clock is in another zone, said rather than shown (with what came, to fix it).
+    const odd = all.flatMap(r => r.times).map(t => t.time).filter(t => t < '04:00' || t >= '22:00').sort()[0];
+    if (odd) return { status: 'unreadable', source: 'TeeItUp', calendar: page, message: `GolfNow's times came back on another clock (one at ${odd}), so Carry won't show them as they are.`, sample: got.text.slice(0, 1500) };
     const offered = all.filter(r => !filters.holes || !r.holes || r.holes === filters.holes);
     const rates = offered.map(r => { const times = r.times.filter(t => suits(t, r, filters)); return { ...r, times, listed: r.times.length }; });
     const note = rates.length ? null : !all.length ? 'Nothing is open to the public on this day.' : 'No rate on this day matches the holes asked for.';

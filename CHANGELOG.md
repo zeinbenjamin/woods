@@ -1,3 +1,7 @@
+## 2.76.0 — 2026-11-01
+- Find a tee time: Bardwell Valley's times showed from 1:28 am, six hours early, because GolfNow keeps that club on another time zone. Times are now read on the club's own clock, as its booking page shows them. If a club's times still come back on the wrong clock, Carry says so instead of listing tee times in the middle of the night.
+- A club whose site doesn't answer now says "Couldn't reach its booking site", not "Couldn't read its tee times".
+
 ## 2.75.0 — 2026-11-01
 - Find a tee time shows each course's picture beside its name, as the Courses list does, so the list is easier to scan.
 - Each course's name has its own line; under it, the distance, how many times and from what time, and the lowest price, with a dot between each.
