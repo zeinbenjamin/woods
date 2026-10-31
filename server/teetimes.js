@@ -390,7 +390,11 @@ async function golfnowTimes(src, date, filters, fresh, course) {
     const offered = all.filter(r => !filters.holes || !r.holes || r.holes === filters.holes);
     const rates = offered.map(r => { const times = r.times.filter(t => suits(t, r, filters)); return { ...r, times, listed: r.times.length }; });
     const note = rates.length ? null : !all.length ? 'GolfNow lists no times for this course on this day (it sells only some of a club\'s times: the pro shop may have more).' : 'No rate on this day matches the holes asked for.';
-    return { status: 'ok', source: 'GolfNow', date, calendar: page, rates, ...(note ? { note } : {}), fetchedAt: new Date(got.at).toISOString() };
+    // An empty day keeps what came, and the search sent: GolfNow's own page listed
+    // Wallacia's times on a day this search came back empty (2026-11-01), so the
+    // request is still being worked out from real answers.
+    const empty = !all.length ? { sample: got.text.slice(0, 1500), sent: golfnowBody(src, date, course || {}) } : {};
+    return { status: 'ok', source: 'GolfNow', date, calendar: page, rates, ...(note ? { note } : {}), ...empty, fetchedAt: new Date(got.at).toISOString() };
   } catch (e) {
     return { status: e.code === 'unreachable' ? 'unreachable' : 'unreadable', source: 'GolfNow', calendar: page, message: e.message, ...(e.sample ? { sample: e.sample } : {}) };
   }

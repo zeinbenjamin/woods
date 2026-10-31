@@ -1,3 +1,6 @@
+## 2.77.1 — 2026-11-01
+- Behind the scenes for Wallacia's tee times: when GolfNow answers with no times, Carry now keeps a copy of the answer, so the reason can be found. GolfNow's own page lists Wallacia's times on days Carry was told there were none.
+
 ## 2.77.0 — 2026-11-01
 - Find a tee time now reads GolfNow's own site, for the courses whose public times are only there: Wallacia and Woodville. Each time links to the course's GolfNow page to book, and GolfNow's hot deals are marked. GolfNow may list only some of a club's times, so the pro shop can have more.
 - Wallacia's course page now shows its green fees ($25 weekday, $35 weekend for 18 holes), and how to book, once its import is loaded again. Woodville's says to book with the pro shop, on 02 9632 3582.

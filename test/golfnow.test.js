@@ -92,5 +92,8 @@ test('what GolfNow says that Carry can\'t use is said, with a sample', async () 
   const no = await get('/api/teetimes/c_wal?date=2026-11-06');
   assert.equal(no.body.status, 'unreachable'); assert.match(no.body.message, /403/); assert.equal(no.body.sample, '<html>Access denied</html>');
   reply = () => [200, '{"ttResults":{"teeTimes":[]}}'];
-  assert.match((await get('/api/teetimes/c_wal?date=2026-11-07')).body.note, /GolfNow lists no times.*pro shop may have more/);
+  const none = (await get('/api/teetimes/c_wal?date=2026-11-07')).body;
+  assert.match(none.note, /GolfNow lists no times.*pro shop may have more/);
+  assert.equal(none.sample, '{"ttResults":{"teeTimes":[]}}', 'an empty day keeps what came');
+  assert.deepEqual([none.sent.FacilityId, none.sent.Date], [16535, 'Nov 07 2026'], 'and the search sent');
 });
