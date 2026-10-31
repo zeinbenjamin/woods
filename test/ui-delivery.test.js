@@ -51,8 +51,8 @@ test('his five 5W shots by hand: face, path, face to path, the ranges, and which
   near(d.follows.face, rf, 1e-9, 'r face'); near(d.follows.path, rp, 1e-9, 'r path');
   near(d.smash, mean(OCT_5W.map(s => s.ballSpeed / s.speed)), 1e-9, 'smash');
   const L = lines(d);
-  assert.equal(L[0], 'Face 3.7° left and path 1.9° left on average, so the face was 1.8° closed to the path (curving the ball left).');
-  assert.equal(L[1], 'Shot to shot the face ranged 6.1° left to 0.8° right, the path 2.4° left to 0.4° left: the face moved more.');
+  assert.equal(L[0], 'Face 3.7° closed and path 1.9° out-to-in on average, so the face was 1.8° closed to the path (curving the ball left).');
+  assert.equal(L[1], 'Shot to shot the face ranged 6.1° closed to 0.8° open, the path 2.4° out-to-in to 0.4° out-to-in: the face moved more.');
   assert.match(L[2], new RegExp(`^Where they finished followed the face closely \\(r ${rf.toFixed(2)}\\) and the path (hardly|partly) \\(r ${rp.toFixed(2).replace('-', '\\-')}\\), over 5 shots\\.$`));
   assert.equal(L[3], 'Smash 1.40 on average (ball speed ÷ club speed).');
 });
@@ -84,7 +84,9 @@ test('the block page: path against face, dots coloured by where they finished, t
   assert.ok(sec);
   assert.equal(app.$$('#blockDelivery .dp-pt').length, 5);
   assert.equal(app.$$('#blockDelivery .dp-pt.l').length, 4); assert.equal(app.$$('#blockDelivery .dp-pt.r').length, 1);
-  assert.deepEqual(app.$$('#blockDelivery .ftile b').map(b => b.textContent), ['3.7°L', '1.9°L', '1.40']);
+  assert.deepEqual(app.$$('#blockDelivery .ftile b').map(b => b.textContent), ['3.7°', '1.9°', '1.40']);
+  assert.match(app.text('#blockDelivery .tiles'), /face closed.*path out-to-in/s);
+  assert.match(app.text('#blockDelivery svg'), /path · out-to-in ← → in-to-out.*face · closed ← → open/s);
   assert.match(app.text('#blockDeliveryLines'), /face was 1\.8° closed to the path/);
   assert.match(app.text('#blockDelivery'), /A correlation shows what moved together, not what caused it/);
   const order = [...app.$('#view').querySelectorAll('#blockPattern, #blockDelivery, #shotTable')].map(e => e.id);
@@ -99,13 +101,15 @@ test('the Overview fold: a row per club measured, and which one each follows', (
   assert.ok(f && !f.open);
   assert.match(app.text('#ovDelivery summary'), /Face, path and strike.*5W follows the face/);
   assert.deepEqual(app.$$('#deliveryTable tbody tr').map(tr => [...tr.children].map(td => td.textContent)),
-    [['5W', '3.7° left', '1.9° left', '1.8° closed', '1.40', '5']]);
-  assert.match(app.text('#ovDelivery [data-club="7i"]'), /2 of the 5 shots with face and path this needs/);
+    [['5W', '3.7° closed', '1.9° out-to-in', 'left', 'face', '1.40']]);
+  // 2.58.0: no per-club paragraphs on the Overview; clubs short of data in one line.
+  assert.equal(app.text('#deliveryFew'), 'Not enough shots with face and path yet: 7i (2 of 5).');
+  assert.doesNotMatch(app.text('#ovDelivery'), /Shot to shot|Where they finished followed/);
 });
 
 test('a swing reading is given the measured face and path for its club', () => {
   const ctx = app.E(`ballContextFor('5W')`);
-  assert.match(ctx, /Measured at impact by the bay over 5 shots \(right-hander, minus is left\): Face 3\.7° left and path 1\.9° left/);
+  assert.match(ctx, /Measured at impact by the bay over 5 shots \(a right-hander; face to the target, path in-to-out or out-to-in\): Face 3\.7° closed and path 1\.9° out-to-in/);
   assert.doesNotMatch(app.E(`ballContextFor('7i')`), /Measured at impact/, 'not from two shots');
 });
 

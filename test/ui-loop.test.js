@@ -36,6 +36,15 @@ const planned = async () => (await app.api.list('sessions')).filter(s => s.plann
 
 test('a round says what it showed: the finding by name, how often, the club, the holes, and what to do', () => {
   app.go('rounds', { sessionId: 'rA' });
+  // 2.58.0 (he asked): a fold under Getting to the green, with the clubs' fold after it; neither a heading of its own.
+  const fold = app.$('#roundFindingsFold'), clubs = app.$('#roundClubs');
+  assert.ok(fold && fold.tagName === 'DETAILS' && fold.contains(app.$('#roundFindings')), 'the findings in their fold');
+  assert.match(app.text('#roundFindingsFold summary'), /^What this round showed \d+ findings? · /);
+  assert.ok(clubs && clubs.tagName === 'DETAILS', 'Clubs on the course is a fold');
+  assert.match(app.text('#roundClubs summary'), /^Clubs on the course 2 clubs · D \d+m$/);
+  const order = [...app.$('#view').querySelectorAll('#toGreen, #roundFindingsFold, #roundClubs, .hbar')].map(e => e.id || 'hbar');
+  assert.deepEqual(order.slice(0, 3), ['toGreen', 'roundFindingsFold', 'roundClubs'], 'under Getting to the green, before Strokes lost by par');
+  assert.ok(!app.$$('#view h2').some(h => /What this round showed|Clubs on the course/.test(h.textContent)));
   const f = app.$$('#roundFindings .finding');
   const approach = f.find(x => /Approaches clubbed short/.test(x.textContent));
   assert.ok(approach, app.text('#roundFindings'));

@@ -78,8 +78,9 @@ test('the round page folds it under Getting to the green, with the two biggest l
   assert.match(app.text('#strokesGained'), /Over 2 traced holes: 8 strokes against 6\.8 expected of a 0-handicap from the same tees, −1\.2 in all\. Left out, not traced through or no putts recorded: hole 2\. On 1 hole with no first-putt distance the last shot and the putts are pooled on the shot\./);
   const rows = app.$$('#sgTable tbody tr').map(tr => [...tr.querySelectorAll('td')].map(td => td.textContent));
   assert.deepEqual(rows, [['Approaches', '3', '−0.8', '−0.3'], ['Putting', '1', '−0.4', '−0.4'], ['Off the tee', '1', '−0.1', '−0.1']], 'worst first');
-  assert.match(app.text('#strokesGained'), /An estimate against a published table, not an official number/);
-  assert.match(app.text('#strokesGained'), /changes nothing about the plan or the armed club/);
+  // 2.58.0: one line in place of the paragraph of caveats (he found it too much).
+  assert.match(app.text('#strokesGained'), /An estimate against a 0-handicap \(.*; change it in Settings\)\./);
+  assert.doesNotMatch(app.text('#strokesGained'), /Broadie|not a prediction|nothing is stored/);
   assert.ok(app.$('#toGreen'), 'Getting to the green is still there');
 });
 

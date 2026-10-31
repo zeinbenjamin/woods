@@ -172,12 +172,13 @@ test('Swing history: measure the rest in one go, then each measure swing by swin
   await app.waitFor(async () => (await doc('s_sep')).swings[0].pose, { what: 'measured all' });
   await app.waitFor(() => app.$('#ptrend_7i'), { what: 'trend' });
   assert.equal(app.$('#measureAll'), null, 'nothing left to measure');
-  const sway = app.$$('#ptrend_7i li').find(li => /Hip sway at the top/.test(li.textContent));
-  assert.match(sway.textContent, /Face on.*28 Sept 2026 -12%/s);
+  // 2.58.0: one row a measure, the latest swing's value, the change since the first, how many swings.
+  const sway = app.$('#ptrend_7i tr[data-k="swayTop"]');
+  assert.deepEqual([...sway.children].map(td => td.textContent), ['Hip sway at the topFace on', '-12%25 Oct 2026', '0%since Sept 2026', '3']);
   // Hips at impact are measurable on the unreliable swing too (its frame 11 has hips), yet only the three reliable ones count.
-  const hips = app.$$('#ptrend_7i li').find(li => /Hips at impact/.test(li.textContent));
-  assert.equal(hips.querySelectorAll('.vals strong').length, 3, 'the unreliable one left out');
-  assert.ok(app.$$('#ptrend_7i li').some(li => /Hips toward the ball at impact/.test(li.textContent) && /Down the line/.test(li.textContent)));
+  assert.equal(app.text('#ptrend_7i tr[data-k="hipImpact"] td.n'), '3', 'the unreliable one left out');
+  assert.match(app.text('#ptrend_7i tr[data-k="extImpact"]'), /Hips toward the ball at impact.*Down the line/);
+  assert.equal(app.$$('#ptrend_7i tbody tr').length, 7, 'a row a measure, nothing date by date');
 });
 
 test('a model that can\'t run says what it needs and stores nothing', async () => {
@@ -228,6 +229,10 @@ test('no body on any frame says so (not that the view is wrong), and a measured 
   await app.waitFor(() => /4 of 4 frames/.test(app.text('#pose_sw_none')), { what: 'redrawn' });
   assert.equal(app.$('#poseNone_sw_none'), null);
   assert.ok(app.$('#pose_sw_face [data-act="measureSwing"]'), 'every measured swing offers it');
+  // 2.58.0 (he asked): once measured, the frame strip folds away; the four positions show the swing.
+  const strip = app.$('#frames_sw_face');
+  assert.ok(strip && strip.tagName === 'DETAILS' && !strip.open && strip.querySelector('.filmstrip'));
+  assert.equal(app.text('#frames_sw_face summary'), `Frames · ${app.J("session('s_oct').swings.find(s => s.id === 'sw_face').frames.length")}`);
 });
 
 test('a face-on clip filmed from the side gives no face-on measures, and says why', async () => {
@@ -250,8 +255,8 @@ test('a face-on clip filmed from the side gives no face-on measures, and says wh
   // Kept out of the club's trend, which still lists the square-on swings.
   app.go('swings');
   app.$('#swc_7i').open = true;
-  const sway = app.$$('#ptrend_7i li').find(li => /Hip sway at the top/.test(li.textContent));
-  assert.ok(sway && !/26 Oct/.test(sway.textContent), 'the side-on swing has no point');
+  const sway = app.$('#ptrend_7i tr[data-k="swayTop"]');
+  assert.ok(sway && !/26 Oct/.test(sway.textContent), 'the side-on swing is not the latest point');
 });
 
 test('the swing trend list keeps its own height (it once took the scoring chart\'s 80 px and drew over the page)', () => {

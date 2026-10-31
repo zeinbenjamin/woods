@@ -897,8 +897,11 @@ joints, the express static server types `.mjs` and `.wasm` right.
   a face-on clip not square on, hip or shoulder width at address under `POSE_SQUARE` (0.2)
   of the torso's length, gets no face-on measures and says so in `#poseSquare_<id>`: his
   phone showed -256% and -394% of hip width, a shift divided by a width near nothing); the
-  Swings page (`#measureAll`, and `poseTrendHtml` in each club's fold: each measure
-  swing by swing, per view); the reading's prompt (`poseContext`).
+  Swings page (`#measureAll`, and `poseTrendHtml` in each club's fold: since 2.58.0 a
+  table, `table.ptrend`, one row a measure: latest value and date, change since the
+  first swing, how many swings; he found the date-by-date list too much); the reading's
+  prompt (`poseContext`). A measured swing's frame strip folds into `#frames_<id>`
+  (*Frames · n*, 2.58.0), since the four positions show the swing.
 - `ui-pose` (12) uses a stand-in detector (`window.carryPose`) with hand-made
   joints: face-on and down-the-line values by hand, a mirrored clip, unsure joints,
   a marked impact, a removed frame, the prompt, measure-all and the trends, a model
@@ -1061,7 +1064,8 @@ app tested its own governing numbers; the second loop lived in the chats.
 What moved into the app, all derived on every draw, nothing stored:
 
 - **Is this list right?** (`listReview()`, fold `#listReview` on the Range
-  list after *Quiet lately*): for every finding with dated evidence (not
+  list after *Quiet lately*, which is a fold row in the same `#listChecks` group since
+  2.58.0): for every finding with dated evidence (not
   measure items or video readings), its outcome: `quiet after range work`
   (its club and swing hit at the range after it first appeared,
   `practisedSince(block, firstSeen)`), `quiet without range work`, `faded`
@@ -1908,10 +1912,11 @@ no effect on the practice list until a future release).
   traced on every scored hole, weighted `0.5^(age / PRACTICE_HALF_LIFE)`,
   `SG_MIN_ROUNDS` 3 or it says how many); a practice card (`sgPhrase`, kinds
   tee/approach/short/putting, only when the recent figure is a loss).
-- **Honesty:** every fold says it is an estimate against a published table,
-  distances to the green's middle, lies as recorded, not the Tour's number,
-  not a prediction, nothing stored, and that it changes nothing about the plan
-  or the armed club. `ui-sg` works a 300-yard par 4 at scratch by hand
+- **Honesty:** every fold says it is an estimate against a handicap level, in one
+  line since 2.58.0 (`sgLimits`; he found the paragraph of caveats too much):
+  distances to the green's middle, lies as recorded, not the Tour's number, not a
+  prediction, nothing stored and nothing changed about the plan or the armed club
+  all still hold, and are said here rather than on the page. `ui-sg` works a 300-yard par 4 at scratch by hand
   (−0.09 tee, +0.22 approach, −0.37 putting), a par 3 with a shot penalty and
   no first putt (pooled), the level rules, the fold, and that nothing lands
   on the documents.
@@ -1974,8 +1979,9 @@ from the course to the range and back, without him recreating it.
   page says it describes what happened since, **not that the practice
   caused it**. Items without counted chances (strike, measure) only say when
   they were practised.
-- **The round page** (`roundFindingsSection`) lists what that round added
-  evidence to: name, how many times, the clubs, the holes (links), *Practise
+- **The round page** (`roundFindingsSection`, a fold `#roundFindingsFold` since 2.58.0,
+  with *Clubs on the course* as `#roundClubs` after it, both under *Getting to the green*
+  and *Strokes gained*; he asked) lists what that round added evidence to: name, how many times, the clubs, the holes (links), *Practise
   this* and *Details*. Tee findings count only the misses.
 - **A block against last time** (`compareBlock`): the latest earlier session
   with the same club, full swing, 5+ shots each side, classified in one pool
@@ -2100,7 +2106,14 @@ over `fullShots`, so the range filter applies; no recency weighting, these are
 plain counts), and in `ballContextFor`, so a swing reading gets the measured face
 and path. Right-hander's signs as the bay reports them; every place says a
 correlation shows what moved together, not what caused it. `ui-delivery` (7) works
-his five 5W shots by hand; 12 mutations caught.
+his five 5W shots by hand; 12 mutations caught. **In a golfer's words** (2.58.0, he
+asked): `faceLabel` (open/closed to the target) and `pathLabel` (in-to-out/out-to-in)
+replace left/right everywhere a face or path is said, for a right-hander as the bay
+reports it (face minus = closed, path plus = in-to-out); the chart's axes say the same
+and keep *curves left/right*. The Overview's fold (`deliveryFold`) is the table only:
+face, path, curve, which one the finish followed (`follows`: the stronger |r|, at least
+0.4, else "neither"), smash; clubs short of `DELIVERY_MIN` in `#deliveryFew`. The block
+page keeps its sentences.
 
 **The block page's source is folded** (2.51.1, he found the screenshots and
 "Read from…" lines wasted the card's room, and the shot patterns will want it):
