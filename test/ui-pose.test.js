@@ -92,7 +92,7 @@ test('measuring a swing asks the model about each stored frame and keeps the joi
 test('face-on by hand: the positions from the hands, sway at the top, hips and head at impact, the lead arm', async () => {
   await app.waitFor(() => app.$('#pose_sw_face'), { what: 'card' });
   const m = app.J(`poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face'))`);
-  assert.deepEqual(m.keys, { address: 0, top: 7, impact: 11, finish: 15 });
+  assert.deepEqual(m.keys, { address: 0, top: 7, impact: 11, finish: 15, down: 9 });
   assert.equal(m.found, 16); assert.equal(m.reliable, true); assert.equal(m.impFrom, 'hands');
   const v = Object.fromEntries(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_face'))).map(x => [x.k, x.v])`));
   near(v.swayTop, -12, 1e-6, 'sway'); near(v.hipImpact, 20, 1e-6, 'hips'); near(v.headImpact, -5, 1e-6, 'head');
@@ -178,7 +178,7 @@ test('Swing history: measure the rest in one go, then each measure swing by swin
   // Hips at impact are measurable on the unreliable swing too (its frame 11 has hips), yet only the three reliable ones count.
   assert.equal(app.text('#ptrend_7i tr[data-k="hipImpact"] td.n'), '3', 'the unreliable one left out');
   assert.match(app.text('#ptrend_7i tr[data-k="extImpact"]'), /Hips toward the ball at impact.*Down the line/);
-  assert.equal(app.$$('#ptrend_7i tbody tr').length, 7, 'a row a measure, nothing date by date');
+  assert.equal(app.$$('#ptrend_7i tbody tr').length, 7, 'a row a measure (hands height at impact needs a marked impact: none here), nothing date by date');
 });
 
 test('a model that can\'t run says what it needs and stores nothing', async () => {
@@ -342,7 +342,7 @@ test('a swing\'s camera angle can be changed: the measures follow, and a reading
   assert.deepEqual(sw.analysis, { one_thing: 'Stay in your posture' }, 'the reading kept');
   await app.waitFor(() => app.$('#angleNote_sw_dtl'), { what: 'redrawn' });
   assert.match(app.text('#angleNote_sw_dtl'), /^This reading was made when the clip was marked Face on\. Analyse again to read it as Down the line\.$/);
-  assert.deepEqual(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))).map(x => x.k)`), ['extImpact', 'bendLoss', 'headUp'], 'measured as down the line');
+  assert.deepEqual(app.J(`poseValues(poseMeasures(session('s_oct').swings.find(s => s.id === 'sw_dtl'))).map(x => x.k)`), ['extImpact', 'bendLoss', 'headUp', 'handsImpact'], 'measured as down the line');
   // Back to the angle it was read under: no note.
   app.act('swingAngle', { sid: 's_oct', wid: 'sw_dtl' });
   app.click('#angleChoices [data-v="face"]');

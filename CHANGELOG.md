@@ -1,3 +1,12 @@
+## 2.63.0 — 2026-10-31
+- Swing plane on down-the-line swings. After *Measure the body*, tap *Tap the ball* and tap the ball once on the address frame. Carry draws the V from the ball (the shaft line through your hands at address, the shoulder line through your shoulders), with your hands going back in green and coming down in white.
+- Three new measures: your hands at the top and coming down, against the V (inside it, flatter under the shaft line, or steeper over the shoulder line), and your hands' height at impact against address.
+- The sheet checks the camera first: if your shoulders don't overlap at address, the phone wasn't behind your hands, so the plane isn't drawn and Carry says why.
+- A *Swing plane* switch on the card hides or shows the drawing on this phone. The measures stay listed either way.
+- Plane faults feed the practice list like the other body measures, with their own drills.
+- Hands height at impact needs impact marked on the trim (or frames close together there). Otherwise the frame taken as impact can be the follow-through, so it asks you to mark it instead of giving a wrong number.
+- The body measures now find the top and impact when only one wrist is visible, as often happens down the line.
+
 ## 2.62.0 — 2026-10-31
 - The practice list now uses the measured body. A measure outside its guide on most of a club's recent swings from one camera angle (at least 3 of the last 5) becomes a finding, such as hips moving toward the ball at impact on your driver.
 - When the same club already has a finding from the ball data, the body fault backs it up on that card ("body, measured") and adds to its weight, rather than being listed twice. On its own it gets its own card, with a drill and a note that the guides are rules of thumb.
