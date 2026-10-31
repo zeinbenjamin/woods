@@ -838,6 +838,14 @@ a choice made on another phone lands on the next poll. `themePicker()` /
 the bag). `ui-theme` covers the default, each choice, the stored copy, the
 server's copy arriving, and nonsense reading as System.
 
+## The card's order (2.70.0)
+
+He asked (with screenshots of his driver and a 7i card): the picture first (the switches and the frame, right under
+the header), then the summary (ball, body, plane, fix), then the quiet folds, then the buttons. `swingCard` and
+`reelCardHtml` (`#reelPose` is now the picture alone, above `#reelCard`; the `rc_` folds follow it). The tied shot's
+line is `swingShotName`: which shot, plus what the tiles have no room for (a penalty; a range shot's face, path,
+smash and strike), since the full `swingShotText` repeated the tiles. The reading's prompt keeps `swingShotText`.
+
 ## The hook, the body fold, analyse all (2.69.0)
 
 He sent a screenshot of a hook he traced (ball, peak up and right, landing just left of the peak but right of the ball)
@@ -1933,6 +1941,15 @@ putt and penalty handlers run unchanged, because the sub still has `hole`.
   The hole logger now refuses an outline or artwork tap on a hole holding
   map shots it can't place (also the case after unlinking a map), so frames
   never mix. A course with no map file is unchanged.
+- **GPS for the whole round** (2.71.0, the hole-maps chat's note of 2026-10-31 from the native-app
+  plan, `docs/native-app.md`, both picked by him): opening Play on a round dated today stores it as
+  the round being played (`carry.playing` in localStorage, `{id, day}`, per phone, so a reload keeps
+  it). `gpsWanted()` is Play open, or `playingRound()`: that round, still today, not every hole
+  `holeDone`. `playLifecycle()` keeps `watchPosition` and the Wake Lock on every page while it holds,
+  and arms a timer for local midnight (`armMidnight`); *End round here* / *Finish round*
+  (`finishPlay`) clears it. `visibilitychange` takes the Wake Lock again when Carry comes back to
+  the front. A locked phone still stops a browser's GPS; only the native app can carry on then.
+  `ui-play` (19).
 - **Not measured on a real course yet.** Distances are checked against
   hand-worked geometry and the globe (haversine) in `ui-play`, but phone GPS
   under trees and how a phone browser treats Cloudflare's offline errors
@@ -2400,7 +2417,7 @@ fixture would let the reading be pinned.
 
 ## Testing
 
-`npm test` — 509 tests, about 110s.
+`npm test` — 510 tests, about 110s.
 
 - `api.test.js` (27) — the server alone: sign-in (forged key, wrong
   audience or team, expired, alg none, no email, the email header alone,
@@ -2668,9 +2685,10 @@ In rough order of value:
    Play mode starts cold on every unlock; only a native app can track while
    locked, as 18Birdies does. The route: Capacitor around the existing app
    (phases: accounts and the Access sign-in check → a shell loading the NAS →
-   background GPS through `platform.js` → Android → build pipeline). Before it,
-   two web changes he picked: GPS for the whole of today's round rather than
-   only the Play view, and the screen kept awake for that round.
+   background GPS through `platform.js` → Android → build pipeline). The two web
+   changes he picked to go first shipped in 2.71.0: GPS for the whole of today's
+   round rather than only the Play view, and the screen kept awake for that round
+   (see *Play mode*).
 
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.

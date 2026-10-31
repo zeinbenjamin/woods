@@ -165,8 +165,10 @@ test('the Swings tab\'s card: Play video at the top right plays the clip in the 
   app.$('#reelPlay').click();
   assert.equal(app.$('#reelVideo video'), null);
   // the body: positions, measures, Across the swing; nothing to measure with, and no id shared with a page
-  const pose = app.$('#reelPose');
-  assert.ok(pose && app.$('#reelCard').compareDocumentPosition(pose) & 4, 'after the reading');
+  // 2.70.0: the picture first, then the summary, then the quiet folds.
+  const pic = app.$('#reelPose'), pose = app.$('#sheetInner');
+  assert.ok(pic && app.$('#reelCard').compareDocumentPosition(pic) & 2, 'the picture before the reading');
+  assert.ok(app.$('#reelCard').compareDocumentPosition(app.$('#rc_sf_sw_r')) & 4, 'the folds after it');
   assert.equal(pose.querySelectorAll('.posePos figure').length, 4);
   assert.match(pose.textContent, /The body, measured 16 of 16 frames/);
   assert.ok(pose.querySelector('#rc_ptr_sw_r .traxis'), 'Across the swing, its ids prefixed');
