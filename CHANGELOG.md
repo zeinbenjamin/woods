@@ -1,3 +1,8 @@
+## 2.74.0 — 2026-11-01
+- Find a tee time: a club whose site doesn't answer in time now says "couldn't be reached: the booking site took too long to answer", not a raw error (Gordon, this week).
+- A 12-hole course like Newgreens Chatswood no longer shows up when you filter for 18 holes: a rate that doesn't say how many holes it is now takes the course's own card.
+- A club whose calendar lists nothing from the day you picked says its bookings may not be open yet (Woollahra opens a few days ahead), rather than only that you may need to sign up.
+
 ## 2.73.0 — 2026-10-31
 - A course page now says when the course's stored location is more than 300 m from where its map puts it, and offers one tap to use the map's. Randwick's was 1.8 km out, in Matraville; Hunter Valley, Hurstville, Lane Cove, Barnwell Park and other early courses are off too. The location places the pin, sorts Closest, sets tee-time distances, picks the course when you start Play, and checks GPS marks.
 - Courses has a search box: type a name, a suburb, or public / private.
