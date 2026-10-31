@@ -2663,6 +2663,15 @@ In rough order of value:
    the armed club never changed. Later, a course pattern from logged approaches set
    against the range one. Mockups: https://claude.ai/artifact/GsWo9jZatcuJoVnqDeV7gh.
 
+6. **A native iPhone / Android app** (parked by him 2026-10-31; the plan is in
+   `docs/native-app.md`). Why: a web page loses GPS when the phone locks, so
+   Play mode starts cold on every unlock; only a native app can track while
+   locked, as 18Birdies does. The route: Capacitor around the existing app
+   (phases: accounts and the Access sign-in check → a shell loading the NAS →
+   background GPS through `platform.js` → Android → build pipeline). Before it,
+   two web changes he picked: GPS for the whole of today's round rather than
+   only the Play view, and the screen kept awake for that round.
+
 Done in 1.5.0: recency weighting of club distances, session filtering
 (leave out, ball type), the penalty report.
 
