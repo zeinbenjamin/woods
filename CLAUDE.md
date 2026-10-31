@@ -880,6 +880,19 @@ so the reader is MiClub's. `server/teetimes.js`, called by
   `.crow`; the name alone on the first line, then distance · times · lowest price (`.ttsum`, joined with ` · `,
   which fixed his screenshot's "13 km 11 times"); rows without times keep distance and suburb, then why.
   `vTeeTimes` starts `HoleMap.icons()`. `ui-teetimes` checks the tile in each part.
+- **Bardwell Valley on another clock** (2.76.0, his search of Wed 4 Nov on
+  2.74.0, 35 of 44 with times): Bardwell "145 times from 01:28", where its
+  TeeItUp page (seen by the agent of 2026-11-01 for the same day) starts at
+  7:28 am: exactly 6 h, which is 07:28 at UTC−7 shown in Sydney, so GolfNow has
+  that club in a US zone (Georges River and Marrickville read right). Its raw
+  answer isn't visible from here, so both shapes are covered: a time with its
+  zone written in (`…T07:28:00-07:00`) is taken as written, the club's clock as
+  its page shows it (`localClock`); a UTC time (`Z`) is still moved to Sydney;
+  and any time from 22:00 to 03:59 makes the answer `unreadable` ("came back on
+  another clock (one at 01:28)") with `sample`, never night-time tee times. If
+  Bardwell then reads "another clock", its sample settles the rule. The
+  search and the course fold say "Couldn't reach its booking site" for
+  `unreachable` (Gordon), "Couldn't read its tee times" otherwise.
 - **Next:** a second source per course (resellers), once the links are settled
   (he agreed, 2026-10-31).
 
@@ -2533,7 +2546,7 @@ fixture would let the reading be pinned.
 - `quick18.test.js` (4) — the Quick18 reader on Lane Cove's real sheet: links, a
   rate per column, members left out, spots, each time's own link, hand-made rows
   for the other players wordings, and the route against a stand-in.
-- `teeitup.test.js` (4) — the TeeItUp reader on a hand-made answer (see
+- `teeitup.test.js` (5) — the TeeItUp reader on a hand-made answer (see
   *Tee times*): links, Sydney times, cents, spots, the route asking with the
   alias, unreadable and refused answers keeping a sample.
 - `teetimes.test.js` (11) — the MiClub reader against Bexley's real calendar

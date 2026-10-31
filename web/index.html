@@ -1959,7 +1959,7 @@ function ttCourse(c, e, p, date) {
   const row = msg => `<div class="ttrow" data-tt="${c.id}"><div class="crow">${ttIcon(c)}<div class="cbody"><b>${name}</b>${whereP ? `<div class="small muted">${whereP}</div>` : ''}<div class="small muted">${msg}</div></div></div></div>`;
   if (!e || e.loading) return { n: -1, html: row(`Checking the club's booking site…`) };
   const d = e.data;
-  if (d.status !== 'ok') return { n: -2, html: row(`Couldn't read its tee times: ${esc(d.message || 'no answer')}${link(d.calendar || c.bookingUrl, 'Check on their site')}`) };
+  if (d.status !== 'ok') return { n: -2, html: row(`${d.status === 'unreachable' ? 'Couldn\'t reach its booking site' : 'Couldn\'t read its tee times'}: ${esc(d.message || 'no answer')}${link(d.calendar || c.bookingUrl, 'Check on their site')}`) };
   const rates = ttFit(d, p, date), n = rates.reduce((a, r) => a + r.times.length, 0);
   if (!n) return { n: 0, html: row(`${esc(d.note || ttMiss(d, p, date))}${link(d.calendar, 'Their calendar')}`) };
   const all = rates.flatMap(r => r.times), first = all.map(t => t.time).sort()[0];
@@ -2015,7 +2015,7 @@ function courseTeeTimes(c) {
   const dayName = d => { const x = chipDays.find(y => y.date === d); return x ? x.label : new Date(d + 'T12:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }); };
   let teaser = 'from the club’s booking site', body;
   if (!e || e.loading) body = `<p class="small muted" id="ctStatus">Checking the club's booking site…</p>`;
-  else if (e.data.status !== 'ok') { teaser = 'couldn’t be read'; body = `<p class="small muted" id="ctStatus">Couldn't read its tee times: ${esc(e.data.message || 'no answer')}${ttSafe(e.data.calendar || c.bookingUrl) ? ` <a href="${esc(e.data.calendar || c.bookingUrl)}" target="_blank" rel="noopener">Check on their site</a>` : ''}</p>`; }
+  else if (e.data.status !== 'ok') { teaser = 'couldn’t be read'; body = `<p class="small muted" id="ctStatus">${e.data.status === 'unreachable' ? 'Couldn\'t reach its booking site' : 'Couldn\'t read its tee times'}: ${esc(e.data.message || 'no answer')}${ttSafe(e.data.calendar || c.bookingUrl) ? ` <a href="${esc(e.data.calendar || c.bookingUrl)}" target="_blank" rel="noopener">Check on their site</a>` : ''}</p>`; }
   else {
     const rates = ttFit(e.data, p, date), n = rates.reduce((a, r) => a + r.times.length, 0);
     if (n) {

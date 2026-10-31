@@ -89,7 +89,7 @@ test('a course with times: its rates, each time with its spots and the club\'s o
 });
 
 test('every course that shows nothing says why', () => {
-  assert.match(row('c_down'), /Couldn't read its tee times: the booking site answered 503/);
+  assert.match(row('c_down'), /Couldn't reach its booking site: the booking site answered 503/);
   assert.match(row('c_empty'), /lists nothing from this day/);
   assert.match(app.text('#ttOther'), /Booking GC/);
   assert.match(app.text('#ttOther'), /Public 9 holes/);
